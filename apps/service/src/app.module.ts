@@ -16,7 +16,7 @@ import { UsersModule } from './users/users.module';
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'req2task',
       entities: [User],
-      synchronize: true,
+      synchronize: false,
     }),
     AuthModule,
     UsersModule,

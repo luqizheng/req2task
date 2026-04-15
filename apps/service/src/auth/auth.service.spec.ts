@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
+import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserRole } from '@req2task/core';
 
@@ -83,7 +84,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should return access token and user info on successful login', async () => {
-      const passwordHash = await require('bcrypt').hash('password123', 10);
+      const passwordHash = await bcrypt.hash('password123', 10);
       const userWithHash = { ...mockUser, passwordHash };
       userRepository.findOne.mockResolvedValue(userWithHash);
 
@@ -109,7 +110,7 @@ describe('AuthService', () => {
     });
 
     it('should throw UnauthorizedException when password is invalid', async () => {
-      const passwordHash = await require('bcrypt').hash('correctpassword', 10);
+      const passwordHash = await bcrypt.hash('correctpassword', 10);
       const userWithHash = { ...mockUser, passwordHash };
       userRepository.findOne.mockResolvedValue(userWithHash);
 

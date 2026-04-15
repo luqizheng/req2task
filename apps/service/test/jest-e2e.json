@@ -5,5 +5,11 @@
   "testRegex": ".e2e-spec.ts$",
   "transform": {
     "^.+\\.(t|j)s$": "ts-jest"
+  },
+  "moduleNameMapper": {
+    "^@req2task/core$": "<rootDir>/../../../packages/core/src/index.ts",
+    "^@req2task/core/(.*)$": "<rootDir>/../../../packages/core/src/$1.ts",
+    "^@req2task/dto$": "<rootDir>/../../../packages/dto/src/index.ts",
+    "^@req2task/dto/(.*)$": "<rootDir>/../../../packages/dto/src/$1.ts"
   }
 }

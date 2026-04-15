@@ -1,5 +1,11 @@
 # AGENTS.md
 
+## 项目背景
+
+req2task（需求转任务）是一个软件需求管理系统，支持需求全生命周期管理、多维度信息关联、AI 辅助需求生成、变更追溯、项目进度可视化和项目知识库构建，为项目经理提供决策支持。
+
+目标用户：需求分析师、开发人员、项目经理
+
 ## 项目概述
 
 req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端和 NestJS 后端。
@@ -32,6 +38,25 @@ pnpm test:e2e       # 运行端到端测试
 - 使用 `pnpm --filter <package>` 针对特定包执行命令
 - 工作区配置位于 `pnpm-workspace.yaml`
 - 应用位于 `apps/` 目录下
+
+## 包结构
+
+```
+packages/
+├── core/          # 后端核心业务代码（实体、服务）
+├── dto/           # 前后端共享 DTO 定义
+apps/
+├── web/           # Vue 3 前端
+└── service/       # NestJS 后端
+```
+
+## DTO 包规则
+
+**重要**：Web 和 Service 交互的 Request/Response DTO 必须定义在 `packages/dto` 中：
+
+- 确保前后端类型一致
+- 单一来源，避免重复定义
+- 支持 API 类型自动补全
 
 ## 代码风格
 

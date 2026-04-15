@@ -6,6 +6,9 @@
   "scripts": {
     "dev:web": "pnpm --filter @req2task/web dev",
     "dev:service": "pnpm --filter @req2task/service start:dev",
+    "dev:infra": "docker-compose -f docker-compose.dev.yml up -d",
+    "dev:infra:stop": "docker-compose -f docker-compose.dev.yml down",
+    "check:env": "npx ts-node scripts/check-env.ts",
     "build": "pnpm -r run build",
     "build:web": "pnpm --filter @req2task/web build",
     "build:service": "pnpm --filter @req2task/service build",

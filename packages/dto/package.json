@@ -28,6 +28,7 @@
   "keywords": [],
   "license": "MIT",
   "devDependencies": {
+    "@req2task/dev-config": "workspace:*",
     "tsup": "^8.3.0",
     "typescript": "^5.7.2"
   }

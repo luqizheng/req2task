@@ -1,0 +1,139 @@
+# Docker Compose 开发基础设施配置
+# 只启动数据库和 Redis 等核心服务，不包含前端和后端
+# 使用方式: docker-compose -f docker-compose.dev.yml up -d
+
+env_file:
+  - apps/service/.env
+
+services:
+  # PostgreSQL 数据库 (带pgvector扩展)
+  postgres:
+    image: zhcoder-docker-registry.com:8000/official/pgvector/pgvector:pg15
+    container_name: ai-sowf-postgres
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
+  # Redis 缓存服务
+  redis:
+    image: zhcoder-docker-registry.com:8000/official/redis:6.2.7-alpine
+    container_name: ai-sowf-redis
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_dev_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
+  # pgAdmin 数据库管理工具 (可选)
+  pgadmin:
+    image: zhcoder-docker-registry.com:8000/official/dpage/pgadmin4:latest
+    container_name: ai-sowf-pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@ai-sowf.com}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin123}
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    ports:
+      - "${PGADMIN_PORT:-5050}:80"
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+      - ./docker/pgadmin-servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
+  # RustFS 对象存储服务 (S3兼容，高性能)
+  rustfs:
+    image: rustfs/rustfs:latest
+    container_name: ai-sowf-rustfs
+    ports:
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    volumes:
+      - rustfs_data:/data
+      - rustfs_logs:/logs
+    environment:
+      - RUSTFS_ROOT_USER=${MINIO_ACCESS_KEY}
+      - RUSTFS_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+      - RUSTFS_ADDRESS=:9000
+      - RUSTFS_CONSOLE_ENABLE=true
+      - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
+  # ChromaDB 向量数据库服务
+  chromadb:
+    image: zhcoder-docker-registry.com:8000/official/chromadb/chroma:latest
+    hostname: chromadb
+    container_name: ai-sowf-chromadb
+    ports:
+      - "${CHROMA_PORT}:8000"
+    volumes:
+      - chromadb_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - PERSIST_DIRECTORY=/chroma/chroma
+      - ANONYMIZED_TELEMETRY=FALSE
+      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_AUTH_TOKEN}
+      - CHROMA_SERVER_AUTHZ_PROVIDER=chromadb.auth.basic_authz.BasicAuthorizationServerProvider
+    # healthcheck:
+    #   test: ["CMD", "curl", "-f", "http://chromadb:8000/api/v2/heartbeat"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 30s
+    # restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
+volumes:
+  postgres_dev_data:
+    name: ai-sowf-postgres-dev-data
+  redis_dev_data:
+    name: ai-sowf-redis-dev-data
+  pgadmin_dev_data:
+    name: ai-sowf-pgadmin-dev-data
+  rustfs_data:
+    name: ai-sowf-rustfs-dev-data
+  rustfs_logs:
+    name: ai-sowf-rustfs-dev-logs
+  chromadb_data:
+    name: ai-sowf-chromadb-data
+
+networks:
+  ai-sowf-dev-network:
+    name: ai-sowf-dev-network
+    driver: bridge

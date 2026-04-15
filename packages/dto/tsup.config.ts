@@ -1,20 +1,13 @@
 import { defineConfig } from 'tsup'
+import { baseTsupConfig } from '@req2task/dev-config/tsup'
 
 export default defineConfig([
   {
+    ...baseTsupConfig[0],
     entry: ['src/index.ts'],
-    format: ['esm'],
-    dts: true,
-    splitting: false,
-    clean: true,
-    outDir: 'dist/esm',
   },
   {
+    ...baseTsupConfig[1],
     entry: ['src/index.ts'],
-    format: ['cjs'],
-    dts: true,
-    splitting: false,
-    clean: false,
-    outDir: 'dist/cjs',
   },
 ])

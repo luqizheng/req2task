@@ -171,8 +171,20 @@ importers:
         specifier: ^5.3.0
         version: 5.9.3
 
+  packages/dev-config:
+    devDependencies:
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)
+      typescript:
+        specifier: ^5.7.2
+        version: 5.9.3
+
   packages/dto:
     devDependencies:
+      '@req2task/dev-config':
+        specifier: workspace:*
+        version: link:../dev-config
       tsup:
         specifier: ^8.3.0
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.9)(typescript@5.9.3)(yaml@2.8.3)

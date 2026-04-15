@@ -1,0 +1,18 @@
+{
+  "name": "@req2task/dev-config",
+  "version": "0.0.1",
+  "description": "Shared development configuration for req2task",
+  "type": "module",
+  "main": "./tsup.config.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./tsup": "./tsup.config.ts",
+    "./tsconfig": "./tsconfig.json"
+  },
+  "keywords": [],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.3.0",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,8 +1,9 @@
 #!/usr/bin/env node
 
 import { execSync } from 'child_process';
-import { existsSync } from 'fs';
-import { platform, release } from 'os';
+import { existsSync, readFileSync } from 'fs';
+import { platform } from 'os';
+import { Client } from 'pg';
 
 interface CheckResult {
   name: string;
@@ -138,6 +139,147 @@ function checkGit(): CheckResult {
   };
 }
 
+interface DbConfig {
+  host: string;
+  port: number;
+  user: string;
+  password: string;
+  database: string;
+}
+
+function parseEnvFile(filePath: string): Record<string, string> {
+  const env: Record<string, string> = {};
+  if (!existsSync(filePath)) {
+    return env;
+  }
+  const content = readFileSync(filePath, 'utf-8');
+  for (const line of content.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const [key, ...valueParts] = trimmed.split('=');
+    if (key && valueParts.length > 0) {
+      env[key] = valueParts.join('=');
+    }
+  }
+  return env;
+}
+
+function getDbConfig(): DbConfig | null {
+  const envPath = 'apps/service/.env';
+  const env = parseEnvFile(envPath);
+  if (!env.DB_HOST || !env.DB_PORT || !env.DB_USER || !env.DB_PASSWORD || !env.DB_NAME) {
+    return null;
+  }
+  return {
+    host: env.DB_HOST,
+    port: parseInt(env.DB_PORT, 10),
+    user: env.DB_USER,
+    password: env.DB_PASSWORD,
+    database: env.DB_NAME,
+  };
+}
+
+async function checkDatabase(): Promise<CheckResult> {
+  const config = getDbConfig();
+  if (!config) {
+    return {
+      name: 'PostgreSQL',
+      required: 'configured',
+      version: null,
+      passed: false,
+      message: 'Database config not found in apps/service/.env'
+    };
+  }
+  const client = new Client({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    connectionTimeoutMillis: 5000,
+  });
+  try {
+    await client.connect();
+    const res = await client.query('SELECT version()');
+    const version = res.rows[0]?.version?.split(' ')[0] + ' ' + res.rows[0]?.version?.split(' ')[1];
+    await client.end();
+    return {
+      name: 'PostgreSQL',
+      required: 'connected',
+      version: version || 'connected',
+      passed: true,
+      message: `Connected: ${config.database}@${config.host}:${config.port}`
+    };
+  } catch (error) {
+    await client.end().catch(() => {});
+    return {
+      name: 'PostgreSQL',
+      required: 'connected',
+      version: null,
+      passed: false,
+      message: `Connection failed: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+}
+
+async function checkDatabaseTables(): Promise<CheckResult> {
+  const config = getDbConfig();
+  if (!config) {
+    return {
+      name: 'DB Tables',
+      required: 'exist',
+      version: null,
+      passed: false,
+      message: 'Database config not found'
+    };
+  }
+  const client = new Client({
+    host: config.host,
+    port: config.port,
+    user: config.user,
+    password: config.password,
+    database: config.database,
+    connectionTimeoutMillis: 5000,
+  });
+  const requiredTables = ['users'];
+  try {
+    await client.connect();
+    const res = await client.query(`
+      SELECT table_name
+      FROM information_schema.tables
+      WHERE table_schema = 'public'
+    `);
+    const existingTables = res.rows.map((r) => r.table_name);
+    await client.end();
+    const missing = requiredTables.filter((t) => !existingTables.includes(t));
+    if (missing.length === 0) {
+      return {
+        name: 'DB Tables',
+        required: 'exist',
+        version: `${existingTables.length} tables`,
+        passed: true,
+        message: `All required tables exist: ${requiredTables.join(', ')}`
+      };
+    }
+    return {
+      name: 'DB Tables',
+      required: 'exist',
+      version: `${existingTables.length} tables`,
+      passed: false,
+      message: `Missing tables: ${missing.join(', ')}. Run migrations first.`
+    };
+  } catch (error) {
+    await client.end().catch(() => {});
+    return {
+      name: 'DB Tables',
+      required: 'exist',
+      version: null,
+      passed: false,
+      message: `Check failed: ${error instanceof Error ? error.message : String(error)}`
+    };
+  }
+}
+
 function printResult(result: CheckResult): void {
   const icon = result.passed ? '✓' : '✗';
   const color = result.passed ? '\x1b[32m' : '\x1b[31m';
@@ -145,7 +287,7 @@ function printResult(result: CheckResult): void {
   console.log(`${color}${icon}${reset} ${result.name}: ${result.message}`);
 }
 
-function main() {
+async function main() {
   const isWindows = platform() === 'win32';
   console.log(`\n🔍 Environment Check (${isWindows ? 'Windows' : 'Linux/macOS'})\n`);
   console.log('─'.repeat(50));
@@ -155,8 +297,14 @@ function main() {
     checkPnpm(),
     checkGit(),
     checkDocker(),
-    checkDockerCompose()
+    checkDockerCompose(),
   ];
+
+  const dbCheck = await checkDatabase();
+  checks.push(dbCheck);
+
+  const dbTablesCheck = await checkDatabaseTables();
+  checks.push(dbTablesCheck);
 
   console.log('─'.repeat(50));
   checks.forEach(printResult);

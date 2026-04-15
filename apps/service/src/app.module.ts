@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { User, UserService } from '@req2task/core'
 
 @Module({
   imports: [
@@ -12,11 +13,11 @@ import { AppService } from './app.service'
       username: process.env.DB_USER || 'postgres',
       password: process.env.DB_PASSWORD || 'postgres',
       database: process.env.DB_NAME || 'req2task',
-      entities: [],
+      entities: [User],
       synchronize: true
     })
   ],
   controllers: [AppController],
-  providers: [AppService]
+  providers: [AppService, UserService]
 })
 export class AppModule {}

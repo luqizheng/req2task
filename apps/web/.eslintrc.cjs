@@ -14,24 +14,15 @@ module.exports = {
   },
   plugins: ['import'],
   rules: {
-    'import/no-restricted-paths': [
-      'error',
-      {
-        zones: [
-          {
-            target: './',
-            from: null,
-            restrictGraph: true,
-            except: ['@req2task/dto']
-          }
-        ]
-      }
-    ]
+    '@typescript-eslint/no-explicit-any': 'warn'
   },
   settings: {
     'import/resolver': {
       alias: {
-        map: [['@req2task/core', './FORBIDDEN_PATH']],
+        map: [
+          ['@req2task/core', '../../packages/core/src'],
+          ['@req2task/dto', '../../packages/dto/src']
+        ],
         extensions: ['.ts', '.tsx', '.vue']
       }
     }

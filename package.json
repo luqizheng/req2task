@@ -6,21 +6,28 @@
   "scripts": {
     "dev:web": "pnpm --filter @req2task/web dev",
     "dev:service": "pnpm --filter @req2task/service start:dev",
-    "dev:infra": "docker-compose -f docker-compose.dev.yml up -d",
-    "dev:infra:stop": "docker-compose -f docker-compose.dev.yml down",
+    "dev:infra": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env up -d",
+    "dev:infra:stop": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env down",
     "check:env": "npx ts-node scripts/check-env.ts",
     "build": "pnpm -r run build",
     "build:web": "pnpm --filter @req2task/web build",
     "build:service": "pnpm --filter @req2task/service build",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
-    "test:e2e": "pnpm --filter @req2task/service test:e2e"
+    "test:e2e": "pnpm --filter @req2task/service test:e2e",
+    "test:all": "pnpm run test && pnpm run test:e2e",
+    "db:migration:generate": "pnpm --filter @req2task/service migration:generate",
+    "db:migration:run": "pnpm --filter @req2task/service migration:run",
+    "db:migration:revert": "pnpm --filter @req2task/service migration:revert",
+    "db:migration:show": "pnpm --filter @req2task/service migration:show"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",
     "@commitlint/config-conventional": "^19.0.0",
+    "@types/pg": "^8.20.0",
     "husky": "^9.0.0",
     "lint-staged": "^15.0.0",
+    "pg": "^8.11.0",
     "typescript": "^5.3.0"
   },
   "lint-staged": {

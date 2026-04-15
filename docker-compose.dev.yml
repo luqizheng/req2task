@@ -2,9 +2,6 @@
 # 只启动数据库和 Redis 等核心服务，不包含前端和后端
 # 使用方式: docker-compose -f docker-compose.dev.yml up -d
 
-env_file:
-  - apps/service/.env
-
 services:
   # PostgreSQL 数据库 (带pgvector扩展)
   postgres:

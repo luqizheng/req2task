@@ -1,0 +1,37 @@
+{
+  "name": "req2task",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "scripts": {
+    "dev:web": "pnpm --filter @req2task/web dev",
+    "dev:service": "pnpm --filter @req2task/service start:dev",
+    "build": "pnpm -r run build",
+    "build:web": "pnpm --filter @req2task/web build",
+    "build:service": "pnpm --filter @req2task/service build",
+    "lint": "pnpm -r run lint",
+    "test": "pnpm -r run test",
+    "test:e2e": "pnpm --filter @req2task/service test:e2e"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.0.0",
+    "@commitlint/config-conventional": "^19.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0",
+    "typescript": "^5.3.0"
+  },
+  "lint-staged": {
+    "*.{ts,vue}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yaml}": [
+      "prettier --write"
+    ]
+  },
+  "commitlint": {
+    "extends": [
+      "@commitlint/config-conventional"
+    ]
+  }
+}

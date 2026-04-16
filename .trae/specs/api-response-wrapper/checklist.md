@@ -1,0 +1,5 @@
+- [x] ApiResponseDto 接口已更新，包含 time、url、method、body 字段
+- [x] 后端响应拦截器已实现并全局注册
+- [x] 前端 axios 响应拦截器已适配新响应格式
+- [x] dto 包已重新构建
+- [x] 现有服务接口测试通过

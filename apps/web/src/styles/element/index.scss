@@ -1,0 +1,40 @@
+@use "element-plus/theme-chalk/src/index.scss" as *;
+
+$colors: (
+  'primary': (
+    'base': #2563eb,
+  ),
+  'success': (
+    'base': #10b981,
+  ),
+  'warning': (
+    'base': #f59e0b,
+  ),
+  'danger': (
+    'base': #ef4444,
+  ),
+  'error': (
+    'base': #ef4444,
+  ),
+  'info': (
+    'base': #6366f1,
+  ),
+);
+
+:root {
+  --el-color-primary: #2563eb;
+  --el-color-success: #10b981;
+  --el-color-warning: #f59e0b;
+  --el-color-danger: #ef4444;
+  --el-color-error: #ef4444;
+  --el-color-info: #6366f1;
+}
+
+.el-button--primary {
+  --el-button-bg-color: #2563eb;
+  --el-button-border-color: #2563eb;
+  --el-button-hover-bg-color: #1d4ed8;
+  --el-button-hover-border-color: #1d4ed8;
+  --el-button-active-bg-color: #1e40af;
+  --el-button-active-border-color: #1e40af;
+}

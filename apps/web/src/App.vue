@@ -7,15 +7,19 @@ import { RouterView } from 'vue-router'
 </template>
 
 <style>
-#app {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  font-weight: normal;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #app {
+  height: 100%;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
+  font-family: 'Inter', 'Source Han Sans CN', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 </style>

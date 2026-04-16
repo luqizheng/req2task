@@ -16,5 +16,12 @@ export default defineConfig({
                 changeOrigin: true
             }
         }
+    },
+    css: {
+        preprocessorOptions: {
+            scss: {
+                additionalData: "@use \"@/styles/element/index.scss\" as *;"
+            }
+        }
     }
 });

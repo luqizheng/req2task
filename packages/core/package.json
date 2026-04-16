@@ -41,6 +41,7 @@
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
+    "axios": "^1.6.0",
     "typeorm": "^0.3.19"
   },
   "devDependencies": {

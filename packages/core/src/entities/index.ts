@@ -5,3 +5,5 @@ export * from './requirement.entity';
 export * from './requirement-change-log.entity';
 export * from './user-story.entity';
 export * from './acceptance-criteria.entity';
+export * from './task.entity';
+export * from './llm-config.entity';

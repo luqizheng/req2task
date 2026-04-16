@@ -2,12 +2,24 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { User, Project, FeatureModule, Requirement, UserStory, AcceptanceCriteria } from "@req2task/core";
+import {
+  User,
+  Project,
+  FeatureModule,
+  Requirement,
+  RequirementChangeLog,
+  UserStory,
+  AcceptanceCriteria,
+  Task,
+  LLMConfig,
+} from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { ProjectsModule } from "./projects/projects.module";
 import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 import { RequirementsModule } from "./requirements/requirements.module";
+import { TasksModule } from "./tasks/tasks.module";
+import { AiModule } from "./ai/ai.module";
 
 @Module({
   imports: [
@@ -18,7 +30,17 @@ import { RequirementsModule } from "./requirements/requirements.module";
       username: process.env.DB_USER || "postgres",
       password: process.env.DB_PASSWORD || "postgres",
       database: process.env.DB_NAME || "req2task",
-      entities: [User, Project, FeatureModule, Requirement, UserStory, AcceptanceCriteria],
+      entities: [
+        User,
+        Project,
+        FeatureModule,
+        Requirement,
+        RequirementChangeLog,
+        UserStory,
+        AcceptanceCriteria,
+        Task,
+        LLMConfig,
+      ],
       synchronize: false,
     }),
     AuthModule,
@@ -26,6 +48,8 @@ import { RequirementsModule } from "./requirements/requirements.module";
     ProjectsModule,
     FeatureModulesModule,
     RequirementsModule,
+    TasksModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

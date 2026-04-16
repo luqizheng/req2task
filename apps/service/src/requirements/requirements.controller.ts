@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequirementsService } from './requirements.service';
+import { RequirementStateService } from '@req2task/core';
 import {
   CreateRequirementDto,
   UpdateRequirementDto,
@@ -19,12 +20,17 @@ import {
   UpdateUserStoryDto,
   CreateAcceptanceCriteriaDto,
   UpdateAcceptanceCriteriaDto,
+  TransitionStatusDto,
+  ReviewRequirementDto,
 } from '@req2task/dto';
 
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class RequirementsController {
-  constructor(private readonly requirementsService: RequirementsService) {}
+  constructor(
+    private readonly requirementsService: RequirementsService,
+    private readonly requirementStateService: RequirementStateService,
+  ) {}
 
   @Post('requirements/modules/:moduleId/requirements')
   async create(
@@ -73,6 +79,73 @@ export class RequirementsController {
   async delete(@Param('id') id: string) {
     await this.requirementsService.delete(id);
     return { code: 0, message: '删除成功' };
+  }
+
+  @Post('requirements/:id/transition')
+  async transitionStatus(
+    @Param('id') id: string,
+    @Body() transitionDto: TransitionStatusDto,
+    @Request() req: any,
+  ) {
+    const result = await this.requirementStateService.transitionStatus(
+      id,
+      transitionDto.targetStatus,
+      req.user.userId,
+      transitionDto.comment,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Get('requirements/:id/allowed-transitions')
+  async getAllowedTransitions(@Param('id') id: string) {
+    const requirement = await this.requirementsService.findById(id);
+    const allowedTransitions =
+      await this.requirementStateService.getAllowedTransitions(requirement.status);
+    return { code: 0, data: { allowedTransitions } };
+  }
+
+  @Get('requirements/:id/change-history')
+  async getChangeHistory(@Param('id') id: string) {
+    const logs = await this.requirementStateService.getChangeHistory(id);
+    return {
+      code: 0,
+      data: {
+        logs: logs.map((log) => ({
+          id: log.id,
+          requirementId: log.requirementId,
+          changeType: log.changeType,
+          oldValue: log.oldValue,
+          newValue: log.newValue,
+          fromStatus: log.fromStatus,
+          toStatus: log.toStatus,
+          comment: log.comment,
+          changedBy: log.changedBy
+            ? {
+                id: log.changedBy.id,
+                displayName: log.changedBy.displayName,
+                username: log.changedBy.username,
+              }
+            : undefined,
+          createdAt: log.createdAt,
+        })),
+        total: logs.length,
+      },
+    };
+  }
+
+  @Post('requirements/:id/review')
+  async reviewRequirement(
+    @Param('id') id: string,
+    @Body() reviewDto: ReviewRequirementDto,
+    @Request() req: any,
+  ) {
+    const result = await this.requirementStateService.reviewRequirement(
+      id,
+      reviewDto.approved,
+      req.user.userId,
+      reviewDto.comment,
+    );
+    return { code: 0, data: result };
   }
 
   @Post('user-stories/:requirementId/user-stories')

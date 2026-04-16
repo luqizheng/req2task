@@ -39,7 +39,7 @@ export class AcceptanceCriteria {
   @Column({ type: 'text' })
   content!: string;
 
-  @Column({ name: 'test_method', nullable: true })
+  @Column({ name: 'test_method', type: 'text', nullable: true })
   testMethod!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

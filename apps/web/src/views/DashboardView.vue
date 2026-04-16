@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Top, Bottom } from '@element-plus/icons-vue'
+import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Top, Bottom, Timer, Reading, CircleCheck } from '@element-plus/icons-vue'
 
 interface StatCard {
   title: string
@@ -9,6 +9,15 @@ interface StatCard {
   trendUp?: boolean
   color: string
   icon: any
+}
+
+interface CostStat {
+  title: string
+  current: number
+  total: number
+  unit: string
+  icon: any
+  color: string
 }
 
 interface Milestone {
@@ -32,6 +41,12 @@ const statCards = ref<StatCard[]>([
   { title: '用户故事', value: 356, trend: '+8%', trendUp: true, color: '#10b981', icon: Document },
   { title: '待验收', value: 24, trend: '-5%', trendUp: false, color: '#f59e0b', icon: Check },
   { title: '风险项', value: 3, trend: '+1', trendUp: false, color: '#ef4444', icon: Warning },
+])
+
+const costStats = ref<CostStat[]>([
+  { title: '执行进度', current: 45, total: 60, unit: '天', icon: Timer, color: '#2563eb' },
+  { title: '故事点', current: 186, total: 240, unit: '点', icon: Reading, color: '#10b981' },
+  { title: '任务完成', current: 78, total: 100, unit: '个', icon: CircleCheck, color: '#6366f1' },
 ])
 
 const milestones = ref<Milestone[]>([
@@ -68,6 +83,10 @@ const getMilestoneStatusText = (status: string) => {
 const getActivityTypeColor = (type: string) => {
   return type === 'ai' ? '#6366f1' : '#2563eb'
 }
+
+const getCostPercentage = (current: number, total: number) => {
+  return Math.round((current / total) * 100)
+}
 </script>
 
 <template>
@@ -99,6 +118,32 @@ const getActivityTypeColor = (type: string) => {
                 </span>
               </div>
             </div>
+          </div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="16" class="cost-row">
+      <el-col :xs="24" :sm="8" v-for="cost in costStats" :key="cost.title">
+        <el-card class="cost-card" shadow="hover">
+          <div class="cost-header">
+            <div class="cost-icon" :style="{ backgroundColor: cost.color + '15', color: cost.color }">
+              <el-icon :size="20"><component :is="cost.icon" /></el-icon>
+            </div>
+            <span class="cost-title">{{ cost.title }}</span>
+          </div>
+          <div class="cost-progress">
+            <el-progress 
+              :percentage="getCostPercentage(cost.current, cost.total)" 
+              :stroke-width="10"
+              :color="cost.color"
+            />
+          </div>
+          <div class="cost-info">
+            <span class="cost-current">{{ cost.current }}</span>
+            <span class="cost-divider">/</span>
+            <span class="cost-total">{{ cost.total }} {{ cost.unit }}</span>
+            <span class="cost-percent">({{ getCostPercentage(cost.current, cost.total) }}%)</span>
           </div>
         </el-card>
       </el-col>
@@ -222,6 +267,75 @@ const getActivityTypeColor = (type: string) => {
 
 .stat-row {
   margin-bottom: 16px;
+}
+
+.cost-row {
+  margin-bottom: 16px;
+}
+
+.cost-card {
+  height: 100%;
+}
+
+.cost-card :deep(.el-card__body) {
+  padding: 16px;
+}
+
+.cost-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.cost-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cost-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.cost-progress {
+  margin-bottom: 8px;
+}
+
+.cost-progress :deep(.el-progress) {
+  margin-right: 0;
+}
+
+.cost-info {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 13px;
+}
+
+.cost-current {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.cost-divider {
+  color: #94a3b8;
+}
+
+.cost-total {
+  color: #64748b;
+}
+
+.cost-percent {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-left: 4px;
 }
 
 .stat-card {

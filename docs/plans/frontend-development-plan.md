@@ -322,17 +322,18 @@ GET    /ai/prompt-templates                             // 获取模板
 ### Sprint 5：AI 配置与对话 (1周)
 
 #### 目标
-实现 AI 配置管理、通用对话功能。
+实现 AI 配置管理、通用对话功能。使用 `@req2task/ai-chat` 组件库。
 
 #### 任务
 
 | 任务 | 预估 | 优先级 |
 |------|------|--------|
-| API: ai.ts | 8h | P0 |
+| API: ai.ts | 6h | P0 |
 | Store: ai.ts | 6h | P0 |
 | AiConfigView.vue | 8h | P0 |
-| AI Chat 组件 | 8h | P0 |
-| AiGenerateView.vue | 6h | P0 |
+| AI Chat 集成 (使用 ai-chat 组件) | 8h | P0 |
+| 后端 SSE 接口适配 | 4h | P1 |
+| 适配器配置 | 4h | P1 |
 
 #### 验收标准
 - [ ] 可配置 LLM
@@ -488,13 +489,18 @@ GET    /ai/prompt-templates                             // 获取模板
 
 ### 6.5 AI 组件
 
-| 组件 | 说明 |
-|------|------|
-| ChatMessage | 聊天消息 |
-| ChatInput | 聊天输入框 |
-| RequirementGenerator | 需求生成器 |
-| ConflictResult | 冲突结果展示 |
-| SimilarList | 相似列表 |
+> **注意**：已集成 `@req2task/ai-chat` 包，基础对话组件直接使用。
+
+| 组件 | 说明 | 来源 |
+|------|------|------|
+| AIChat | 完整对话窗口 | @req2task/ai-chat |
+| Window | 对话容器 | @req2task/ai-chat |
+| MessageList | 消息列表 | @req2task/ai-chat |
+| MessageBubble | 消息气泡 | @req2task/ai-chat |
+| InputArea | 输入区域 | @req2task/ai-chat |
+| RequirementGenerator | 需求生成器 | 新开发 |
+| ConflictResult | 冲突结果展示 | 新开发 |
+| SimilarList | 相似列表 | 新开发 |
 
 ---
 
@@ -542,6 +548,136 @@ export const useProjectStore = defineStore('project', () => {
 - API 错误统一在 axios 拦截器处理
 - 业务错误使用 ElMessage 提示
 - 关键操作使用 ConfirmDialog 确认
+
+### 7.5 AI Chat 组件使用
+
+项目已引入 `@req2task/ai-chat` 组件库（位于 `packages/ai-chat`），提供完整的 AI 对话功能。
+
+#### 7.5.1 基础用法
+
+```vue
+<script setup lang="ts">
+import { ref } from 'vue'
+import { AIChat } from '@req2task/ai-chat'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
+const chatRef = ref()
+
+const config = {
+  endpoint: '/api/ai/chat',
+  headers: {
+    Authorization: `Bearer ${userStore.token}`
+  },
+  userRoleName: '我',
+  assistantRoleName: 'AI 助手'
+}
+</script>
+
+<template>
+  <AIChat
+    ref="chatRef"
+    :config="config"
+    title="AI 助手"
+    placeholder="输入消息..."
+    @error="handleError"
+  />
+</template>
+```
+
+#### 7.5.2 暴露的方法
+
+```vue
+<script setup lang="ts">
+const chatRef = ref()
+
+// 清除对话
+chatRef.value?.clearMessages()
+
+// 获取消息历史
+const messages = chatRef.value?.getMessages()
+
+// 停止生成
+chatRef.value?.stopStream()
+
+// 获取会话 ID
+const sessionId = chatRef.value?.getConversationId()
+
+// 设置会话 ID
+chatRef.value?.setConversationId('session-xxx')
+
+// 滚动到底部
+chatRef.value?.scrollToBottom()
+</script>
+```
+
+#### 7.5.3 事件监听
+
+```vue
+<template>
+  <AIChat
+    @message-sent="onMessageSent"
+    @message-received="onMessageReceived"
+    @stream-start="onStreamStart"
+    @stream-end="onStreamEnd"
+    @error="onError"
+    @conversation-created="onConversationCreated"
+  />
+</template>
+```
+
+#### 7.5.4 后端 SSE 接口要求
+
+AIChat 组件使用 SSE（Server-Sent Events）流式响应，后端接口需满足：
+
+```typescript
+// 请求格式
+POST /api/ai/chat
+Content-Type: application/json
+
+{
+  "message": "用户输入",
+  "sessionId": "可选的会话ID",
+  "conversationId": "可选的对话ID"
+}
+
+// 响应格式 (SSE)
+Content-Type: text/event-stream
+
+data: {"type": "content", "content": "AI 回复内容1"}
+
+data: {"type": "content", "content": "AI 回复内容2"}
+
+data: {"type": "metadata", "conversationId": "xxx"}
+
+data: [DONE]
+```
+
+#### 7.5.5 适配器配置
+
+如后端接口格式不同，可使用适配器进行转换：
+
+```typescript
+import { adapterRegistry, createMessageAdapter } from '@req2task/ai-chat'
+
+// 注册自定义适配器
+adapterRegistry.register(createMessageAdapter({
+  name: 'custom',
+  // 请求转换
+  transformRequest: (req) => ({
+    prompt: req.message,
+    session_id: req.sessionId
+  }),
+  // 响应转换
+  transformResponse: (res) => ({
+    type: 'content',
+    content: res.text
+  })
+}))
+
+// 使用适配器
+<AIChat adapter-name="custom" />
+```
 
 ---
 

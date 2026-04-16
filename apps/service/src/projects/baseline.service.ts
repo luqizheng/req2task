@@ -6,8 +6,6 @@ import {
   Project,
   Requirement,
   Task,
-  RequirementStatus,
-  TaskStatus,
 } from '@req2task/core';
 
 @Injectable()
@@ -73,14 +71,14 @@ export class BaselineService {
     await this.baselineRepository.remove(baseline);
   }
 
-  private async takeSnapshot(projectId: string): Promise<Record<string, any>> {
+  private async takeSnapshot(_projectId: string): Promise<Record<string, unknown>> {
     const requirements = await this.requirementRepository.find({
-      where: { moduleId: projectId },
+      where: { moduleId: _projectId },
       relations: ['userStories', 'children'],
     });
 
     const tasks = await this.taskRepository.find({
-      where: { requirementId: projectId },
+      where: { requirementId: _projectId },
     });
 
     return {
@@ -103,8 +101,8 @@ export class BaselineService {
   }
 
   private async restoreSnapshot(
-    snapshot: Record<string, any>,
-    projectId: string,
+    snapshot: Record<string, unknown>,
+    _projectId: string,
   ): Promise<void> {
     for (const reqSnapshot of snapshot.requirements || []) {
       await this.requirementRepository.update(reqSnapshot.id, {

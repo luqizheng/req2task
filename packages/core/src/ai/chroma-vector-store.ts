@@ -37,7 +37,7 @@ export class ChromaVectorStore implements VectorStore {
     }
   }
 
-  async deleteByFilter(filter: Record<string, any>): Promise<void> {
+  async deleteByFilter(filter: Record<string, unknown>): Promise<void> {
     const toDelete: string[] = [];
 
     for (const [id, doc] of this.documents.entries()) {

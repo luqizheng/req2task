@@ -6,7 +6,6 @@ import {
   PromptService,
   ChromaVectorStore,
   LLMMessage,
-  SearchResult,
 } from '@req2task/core';
 import { Task, TaskPriority } from '@req2task/core';
 

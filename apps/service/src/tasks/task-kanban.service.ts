@@ -29,7 +29,7 @@ export class TaskKanbanService {
   async transitionStatus(
     taskId: string,
     targetStatus: TaskStatus,
-    userId?: string,
+    _userId?: string,
   ): Promise<Task> {
     const task = await this.taskRepository.findOne({ where: { id: taskId } });
 

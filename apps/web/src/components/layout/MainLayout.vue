@@ -39,7 +39,7 @@ const passwordRules = {
   confirmPassword: [
     { required: true, message: '请确认密码', trigger: 'blur' },
     {
-      validator: (_rule: any, value: string, callback: any) => {
+      validator: (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (value !== passwordForm.value.newPassword) {
           callback(new Error('两次密码不一致'))
         } else {

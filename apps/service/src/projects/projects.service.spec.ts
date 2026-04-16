@@ -4,10 +4,18 @@ import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
 import { Project, ProjectStatus, User, UserRole } from '@req2task/core';
 
+interface MockRepository {
+  findAndCount: jest.Mock;
+  findOne: jest.Mock;
+  create: jest.Mock;
+  save: jest.Mock;
+  remove: jest.Mock;
+}
+
 describe('ProjectsService', () => {
   let service: ProjectsService;
-  let projectRepository: any;
-  let userRepository: any;
+  let projectRepository: MockRepository;
+  let userRepository: MockRepository;
 
   const mockOwner: User = {
     id: 'owner-uuid',

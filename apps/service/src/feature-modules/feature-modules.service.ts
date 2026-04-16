@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, TreeRepository } from 'typeorm';
+import { Repository } from 'typeorm';
 import { FeatureModule } from '@req2task/core';
 import {
   CreateFeatureModuleDto,
@@ -53,7 +53,7 @@ export class FeatureModulesService {
 
   async findTreeByProject(projectId: string): Promise<FeatureModuleResponseDto[]> {
     const roots = await this.featureModuleRepository.find({
-      where: { projectId, parentId: null as any },
+      where: { projectId, parentId: null as unknown },
       relations: ['children', 'children.children'],
       order: { sort: 'ASC' },
     });

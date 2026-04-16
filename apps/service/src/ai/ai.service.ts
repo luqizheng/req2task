@@ -8,7 +8,6 @@ import {
   VectorDocument,
   SearchResult,
   LLMMessage,
-  LLMProviderType,
 } from '@req2task/core';
 import { LLMConfig } from '@req2task/core';
 import {

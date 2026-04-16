@@ -16,6 +16,13 @@ import { TaskKanbanService } from './task-kanban.service';
 import { CreateTaskDto, UpdateTaskDto, AddDependencyDto } from '@req2task/dto';
 import { TaskStatus } from '@req2task/core';
 
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    username: string;
+  };
+}
+
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class TasksController {
@@ -28,7 +35,7 @@ export class TasksController {
   async create(
     @Param('requirementId') requirementId: string,
     @Body() createDto: CreateTaskDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const result = await this.tasksService.create(
       requirementId,

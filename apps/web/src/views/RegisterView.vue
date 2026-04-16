@@ -17,7 +17,7 @@ const registerForm = ref({
   agree: false,
 });
 
-const validatePassword = (_rule: any, value: any, callback: any) => {
+const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
   if (value !== registerForm.value.password) {
     callback(new Error("两次输入密码不一致"));
   } else {
@@ -62,8 +62,9 @@ const handleRegister = async () => {
         });
         ElMessage.success("注册成功，请登录");
         router.push("/login");
-      } catch (error: any) {
-        ElMessage.error(error.response?.data?.message || "注册失败");
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        ElMessage.error(axiosError.response?.data?.message || "注册失败");
       } finally {
         loading.value = false;
       }

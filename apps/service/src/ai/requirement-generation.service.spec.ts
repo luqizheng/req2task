@@ -112,7 +112,7 @@ describe('RequirementGenerationService', () => {
       } as RawRequirement;
 
       rawRequirementRepository.findOne.mockResolvedValue(mockRawRequirement);
-      rawRequirementRepository.update.mockResolvedValue({} as any);
+      rawRequirementRepository.update.mockResolvedValue({ affected: 1 } as unknown);
       promptService.renderTemplate.mockReturnValue('Generated template');
       llmService.generate.mockResolvedValue({
         content: `Title: Login Feature
@@ -145,12 +145,10 @@ As a user, I want to login, so that I can access my account`,
 
   describe('generateUserStories', () => {
     it('should generate user stories', async () => {
-      const llmResponse = `As a user, I want to login, so that I can access my account
-As a user, I want to reset password, so that I can recover my account`;
-
       promptService.renderTemplate.mockReturnValue('Template');
       llmService.generate.mockResolvedValue({
-        content: llmResponse,
+        content: `As a user, I want to login, so that I can access my account
+As a user, I want to reset password, so that I can recover my account`,
         configId: 'default',
       });
 

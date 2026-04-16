@@ -14,11 +14,20 @@ import {
   UserRole,
 } from '@req2task/core';
 
+interface MockRepository {
+  findAndCount: jest.Mock;
+  findOne: jest.Mock;
+  create: jest.Mock;
+  save: jest.Mock;
+  remove: jest.Mock;
+  find: jest.Mock;
+}
+
 describe('RequirementsService', () => {
   let service: RequirementsService;
-  let requirementRepository: any;
-  let userStoryRepository: any;
-  let acceptanceCriteriaRepository: any;
+  let requirementRepository: MockRepository;
+  let userStoryRepository: MockRepository;
+  let acceptanceCriteriaRepository: MockRepository;
 
   const mockUser: User = {
     id: 'user-uuid',

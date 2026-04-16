@@ -1,6 +1,4 @@
-import { test, expect, request } from '@playwright/test'
-
-const API_BASE = 'http://localhost:4000'
+import { test, expect } from '@playwright/test'
 
 test.describe('登录功能', () => {
   test('登录成功', async ({ page }) => {

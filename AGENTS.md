@@ -68,7 +68,11 @@ apps/
 - TypeScript 严格模式
 - 提交前自动运行 lint-staged（配置于 package.json）
 
-## 规则
+## 硬性规则（必须遵守，CI 会验证）
+
+1. _.ts/_.tsx 单文件不超过 300 行, _.vue 单文件不超过 500 行, _.spec.ts 单文件不超过 2300 行
+2. 新增代码必须有对应测试
+3. 使用结构化日志，禁止 console.log
 
 **强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则，包括但不限于：
 

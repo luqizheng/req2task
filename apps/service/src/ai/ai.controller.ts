@@ -24,6 +24,13 @@ import {
 } from '@req2task/dto';
 import { LLMMessage } from '@req2task/core';
 
+interface AuthenticatedRequest {
+  user: {
+    userId: string;
+    username: string;
+  };
+}
+
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))
 export class AiController {
@@ -107,7 +114,7 @@ export class AiController {
   async createRawRequirement(
     @Param('moduleId') moduleId: string,
     @Body() createDto: CreateRawRequirementDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const result = await this.requirementGenerationService.createRawRequirement(
       moduleId,

@@ -20,7 +20,7 @@ export class ApiExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
-      message = typeof res === 'string' ? res : (res as any).message || message;
+      message = typeof res === 'string' ? res : (res as { message?: string }).message || message;
     }
 
     response.status(status).json({

@@ -36,7 +36,7 @@ export class RequirementsController {
   async create(
     @Param('moduleId') moduleId: string,
     @Body() createDto: CreateRequirementDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const result = await this.requirementsService.create(
       moduleId,
@@ -85,7 +85,7 @@ export class RequirementsController {
   async transitionStatus(
     @Param('id') id: string,
     @Body() transitionDto: TransitionStatusDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const result = await this.requirementStateService.transitionStatus(
       id,
@@ -137,7 +137,7 @@ export class RequirementsController {
   async reviewRequirement(
     @Param('id') id: string,
     @Body() reviewDto: ReviewRequirementDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ) {
     const result = await this.requirementStateService.reviewRequirement(
       id,

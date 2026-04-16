@@ -44,7 +44,8 @@ export class AuthService {
     });
 
     const savedUser = await this.userRepository.save(user);
-    const { passwordHash: _, ...result } = savedUser;
+    const { passwordHash: _passwordHash, ...result } = savedUser;
+    void _passwordHash;
     return result;
   }
 

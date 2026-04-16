@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, markRaw } from 'vue'
+import { ref, markRaw, type Component } from 'vue'
 import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Top, Bottom, Timer, Reading, CircleCheck } from '@element-plus/icons-vue'
 
 const folderIcon = markRaw(Folder)
@@ -9,10 +9,6 @@ const warningIcon = markRaw(Warning)
 const timerIcon = markRaw(Timer)
 const readingIcon = markRaw(Reading)
 const circleCheckIcon = markRaw(CircleCheck)
-const magicStickIcon = markRaw(MagicStick)
-const arrowRightIcon = markRaw(ArrowRight)
-const topIcon = markRaw(Top)
-const bottomIcon = markRaw(Bottom)
 
 interface StatCard {
   title: string
@@ -20,7 +16,7 @@ interface StatCard {
   trend?: string
   trendUp?: boolean
   color: string
-  icon: any
+  icon: Component
 }
 
 interface CostStat {
@@ -28,7 +24,7 @@ interface CostStat {
   current: number
   total: number
   unit: string
-  icon: any
+  icon: Component
   color: string
 }
 

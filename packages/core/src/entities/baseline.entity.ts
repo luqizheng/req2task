@@ -28,7 +28,7 @@ export class Baseline {
   description!: string | null;
 
   @Column({ name: 'snapshot_data', type: 'jsonb' })
-  snapshotData!: Record<string, any>;
+  snapshotData!: Record<string, unknown>;
 
   @Column({ name: 'created_by_id' })
   createdById!: string;

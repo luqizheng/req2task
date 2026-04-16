@@ -41,7 +41,7 @@ const handleLogin = async () => {
         userStore.setUserInfo(data.user)
         ElMessage.success('登录成功')
         router.push('/HomeView')
-      } catch (error: any) {
+      } catch (error: AxiosError) {
         ElMessage.error(error.response?.data?.message || '登录失败')
       } finally {
         loading.value = false

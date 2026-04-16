@@ -6,13 +6,10 @@ import {
   PromptService,
   ChromaVectorStore,
   LLMMessage,
-  VectorDocument,
 } from '@req2task/core';
 import { RawRequirement, RawRequirementStatus } from '@req2task/core';
 import {
   Priority,
-  RequirementSource,
-  RequirementStatus,
 } from '@req2task/core';
 
 export interface GenerateRequirementResult {

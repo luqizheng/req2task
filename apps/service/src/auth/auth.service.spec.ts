@@ -6,10 +6,20 @@ import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserRole } from '@req2task/core';
 
+interface MockRepository {
+  findOne: jest.Mock;
+  create: jest.Mock;
+  save: jest.Mock;
+}
+
+interface MockJwtService {
+  sign: jest.Mock;
+}
+
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepository: any;
-  let jwtService: any;
+  let userRepository: MockRepository;
+  let jwtService: MockJwtService;
 
   const mockUser: User = {
     id: 'test-uuid-1',

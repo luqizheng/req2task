@@ -24,7 +24,7 @@ export class UsersService {
   ) {}
 
   private toResponseDto(user: User): UserResponseDto {
-    const { passwordHash, ...result } = user;
+    const { passwordHash: _passwordHash, ...result } = user;
     return result as UserResponseDto;
   }
 

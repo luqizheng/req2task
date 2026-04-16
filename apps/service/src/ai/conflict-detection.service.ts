@@ -145,8 +145,6 @@ export class ConflictDetectionService {
     relatedRequirements: SearchResult[],
     configId?: string,
   ): Promise<Conflict[]> {
-    const conflicts: Conflict[] = [];
-
     const requirementsText = relatedRequirements
       .map((r, i) => `${i + 1}. ${r.content}`)
       .join('\n');

@@ -1,192 +1,55 @@
 ---
 name: typeorm
-description: Guidelines for developing with TypeORM, a full-featured ORM for TypeScript and JavaScript supporting multiple databases
+description: |
+  TypeORM for TypeScript/JavaScript. Covers entities, repositories,
+  and relations. Use with SQL databases.
+
+  USE WHEN: user mentions "typeorm", "@Entity", "Repository", "DataSource",
+  "QueryBuilder", "typeorm migration", asks about "decorators for database",
+  "active record pattern", "entity relationships", "typeorm relations"
+
+  DO NOT USE FOR: Prisma projects - use `prisma` skill; Drizzle - use `drizzle` skill;
+  SQLAlchemy (Python) - use `sqlalchemy` skill; raw SQL - use `database-query` MCP;
+  NoSQL - use `mongodb` skill; Sequelize - not supported
+allowed-tools: Read, Grep, Glob, Write, Edit
 ---
+# TypeORM Core Knowledge
 
-# TypeORM Development Guidelines
+> **Deep Knowledge**: Use `mcp__documentation__fetch_docs` with technology: `typeorm` for comprehensive documentation.
 
-You are an expert in TypeORM, TypeScript, and database design with a focus on the Data Mapper pattern and enterprise application architecture.
+## When NOT to Use This Skill
 
-## Core Principles
-
-- TypeORM supports both Active Record and Data Mapper patterns
-- Uses TypeScript decorators for entity and column definitions
-- Supports MySQL, PostgreSQL, MariaDB, SQLite, MS SQL Server, Oracle, and more
-- Works in Node.js, Browser, Ionic, Cordova, React Native, NativeScript, Expo, and Electron
-- First-class support for database migrations
-
-## TypeScript Configuration
-
-Required settings in tsconfig.json:
-
-```json
-{
-  "compilerOptions": {
-    "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
-    "strict": true,
-    "target": "ES2020",
-    "module": "commonjs",
-    "moduleResolution": "node"
-  }
-}
-```
+- **Prisma Projects**: Use `prisma` skill for Prisma-based applications
+- **Drizzle Projects**: Use `drizzle` skill for Drizzle ORM
+- **Python Applications**: Use `sqlalchemy` skill for Python ORMs
+- **Raw SQL Operations**: Use `database-query` MCP server for direct SQL
+- **NoSQL Databases**: Use `mongodb` skill for MongoDB (TypeORM MongoDB support is limited)
+- **Database Design**: Consult `sql-expert` or `architect-expert` for schema architecture
+- **Migration Strategy**: Engage `devops-expert` for production deployment planning
 
 ## Entity Definition
 
-### Basic Entity
-
 ```typescript
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from "typeorm";
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, OneToMany } from 'typeorm';
 
-@Entity("users")
+@Entity()
 export class User {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Column({ type: "varchar", length: 255, unique: true })
+  @Column({ length: 100 })
+  name: string;
+
+  @Column({ unique: true })
   email: string;
 
-  @Column({ type: "varchar", length: 255, nullable: true })
-  name: string | null;
-
-  @Column({ type: "boolean", default: true })
+  @Column({ default: true })
   isActive: boolean;
 
   @CreateDateColumn()
   createdAt: Date;
 
-  @UpdateDateColumn()
-  updatedAt: Date;
-}
-```
-
-### Primary Key Options
-
-```typescript
-// Auto-increment
-@PrimaryGeneratedColumn()
-id: number;
-
-// UUID
-@PrimaryGeneratedColumn("uuid")
-id: string;
-
-// Custom primary key
-@PrimaryColumn()
-id: string;
-
-// Composite primary key
-@Entity()
-export class OrderItem {
-  @PrimaryColumn()
-  orderId: number;
-
-  @PrimaryColumn()
-  productId: number;
-}
-```
-
-### Column Decorators
-
-```typescript
-@Entity()
-export class Product {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  // String columns
-  @Column({ type: "varchar", length: 255 })
-  name: string;
-
-  @Column({ type: "text", nullable: true })
-  description: string | null;
-
-  // Numeric columns
-  @Column({ type: "decimal", precision: 10, scale: 2 })
-  price: number;
-
-  @Column({ type: "int", default: 0 })
-  stock: number;
-
-  // Boolean
-  @Column({ type: "boolean", default: true })
-  isAvailable: boolean;
-
-  // JSON
-  @Column({ type: "jsonb", nullable: true })
-  metadata: Record<string, any> | null;
-
-  // Enum
-  @Column({
-    type: "enum",
-    enum: ["active", "inactive", "pending"],
-    default: "pending",
-  })
-  status: "active" | "inactive" | "pending";
-
-  // Timestamps
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @DeleteDateColumn()
-  deletedAt: Date | null; // For soft deletes
-
-  // Version column for optimistic locking
-  @VersionColumn()
-  version: number;
-}
-```
-
-## Relationships
-
-### One-to-One
-
-```typescript
-@Entity()
-export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @OneToOne(() => Profile, (profile) => profile.user, { cascade: true })
-  @JoinColumn()
-  profile: Profile;
-}
-
-@Entity()
-export class Profile {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  bio: string;
-
-  @OneToOne(() => User, (user) => user.profile)
-  user: User;
-}
-```
-
-### One-to-Many / Many-to-One
-
-```typescript
-@Entity()
-export class User {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  name: string;
-
-  @OneToMany(() => Post, (post) => post.author)
+  @OneToMany(() => Post, post => post.author)
   posts: Post[];
 }
 
@@ -198,471 +61,349 @@ export class Post {
   @Column()
   title: string;
 
-  @ManyToOne(() => User, (user) => user.posts, { onDelete: "CASCADE" })
-  @JoinColumn({ name: "author_id" })
+  @Column({ type: 'text', nullable: true })
+  content: string;
+
+  @ManyToOne(() => User, user => user.posts)
   author: User;
-
-  @Column()
-  authorId: number; // Explicit foreign key column
 }
 ```
 
-### Many-to-Many
+## Repository Operations
 
 ```typescript
-@Entity()
-export class Post {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column()
-  title: string;
-
-  @ManyToMany(() => Tag, (tag) => tag.posts)
-  @JoinTable({
-    name: "post_tags",
-    joinColumn: { name: "post_id" },
-    inverseJoinColumn: { name: "tag_id" },
-  })
-  tags: Tag[];
-}
-
-@Entity()
-export class Tag {
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Column({ unique: true })
-  name: string;
-
-  @ManyToMany(() => Post, (post) => post.tags)
-  posts: Post[];
-}
-```
-
-## Repository Pattern
-
-### Basic Repository Usage
-
-```typescript
-import { AppDataSource } from "./data-source";
-import { User } from "./entities/User";
+import { AppDataSource } from './data-source';
 
 const userRepository = AppDataSource.getRepository(User);
 
-// Find all
+// Create
+const user = userRepository.create({ name: 'John', email: 'john@example.com' });
+await userRepository.save(user);
+
+// Read
 const users = await userRepository.find();
-
-// Find with conditions
-const activeUsers = await userRepository.find({
-  where: { isActive: true },
-});
-
-// Find one
-const user = await userRepository.findOne({
+const user = await userRepository.findOneBy({ id: 1 });
+const userWithPosts = await userRepository.findOne({
   where: { id: 1 },
+  relations: { posts: true },
 });
-
-// Find or fail
-const user = await userRepository.findOneOrFail({
-  where: { id: 1 },
-});
-
-// Save
-const newUser = userRepository.create({
-  email: "user@example.com",
-  name: "John Doe",
-});
-await userRepository.save(newUser);
 
 // Update
-await userRepository.update({ id: 1 }, { name: "Jane Doe" });
+await userRepository.update(1, { name: 'Jane' });
 
 // Delete
-await userRepository.delete({ id: 1 });
-
-// Soft delete (requires @DeleteDateColumn)
-await userRepository.softDelete({ id: 1 });
+await userRepository.delete(1);
 ```
 
-### Custom Repository
-
-```typescript
-import { Repository, DataSource } from "typeorm";
-import { User } from "./entities/User";
-
-export class UserRepository extends Repository<User> {
-  constructor(private dataSource: DataSource) {
-    super(User, dataSource.createEntityManager());
-  }
-
-  async findByEmail(email: string): Promise<User | null> {
-    return this.findOne({ where: { email } });
-  }
-
-  async findActiveUsers(): Promise<User[]> {
-    return this.find({
-      where: { isActive: true },
-      order: { createdAt: "DESC" },
-    });
-  }
-
-  async findWithPosts(userId: number): Promise<User | null> {
-    return this.findOne({
-      where: { id: userId },
-      relations: ["posts"],
-    });
-  }
-}
-```
-
-### Query Builder
+## Query Builder
 
 ```typescript
 const users = await userRepository
-  .createQueryBuilder("user")
-  .leftJoinAndSelect("user.posts", "post")
-  .where("user.isActive = :isActive", { isActive: true })
-  .andWhere("post.publishedAt IS NOT NULL")
-  .orderBy("user.createdAt", "DESC")
-  .skip(0)
+  .createQueryBuilder('user')
+  .leftJoinAndSelect('user.posts', 'post')
+  .where('user.isActive = :active', { active: true })
+  .andWhere('post.published = :published', { published: true })
+  .orderBy('user.createdAt', 'DESC')
   .take(10)
   .getMany();
+```
 
-// With raw results
-const result = await userRepository
-  .createQueryBuilder("user")
-  .select("COUNT(*)", "count")
-  .where("user.isActive = :isActive", { isActive: true })
-  .getRawOne();
+## Data Source Config
 
-// Insert with query builder
+```typescript
+import { DataSource } from 'typeorm';
+
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  host: 'localhost',
+  port: 5432,
+  username: 'user',
+  password: 'password',
+  database: 'mydb',
+  entities: [User, Post],
+  synchronize: false,
+  migrations: ['src/migrations/*.ts'],
+});
+```
+
+## Anti-Patterns
+
+| Anti-Pattern | Why It's Bad | Better Approach |
+|-------------|--------------|-----------------|
+| `synchronize: true` in production | Can drop tables, loses data | Always use migrations in production |
+| Using `find()` without relations | N+1 query problem | Use `relations` option or QueryBuilder with joins |
+| Not using transactions for multi-step ops | Data inconsistency risk | Wrap related operations in `transaction()` |
+| Hardcoded credentials in DataSource | Security vulnerability | Use environment variables |
+| No connection pool configuration | Connection exhaustion | Set `extra.max` and pool timeouts |
+| Using `@Column()` without type for large text | May truncate data | Specify `type: 'text'` for long content |
+| Lazy loading relations everywhere | Performance issues, N+1 queries | Use eager loading strategically |
+| Not handling unique constraint errors | Poor error messages to users | Catch and handle constraint violations |
+| Manual SQL without parameters | SQL injection risk | Use QueryBuilder with parameters |
+| No indexes on frequently queried columns | Slow queries | Add `@Index()` decorators |
+
+## Quick Troubleshooting
+
+| Issue | Likely Cause | Solution |
+|-------|--------------|----------|
+| "Cannot find name 'AppDataSource'" | DataSource not initialized | Call `AppDataSource.initialize()` at startup |
+| "relation does not exist" | Migration not run | Execute pending migrations |
+| "column does not exist" | Entity/DB out of sync | Generate and run new migration |
+| Type errors on entities | Decorator metadata issue | Enable `emitDecoratorMetadata` and `experimentalDecorators` in tsconfig |
+| "Repository not found" | Entity not registered | Add entity to DataSource `entities` array |
+| Slow queries | Missing indexes, no joins | Add indexes, use `leftJoinAndSelect` |
+| Connection pool exhausted | Too many concurrent queries | Increase `extra.max` pool size |
+| "Cannot query across many-to-many" | Missing join table | Add explicit join table or use QueryBuilder |
+| Migration generation creates no file | No entity changes detected | Manually create migration if needed |
+| "ECONNREFUSED" | Database not running | Start database, verify connection details |
+
+## Production Readiness
+
+### Data Source Configuration
+
+```typescript
+// data-source.ts
+import { DataSource } from 'typeorm';
+
+export const AppDataSource = new DataSource({
+  type: 'postgres',
+  url: process.env.DATABASE_URL,
+  // SECURITY: Use proper CA certificate in production instead of disabling verification
+  // ssl: { rejectUnauthorized: false } is INSECURE - vulnerable to MITM attacks
+  ssl: process.env.NODE_ENV === 'production'
+    ? { ca: process.env.DB_CA_CERT }
+    : false,
+
+  // Connection pool
+  extra: {
+    max: 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 10000,
+  },
+
+  entities: ['dist/entities/**/*.js'],
+  migrations: ['dist/migrations/**/*.js'],
+  subscribers: ['dist/subscribers/**/*.js'],
+
+  // Never use in production
+  synchronize: false,
+
+  // Logging
+  logging: process.env.NODE_ENV === 'development' ? ['query', 'error'] : ['error'],
+  logger: 'advanced-console',
+
+  // Cache
+  cache: {
+    type: 'ioredis',
+    options: {
+      host: process.env.REDIS_HOST,
+      port: parseInt(process.env.REDIS_PORT || '6379'),
+    },
+    duration: 30000, // 30 seconds
+  },
+});
+
+// Initialize
+AppDataSource.initialize()
+  .then(() => console.log('Database connected'))
+  .catch((err) => console.error('Database connection error:', err));
+```
+
+### Transaction Management
+
+```typescript
+import { EntityManager } from 'typeorm';
+
+async function transferFunds(
+  manager: EntityManager,
+  fromId: number,
+  toId: number,
+  amount: number
+) {
+  return await manager.transaction(async (transactionalManager) => {
+    const from = await transactionalManager
+      .createQueryBuilder(Account, 'account')
+      .setLock('pessimistic_write')
+      .where('account.id = :id', { id: fromId })
+      .getOne();
+
+    if (!from || from.balance < amount) {
+      throw new Error('Insufficient funds');
+    }
+
+    await transactionalManager
+      .createQueryBuilder()
+      .update(Account)
+      .set({ balance: () => `balance - ${amount}` })
+      .where('id = :id', { id: fromId })
+      .execute();
+
+    await transactionalManager
+      .createQueryBuilder()
+      .update(Account)
+      .set({ balance: () => `balance + ${amount}` })
+      .where('id = :id', { id: toId })
+      .execute();
+  });
+}
+```
+
+### Query Optimization
+
+```typescript
+// Pagination
+async function getUsers(page: number, limit: number) {
+  const [users, total] = await userRepository.findAndCount({
+    skip: (page - 1) * limit,
+    take: limit,
+    order: { createdAt: 'DESC' },
+  });
+
+  return {
+    data: users,
+    meta: {
+      total,
+      page,
+      lastPage: Math.ceil(total / limit),
+    },
+  };
+}
+
+// Select specific columns
+const users = await userRepository
+  .createQueryBuilder('user')
+  .select(['user.id', 'user.name', 'user.email'])
+  .where('user.isActive = :active', { active: true })
+  .getMany();
+
+// Batch operations
 await userRepository
   .createQueryBuilder()
   .insert()
   .into(User)
-  .values([
-    { email: "user1@example.com", name: "User 1" },
-    { email: "user2@example.com", name: "User 2" },
-  ])
+  .values(usersToCreate)
+  .orIgnore() // Skip duplicates
   .execute();
 ```
 
-## Data Source Configuration
-
-```typescript
-// data-source.ts
-import { DataSource } from "typeorm";
-import { User } from "./entities/User";
-import { Post } from "./entities/Post";
-
-export const AppDataSource = new DataSource({
-  type: "postgres",
-  host: process.env.DB_HOST || "localhost",
-  port: parseInt(process.env.DB_PORT || "5432"),
-  username: process.env.DB_USERNAME,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-
-  // Entity configuration
-  entities: [User, Post],
-  // Or use glob pattern: entities: ["src/entities/**/*.ts"]
-
-  // Migrations
-  migrations: ["src/migrations/**/*.ts"],
-
-  // Synchronize - NEVER use in production
-  synchronize: false,
-
-  // Logging
-  logging: process.env.NODE_ENV === "development",
-
-  // Connection pool
-  poolSize: 10,
-
-  // SSL (for production)
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-});
-
-// Initialize connection
-AppDataSource.initialize()
-  .then(() => console.log("Data Source initialized"))
-  .catch((error) => console.error("Error initializing Data Source:", error));
-```
-
-## Migrations
-
-### Creating Migrations
-
-```bash
-# Generate migration from entity changes
-npx typeorm migration:generate src/migrations/CreateUsers -d src/data-source.ts
-
-# Create empty migration
-npx typeorm migration:create src/migrations/SeedUsers
-
-# Run migrations
-npx typeorm migration:run -d src/data-source.ts
-
-# Revert last migration
-npx typeorm migration:revert -d src/data-source.ts
-```
-
-### Migration File Structure
-
-```typescript
-import { MigrationInterface, QueryRunner, Table, TableIndex } from "typeorm";
-
-export class CreateUsers1234567890 implements MigrationInterface {
-  public async up(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.createTable(
-      new Table({
-        name: "users",
-        columns: [
-          {
-            name: "id",
-            type: "int",
-            isPrimary: true,
-            isGenerated: true,
-            generationStrategy: "increment",
-          },
-          {
-            name: "email",
-            type: "varchar",
-            length: "255",
-            isUnique: true,
-          },
-          {
-            name: "name",
-            type: "varchar",
-            length: "255",
-            isNullable: true,
-          },
-          {
-            name: "is_active",
-            type: "boolean",
-            default: true,
-          },
-          {
-            name: "created_at",
-            type: "timestamp",
-            default: "CURRENT_TIMESTAMP",
-          },
-          {
-            name: "updated_at",
-            type: "timestamp",
-            default: "CURRENT_TIMESTAMP",
-            onUpdate: "CURRENT_TIMESTAMP",
-          },
-        ],
-      }),
-      true
-    );
-
-    await queryRunner.createIndex(
-      "users",
-      new TableIndex({
-        name: "IDX_USERS_EMAIL",
-        columnNames: ["email"],
-      })
-    );
-  }
-
-  public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.dropIndex("users", "IDX_USERS_EMAIL");
-    await queryRunner.dropTable("users");
-  }
-}
-```
-
-## Transactions
-
-```typescript
-// Using QueryRunner
-const queryRunner = AppDataSource.createQueryRunner();
-await queryRunner.connect();
-await queryRunner.startTransaction();
-
-try {
-  const user = queryRunner.manager.create(User, {
-    email: "user@example.com",
-    name: "User",
-  });
-  await queryRunner.manager.save(user);
-
-  const post = queryRunner.manager.create(Post, {
-    title: "First Post",
-    author: user,
-  });
-  await queryRunner.manager.save(post);
-
-  await queryRunner.commitTransaction();
-} catch (error) {
-  await queryRunner.rollbackTransaction();
-  throw error;
-} finally {
-  await queryRunner.release();
-}
-
-// Using transaction method
-await AppDataSource.transaction(async (manager) => {
-  const user = manager.create(User, {
-    email: "user@example.com",
-    name: "User",
-  });
-  await manager.save(user);
-
-  const post = manager.create(Post, {
-    title: "First Post",
-    author: user,
-  });
-  await manager.save(post);
-});
-```
-
-## NestJS Integration
-
-```typescript
-// app.module.ts
-import { Module } from "@nestjs/common";
-import { TypeOrmModule } from "@nestjs/typeorm";
-import { User } from "./entities/user.entity";
-import { UsersModule } from "./users/users.module";
-
-@Module({
-  imports: [
-    TypeOrmModule.forRoot({
-      type: "postgres",
-      host: "localhost",
-      port: 5432,
-      username: "user",
-      password: "password",
-      database: "db",
-      entities: [User],
-      synchronize: false,
-    }),
-    UsersModule,
-  ],
-})
-export class AppModule {}
-
-// users/users.module.ts
-@Module({
-  imports: [TypeOrmModule.forFeature([User])],
-  providers: [UsersService],
-  controllers: [UsersController],
-})
-export class UsersModule {}
-
-// users/users.service.ts
-@Injectable()
-export class UsersService {
-  constructor(
-    @InjectRepository(User)
-    private usersRepository: Repository<User>,
-  ) {}
-
-  findAll(): Promise<User[]> {
-    return this.usersRepository.find();
-  }
-
-  findOne(id: number): Promise<User | null> {
-    return this.usersRepository.findOneBy({ id });
-  }
-}
-```
-
-## Best Practices
-
-### Use Migrations in Production
-
-Never use `synchronize: true` in production. Always use migrations:
-
-```typescript
-// Development: Use migrations, not sync
-synchronize: false,
-```
-
-### Eager vs Lazy Loading
-
-```typescript
-// Eager loading - loads relations automatically
-@OneToMany(() => Post, (post) => post.author, { eager: true })
-posts: Post[];
-
-// Lazy loading - loads relations on access
-@OneToMany(() => Post, (post) => post.author)
-posts: Promise<Post[]>;
-
-// Explicit loading (recommended)
-const user = await userRepository.findOne({
-  where: { id: 1 },
-  relations: ["posts"],
-});
-```
-
-### Avoid N+1 Queries
-
-```typescript
-// Bad: N+1 queries
-const users = await userRepository.find();
-for (const user of users) {
-  console.log(user.posts); // Separate query for each user
-}
-
-// Good: Eager load relations
-const users = await userRepository.find({
-  relations: ["posts"],
-});
-```
-
-### Use Indexes
+### Soft Deletes
 
 ```typescript
 @Entity()
-@Index(["email"])
-@Index(["firstName", "lastName"])
+@DeleteDateColumn()
 export class User {
-  @Column()
-  @Index()
-  email: string;
+  @PrimaryGeneratedColumn()
+  id: number;
 
   @Column()
-  firstName: string;
+  name: string;
 
-  @Column()
-  lastName: string;
-}
-```
-
-### Cascade Operations
-
-```typescript
-@OneToMany(() => Post, (post) => post.author, {
-  cascade: true, // Saves/removes related posts
-  onDelete: "CASCADE", // Database-level cascade
-})
-posts: Post[];
-```
-
-### Naming Strategies
-
-For consistent naming between TypeScript and database:
-
-```typescript
-import { DefaultNamingStrategy, NamingStrategyInterface } from "typeorm";
-import { snakeCase } from "typeorm/util/StringUtils";
-
-export class SnakeNamingStrategy extends DefaultNamingStrategy implements NamingStrategyInterface {
-  tableName(targetName: string, userSpecifiedName: string | undefined): string {
-    return userSpecifiedName ? userSpecifiedName : snakeCase(targetName);
-  }
-
-  columnName(propertyName: string, customName: string, embeddedPrefixes: string[]): string {
-    return snakeCase(embeddedPrefixes.join("_")) + (customName ? customName : snakeCase(propertyName));
-  }
+  @DeleteDateColumn()
+  deletedAt?: Date;
 }
 
-// Use in data source config
-namingStrategy: new SnakeNamingStrategy(),
+// Soft delete
+await userRepository.softDelete(1);
+
+// Include soft deleted
+const allUsers = await userRepository
+  .createQueryBuilder('user')
+  .withDeleted()
+  .getMany();
+
+// Restore
+await userRepository.restore(1);
 ```
+
+### Migration Best Practices
+
+```typescript
+// migrations/1234567890-CreateUsersTable.ts
+import { MigrationInterface, QueryRunner } from 'typeorm';
+
+export class CreateUsersTable1234567890 implements MigrationInterface {
+  public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`
+      CREATE TABLE "users" (
+        "id" SERIAL PRIMARY KEY,
+        "email" VARCHAR(255) UNIQUE NOT NULL,
+        "name" VARCHAR(100) NOT NULL,
+        "created_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    await queryRunner.query(`
+      CREATE INDEX "idx_users_email" ON "users" ("email")
+    `);
+  }
+
+  public async down(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(`DROP TABLE "users"`);
+  }
+}
+
+// CLI commands
+// npm run typeorm migration:generate -- -n CreateUsersTable
+// npm run typeorm migration:run
+// npm run typeorm migration:revert
+```
+
+### Testing
+
+```typescript
+// test-utils.ts
+import { DataSource } from 'typeorm';
+
+export const TestDataSource = new DataSource({
+  type: 'postgres',
+  url: process.env.TEST_DATABASE_URL,
+  entities: ['src/entities/**/*.ts'],
+  synchronize: true,
+  dropSchema: true,
+});
+
+// tests/user.test.ts
+describe('UserRepository', () => {
+  beforeAll(async () => {
+    await TestDataSource.initialize();
+  });
+
+  afterAll(async () => {
+    await TestDataSource.destroy();
+  });
+
+  beforeEach(async () => {
+    await TestDataSource.synchronize(true);
+  });
+
+  it('should create user', async () => {
+    const repo = TestDataSource.getRepository(User);
+    const user = await repo.save({ name: 'Test', email: 'test@example.com' });
+    expect(user.id).toBeDefined();
+  });
+});
+```
+
+### Monitoring Metrics
+
+| Metric | Target |
+|--------|--------|
+| Query time (p99) | < 100ms |
+| Connection pool usage | < 80% |
+| Slow query count | 0 |
+| Migration success | 100% |
+
+### Checklist
+
+- [ ] Connection pooling configured
+- [ ] SSL in production
+- [ ] synchronize: false in production
+- [ ] Query caching with Redis
+- [ ] Transaction management
+- [ ] Soft deletes where appropriate
+- [ ] Pagination for list queries
+- [ ] Migration versioning
+- [ ] Logging only errors in production
+- [ ] Test database isolation
+
+## Reference Documentation
+- [Relations](quick-ref/relations.md)
+- [Migrations](quick-ref/migrations.md)

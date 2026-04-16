@@ -3,7 +3,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AiController } from './ai.controller';
 import { AiService } from './ai.service';
 import { RequirementGenerationService } from './requirement-generation.service';
-import { LLMConfig, RawRequirement, LLMService, PromptService, ChromaVectorStore } from '@req2task/core';
+import { ConflictDetectionService } from './conflict-detection.service';
+import {
+  LLMConfig,
+  RawRequirement,
+  LLMService,
+  PromptService,
+  ChromaVectorStore,
+} from '@req2task/core';
 
 @Module({
   imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement])],
@@ -11,10 +18,11 @@ import { LLMConfig, RawRequirement, LLMService, PromptService, ChromaVectorStore
   providers: [
     AiService,
     RequirementGenerationService,
+    ConflictDetectionService,
     LLMService,
     PromptService,
     ChromaVectorStore,
   ],
-  exports: [AiService, RequirementGenerationService],
+  exports: [AiService, RequirementGenerationService, ConflictDetectionService],
 })
 export class AiModule {}

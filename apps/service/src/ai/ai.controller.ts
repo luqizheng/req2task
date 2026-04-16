@@ -6,12 +6,14 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
 import { RequirementGenerationService } from './requirement-generation.service';
+import { ConflictDetectionService } from './conflict-detection.service';
 import {
   CreateLLMConfigDto,
   UpdateLLMConfigDto,
@@ -19,6 +21,7 @@ import {
   VectorStoreRequestDto,
   CreateRawRequirementDto,
 } from '@req2task/dto';
+import { LLMMessage } from '@req2task/core';
 
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))
@@ -26,6 +29,7 @@ export class AiController {
   constructor(
     private readonly aiService: AiService,
     private readonly requirementGenerationService: RequirementGenerationService,
+    private readonly conflictDetectionService: ConflictDetectionService,
   ) {}
 
   @Post('llm-configs')
@@ -145,6 +149,41 @@ export class AiController {
   ) {
     const result = await this.requirementGenerationService.generateAcceptanceCriteria(
       requirementContent,
+      configId,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Post('raw-requirements/:id/detect-conflicts')
+  async detectConflicts(
+    @Param('id') id: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.conflictDetectionService.detectConflicts(id, configId);
+    return { code: 0, data: result };
+  }
+
+  @Get('semantic-search')
+  async semanticSearch(
+    @Query('query') query: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.conflictDetectionService.semanticSearch(
+      query,
+      limit ? parseInt(limit, 10) : 10,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Post('ai-chat')
+  async aiChat(
+    @Body('messages') messages: LLMMessage[],
+    @Body('contextRequirementId') contextRequirementId?: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.conflictDetectionService.chat(
+      messages,
+      contextRequirementId,
       configId,
     );
     return { code: 0, data: result };

@@ -7,3 +7,4 @@ export * from './user-story.entity';
 export * from './acceptance-criteria.entity';
 export * from './task.entity';
 export * from './llm-config.entity';
+export * from './raw-requirement.entity';

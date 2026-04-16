@@ -7,20 +7,26 @@ import {
   Body,
   Param,
   UseGuards,
+  Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
+import { RequirementGenerationService } from './requirement-generation.service';
 import {
   CreateLLMConfigDto,
   UpdateLLMConfigDto,
   ChatRequestDto,
   VectorStoreRequestDto,
+  CreateRawRequirementDto,
 } from '@req2task/dto';
 
 @Controller('ai')
 @UseGuards(AuthGuard('jwt'))
 export class AiController {
-  constructor(private readonly aiService: AiService) {}
+  constructor(
+    private readonly aiService: AiService,
+    private readonly requirementGenerationService: RequirementGenerationService,
+  ) {}
 
   @Post('llm-configs')
   async createLLMConfig(@Body() createDto: CreateLLMConfigDto) {
@@ -88,6 +94,59 @@ export class AiController {
   @Get('prompt-templates')
   async getPromptTemplates() {
     const result = await this.aiService.getPromptTemplates();
+    return { code: 0, data: result };
+  }
+
+  @Post('modules/:moduleId/raw-requirements')
+  async createRawRequirement(
+    @Param('moduleId') moduleId: string,
+    @Body() createDto: CreateRawRequirementDto,
+    @Request() req: any,
+  ) {
+    const result = await this.requirementGenerationService.createRawRequirement(
+      moduleId,
+      createDto.content,
+      req.user.userId,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Get('modules/:moduleId/raw-requirements')
+  async findRawRequirements(@Param('moduleId') moduleId: string) {
+    const result = await this.requirementGenerationService.findByModule(moduleId);
+    return { code: 0, data: result };
+  }
+
+  @Post('raw-requirements/:id/generate')
+  async generateFromRaw(
+    @Param('id') id: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.requirementGenerationService.generateRequirement(id, configId);
+    return { code: 0, data: result };
+  }
+
+  @Post('generate-user-stories')
+  async generateUserStories(
+    @Body('requirementContent') requirementContent: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.requirementGenerationService.generateUserStories(
+      requirementContent,
+      configId,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Post('generate-acceptance-criteria')
+  async generateAcceptanceCriteria(
+    @Body('requirementContent') requirementContent: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.requirementGenerationService.generateAcceptanceCriteria(
+      requirementContent,
+      configId,
+    );
     return { code: 0, data: result };
   }
 }

@@ -14,6 +14,8 @@
     "build:service": "pnpm --filter @req2task/service build",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",
+    "test:web": "pnpm --filter @req2task/web test",
+    "test:e2e:web": "pnpm --filter @req2task/web test:e2e",
     "test:e2e": "pnpm --filter @req2task/service test:e2e",
     "test:all": "pnpm run test && pnpm run test:e2e",
     "db:migration:generate": "pnpm --filter @req2task/service migration:generate",

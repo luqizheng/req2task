@@ -1,10 +1,14 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 import { User, Lock, MagicStick } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
+import { authApi } from '@/api'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
 const loginForm = ref({
@@ -25,13 +29,23 @@ const rules: FormRules = {
 
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  await loginFormRef.value.validate((valid) => {
+  await loginFormRef.value.validate(async (valid) => {
     if (valid) {
       loading.value = true
-      setTimeout(() => {
-        loading.value = false
+      try {
+        const { data } = await authApi.login({
+          username: loginForm.value.username,
+          password: loginForm.value.password
+        })
+        userStore.setToken(data.accessToken)
+        userStore.setUserInfo(data.user)
+        ElMessage.success('登录成功')
         router.push('/dashboard')
-      }, 1000)
+      } catch (error: any) {
+        ElMessage.error(error.response?.data?.message || '登录失败')
+      } finally {
+        loading.value = false
+      }
     }
   })
 }

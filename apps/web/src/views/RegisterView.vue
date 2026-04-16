@@ -3,6 +3,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { User, Lock, Message, MagicStick } from "@element-plus/icons-vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
+import { authApi } from "@/api";
 
 const router = useRouter();
 const registerFormRef = ref<FormInstance>();
@@ -10,6 +11,7 @@ const loading = ref(false);
 const registerForm = ref({
   username: "",
   email: "",
+  displayName: "",
   password: "",
   confirmPassword: "",
   agree: false,
@@ -44,18 +46,27 @@ const rules: FormRules = {
 
 const handleRegister = async () => {
   if (!registerFormRef.value) return;
-  await registerFormRef.value.validate((valid) => {
+  await registerFormRef.value.validate(async (valid) => {
     if (valid) {
       if (!registerForm.value.agree) {
         ElMessage.warning("请先同意用户协议");
         return;
       }
       loading.value = true;
-      setTimeout(() => {
-        loading.value = false;
+      try {
+        await authApi.register({
+          username: registerForm.value.username,
+          email: registerForm.value.email,
+          displayName: registerForm.value.displayName || registerForm.value.username,
+          password: registerForm.value.password,
+        });
         ElMessage.success("注册成功，请登录");
         router.push("/login");
-      }, 1000);
+      } catch (error: any) {
+        ElMessage.error(error.response?.data?.message || "注册失败");
+      } finally {
+        loading.value = false;
+      }
     }
   });
 };
@@ -106,6 +117,15 @@ const goToLogin = () => {
             placeholder="邮箱"
             size="large"
             :prefix-icon="Message"
+          />
+        </el-form-item>
+
+        <el-form-item prop="displayName">
+          <el-input
+            v-model="registerForm.displayName"
+            placeholder="显示名称（可选）"
+            size="large"
+            :prefix-icon="User"
           />
         </el-form-item>
 

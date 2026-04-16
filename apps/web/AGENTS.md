@@ -1,5 +1,7 @@
 # @req2task/web
 
+> **重要**: UI 设计规则请参考 [DESIGN-RULES.md](./DESIGN-RULES.md)
+
 ## 开发指南
 
 ### 启动开发服务器
@@ -60,3 +62,4 @@ apps/web/src/
 2. 状态管理使用 Pinia
 3. 路由配置位于 `router/index.ts`
 4. 运行 lint 和 type-check 后再提交
+5. UI 设计规则参见 [DESIGN-RULES.md](./DESIGN-RULES.md)

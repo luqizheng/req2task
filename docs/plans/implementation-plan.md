@@ -1,9 +1,3 @@
----
-last_updated: 2024-02-01
-status: active
-owner: req2task团队
----
-
 # 实施路线图
 
 ## 1. 项目阶段规划
@@ -36,6 +30,13 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 1：基础设施准备（1周）
 
+#### 目标
+- 完善开发环境
+- 建立基础设施服务
+- 搭建基础架构
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | Docker Compose 配置 Redis | infra | 2h | P0 |
@@ -46,7 +47,12 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 | API 统一响应拦截器完善 | dev | 2h | P2 |
 | 单元测试基础配置 | test | 4h | P1 |
 
-**验收标准**
+#### 交付物
+- `docker-compose.dev.yml` 包含 PostgreSQL + Redis + ChromaDB
+- 重构后的 NestJS 模块结构
+- 用户模块完整 CRUD
+
+#### 验收标准
 - [ ] Redis 连接成功
 - [ ] ChromaDB 可用
 - [ ] 用户模块 API 正常
@@ -55,17 +61,31 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 2：项目与模块管理（1周）
 
+#### 目标
+- 完成项目 CRUD
+- 完成功能模块 CRUD
+- 项目成员管理
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | Project Entity 开发 | dev | 4h | P0 |
 | ProjectService 开发 | dev | 6h | P0 |
 | ProjectController 开发 | dev | 4h | P0 |
+| ProjectModule 创建 | dev | 2h | P0 |
 | FeatureModule Entity 开发 | dev | 4h | P0 |
 | FeatureModuleService 开发 | dev | 6h | P0 |
+| FeatureModuleController 开发 | dev | 4h | P0 |
 | 项目成员管理 | dev | 6h | P1 |
 | 数据库迁移脚本 | dev | 4h | P0 |
 
-**验收标准**
+#### 交付物
+- Project 模块完整 API
+- FeatureModule 模块完整 API
+- 数据库迁移脚本
+
+#### 验收标准
 - [ ] 可创建/编辑/删除项目
 - [ ] 可创建/编辑/删除功能模块
 - [ ] 可添加/移除项目成员
@@ -75,15 +95,31 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 3：需求管理基础（1周）
 
+#### 目标
+- 完成需求 CRUD
+- 完成用户故事 CRUD
+- 完成验收条件 CRUD
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | Requirement Entity 开发 | dev | 6h | P0 |
 | RequirementService 开发 | dev | 8h | P0 |
+| RequirementController 开发 | dev | 6h | P0 |
 | UserStory Entity 开发 | dev | 4h | P0 |
+| UserStoryService 开发 | dev | 6h | P0 |
+| UserStoryController 开发 | dev | 4h | P0 |
 | AcceptanceCriteria Entity 开发 | dev | 4h | P0 |
+| AcceptanceCriteriaService 开发 | dev | 6h | P0 |
 | 数据库迁移脚本 | dev | 4h | P0 |
 
-**验收标准**
+#### 交付物
+- Requirement 模块完整 API
+- UserStory 模块完整 API
+- AcceptanceCriteria 模块完整 API
+
+#### 验收标准
 - [ ] 可创建需求并关联模块
 - [ ] 可添加用户故事（Role-Goal-Benefit）
 - [ ] 可添加验收条件（Given-When-Then）
@@ -93,14 +129,29 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 4：需求状态与变更（1周）
 
+#### 目标
+- 需求状态机实现
+- 变更日志记录
+- 需求审批流程
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | 需求状态流转服务 | dev | 8h | P0 |
+| 状态变更触发器 | dev | 6h | P0 |
 | RequirementChangeLog Entity | dev | 4h | P0 |
+| 变更日志服务 | dev | 6h | P0 |
 | 需求评审 API | dev | 6h | P1 |
 | 需求版本管理基础 | dev | 6h | P1 |
+| 数据库迁移脚本 | dev | 4h | P0 |
 
-**验收标准**
+#### 交付物
+- 需求状态机
+- 变更日志记录
+- 评审流程
+
+#### 验收标准
 - [ ] 需求状态可正常流转
 - [ ] 状态变更自动记录日志
 - [ ] 可查看需求变更历史
@@ -110,16 +161,30 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 5：任务管理（1周）
 
+#### 目标
+- 完成任务 CRUD
+- 任务依赖管理
+- 任务分配
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | Task Entity 开发 | dev | 6h | P0 |
 | TaskService 开发 | dev | 8h | P0 |
+| TaskController 开发 | dev | 6h | P0 |
 | TaskDependency Entity | dev | 4h | P0 |
 | 任务编号生成器 | dev | 6h | P0 |
 | 任务依赖服务 | dev | 6h | P0 |
 | 任务分配服务 | dev | 6h | P0 |
+| 数据库迁移脚本 | dev | 4h | P0 |
 
-**验收标准**
+#### 交付物
+- Task 模块完整 API
+- 任务依赖管理
+- 任务分配
+
+#### 验收标准
 - [ ] 可创建任务并关联需求
 - [ ] 任务编号自动生成
 - [ ] 可建立任务依赖关系
@@ -129,14 +194,29 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 6：任务状态与看板（1周）
 
+#### 目标
+- 任务状态机实现
+- 看板视图 API
+- 任务统计
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | 任务状态流转服务 | dev | 6h | P0 |
+| 任务状态更新 API | dev | 4h | P0 |
 | 看板视图服务 | dev | 8h | P0 |
 | 任务统计服务 | dev | 6h | P1 |
+| 子任务支持 | dev | 6h | P1 |
 | 前端看板页面 | dev | 8h | P0 |
+| 数据库迁移脚本 | dev | 4h | P0 |
 
-**验收标准**
+#### 交付物
+- 任务看板 API
+- 任务统计
+- 前端看板页面
+
+#### 验收标准
 - [ ] 任务状态可正常流转
 - [ ] 看板视图展示任务
 - [ ] 可查看任务统计
@@ -145,15 +225,30 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 7：AI 基础设施（1周）
 
+#### 目标
+- LLM 配置模块
+- 提示词管理
+- 向量数据库集成
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | LLM Config Entity | dev | 6h | P0 |
+| LLM ConfigService | dev | 8h | P0 |
 | LLM Provider 抽象 | dev | 8h | P0 |
 | DeepSeek Provider | dev | 4h | P0 |
+| OpenAI Provider | dev | 4h | P1 |
 | PromptService 开发 | dev | 6h | P0 |
 | ChromaDB 集成 | dev | 8h | P0 |
+| 向量存储服务 | dev | 6h | P0 |
 
-**验收标准**
+#### 交付物
+- LLM 配置管理
+- 提示词服务
+- 向量数据库服务
+
+#### 验收标准
 - [ ] 可配置 LLM
 - [ ] 可调用 DeepSeek API
 - [ ] ChromaDB 可用
@@ -163,15 +258,28 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 8：AI 需求生成（1周）
 
+#### 目标
+- AI 生成需求
+- AI 生成用户故事
+- AI 生成验收条件
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | AI 需求生成服务 | dev | 8h | P0 |
 | AI 用户故事生成 | dev | 6h | P0 |
 | AI 验收条件生成 | dev | 6h | P0 |
+| 原始需求管理 API | dev | 6h | P0 |
 | 需求向量化存储 | dev | 6h | P0 |
+| AI 生成历史记录 | dev | 4h | P2 |
 | 前端 AI 生成 UI | dev | 8h | P0 |
 
-**验收标准**
+#### 交付物
+- AI 需求生成 API
+- 前端 AI 生成页面
+
+#### 验收标准
 - [ ] 可输入原始需求
 - [ ] AI 生成结构化需求
 - [ ] 可保存生成结果
@@ -180,15 +288,29 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 9：AI 冲突检测（1周）
 
+#### 目标
+- RAG 语义检索
+- LLM 冲突分析
+- 冲突展示 UI
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | 语义检索服务 | dev | 8h | P0 |
 | 冲突分析 Prompt | dev | 6h | P0 |
 | 冲突分析服务 | dev | 8h | P0 |
 | AI Chat API | dev | 8h | P0 |
+| 冲突检测触发器 | dev | 4h | P0 |
+| 关联需求展示 UI | dev | 8h | P0 |
 | 前端 Chat 界面 | dev | 8h | P0 |
 
-**验收标准**
+#### 交付物
+- 冲突检测服务
+- AI Chat API
+- 前端 Chat 页面
+
+#### 验收标准
 - [ ] 输入需求可检索相关需求
 - [ ] 可检测逻辑冲突
 - [ ] 冲突结果正确展示
@@ -198,17 +320,65 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ### Sprint 10：AI 增强与优化（1周）
 
+#### 目标
+- 任务 AI 分解
+- AI 评审预判
+- 性能优化
+
+#### 任务
+
 | 任务 | 类型 | 预估 | 优先级 |
 |------|------|------|--------|
 | AI 任务分解 | dev | 8h | P0 |
 | AI 工时估算 | dev | 6h | P0 |
 | AI 评审预判 | dev | 6h | P1 |
 | AI 相似推荐 | dev | 6h | P0 |
+| RAG 检索优化 | perf | 4h | P1 |
+| LLM 调用优化 | perf | 4h | P1 |
+| 冲突自动处理 | dev | 6h | P1 |
 
-**验收标准**
+#### 交付物
+- AI 任务分解
+- AI 评审预判
+- 相似推荐
+
+#### 验收标准
 - [ ] 可 AI 分解任务
 - [ ] 可 AI 估算工时
 - [ ] 可推荐相似需求
+
+---
+
+### Sprint 11-12：高级功能（2周）
+
+#### 目标
+- 项目看板
+- 报表中心
+- 基线管理
+- 权限完善
+
+#### 任务
+
+| 任务 | 类型 | 预估 | 优先级 |
+|------|------|------|--------|
+| 项目进度看板 | dev | 8h | P1 |
+| 燃尽图 | dev | 6h | P1 |
+| 报表导出 | dev | 6h | P2 |
+| 基线管理 | dev | 8h | P1 |
+| 需求快照 | dev | 6h | P1 |
+| 权限完善 | dev | 8h | P1 |
+| 通知系统 | dev | 6h | P2 |
+| 集成测试 | test | 8h | P1 |
+
+#### 交付物
+- 项目看板
+- 报表中心
+- 基线管理
+
+#### 验收标准
+- [ ] 看板展示项目进度
+- [ ] 可创建基线
+- [ ] 可恢复基线
 
 ---
 
@@ -221,6 +391,7 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 | 前端开发 | 1 | 1 | 1 |
 | 后端开发 | 1 | 1 | 1 |
 | 测试 | - | 0.5 | 1 |
+| DevOps | 0.5 | - | - |
 
 ### 3.2 基础设施需求
 
@@ -236,9 +407,58 @@ Sprint 1-2    Sprint 3-4    Sprint 5-6    Sprint 7-8    Sprint 9-10
 
 ## 4. 风险管理
 
+### 4.1 风险识别
+
 | 风险 | 影响 | 概率 | 应对 |
 |------|------|------|------|
 | LLM API 不稳定 | 高 | 中 | 本地 Ollama 降级 |
 | ChromaDB 性能问题 | 中 | 低 | 索引优化、分片 |
 | 冲突检测准确率低 | 中 | 中 | 持续优化 Prompt |
 | 需求变更 | 中 | 高 | 敏捷响应 |
+
+### 4.2 降级策略
+
+| 场景 | 降级方案 |
+|------|----------|
+| LLM 服务不可用 | 降级到手动输入 |
+| ChromaDB 不可用 | 降级到关键词搜索 |
+| Redis 不可用 | 降级到无缓存 |
+
+---
+
+## 5. 验收流程
+
+### 5.1 Sprint 验收
+
+每个 Sprint 结束时进行：
+1. 代码审查
+2. 单元测试覆盖率检查（≥70%）
+3. 功能演示
+4. 文档更新
+
+### 5.2 里程碑验收
+
+| 里程碑 | 验收内容 |
+|--------|----------|
+| M1 | 项目、模块 CRUD 可用 |
+| M2 | 需求-任务完整闭环 |
+| M3 | AI 可生成需求 |
+| M4 | 冲突检测工作 |
+| M5 | 完整系统可用 |
+
+---
+
+## 6. 后续迭代
+
+### 6.1 v2.0 规划
+
+- 多租户支持
+- 移动端适配
+- 第三方集成（Jira、GitHub）
+- 高级 AI（Agent）
+
+### 6.2 技术演进
+
+- 微服务拆分
+- 事件溯源
+- CQRS 架构

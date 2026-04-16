@@ -1,3 +1,9 @@
+---
+last_updated: 2024-02-01
+status: active
+owner: req2task团队
+---
+
 # LLM 服务模块
 
 ## 概述
@@ -14,34 +20,15 @@
 - 指标收集：追踪调用次数、延迟等指标
 - 工厂模式：统一的LLM服务获取接口
 - 配置管理：完整的 CRUD API 管理 LLM 配置
-- 调用日志：详细的调用记录和统计分析
-- 追问问题生成：基于需求分析的智能追问
 
 ## 支持的提供商
 
-### 1. DeepSeek
-
-- **模型**: deepseek-chat
-- **API Endpoint**: <https://api.deepseek.com/v1>
-- **特性**: 函数调用、流式响应
-
-### 2. OpenAI
-
-- **模型**: gpt-4o
-- **API Endpoint**: <https://api.openai.com/v1>
-- **特性**: 函数调用、视觉支持、流式响应
-
-### 3. Ollama (本地)
-
-- **模型**: llama3.1:8b
-- **API Endpoint**: <http://localhost:11434/api>
-- **特性**: 本地部署、流式响应
-
-### 4. MiniMax
-
-- **模型**: 需要配置
-- **API Endpoint**: <https://api.minimaxi.com/anthropic>
-- **特性**: 函数调用、流式响应
+| 提供商 | 模型 | API Endpoint | 特性 |
+|--------|------|--------------|------|
+| DeepSeek | deepseek-chat | https://api.deepseek.com/v1 | 函数调用、流式响应 |
+| OpenAI | gpt-4o | https://api.openai.com/v1 | 函数调用、视觉支持、流式响应 |
+| Ollama | llama3.1:8b | http://localhost:11434/api | 本地部署、流式响应 |
+| MiniMax | 需要配置 | https://api.minimaxi.com/anthropic | 函数调用、流式响应 |
 
 ## API 端点
 
@@ -91,46 +78,7 @@ Content-Type: application/json
 
 支持的 provider: deepseek, openai, ollama, minimax
 
-#### 4. 流式调用指定提供商
-
-```http
-POST /api/llm/stream/:provider
-Content-Type: application/json
-
-{
-  "messages": [
-    { "role": "user", "content": "你好" }
-  ]
-}
-```
-
-#### 5. 使用指定配置调用
-
-```http
-POST /api/llm/call/config/:configId
-Content-Type: application/json
-
-{
-  "messages": [
-    { "role": "user", "content": "你好" }
-  ]
-}
-```
-
-#### 6. 使用指定配置流式调用
-
-```http
-POST /api/llm/stream/config/:configId
-Content-Type: application/json
-
-{
-  "messages": [
-    { "role": "user", "content": "你好" }
-  ]
-}
-```
-
-#### 7. 获取健康状态
+#### 4. 获取健康状态
 
 ```http
 GET /api/llm/health
@@ -150,37 +98,9 @@ GET /api/llm/health
 ]
 ```
 
-#### 8. 获取使用指标
-
-```http
-GET /api/llm/metrics
-```
-
-响应示例：
-
-```json
-[
-  {
-    "totalCalls": 150,
-    "successfulCalls": 145,
-    "failedCalls": 5,
-    "averageLatency": 230,
-    "provider": "deepseek",
-    "model": "deepseek-chat",
-    "configId": "123456"
-  }
-]
-```
-
 ### 配置管理 API
 
-#### 1. 获取支持的提供商列表
-
-```http
-GET /api/llm/config/providers
-```
-
-#### 2. 创建配置
+#### 1. 创建配置
 
 ```http
 POST /api/llm/config
@@ -196,43 +116,19 @@ Content-Type: application/json
 }
 ```
 
-#### 3. 获取所有配置
+#### 2. 获取所有配置
 
 ```http
 GET /api/llm/config?provider=deepseek&activeOnly=true&page=1&limit=10
 ```
 
-#### 4. 获取默认配置
+#### 3. 获取默认配置
 
 ```http
 GET /api/llm/config/default
 ```
 
-#### 5. 获取指定提供商的配置
-
-```http
-GET /api/llm/config/provider/:provider
-```
-
-#### 6. 获取配置使用指标
-
-```http
-GET /api/llm/config/metrics?provider=deepseek&days=7
-```
-
-#### 7. 获取调用日志
-
-```http
-GET /api/llm/config/logs?provider=deepseek&page=1&limit=10
-```
-
-#### 8. 获取单个配置
-
-```http
-GET /api/llm/config/:id
-```
-
-#### 9. 更新配置
+#### 4. 更新配置
 
 ```http
 PUT /api/llm/config/:id
@@ -243,13 +139,13 @@ Content-Type: application/json
 }
 ```
 
-#### 10. 删除配置
+#### 5. 删除配置
 
 ```http
 DELETE /api/llm/config/:id
 ```
 
-#### 11. 设置默认配置
+#### 6. 设置默认配置
 
 ```http
 POST /api/llm/config/:id/set-default
@@ -258,19 +154,10 @@ POST /api/llm/config/:id/set-default
 ## 环境变量配置
 
 ```env
-# DeepSeek API配置
 LLM_DEEPSEEK_API_KEY=your-deepseek-api-key-here
-
-# OpenAI API配置
 LLM_OPENAI_API_KEY=your-openai-api-key-here
-
-# MiniMax API配置
 LLM_MINIMAX_API_KEY=your-minimax-api-key-here
-
-# Ollama 配置（本地）
 LLM_OLLAMA_API_ENDPOINT=http://localhost:11434/api
-
-# 通用配置
 LLM_TIMEOUT=30000
 LLM_MAX_RETRIES=3
 ```
@@ -307,35 +194,11 @@ const response = await this.llmService.callWithProvider("openai", {
 });
 ```
 
-### 使用指定配置
-
-```typescript
-const response = await this.llmService.callWithConfig(configId, {
-  messages: [{ role: "user", content: "你好" }],
-});
-```
-
 ### 流式调用
 
 ```typescript
 for await (const chunk of await this.llmService.stream(request)) {
   console.log(chunk);
-}
-```
-
-### 访问工厂服务
-
-```typescript
-import { Injectable } from "@nestjs/common";
-import { LLMFactoryService } from "./llm/llm-factory.service";
-
-@Injectable()
-export class MyService {
-  constructor(private readonly llmFactory: LLMFactoryService) {}
-
-  async getServiceByProvider(providerId: string) {
-    return this.llmFactory.getService(providerId);
-  }
 }
 ```
 
@@ -365,27 +228,6 @@ const statuses = await this.factory.getHealthStatus();
 - 平均延迟
 - 最后调用时间
 
-获取指标：
-
-```typescript
-const metrics = this.factory.getMetrics();
-```
-
-## Swagger 文档
-
-访问 Swagger 文档查看完整的API说明：
-
-```
-http://localhost:3000/docs
-```
-
-## 注意事项
-
-1. 配置管理 API 需要 JWT 认证
-2. API Key 在响应中会被脱敏处理
-3. 生产环境请配置有效的 API Key
-4. 定期检查服务健康状态
-
 ## 扩展开发
 
 ### 添加新的提供商
@@ -394,10 +236,7 @@ http://localhost:3000/docs
 2. 继承 `AbstractLLMProvider` 和 `AbstractLLMService`
 3. 在 `LLMFactoryService` 中注册新的提供商
 
-示例：
-
 ```typescript
-// providers/my-provider.provider.ts
 @Injectable()
 export class MyProvider extends AbstractLLMProvider {
   readonly name = "MyProvider";
@@ -413,34 +252,9 @@ export class MyProvider extends AbstractLLMProvider {
 }
 ```
 
-## 故障排除
+## 注意事项
 
-### 问题1: API调用失败
-
-**症状**: 调用返回错误
-
-**解决方案**:
-
-1. 检查 API Key 是否正确配置
-2. 确认网络连接正常
-3. 查看日志获取详细错误信息
-
-### 问题2: 超时错误
-
-**症状**: 请求超时
-
-**解决方案**:
-
-1. 增加超时时间配置
-2. 减少 maxTokens 参数
-3. 检查网络延迟
-
-### 问题3: 提供商不可用
-
-**症状**: 某个提供商无法连接
-
-**解决方案**:
-
-1. 检查提供商服务状态
-2. 切换到其他可用的提供商
-3. 确认 API Endpoint 配置正确
+1. 配置管理 API 需要 JWT 认证
+2. API Key 在响应中会被脱敏处理
+3. 生产环境请配置有效的 API Key
+4. 定期检查服务健康状态

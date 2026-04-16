@@ -74,10 +74,24 @@ apps/
 2. 新增代码必须有对应测试
 3. 使用结构化日志，禁止 console.log
 
-**强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则，包括但不限于：
+**强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则。
 
-- **输出规则**：简体中文、禁用客套语、直接输出
-- **控制台规则**：Windows PowerShell、UTF-8 BOM 编码
-- **代码规则**：无注释、遵循代码风格、Vue 使用 `<script setup>`、NestJS 使用构造函数注入
-- **DTO 共享规则**：Web/Service 交互的 DTO 必须定义在 `packages/dto` 中
-- **命名规范**：TypeScript/Vue/数据库/API 路由的命名约定
+## 文档导航
+
+| 你想做什么 | 去哪里看 |
+|-----------|---------|
+| 了解系统架构 | [docs/architecture/overview.md](docs/architecture/overview.md) |
+| 了解模块边界和依赖规则 | [docs/design/module-design.md](docs/design/module-design.md) |
+| 了解数据库设计 | [docs/design/database-design.md](docs/design/database-design.md) |
+| 了解 API 规范 | [docs/reference/api-spec.md](docs/reference/api-spec.md) |
+| 了解实施计划 | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
+| 了解编码规范 | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) |
+| 了解完整文档索引 | [docs/README.md](docs/README.md) |
+
+### 文档层级
+
+- **docs/architecture/** - 架构层（系统架构、技术栈、模块关系）
+- **docs/design/** - 设计层（数据库设计、模块设计、AI设计）
+- **docs/prd/** - PRD 层（业务模型、功能流程、需求规范）
+- **docs/reference/** - 参考层（API规范、错误码）
+- **docs/conventions/** - 规范层（命名规范、错误处理、日志规范）

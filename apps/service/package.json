@@ -15,8 +15,8 @@
     "test:cov": "jest --coverage",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
-    "migration:generate": "pnpm build && ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./dist/src/data-source.js",
-    "migration:run": "pnpm build && pnpm typeorm migration:run -d ./dist/src/data-source.js",
+    "migration:generate": "pnpm build && ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./src/data-source.ts ",
+    "migration:run": "pnpm build && pnpm typeorm migration:run -d ./src/data-source.ts",
     "migration:revert": "pnpm typeorm migration:revert -d ./src/data-source.ts",
     "migration:show": "pnpm typeorm migration:show -d ./src/data-source.ts"
   },

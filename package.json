@@ -18,10 +18,10 @@
     "test:e2e:web": "pnpm --filter @req2task/web test:e2e",
     "test:e2e": "pnpm --filter @req2task/service test:e2e",
     "test:all": "pnpm run test && pnpm run test:e2e",
-    "db:migration:generate": "pnpm --filter @req2task/service migration:generate",
-    "db:migration:run": "pnpm --filter @req2task/service migration:run",
-    "db:migration:revert": "pnpm --filter @req2task/service migration:revert",
-    "db:migration:show": "pnpm --filter @req2task/service migration:show"
+    "db:migration:generate": "ts-node scripts/migration-generate.ts",
+    "db:migration:run": "ts-node scripts/migration-run.ts",
+    "db:migration:revert": "ts-node scripts/migration-revert.ts",
+    "db:migration:show": "ts-node scripts/migration-show.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

@@ -4,9 +4,14 @@ import type { UserInfoDto } from '@req2task/dto';
 
 export const useUserStore = defineStore('user', () => {
   const token = ref<string>(localStorage.getItem('accessToken') || '');
-  const userInfo = ref<UserInfoDto | null>(
-    JSON.parse(localStorage.getItem('user') || 'null')
-  );
+  const userInfo = ref<UserInfoDto | null>(() => {
+    const userStr = localStorage.getItem('user');
+    try {
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const setToken = (newToken: string) => {
     token.value = newToken;

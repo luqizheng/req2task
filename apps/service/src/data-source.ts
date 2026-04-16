@@ -1,13 +1,22 @@
 import { DataSource, DataSourceOptions } from 'typeorm';
 import * as dotenv from 'dotenv';
-import { User } from '@req2task/core';
 import { resolve, join } from 'path';
+import * as fs from 'fs';
 
 dotenv.config({ path: '.env' });
 
-const cwd = process.cwd();
-const projectRoot = resolve(cwd);
-const serviceRoot = resolve(projectRoot, 'apps', 'service');
+const serviceRoot = 'D:/projects/req2task/apps/service';
+const migrationsDir = join(serviceRoot, 'dist', 'src', 'migrations');
+
+let migrationFiles: string[] = [];
+if (fs.existsSync(migrationsDir)) {
+  migrationFiles = fs.readdirSync(migrationsDir)
+    .filter(f => f.endsWith('.js'))
+    .map(f => join(migrationsDir, f));
+}
+
+const coreDist = 'D:/projects/req2task/packages/core/dist';
+const User = require(join(coreDist, 'entities', 'user.entity.js')).User;
 
 const options: DataSourceOptions = {
   type: 'postgres',
@@ -17,8 +26,9 @@ const options: DataSourceOptions = {
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_NAME || 'req2task',
   entities: [User],
-  migrations: [join(serviceRoot, 'src', 'migrations')],
+  migrations: migrationFiles,
   migrationsTableName: 'migrations',
+  synchronize: false,
 };
 
 export const AppDataSource = new DataSource(options);

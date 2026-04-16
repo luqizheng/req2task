@@ -1,8 +1,11 @@
 export interface ApiResponseDto<T = unknown> {
   success: boolean
+  message: string
   data?: T
-  message?: string
-  error?: string
+  time: string
+  url: string
+  method?: string
+  body?: Record<string, unknown>
 }
 
 export interface ApiErrorDto {

@@ -7,20 +7,29 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.js"
     },
     "./entities": {
+      "types": "./dist/entities/index.d.ts",
       "import": "./dist/entities/index.js",
-      "types": "./dist/entities/index.d.ts"
+      "require": "./dist/entities/index.js"
+    },
+    "./entities/*": {
+      "types": "./dist/entities/*.d.ts",
+      "import": "./dist/entities/*.js",
+      "require": "./dist/entities/*.js"
     },
     "./services": {
+      "types": "./dist/services/index.d.ts",
       "import": "./dist/services/index.js",
-      "types": "./dist/services/index.d.ts"
+      "require": "./dist/services/index.js"
     },
     "./bo": {
+      "types": "./dist/bo/index.d.ts",
       "import": "./dist/bo/index.js",
-      "types": "./dist/bo/index.d.ts"
+      "require": "./dist/bo/index.js"
     }
   },
   "scripts": {

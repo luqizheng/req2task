@@ -1,68 +1,68 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { User, Lock, Message, MagicStick } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
+import { ref } from "vue";
+import { useRouter } from "vue-router";
+import { User, Lock, Message, MagicStick } from "@element-plus/icons-vue";
+import { ElMessage, type FormInstance, type FormRules } from "element-plus";
 
-const router = useRouter()
-const registerFormRef = ref<FormInstance>()
-const loading = ref(false)
+const router = useRouter();
+const registerFormRef = ref<FormInstance>();
+const loading = ref(false);
 const registerForm = ref({
-  username: '',
-  email: '',
-  password: '',
-  confirmPassword: '',
-  agree: false
-})
+  username: "",
+  email: "",
+  password: "",
+  confirmPassword: "",
+  agree: false,
+});
 
 const validatePassword = (_rule: any, value: any, callback: any) => {
   if (value !== registerForm.value.password) {
-    callback(new Error('两次输入密码不一致'))
+    callback(new Error("两次输入密码不一致"));
   } else {
-    callback()
+    callback();
   }
-}
+};
 
 const rules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+    { required: true, message: "请输入用户名", trigger: "blur" },
+    { min: 3, max: 20, message: "用户名长度为3-20个字符", trigger: "blur" },
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: "请输入邮箱", trigger: "blur" },
+    { type: "email", message: "请输入正确的邮箱格式", trigger: "blur" },
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少6位', trigger: 'blur' }
+    { required: true, message: "请输入密码", trigger: "blur" },
+    { min: 6, message: "密码长度至少6位", trigger: "blur" },
   ],
   confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    { validator: validatePassword, trigger: 'blur' }
-  ]
-}
+    { required: true, message: "请确认密码", trigger: "blur" },
+    { validator: validatePassword, trigger: "blur" },
+  ],
+};
 
 const handleRegister = async () => {
-  if (!registerFormRef.value) return
+  if (!registerFormRef.value) return;
   await registerFormRef.value.validate((valid) => {
     if (valid) {
       if (!registerForm.value.agree) {
-        ElMessage.warning('请先同意用户协议')
-        return
+        ElMessage.warning("请先同意用户协议");
+        return;
       }
-      loading.value = true
+      loading.value = true;
       setTimeout(() => {
-        loading.value = false
-        ElMessage.success('注册成功，请登录')
-        router.push('/login')
-      }, 1000)
+        loading.value = false;
+        ElMessage.success("注册成功，请登录");
+        router.push("/login");
+      }, 1000);
     }
-  })
-}
+  });
+};
 
 const goToLogin = () => {
-  router.push('/login')
-}
+  router.push("/login");
+};
 </script>
 
 <template>
@@ -74,7 +74,7 @@ const goToLogin = () => {
         <div class="circle circle-3"></div>
       </div>
     </div>
-    
+
     <div class="register-card">
       <div class="register-header">
         <div class="logo">
@@ -148,7 +148,7 @@ const goToLogin = () => {
             class="register-btn"
             native-type="submit"
           >
-            {{ loading ? '注册中...' : '注 册' }}
+            {{ loading ? "注册中..." : "注 册" }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -183,7 +183,11 @@ const goToLogin = () => {
 .register-decoration .circle {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(37, 99, 235, 0.1),
+    rgba(99, 102, 241, 0.05)
+  );
 }
 
 .circle-1 {
@@ -212,7 +216,9 @@ const goToLogin = () => {
   padding: 48px 40px;
   background: white;
   border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 1;
 }

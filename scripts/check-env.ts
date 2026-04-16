@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
-import { execSync } from "child_process";
+import { execSync, exec } from "child_process";
 import { existsSync, readFileSync } from "fs";
 import { platform } from "os";
 import { Client } from "pg";
+import readline from "readline";
 
 interface CheckResult {
   name: string;
@@ -144,6 +145,55 @@ function checkGit(): CheckResult {
     passed: false,
     message: "Git is not installed or not in PATH",
   };
+}
+
+function checkPlaywrightBrowsers(): CheckResult {
+  try {
+    // Check if playwright browsers are installed
+    const result = runCommand("pnpm exec playwright install --dry-run");
+    return {
+      name: "Playwright Browsers",
+      required: "installed",
+      version: "installed",
+      passed: true,
+      message: "Browsers are installed",
+    };
+  } catch (error) {
+    return {
+      name: "Playwright Browsers",
+      required: "installed",
+      version: null,
+      passed: false,
+      message: "Browsers not installed. Run: pnpm exec playwright install",
+    };
+  }
+}
+
+function promptUser(question: string): Promise<boolean> {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve) => {
+    rl.question(question, (answer) => {
+      rl.close();
+      resolve(answer.toLowerCase().startsWith("y"));
+    });
+  });
+}
+
+function installPlaywrightBrowsers(): boolean {
+  try {
+    console.log("Installing Playwright browsers...");
+    execSync("pnpm exec playwright install", {
+      encoding: "utf-8",
+      stdio: "inherit",
+    });
+    return true;
+  } catch (error) {
+    console.error("Failed to install Playwright browsers:", error);
+    return false;
+  }
 }
 
 interface DbConfig {
@@ -324,9 +374,26 @@ async function main() {
   const dbTablesCheck = await checkDatabaseTables();
   checks.push(dbTablesCheck);
 
+  // Check Playwright browsers
+  const playwrightCheck = checkPlaywrightBrowsers();
+  checks.push(playwrightCheck);
+
   console.log("─".repeat(50));
   checks.forEach(printResult);
   console.log("─".repeat(50));
+
+  // Handle Playwright browser installation
+  if (!playwrightCheck.passed) {
+    const shouldInstall = await promptUser("Do you want to install Playwright browsers now? (y/n): ");
+    if (shouldInstall) {
+      const success = installPlaywrightBrowsers();
+      if (success) {
+        console.log("\n✅ Playwright browsers installed successfully!");
+        playwrightCheck.passed = true;
+        playwrightCheck.message = "Browsers are installed";
+      }
+    }
+  }
 
   const allPassed = checks.every((c) => c.passed);
   const criticalPassed = checks.slice(0, 3).every((c) => c.passed);

@@ -1,3 +1,12 @@
+import * as dotenv from 'dotenv'
+import * as path from 'path'
+
+const envPath = path.join(process.cwd(), '.env')
+console.log('Loading .env from:', envPath)
+dotenv.config({ path: envPath })
+console.log('DB_USER:', process.env.DB_USER)
+console.log('DB_PASSWORD:', process.env.DB_PASSWORD)
+
 import { NestFactory } from '@nestjs/core'
 import { ValidationPipe } from '@nestjs/common'
 import { AppModule } from './app.module'

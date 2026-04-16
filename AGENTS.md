@@ -31,6 +31,10 @@ pnpm build:service  # 构建后端
 pnpm lint           # 检查所有代码
 pnpm test           # 运行所有测试
 pnpm test:e2e       # 运行端到端测试
+pnpm db:migration:generate # 生成数据库迁移
+pnpm db:migration:run      # 运行数据库迁移
+pnpm db:migration:revert   # 回滚数据库迁移
+pnpm db:migration:show     # 查看迁移状态
 ```
 
 ## Monorepo 工作流

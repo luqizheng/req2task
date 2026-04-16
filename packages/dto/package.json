@@ -27,6 +27,11 @@
   },
   "keywords": [],
   "license": "MIT",
+  "dependencies": {
+    "@req2task/core": "workspace:*",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0"
+  },
   "devDependencies": {
     "@req2task/dev-config": "workspace:*",
     "tsup": "^8.3.0",

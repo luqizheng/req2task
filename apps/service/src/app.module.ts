@@ -2,9 +2,11 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
-import { User } from "@req2task/core";
+import { User, Project, FeatureModule } from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
+import { ProjectsModule } from "./projects/projects.module";
+import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 
 @Module({
   imports: [
@@ -15,11 +17,13 @@ import { UsersModule } from "./users/users.module";
       username: process.env.DB_USER || "postgres",
       password: process.env.DB_PASSWORD || "postgres",
       database: process.env.DB_NAME || "req2task",
-      entities: [User],
+      entities: [User, Project, FeatureModule],
       synchronize: false,
     }),
     AuthModule,
     UsersModule,
+    ProjectsModule,
+    FeatureModulesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

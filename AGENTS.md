@@ -66,4 +66,10 @@ apps/
 
 ## 规则
 
-开发规则详见 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md)
+**强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则，包括但不限于：
+
+- **输出规则**：简体中文、禁用客套语、直接输出
+- **控制台规则**：Windows PowerShell、UTF-8 BOM 编码
+- **代码规则**：无注释、遵循代码风格、Vue 使用 `<script setup>`、NestJS 使用构造函数注入
+- **DTO 共享规则**：Web/Service 交互的 DTO 必须定义在 `packages/dto` 中
+- **命名规范**：TypeScript/Vue/数据库/API 路由的命名约定

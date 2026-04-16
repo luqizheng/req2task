@@ -170,7 +170,7 @@ const getRoleTagType = (role: string) => {
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="email" label="邮箱" min-width="160">
           <template #default="{ row }">
-            <el-link type="primary" :underline="false">{{ row.email }}</el-link>
+            <el-link type="primary" underline="never">{{ row.email }}</el-link>
           </template>
         </el-table-column>
         <el-table-column prop="phone" label="手机号" width="130" />

@@ -1,24 +1,87 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute } from 'vue-router'
-import { 
-  DataLine, 
-  Document, 
-  Ticket, 
-  Flag, 
-  Grid, 
-  User, 
-  Notebook, 
-  Setting, 
-  Search, 
-  Bell, 
+import { ref, computed } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  DataLine,
+  Document,
+  Ticket,
+  Flag,
+  Grid,
+  User,
+  Notebook,
+  Setting,
+  Search,
+  Bell,
   MagicStick,
   ArrowRight,
   ArrowLeft
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
+const router = useRouter()
+const userStore = useUserStore()
 const isCollapsed = ref(false)
+const passwordFormRef = ref()
+const passwordDialogVisible = ref(false)
+const passwordForm = ref({
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordRules = {
+  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+  newPassword: [
+    { required: true, message: '请输入新密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    {
+      validator: (_rule: any, value: string, callback: any) => {
+        if (value !== passwordForm.value.newPassword) {
+          callback(new Error('两次密码不一致'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur'
+    }
+  ]
+}
+
+const userDisplayName = computed(() => {
+  return userStore.userInfo?.displayName || userStore.userInfo?.username || '用户'
+})
+
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    userStore.logout()
+    router.push('/login')
+  } catch {}
+}
+
+const openChangePassword = () => {
+  passwordDialogVisible.value = true
+}
+
+const handleChangePassword = async () => {
+  if (!passwordFormRef.value) return
+  await passwordFormRef.value.validate((valid: boolean) => {
+    if (valid) {
+      ElMessage.success('密码修改成功，请重新登录')
+      passwordDialogVisible.value = false
+      userStore.logout()
+      router.push('/login')
+    }
+  })
+}
 
 const menuItems = [
   { path: '/', icon: DataLine, label: '仪表盘', name: 'dashboard' },
@@ -34,10 +97,6 @@ const menuItems = [
 const bottomMenuItems = [
   { path: '/settings', icon: Setting, label: '系统设置', name: 'settings' },
 ]
-
-const handleLogout = () => {
-  console.log('logout')
-}
 </script>
 
 <template>
@@ -106,13 +165,13 @@ const handleLogout = () => {
           <el-dropdown trigger="click">
             <div class="user-info">
               <el-avatar :size="32" src="https://cube.elemecdn.com/0/88/03b0d39593f0349b2ea8d72896280.jpeg" />
-              <span class="user-name">张经理</span>
+              <span class="user-name">{{ userDisplayName }}</span>
               <el-icon class="arrow"><ArrowRight /></el-icon>
             </div>
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item>个人中心</el-dropdown-item>
-                <el-dropdown-item>修改密码</el-dropdown-item>
+                <el-dropdown-item @click="openChangePassword">修改密码</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -132,6 +191,29 @@ const handleLogout = () => {
         </el-button>
       </el-tooltip>
     </div>
+
+    <el-dialog v-model="passwordDialogVisible" title="修改密码" width="400px">
+      <el-form
+        ref="passwordFormRef"
+        :model="passwordForm"
+        :rules="passwordRules"
+        label-width="80px"
+      >
+        <el-form-item label="当前密码" prop="oldPassword">
+          <el-input v-model="passwordForm.oldPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="新密码" prop="newPassword">
+          <el-input v-model="passwordForm.newPassword" type="password" show-password />
+        </el-form-item>
+        <el-form-item label="确认密码" prop="confirmPassword">
+          <el-input v-model="passwordForm.confirmPassword" type="password" show-password />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="passwordDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleChangePassword">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 

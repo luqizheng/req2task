@@ -1,6 +1,18 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, markRaw } from 'vue'
 import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Top, Bottom, Timer, Reading, CircleCheck } from '@element-plus/icons-vue'
+
+const folderIcon = markRaw(Folder)
+const documentIcon = markRaw(Document)
+const checkIcon = markRaw(Check)
+const warningIcon = markRaw(Warning)
+const timerIcon = markRaw(Timer)
+const readingIcon = markRaw(Reading)
+const circleCheckIcon = markRaw(CircleCheck)
+const magicStickIcon = markRaw(MagicStick)
+const arrowRightIcon = markRaw(ArrowRight)
+const topIcon = markRaw(Top)
+const bottomIcon = markRaw(Bottom)
 
 interface StatCard {
   title: string
@@ -37,16 +49,16 @@ interface RecentActivity {
 }
 
 const statCards = ref<StatCard[]>([
-  { title: '需求总数', value: 128, trend: '+12%', trendUp: true, color: '#2563eb', icon: Folder },
-  { title: '用户故事', value: 356, trend: '+8%', trendUp: true, color: '#10b981', icon: Document },
-  { title: '待验收', value: 24, trend: '-5%', trendUp: false, color: '#f59e0b', icon: Check },
-  { title: '风险项', value: 3, trend: '+1', trendUp: false, color: '#ef4444', icon: Warning },
+  { title: '需求总数', value: 128, trend: '+12%', trendUp: true, color: '#2563eb', icon: folderIcon },
+  { title: '用户故事', value: 356, trend: '+8%', trendUp: true, color: '#10b981', icon: documentIcon },
+  { title: '待验收', value: 24, trend: '-5%', trendUp: false, color: '#f59e0b', icon: checkIcon },
+  { title: '风险项', value: 3, trend: '+1', trendUp: false, color: '#ef4444', icon: warningIcon },
 ])
 
 const costStats = ref<CostStat[]>([
-  { title: '执行进度', current: 45, total: 60, unit: '天', icon: Timer, color: '#2563eb' },
-  { title: '故事点', current: 186, total: 240, unit: '点', icon: Reading, color: '#10b981' },
-  { title: '任务完成', current: 78, total: 100, unit: '个', icon: CircleCheck, color: '#6366f1' },
+  { title: '执行进度', current: 45, total: 60, unit: '天', icon: timerIcon, color: '#2563eb' },
+  { title: '故事点', current: 186, total: 240, unit: '点', icon: readingIcon, color: '#10b981' },
+  { title: '任务完成', current: 78, total: 100, unit: '个', icon: circleCheckIcon, color: '#6366f1' },
 ])
 
 const milestones = ref<Milestone[]>([
@@ -226,7 +238,7 @@ const getCostPercentage = (current: number, total: number) => {
             </el-table-column>
             <el-table-column prop="target">
               <template #default="{ row }">
-                <el-link type="primary" :underline="false">{{ row.target }}</el-link>
+                <el-link type="primary" underline="never">{{ row.target }}</el-link>
               </template>
             </el-table-column>
             <el-table-column prop="time" width="100" align="right">

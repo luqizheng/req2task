@@ -14,6 +14,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { AiService } from './ai.service';
 import { RequirementGenerationService } from './requirement-generation.service';
 import { ConflictDetectionService } from './conflict-detection.service';
+import { TaskDecompositionService } from './task-decomposition.service';
 import {
   CreateLLMConfigDto,
   UpdateLLMConfigDto,
@@ -30,6 +31,7 @@ export class AiController {
     private readonly aiService: AiService,
     private readonly requirementGenerationService: RequirementGenerationService,
     private readonly conflictDetectionService: ConflictDetectionService,
+    private readonly taskDecompositionService: TaskDecompositionService,
   ) {}
 
   @Post('llm-configs')
@@ -186,6 +188,53 @@ export class AiController {
       contextRequirementId,
       configId,
     );
+    return { code: 0, data: result };
+  }
+
+  @Post('decompose-requirement')
+  async decomposeRequirement(
+    @Body('requirementContent') requirementContent: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.taskDecompositionService.decomposeRequirement(
+      requirementContent,
+      configId,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Post('estimate-workload')
+  async estimateWorkload(
+    @Body('requirementContent') requirementContent: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.taskDecompositionService.estimateWorkload(
+      requirementContent,
+      configId,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Get('similar-requirements')
+  async findSimilarRequirements(
+    @Query('requirementContent') requirementContent: string,
+    @Query('moduleId') moduleId: string,
+    @Query('limit') limit?: string,
+  ) {
+    const result = await this.taskDecompositionService.findSimilarRequirements(
+      requirementContent,
+      moduleId,
+      limit ? parseInt(limit, 10) : 5,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Post('tasks/:id/generate-subtasks')
+  async generateSubTasks(
+    @Param('id') id: string,
+    @Body('configId') configId?: string,
+  ) {
+    const result = await this.taskDecompositionService.generateSubTasks(id, configId);
     return { code: 0, data: result };
   }
 }

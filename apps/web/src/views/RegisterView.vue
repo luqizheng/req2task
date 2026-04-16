@@ -1,130 +1,170 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { User, Lock, MagicStick } from '@element-plus/icons-vue'
+import { User, Lock, Message, MagicStick } from '@element-plus/icons-vue'
 import type { FormInstance, FormRules } from 'element-plus'
 
 const router = useRouter()
-const loginFormRef = ref<FormInstance>()
+const registerFormRef = ref<FormInstance>()
 const loading = ref(false)
-const loginForm = ref({
+const registerForm = ref({
   username: '',
+  email: '',
   password: '',
-  remember: false
+  confirmPassword: '',
+  agree: false
 })
+
+const validatePassword = (_rule: any, value: any, callback: any) => {
+  if (value !== registerForm.value.password) {
+    callback(new Error('两次输入密码不一致'))
+  } else {
+    callback()
+  }
+}
 
 const rules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 20, message: '用户名长度为3-20个字符', trigger: 'blur' }
+  ],
+  email: [
+    { required: true, message: '请输入邮箱', trigger: 'blur' },
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
   ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度至少6位', trigger: 'blur' }
+  ],
+  confirmPassword: [
+    { required: true, message: '请确认密码', trigger: 'blur' },
+    { validator: validatePassword, trigger: 'blur' }
   ]
 }
 
-const handleLogin = async () => {
-  if (!loginFormRef.value) return
-  await loginFormRef.value.validate((valid) => {
+const handleRegister = async () => {
+  if (!registerFormRef.value) return
+  await registerFormRef.value.validate((valid) => {
     if (valid) {
+      if (!registerForm.value.agree) {
+        ElMessage.warning('请先同意用户协议')
+        return
+      }
       loading.value = true
       setTimeout(() => {
         loading.value = false
-        router.push('/dashboard')
+        ElMessage.success('注册成功，请登录')
+        router.push('/login')
       }, 1000)
     }
   })
 }
 
-const handleForgot = () => {
-  console.log('forgot password')
-}
-
-const goToRegister = () => {
-  router.push('/register')
+const goToLogin = () => {
+  router.push('/login')
 }
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-bg">
-      <div class="login-decoration">
+  <div class="register-container">
+    <div class="register-bg">
+      <div class="register-decoration">
         <div class="circle circle-1"></div>
         <div class="circle circle-2"></div>
         <div class="circle circle-3"></div>
       </div>
     </div>
     
-    <div class="login-card">
-      <div class="login-header">
+    <div class="register-card">
+      <div class="register-header">
         <div class="logo">
           <el-icon :size="40" class="logo-icon"><MagicStick /></el-icon>
           <span class="logo-text">req2task</span>
         </div>
-        <p class="subtitle">需求管理系统</p>
+        <p class="subtitle">创建账号</p>
       </div>
 
       <el-form
-        ref="loginFormRef"
-        :model="loginForm"
+        ref="registerFormRef"
+        :model="registerForm"
         :rules="rules"
-        class="login-form"
-        @submit.prevent="handleLogin"
+        class="register-form"
+        @submit.prevent="handleRegister"
       >
         <el-form-item prop="username">
           <el-input
-            v-model="loginForm.username"
+            v-model="registerForm.username"
             placeholder="用户名"
             size="large"
             :prefix-icon="User"
           />
         </el-form-item>
 
+        <el-form-item prop="email">
+          <el-input
+            v-model="registerForm.email"
+            placeholder="邮箱"
+            size="large"
+            :prefix-icon="Message"
+          />
+        </el-form-item>
+
         <el-form-item prop="password">
           <el-input
-            v-model="loginForm.password"
+            v-model="registerForm.password"
             type="password"
-            placeholder="密码"
+            placeholder="密码（至少6位）"
             size="large"
             :prefix-icon="Lock"
             show-password
           />
         </el-form-item>
 
-        <div class="form-options">
-          <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-          <el-link type="primary" @click="handleForgot">忘记密码？</el-link>
-        </div>
+        <el-form-item prop="confirmPassword">
+          <el-input
+            v-model="registerForm.confirmPassword"
+            type="password"
+            placeholder="确认密码"
+            size="large"
+            :prefix-icon="Lock"
+            show-password
+          />
+        </el-form-item>
+
+        <el-form-item>
+          <el-checkbox v-model="registerForm.agree">
+            我已阅读并同意
+            <el-link type="primary">《用户协议》</el-link>
+            和
+            <el-link type="primary">《隐私政策》</el-link>
+          </el-checkbox>
+        </el-form-item>
 
         <el-form-item>
           <el-button
             type="primary"
             size="large"
             :loading="loading"
-            class="login-btn"
+            class="register-btn"
             native-type="submit"
           >
-            {{ loading ? '登录中...' : '登 录' }}
+            {{ loading ? '注册中...' : '注 册' }}
           </el-button>
         </el-form-item>
       </el-form>
 
-      <div class="login-footer">
-        <span class="ai-badge">
-          <el-icon><MagicStick /></el-icon>
-          AI 智能辅助
+      <div class="register-footer">
+        <span class="login-tip">
+          已有账号？
+          <el-link type="primary" @click="goToLogin">立即登录</el-link>
         </span>
-        <div class="register-link">
-          还没有账号？
-          <el-link type="primary" @click="goToRegister">立即注册</el-link>
-        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style scoped>
-.login-container {
+.register-container {
   min-height: 100vh;
   display: flex;
   align-items: center;
@@ -134,13 +174,13 @@ const goToRegister = () => {
   overflow: hidden;
 }
 
-.login-bg {
+.register-bg {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-.login-decoration .circle {
+.register-decoration .circle {
   position: absolute;
   border-radius: 50%;
   background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.05));
@@ -167,7 +207,7 @@ const goToRegister = () => {
   left: 20%;
 }
 
-.login-card {
+.register-card {
   width: 420px;
   padding: 48px 40px;
   background: white;
@@ -177,7 +217,7 @@ const goToRegister = () => {
   z-index: 1;
 }
 
-.login-header {
+.register-header {
   text-align: center;
   margin-bottom: 32px;
 }
@@ -206,43 +246,23 @@ const goToRegister = () => {
   font-size: 14px;
 }
 
-.login-form {
+.register-form {
   margin-top: 24px;
 }
 
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.login-btn {
+.register-btn {
   width: 100%;
   height: 48px;
   font-size: 16px;
   font-weight: 500;
 }
 
-.login-footer {
+.register-footer {
   margin-top: 24px;
   text-align: center;
 }
 
-.ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.register-link {
-  margin-top: 16px;
+.login-tip {
   color: #64748b;
   font-size: 14px;
 }

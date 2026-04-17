@@ -9,3 +9,4 @@ export * from './task.entity';
 export * from './llm-config.entity';
 export * from './raw-requirement.entity';
 export * from './baseline.entity';
+export * from './notification.entity';

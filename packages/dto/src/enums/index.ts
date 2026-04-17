@@ -1,4 +1,5 @@
 export * from './user-role.enum';
+export * from './permission.enum';
 export * from './project-status.enum';
 export * from './raw-requirement-status.enum';
 export * from './llm-provider-type.enum';

@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -25,6 +25,8 @@ export interface GenerateRequirementResult {
 
 @Injectable()
 export class RequirementGenerationService {
+  private readonly logger = new Logger(RequirementGenerationService.name);
+
   constructor(
     @InjectRepository(RawRequirement)
     private rawRequirementRepository: Repository<RawRequirement>,
@@ -111,6 +113,10 @@ export class RequirementGenerationService {
         ...parsed,
       };
     } catch (error) {
+      this.logger.error(
+        `Failed to generate requirement ${rawRequirementId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
       await this.rawRequirementRepository.update(rawRequirementId, {
         status: RawRequirementStatus.FAILED,
         errorMessage: error instanceof Error ? error.message : 'Unknown error',

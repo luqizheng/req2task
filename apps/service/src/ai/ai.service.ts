@@ -14,6 +14,7 @@ import {
   CreateLLMConfigDto,
   UpdateLLMConfigDto,
   ChatRequestDto,
+  LLMConfigResponseDto,
 } from '@req2task/dto';
 
 @Injectable()
@@ -26,32 +27,53 @@ export class AiService {
     private vectorStore: ChromaVectorStore,
   ) {}
 
-  async createLLMConfig(createDto: CreateLLMConfigDto): Promise<LLMConfig> {
+  async createLLMConfig(createDto: CreateLLMConfigDto): Promise<LLMConfigResponseDto> {
     if (createDto.isDefault) {
       await this.llmConfigRepository.update({ isDefault: true }, { isDefault: false });
     }
 
     const config = this.llmConfigRepository.create(createDto);
-    return this.llmConfigRepository.save(config);
+    const saved = await this.llmConfigRepository.save(config);
+    return this.toResponseDto(saved);
   }
 
-  async findAllLLMConfigs(): Promise<LLMConfig[]> {
-    return this.llmConfigRepository.find({
+  async findAllLLMConfigs(): Promise<LLMConfigResponseDto[]> {
+    const configs = await this.llmConfigRepository.find({
       order: { isDefault: 'DESC', createdAt: 'DESC' },
     });
+    return configs.map(c => this.toResponseDto(c));
   }
 
-  async findLLMConfig(id: string): Promise<LLMConfig> {
-    return this.llmConfigRepository.findOneOrFail({ where: { id } });
+  async findLLMConfig(id: string): Promise<LLMConfigResponseDto> {
+    const config = await this.llmConfigRepository.findOneOrFail({ where: { id } });
+    return this.toResponseDto(config);
   }
 
-  async updateLLMConfig(id: string, updateDto: UpdateLLMConfigDto): Promise<LLMConfig> {
+  async updateLLMConfig(id: string, updateDto: UpdateLLMConfigDto): Promise<LLMConfigResponseDto> {
     if (updateDto.isDefault) {
       await this.llmConfigRepository.update({ isDefault: true }, { isDefault: false });
     }
 
     await this.llmConfigRepository.update(id, updateDto);
     return this.findLLMConfig(id);
+  }
+
+  private toResponseDto(config: LLMConfig): LLMConfigResponseDto {
+    return {
+      id: config.id,
+      name: config.name,
+      provider: config.provider,
+      modelName: config.modelName,
+      baseUrl: config.baseUrl,
+      maxTokens: config.maxTokens,
+      temperature: config.temperature,
+      topP: config.topP,
+      isActive: config.isActive,
+      isDefault: config.isDefault,
+      createdAt: config.createdAt,
+      updatedAt: config.updatedAt,
+      apiKey: config.apiKey ? '********' : undefined,
+    };
   }
 
   async deleteLLMConfig(id: string): Promise<void> {

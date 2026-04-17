@@ -12,6 +12,8 @@ import {
   AcceptanceCriteria,
   Task,
   LLMConfig,
+  Baseline,
+  Notification,
 } from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -20,6 +22,7 @@ import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 import { RequirementsModule } from "./requirements/requirements.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { AiModule } from "./ai/ai.module";
+import { NotificationModule } from "./notifications/notification.module";
 
 @Module({
   imports: [
@@ -40,6 +43,8 @@ import { AiModule } from "./ai/ai.module";
         AcceptanceCriteria,
         Task,
         LLMConfig,
+        Baseline,
+        Notification,
       ],
       synchronize: false,
     }),
@@ -50,6 +55,7 @@ import { AiModule } from "./ai/ai.module";
     RequirementsModule,
     TasksModule,
     AiModule,
+    NotificationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

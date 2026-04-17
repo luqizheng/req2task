@@ -43,7 +43,7 @@
 
 | Sprint | 名称 | 状态 | 交付内容 | 里程碑 |
 |--------|------|------|----------|--------|
-| Sprint 00 | [用户与认证管理](sprint-00-frontend-user-auth.md) | ⏳ 待开始 | 用户 CRUD、个人中心、修改密码 | M0 |
+| Sprint 00 | [用户与认证管理](sprint-00-frontend-user-auth.md) | ✅ 完成 | 用户 CRUD、个人中心、修改密码 | M0 |
 | Sprint 01 | [项目与模块管理](sprint-01-frontend-projects-modules.md) | ⏳ 待开始 | ProjectListView、ProjectDetailView | M1 |
 | Sprint 02 | [需求管理基础](sprint-02-frontend-requirements-basics.md) | ⏳ 待开始 | RequirementListView、RequirementDetailView | M1 |
 | Sprint 03 | [需求状态与工作流](sprint-03-frontend-requirements-workflow.md) | ⏳ 待开始 | 状态流转、变更历史、评审组件 | M2 |
@@ -71,7 +71,7 @@
 
 | 里程碑 | 目标 Sprint | 后端状态 | 前端状态 |
 |--------|-------------|----------|----------|
-| M0 | Sprint 0 | ✅ 完成 | ⏳ 待开始 |
+| M0 | Sprint 0 | ✅ 完成 | ✅ 完成 |
 | M1 | Sprint 2 | ✅ 完成 | ⏳ 待开始 |
 | M2 | Sprint 4 | ✅ 完成 | ⏳ 待开始 |
 | M3 | Sprint 6 | ✅ 完成 | ⏳ 待开始 |

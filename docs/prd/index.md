@@ -1,5 +1,25 @@
 # 产品需求文档 - 需求转任务系统（req2task）
 
+## 实现状态总览
+
+| 功能模块 | 状态 | 对应 Sprint | 说明 |
+|----------|------|-------------|------|
+| 用户与认证管理 | ✅ 已完成 | Sprint 00 | 用户 CRUD、登录认证 |
+| 项目与模块管理 | ✅ 已完成 | Sprint 01-02 | Project、FeatureModule |
+| 需求管理基础 | ✅ 已完成 | Sprint 03 | Requirement、UserStory、AcceptanceCriteria |
+| 需求状态与变更 | ✅ 已完成 | Sprint 04 | 状态机、变更日志、评审流程 |
+| 任务管理 | ✅ 已完成 | Sprint 05-06 | Task、看板视图、任务统计 |
+| AI 基础设施 | ✅ 已完成 | Sprint 07 | LLM 配置、向量数据库 |
+| AI 需求生成 | ✅ 已完成 | Sprint 08 | AI 生成需求、用户故事 |
+| AI 冲突检测 | ✅ 已完成 | Sprint 09 | 语义检索、冲突分析、AI Chat |
+| AI 增强与优化 | ✅ 已完成 | Sprint 10 | 任务分解、工时估算 |
+| 高级功能 | 🚧 进行中 | Sprint 11 | 项目看板、报表、基线管理 |
+| 高级功能（下） | ⏳ 待开始 | Sprint 12 | 权限完善、通知系统 |
+
+> 状态符号：✅ 已完成 | 🚧 进行中 | ⏳ 待开始 | ⚠️ 有变更
+
+---
+
 ## 文档结构
 
 本产品需求文档已拆分为多个模块化文件，便于维护和阅读：
@@ -61,6 +81,7 @@
 
 - [系统概述](system-overview.md)
 - [用户管理](user-management.md)
+- [项目成员系统](project-user-system.md)
 - [核心模型](core-models.md)
 - [功能流程](functional-flows.md)
 - [需求优先级管理](requirement-priority.md)

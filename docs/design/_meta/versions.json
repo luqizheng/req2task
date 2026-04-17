@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-04-17",
+  "documents": [
+    {
+      "path": "ai/ai-assistant-design.md",
+      "version": "1.0.0",
+      "updated": "2024-02-01",
+      "changelog": "初始版本"
+    },
+    {
+      "path": "ai/llm-management.md",
+      "version": "1.0.0",
+      "updated": "2024-02-01",
+      "changelog": "初始版本"
+    },
+    {
+      "path": "ai/templates/",
+      "version": "1.0.0",
+      "updated": "2024-02-01",
+      "changelog": "初始版本"
+    },
+    {
+      "path": "data/database-design.md",
+      "version": "1.0.0",
+      "updated": "2024-02-01",
+      "changelog": "初始版本"
+    },
+    {
+      "path": "modules/module-design.md",
+      "version": "1.0.0",
+      "updated": "2024-02-01",
+      "changelog": "初始版本"
+    },
+    {
+      "path": "project/project-user-system-plan.md",
+      "version": "1.0.0",
+      "updated": "2026-04-17",
+      "changelog": "初始版本"
+    }
+  ]
+}

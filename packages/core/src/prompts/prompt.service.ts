@@ -1,4 +1,3 @@
-import { Injectable } from '@nestjs/common';
 import { RenderService } from './render.service';
 import { requirementPrompts } from './requirement.prompts';
 import { taskPrompts } from './task.prompts';
@@ -18,11 +17,12 @@ export interface RenderedPrompt {
   maxTokens: number;
 }
 
-@Injectable()
 export class PromptService {
   private prompts: Map<string, PromptTemplate>;
+  private renderService: RenderService;
 
-  constructor(private renderService: RenderService) {
+  constructor(renderService: RenderService) {
+    this.renderService = renderService;
     this.prompts = new Map();
     this.loadPrompts();
   }

@@ -1,9 +1,7 @@
-import { Injectable } from '@nestjs/common';
 import axios, { AxiosInstance } from 'axios';
 import { LLMProvider, LLMMessage, LLMResponse, LLMOptions } from './llm-provider.interface';
 import { LLMConfig } from '../entities/llm-config.entity';
 
-@Injectable()
 export class DeepSeekProvider implements LLMProvider {
   private client: AxiosInstance;
   private config: LLMConfig;

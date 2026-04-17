@@ -37,16 +37,20 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint \"src/**/*.ts\" --fix"
   },
   "dependencies": {
     "@req2task/dto": "workspace:*",
+    "@swc/core": "^1.15.26",
     "axios": "^1.6.0",
     "typeorm": "^0.3.19"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
+    "tsup": "^8.3.0",
     "typescript": "^5.3.0"
   }
 }

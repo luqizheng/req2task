@@ -1,18 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LLMConfig } from '../entities/llm-config.entity';
 import { LLMProviderType } from '@req2task/dto';
 import { LLMProvider, LLMMessage, LLMOptions } from './llm-provider.interface';
 import { DeepSeekProvider } from './deepseek.provider';
 import { OpenAIProvider } from './openai.provider';
+import { NotFoundException } from '../exceptions/business.exception';
 
-@Injectable()
 export class LLMService {
   private providerCache: Map<string, LLMProvider> = new Map();
 
   constructor(
-    @InjectRepository(LLMConfig)
     private llmConfigRepository: Repository<LLMConfig>,
   ) {}
 

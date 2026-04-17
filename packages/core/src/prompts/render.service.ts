@@ -1,6 +1,3 @@
-import { Injectable } from '@nestjs/common';
-
-@Injectable()
 export class RenderService {
   render(content: string, params: Record<string, unknown>): string {
     let result = content;

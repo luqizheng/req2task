@@ -1,7 +1,5 @@
-import { Injectable } from '@nestjs/common';
 import { VectorStore, VectorDocument, SearchResult } from './vector-store.interface';
 
-@Injectable()
 export class ChromaVectorStore implements VectorStore {
   private documents: Map<string, VectorDocument> = new Map();
 

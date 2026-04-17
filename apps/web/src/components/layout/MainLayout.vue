@@ -10,7 +10,6 @@ import {
   Flag,
   Grid,
   User,
-  Notebook,
   Setting,
   Search,
   Bell,
@@ -85,13 +84,11 @@ const handleChangePassword = async () => {
 
 const menuItems = [
   { path: '/', icon: DataLine, label: '仪表盘', name: 'dashboard' },
+  { path: '/projects', icon: Grid, label: '项目管理', name: 'projects' },
   { path: '/requirements', icon: Document, label: '需求管理', name: 'requirements' },
   { path: '/versions', icon: Ticket, label: '版本管理', name: 'versions' },
   { path: '/milestones', icon: Flag, label: '里程碑', name: 'milestones' },
-  { path: '/modules', icon: Grid, label: '功能模块', name: 'modules' },
-  { path: '/stories', icon: Notebook, label: '用户故事', name: 'stories' },
   { path: '/users', icon: User, label: '用户管理', name: 'users' },
-  { path: '/knowledge', icon: Notebook, label: '知识库', name: 'knowledge' },
 ]
 
 const bottomMenuItems = [
@@ -170,7 +167,7 @@ const bottomMenuItems = [
             </div>
             <template #dropdown>
               <el-dropdown-menu>
-                <el-dropdown-item>个人中心</el-dropdown-item>
+                <el-dropdown-item @click="router.push('/profile')">个人中心</el-dropdown-item>
                 <el-dropdown-item @click="openChangePassword">修改密码</el-dropdown-item>
                 <el-dropdown-item divided @click="handleLogout">退出登录</el-dropdown-item>
               </el-dropdown-menu>

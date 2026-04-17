@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { RawRequirementResponse } from '@/api/ai';
-import type { GenerateRequirementResponse } from '@req2task/dto';
+import type { GenerateRequirementResponseDto } from '@req2task/dto';
 
 export interface RawCollection {
   id: string;
@@ -128,7 +128,7 @@ export const useRawRequirementStore = defineStore('rawRequirement', () => {
   const generateFromRaw = async (
     id: string,
     configId?: string
-  ): Promise<GenerateRequirementResponse> => {
+  ): Promise<GenerateRequirementResponseDto> => {
     isLoading.value = true;
     error.value = null;
     try {

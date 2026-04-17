@@ -2,7 +2,7 @@
 import { ref } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 
-const props = defineProps<{
+defineProps<{
   model: Record<string, any>;
   rules?: FormRules;
   labelWidth?: string | number;

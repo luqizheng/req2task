@@ -19,8 +19,7 @@ const createLoading = ref(false);
 const fetchBaselines = async () => {
   loading.value = true;
   try {
-    const res = await projectsApi.getBaselines(projectId.value);
-    baselines.value = res.data;
+    baselines.value = await projectsApi.getBaselines(projectId.value);
   } catch (error) {
     ElMessage.error('获取基线列表失败');
   } finally {

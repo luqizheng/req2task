@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Plus } from '@element-plus/icons-vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
+import { ElMessageBox } from 'element-plus';
 import type { ProjectResponseDto } from '@req2task/dto';
 import { useUserManageStore } from '@/stores/userManage';
 import type { UserListParams } from '@/api/users';

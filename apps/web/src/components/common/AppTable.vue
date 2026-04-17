@@ -45,7 +45,7 @@ const tableData = computed(() => props.data || []);
       :height="height"
       :max-height="maxHeight"
       class="app-table-inner"
-      @row-click="emit('row-click', $event, arguments[1], arguments[2])"
+      @row-click="(row: any, column: any, event: MouseEvent) => emit('row-click', row, column, event)"
       @selection-change="emit('selection-change', $event)"
     >
       <el-table-column
@@ -63,7 +63,7 @@ const tableData = computed(() => props.data || []);
           <slot :name="col.slot" :row="row" />
         </template>
         <template v-else-if="col.formatter" #default="{ row }">
-          {{ col.formatter(row, {}, row[col.prop]) }}
+          {{ col.formatter?.(row, {}, row[col.prop]) }}
         </template>
       </el-table-column>
     </el-table>

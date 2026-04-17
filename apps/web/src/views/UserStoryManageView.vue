@@ -5,8 +5,8 @@ import { Plus, Edit, Delete, Close, Check } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useUserStoryStore } from '@/stores/userStory';
 import { useAcceptanceCriteriaStore } from '@/stores/acceptanceCriteria';
-import type { UserStoryResponseDto } from '@req2task/dto';
-import type { AcceptanceCriteriaResponseDto } from '@req2task/dto';
+import type { UserStoryResponseDto, AcceptanceCriteriaResponseDto } from '@req2task/dto';
+import { CriteriaType } from '@req2task/dto';
 
 const route = useRoute();
 const router = useRouter();
@@ -29,9 +29,12 @@ const storyForm = ref({
   benefit: ''
 });
 
-const criteriaForm = ref({
+const criteriaForm = ref<{
+  content: string;
+  criteriaType: CriteriaType;
+}>({
   content: '',
-  type: 'functional'
+  criteriaType: CriteriaType.FUNCTIONAL
 });
 
 const handleSelectStory = async (story: UserStoryResponseDto) => {
@@ -115,13 +118,13 @@ const handleDeleteStory = async (story: UserStoryResponseDto) => {
 };
 
 const handleAddCriteria = () => {
-  criteriaForm.value = { content: '', type: 'functional' };
+  criteriaForm.value = { content: '', criteriaType: CriteriaType.FUNCTIONAL };
   isAddingCriteria.value = true;
 };
 
 const handleCancelAddCriteria = () => {
   isAddingCriteria.value = false;
-  criteriaForm.value = { content: '', type: 'functional' };
+  criteriaForm.value = { content: '', criteriaType: CriteriaType.FUNCTIONAL };
 };
 
 const handleSaveCriteria = async () => {
@@ -141,7 +144,7 @@ const handleSaveCriteria = async () => {
 const handleEditCriteria = (criteria: AcceptanceCriteriaResponseDto) => {
   criteriaForm.value = {
     content: criteria.content,
-    type: criteria.type
+    criteriaType: criteria.criteriaType
   };
   editingCriteriaId.value = criteria.id;
   isEditingCriteria.value = true;
@@ -150,7 +153,7 @@ const handleEditCriteria = (criteria: AcceptanceCriteriaResponseDto) => {
 const handleCancelEditCriteria = () => {
   isEditingCriteria.value = false;
   editingCriteriaId.value = null;
-  criteriaForm.value = { content: '', type: 'functional' };
+  criteriaForm.value = { content: '', criteriaType: CriteriaType.FUNCTIONAL };
 };
 
 const handleSaveEditCriteria = async () => {
@@ -332,7 +335,7 @@ onMounted(async () => {
               </div>
               <template v-else>
                 <div class="criteria-content">
-                  <el-checkbox :model-value="criteria.isChecked" disabled>{{ criteria.content }}</el-checkbox>
+                  <span>{{ criteria.content }}</span>
                 </div>
                 <div class="criteria-actions">
                   <el-button type="primary" :icon="Edit" size="small" text @click="handleEditCriteria(criteria)" />

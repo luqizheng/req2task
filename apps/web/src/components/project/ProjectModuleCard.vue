@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { Plus, Delete, List } from '@element-plus/icons-vue';
+import { Plus, List } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FeatureModuleResponseDto, CreateFeatureModuleDto, UpdateFeatureModuleDto } from '@req2task/dto';

@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref, reactive, watch } from 'vue';
+import { ref, reactive } from 'vue';
 import { Edit } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
-import { ElMessage } from 'element-plus';
+import { ProjectStatus } from '@req2task/dto';
 import type { ProjectResponseDto, UpdateProjectDto } from '@req2task/dto';
 
 interface Props {
@@ -20,10 +20,14 @@ const emit = defineEmits<{
 
 const dialogVisible = ref(false);
 const formRef = ref<FormInstance>();
-const formData = reactive({
+const formData = reactive<{
+  name: string;
+  description: string;
+  status: ProjectStatus;
+}>({
   name: '',
   description: '',
-  status: 'ACTIVE',
+  status: ProjectStatus.ACTIVE,
 });
 
 const rules: FormRules = {
@@ -31,10 +35,10 @@ const rules: FormRules = {
 };
 
 const statusOptions = [
-  { value: 'ACTIVE', label: '进行中' },
-  { value: 'PLANNING', label: '规划中' },
-  { value: 'COMPLETED', label: '已完成' },
-  { value: 'ARCHIVED', label: '已归档' },
+  { value: ProjectStatus.ACTIVE, label: '进行中' },
+  { value: ProjectStatus.PLANNING, label: '规划中' },
+  { value: ProjectStatus.COMPLETED, label: '已完成' },
+  { value: ProjectStatus.ARCHIVED, label: '已归档' },
 ];
 
 const getStatusTagType = (status: string) => {
@@ -55,7 +59,7 @@ const handleEdit = () => {
   if (!props.project) return;
   formData.name = props.project.name;
   formData.description = props.project.description || '';
-  formData.status = props.project.status || 'ACTIVE';
+  formData.status = props.project.status || ProjectStatus.ACTIVE;
   dialogVisible.value = true;
 };
 

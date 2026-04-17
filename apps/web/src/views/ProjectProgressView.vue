@@ -38,8 +38,7 @@ const taskStatusList = computed(() => {
 const fetchProgress = async () => {
   loading.value = true;
   try {
-    const res = await projectsApi.getProgress(projectId.value);
-    progressData.value = res.data;
+    progressData.value = await projectsApi.getProgress(projectId.value);
   } catch (error) {
     ElMessage.error('获取项目进度失败');
   } finally {

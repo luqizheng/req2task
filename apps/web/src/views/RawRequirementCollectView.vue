@@ -6,7 +6,6 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRawRequirementStore } from '@/stores/rawRequirement';
 import { useAiStore } from '@/stores/ai';
 import type { RawRequirementResponse } from '@/api/ai';
-import type { GenerateRequirementResponse } from '@req2task/dto';
 
 const route = useRoute();
 const router = useRouter();
@@ -21,12 +20,8 @@ const isEditing = ref(false);
 const editingId = ref<string | null>(null);
 const newRequirementContent = ref('');
 const generatingId = ref<string | null>(null);
-const generatedResult = ref<GenerateRequirementResponse | null>(null);
+const generatedResult = ref<any>(null);
 const showResultDialog = ref(false);
-
-const requirementFormRules = {
-  content: [{ required: true, message: '请输入原始需求内容', trigger: 'blur' }]
-};
 
 const handleAddRequirement = () => {
   isAdding.value = true;

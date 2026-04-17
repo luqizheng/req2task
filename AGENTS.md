@@ -54,6 +54,13 @@ apps/
 └── service/       # NestJS 后端
 ```
 
+## 子包 AGENTS.md
+
+各子包有独立的 AGENTS.md 文件，包含该包的特定规则和指南：
+
+- [apps/web/AGENTS.md](apps/web/AGENTS.md) - Vue 3 前端开发规范
+- [apps/service/AGENTS.md](apps/service/AGENTS.md) - NestJS 后端开发规范
+
 ## DTO 包规则
 
 **重要**：Web 和 Service 交互的 Request/Response DTO 必须定义在 `packages/dto` 中：

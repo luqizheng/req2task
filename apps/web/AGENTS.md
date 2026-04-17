@@ -63,3 +63,38 @@ apps/web/src/
 3. 路由配置位于 `router/index.ts`
 4. 运行 lint 和 type-check 后再提交
 5. UI 设计规则参见 [DESIGN-RULES.md](./DESIGN-RULES.md)
+
+## API 调用规范
+
+### Axios 拦截器
+
+[src/api/axios.ts](src/api/axios.ts) 中的响应拦截器已配置为自动返回业务数据：
+
+- 成功响应：直接返回 `apiResponse.data`（业务数据）
+- 失败响应：抛出 `Error` 并自动处理 401 重定向
+
+### 调用方式
+
+API 返回的直接是业务数据，无需解构 `data` 属性：
+
+```typescript
+// ✅ 正确：直接使用返回值
+const data = await api.get<MyType>('/endpoint');
+currentValue.value = data;
+
+// ❌ 错误：无需解构 { data }
+const { data } = await api.get<MyType>('/endpoint');
+currentValue.value = data;
+```
+
+### API 定义文件
+
+| 文件 | 用途 |
+|------|------|
+| `src/api/axios.ts` | Axios 实例和拦截器配置 |
+| `src/api/auth.ts` | 认证相关 API |
+| `src/api/projects.ts` | 项目管理 API |
+| `src/api/requirements.ts` | 需求管理 API |
+| `src/api/tasks.ts` | 任务管理 API |
+| `src/api/users.ts` | 用户管理 API |
+| `src/api/ai.ts` | AI 功能 API |

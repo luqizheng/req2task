@@ -5,7 +5,7 @@
 | 计划类型 | Sprint 数量 | 完成 | 进行中 | 待开始 |
 |----------|-------------|------|--------|--------|
 | 后端实施路线图 | 15 | 13 | 0 | 2 |
-| 前端开发计划 | 11 | 11 | 0 | 0 |
+| 前端开发计划 | 16 | 10 | 1 | 5 |
 | **总计** | **25** | **24** | **0** | **1** |
 
 ---
@@ -48,6 +48,17 @@
 | Sprint 09 | [高级功能与优化 - 上](sprint-09-frontend-advanced-part1.md) | ✅ 完成 | 进度看板、基线管理、通知组件 | M5 |
 | Sprint 10 | [高级功能与优化 - 下](sprint-10-frontend-advanced-part2.md) | ✅ 完成 | 性能优化、E2E 测试、响应式适配 | M5 |
 
+### M6 前端开发计划
+
+| Sprint | 名称 | 状态 | 交付内容 | 里程碑 |
+|--------|------|------|----------|--------|
+| Sprint 11 | [核心 Store 与页面](sprint-11-frontend-core-store.md) | 🚧 进行中 | Store 补齐、RawRequirementCollectView、UserStoryManageView | M6 |
+| Sprint 12 | [组件体系](sprint-12-frontend-components.md) | ⏳ 待开始 | 通用组件库、业务组件库 | M6 |
+| Sprint 13 | [体验优化](sprint-13-frontend-experience.md) | ⏳ 待开始 | 骨架屏、响应式、动画 | M6 |
+| Sprint 14 | [权限与通知](sprint-15-frontend-permission.md) | ⏳ 待开始 | 权限管理、通知系统 | M6 |
+
+详细计划: [前端路线图](frontend-roadmap.md)
+
 ---
 
 ## 里程碑进度
@@ -60,7 +71,7 @@
 | M3 | Sprint 6 | ✅ 完成 | ✅ 完成 |
 | M4 | Sprint 8 | ✅ 完成 | ✅ 完成 |
 | M5 | Sprint 10-12 | ✅ 完成 | ✅ 完成 |
-| M6 | Sprint 13-15 | 🚧 进行中 | ⏳ 待开始 |
+| M6 | Sprint 13-15 | 🚧 进行中 | 🚧 进行中 |
 
 ---
 
@@ -77,6 +88,7 @@
 
 ## 更新日志
 
+- 2026-04-17: 新增前端 M6 开发计划 (Sprint 11-15)，Sprint 11 🚧 进行中
 - 2026-04-17: Sprint 11-13 完成，M5/M6 里程碑推进
 - 2026-04-17: 初始化 Sprint 索引，创建拆分文件
 - 2026-04-17: 更新后端 Sprint 状态 (Sprint 01-10 ✅ 完成, Sprint 11 🚧 进行中, Sprint 12 ⏳ 待开始)

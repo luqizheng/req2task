@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { AIChat } from '@req2task/ai-chat';
+import '@req2task/ai-chat/dist/style.css';
 import { ElMessage } from 'element-plus';
 import { useUserStore } from '@/stores/user';
 import { useAiStore } from '@/stores/ai';

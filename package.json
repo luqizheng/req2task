@@ -21,7 +21,8 @@
     "db:migration:generate": "ts-node scripts/migration-generate.ts",
     "db:migration:run": "ts-node scripts/migration-run.ts",
     "db:migration:revert": "ts-node scripts/migration-revert.ts",
-    "db:migration:show": "ts-node scripts/migration-show.ts"
+    "db:migration:show": "ts-node scripts/migration-show.ts",
+    "db:reset": "ts-node scripts/db-reset.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

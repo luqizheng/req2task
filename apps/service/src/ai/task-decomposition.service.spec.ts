@@ -24,10 +24,11 @@ describe('TaskDecompositionService', () => {
 
     const mockLLMService = {
       generate: jest.fn(),
+      chatWithConfig: jest.fn(),
     };
 
     const mockPromptService = {
-      renderTemplate: jest.fn(),
+      render: jest.fn(),
     };
 
     const mockVectorStore = {
@@ -69,8 +70,13 @@ describe('TaskDecompositionService', () => {
 
   describe('decomposeRequirement', () => {
     it('should decompose requirement into tasks', async () => {
-      promptService.renderTemplate.mockReturnValue('Template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Template',
+        temperature: 0.5,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: `1. Design database schema
 Hours: 4 hours
 Priority: high
@@ -90,8 +96,13 @@ Description: Implement REST API endpoints`,
     });
 
     it('should return empty decomposition when no tasks found', async () => {
-      promptService.renderTemplate.mockReturnValue('Template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Template',
+        temperature: 0.5,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: 'No tasks generated.',
         configId: 'default',
       });
@@ -192,8 +203,13 @@ Reasoning: The feature requires database design, API development, and testing. E
       } as Task;
 
       taskRepository.findOne.mockResolvedValue(mockTask);
-      promptService.renderTemplate.mockReturnValue('Template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Template',
+        temperature: 0.5,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: `1. Subtask 1
 Hours: 2 hours
 Priority: medium

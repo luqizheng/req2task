@@ -149,16 +149,19 @@ export class ConflictDetectionService {
       .map((r, i) => `${i + 1}. ${r.content}`)
       .join('\n');
 
-    const template = this.promptService.renderTemplate('conflict_detection', {
+    const rendered = this.promptService.render('CONFLICT_DETECTION', {
       requirements: `Target: ${targetRequirement}\n\n${requirementsText}`,
     });
 
     const messages: LLMMessage[] = [
-      { role: 'system', content: 'You are a requirements analyst.' },
-      { role: 'user', content: template },
+      { role: 'system', content: rendered.systemPrompt },
+      { role: 'user', content: rendered.userPrompt },
     ];
 
-    const response = await this.llmService.generate(messages, configId);
+    const response = await this.llmService.chatWithConfig(messages, configId, {
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
 
     return this.parseConflicts(response.content, targetRequirement, relatedRequirements);
   }

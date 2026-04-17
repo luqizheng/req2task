@@ -11,6 +11,7 @@ import {
   Task,
   LLMService,
   PromptService,
+  RenderService,
   ChromaVectorStore,
 } from '@req2task/core';
 
@@ -24,6 +25,7 @@ import {
     TaskDecompositionService,
     LLMService,
     PromptService,
+    RenderService,
     ChromaVectorStore,
   ],
   exports: [

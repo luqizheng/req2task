@@ -31,11 +31,12 @@ describe('AiService', () => {
     const mockLLMService = {
       chat: jest.fn(),
       generate: jest.fn(),
+      chatWithConfig: jest.fn(),
     };
 
     const mockPromptService = {
-      getAllTemplates: jest.fn(),
-      renderTemplate: jest.fn(),
+      getAll: jest.fn(),
+      render: jest.fn(),
     };
 
     const mockVectorStore = {
@@ -163,8 +164,13 @@ describe('AiService', () => {
     it('should generate requirement', async () => {
       const input = 'Build a login feature';
 
-      promptService.renderTemplate.mockReturnValue('Generated template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'You are a helpful assistant.',
+        userPrompt: 'Generated template',
+        temperature: 0.7,
+        maxTokens: 2000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: 'Generated requirement content',
         configId: 'default',
       });
@@ -172,9 +178,9 @@ describe('AiService', () => {
       const result = await service.generateRequirement(input);
 
       expect(result.content).toBe('Generated requirement content');
-      expect(promptService.renderTemplate).toHaveBeenCalledWith(
-        'requirement_generation',
-        { input },
+      expect(promptService.render).toHaveBeenCalledWith(
+        'REQUIREMENT_GENERATION',
+        { rawRequirement: input, conversation: '' },
       );
     });
   });
@@ -211,16 +217,32 @@ describe('AiService', () => {
   describe('getPromptTemplates', () => {
     it('should return all prompt templates', async () => {
       const mockTemplates = [
-        { name: 'template1', template: 'Template 1' },
-        { name: 'template2', template: 'Template 2' },
+        {
+          code: 'T1',
+          name: 'Template 1',
+          category: 'requirement-generation' as const,
+          description: 'Test',
+          systemPrompt: 'System',
+          userPromptTemplate: 'User',
+          parameters: [],
+        },
+        {
+          code: 'T2',
+          name: 'Template 2',
+          category: 'task-breakdown' as const,
+          description: 'Test',
+          systemPrompt: 'System',
+          userPromptTemplate: 'User',
+          parameters: [],
+        },
       ];
 
-      promptService.getAllTemplates.mockReturnValue(mockTemplates);
+      promptService.getAll.mockReturnValue(mockTemplates as any);
 
       const result = await service.getPromptTemplates();
 
       expect(result).toHaveLength(2);
-      expect(promptService.getAllTemplates).toHaveBeenCalled();
+      expect(promptService.getAll).toHaveBeenCalled();
     });
   });
 });

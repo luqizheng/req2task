@@ -6,6 +6,8 @@
 
 ### 产品定义
 1. **[系统概述](system-overview.md)** - 产品定位、目标用户、核心价值、使用场景
+2. **[系统设置](system-settings.md)** - 全局配置、注册开关、安全策略
+3. **[用户管理](user-management.md)** - 用户生命周期、认证授权、角色权限、审计日志
 
 ### 业务模型
 2. **[核心模型](core-models.md)** - 层级结构、实体关系、字段定义
@@ -42,6 +44,8 @@
 | v1.2 | 2024-02-01 | 拆分文档结构 |
 | v2.0 | 2026-04-16 | 补充技术设计、实施路线图 |
 | v2.1 | 2026-04-16 | 需求状态增加processing/completed、设计文档移至独立目录 |
+| v2.2 | 2026-04-17 | 新增用户管理系统PRD |
+| v2.3 | 2026-04-17 | 新增系统设置模块PRD |
 
 ## 维护说明
 
@@ -54,6 +58,8 @@
 ## 快速导航
 
 - [系统概述](system-overview.md)
+- [系统设置](system-settings.md)
+- [用户管理](user-management.md)
 - [核心模型](core-models.md)
 - [功能流程](functional-flows.md)
 - [需求优先级管理](requirement-priority.md)

@@ -24,10 +24,11 @@ describe('ConflictDetectionService', () => {
 
     const mockLLMService = {
       generate: jest.fn(),
+      chatWithConfig: jest.fn(),
     };
 
     const mockPromptService = {
-      renderTemplate: jest.fn(),
+      render: jest.fn(),
     };
 
     const mockVectorStore = {
@@ -104,8 +105,13 @@ describe('ConflictDetectionService', () => {
 
       rawRequirementRepository.findOne.mockResolvedValue(mockRequirement);
       vectorStore.search.mockResolvedValue(mockRelated);
-      promptService.renderTemplate.mockReturnValue('Conflict template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Conflict template',
+        temperature: 0.5,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: `Type: functional
 Description: Login and registration have overlapping user fields
 Suggestion: Consolidate user data collection`,

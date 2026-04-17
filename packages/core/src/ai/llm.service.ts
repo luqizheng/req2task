@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LLMConfig, LLMProviderType } from '../entities/llm-config.entity';
-import { LLMProvider, LLMMessage } from './llm-provider.interface';
+import { LLMProvider, LLMMessage, LLMOptions } from './llm-provider.interface';
 import { DeepSeekProvider } from './deepseek.provider';
 import { OpenAIProvider } from './openai.provider';
 
@@ -70,5 +70,18 @@ export class LLMService {
     configId?: string,
   ): Promise<{ content: string; configId: string }> {
     return this.generate(messages, configId);
+  }
+
+  async chatWithConfig(
+    messages: LLMMessage[],
+    configId?: string,
+    options?: LLMOptions,
+  ): Promise<{ content: string; configId: string }> {
+    const provider = await this.getProvider(configId);
+    const response = await provider.generate(messages, options);
+    return {
+      content: response.content,
+      configId: configId || 'default',
+    };
   }
 }

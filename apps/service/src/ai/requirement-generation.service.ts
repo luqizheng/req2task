@@ -67,16 +67,20 @@ export class RequirementGenerationService {
         status: RawRequirementStatus.PROCESSING,
       });
 
-      const template = this.promptService.renderTemplate('requirement_generation', {
-        input: rawRequirement.originalContent,
+      const rendered = this.promptService.render('REQUIREMENT_GENERATION', {
+        rawRequirement: rawRequirement.originalContent,
+        conversation: '',
       });
 
       const messages: LLMMessage[] = [
-        { role: 'system', content: 'You are a helpful requirements analyst.' },
-        { role: 'user', content: template },
+        { role: 'system', content: rendered.systemPrompt },
+        { role: 'user', content: rendered.userPrompt },
       ];
 
-      const response = await this.llmService.generate(messages, configId);
+      const response = await this.llmService.chatWithConfig(messages, configId, {
+        temperature: rendered.temperature,
+        maxTokens: rendered.maxTokens,
+      });
 
       const parsed = this.parseGeneratedContent(response.content);
 
@@ -121,16 +125,19 @@ export class RequirementGenerationService {
     requirementContent: string,
     configId?: string,
   ): Promise<{ role: string; goal: string; benefit: string }[]> {
-    const template = this.promptService.renderTemplate('user_story_generation', {
-      requirement: requirementContent,
+    const rendered = this.promptService.render('USER_STORY_GENERATION', {
+      requirementText: requirementContent,
     });
 
     const messages: LLMMessage[] = [
-      { role: 'system', content: 'You are a helpful requirements analyst.' },
-      { role: 'user', content: template },
+      { role: 'system', content: rendered.systemPrompt },
+      { role: 'user', content: rendered.userPrompt },
     ];
 
-    const response = await this.llmService.generate(messages, configId);
+    const response = await this.llmService.chatWithConfig(messages, configId, {
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
     return this.parseUserStories(response.content);
   }
 

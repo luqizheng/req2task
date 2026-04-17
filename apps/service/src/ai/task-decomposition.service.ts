@@ -41,16 +41,19 @@ export class TaskDecompositionService {
     requirementContent: string,
     configId?: string,
   ): Promise<TaskDecomposition> {
-    const template = this.promptService.renderTemplate('task_decomposition', {
-      requirement: requirementContent,
+    const rendered = this.promptService.render('TASK_BREAKDOWN', {
+      modules: requirementContent,
     });
 
     const messages: LLMMessage[] = [
-      { role: 'system', content: 'You are a project manager.' },
-      { role: 'user', content: template },
+      { role: 'system', content: rendered.systemPrompt },
+      { role: 'user', content: rendered.userPrompt },
     ];
 
-    const response = await this.llmService.generate(messages, configId);
+    const response = await this.llmService.chatWithConfig(messages, configId, {
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
     return this.parseDecompositionResult(response.content);
   }
 

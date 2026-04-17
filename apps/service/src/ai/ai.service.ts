@@ -71,16 +71,20 @@ export class AiService {
     input: string,
     configId?: string,
   ): Promise<{ content: string }> {
-    const template = this.promptService.renderTemplate('requirement_generation', {
-      input,
+    const rendered = this.promptService.render('REQUIREMENT_GENERATION', {
+      rawRequirement: input,
+      conversation: '',
     });
 
     const messages: LLMMessage[] = [
-      { role: 'system', content: 'You are a helpful assistant.' },
-      { role: 'user', content: template },
+      { role: 'system', content: rendered.systemPrompt },
+      { role: 'user', content: rendered.userPrompt },
     ];
 
-    const result = await this.llmService.generate(messages, configId);
+    const result = await this.llmService.chatWithConfig(messages, configId, {
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
     return { content: result.content };
   }
 
@@ -95,6 +99,6 @@ export class AiService {
   }
 
   async getPromptTemplates() {
-    return this.promptService.getAllTemplates();
+    return this.promptService.getAll();
   }
 }

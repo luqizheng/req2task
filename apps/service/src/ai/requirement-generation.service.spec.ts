@@ -32,10 +32,11 @@ describe('RequirementGenerationService', () => {
 
     const mockLLMService = {
       generate: jest.fn(),
+      chatWithConfig: jest.fn(),
     };
 
     const mockPromptService = {
-      renderTemplate: jest.fn(),
+      render: jest.fn(),
     };
 
     const mockVectorStore = {
@@ -112,9 +113,14 @@ describe('RequirementGenerationService', () => {
       } as RawRequirement;
 
       rawRequirementRepository.findOne.mockResolvedValue(mockRawRequirement);
-      rawRequirementRepository.update.mockResolvedValue({ affected: 1 } as unknown);
-      promptService.renderTemplate.mockReturnValue('Generated template');
-      llmService.generate.mockResolvedValue({
+      rawRequirementRepository.update.mockResolvedValue({ affected: 1 } as any);
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Generated template',
+        temperature: 0.3,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: `Title: Login Feature
 Description: Implement user authentication
 Priority: high
@@ -145,8 +151,13 @@ As a user, I want to login, so that I can access my account`,
 
   describe('generateUserStories', () => {
     it('should generate user stories', async () => {
-      promptService.renderTemplate.mockReturnValue('Template');
-      llmService.generate.mockResolvedValue({
+      promptService.render.mockReturnValue({
+        systemPrompt: 'System prompt',
+        userPrompt: 'Template',
+        temperature: 0.7,
+        maxTokens: 3000,
+      });
+      llmService.chatWithConfig.mockResolvedValue({
         content: `As a user, I want to login, so that I can access my account
 As a user, I want to reset password, so that I can recover my account`,
         configId: 'default',

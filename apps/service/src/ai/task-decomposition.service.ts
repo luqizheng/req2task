@@ -7,7 +7,8 @@ import {
   ChromaVectorStore,
   LLMMessage,
 } from '@req2task/core';
-import { Task, TaskPriority } from '@req2task/core';
+import { Task } from '@req2task/core';
+import { TaskPriority } from '@req2task/dto';
 
 export interface TaskDecomposition {
   tasks: {

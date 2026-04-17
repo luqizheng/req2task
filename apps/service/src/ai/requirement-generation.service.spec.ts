@@ -11,8 +11,8 @@ import {
   PromptService,
   ChromaVectorStore,
   RawRequirement,
-  RawRequirementStatus,
 } from '@req2task/core';
+import { RawRequirementStatus } from '@req2task/dto';
 
 describe('RequirementGenerationService', () => {
   let service: RequirementGenerationService;

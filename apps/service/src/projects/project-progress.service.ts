@@ -1,14 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Project,
-  Requirement,
-  RequirementStatus,
-  Task,
-  TaskStatus,
-  FeatureModule,
-} from '@req2task/core';
+import { Project, Requirement, Task, FeatureModule } from '@req2task/core';
+import { RequirementStatus, TaskStatus } from '@req2task/dto';
 
 export interface ProjectProgress {
   projectId: string;

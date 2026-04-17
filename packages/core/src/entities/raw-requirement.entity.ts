@@ -9,13 +9,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Requirement } from './requirement.entity';
-
-export enum RawRequirementStatus {
-  PENDING = 'pending',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
+import { RawRequirementStatus } from '@req2task/dto';
 
 @Entity('raw_requirements')
 export class RawRequirement {

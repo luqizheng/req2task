@@ -1,12 +1,22 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Baseline,
-  Project,
-  Requirement,
-  Task,
-} from '@req2task/core';
+import { Baseline, Project, Requirement, Task } from '@req2task/core';
+import { RequirementStatus, Priority, TaskStatus, TaskPriority } from '@req2task/dto';
+
+interface SnapshotData {
+  requirements?: Array<{
+    id: string;
+    status?: RequirementStatus;
+    priority?: Priority;
+  }>;
+  tasks?: Array<{
+    id: string;
+    status?: TaskStatus;
+    priority?: TaskPriority;
+  }>;
+  timestamp?: string;
+}
 
 @Injectable()
 export class BaselineService {
@@ -101,7 +111,7 @@ export class BaselineService {
   }
 
   private async restoreSnapshot(
-    snapshot: Record<string, unknown>,
+    snapshot: SnapshotData,
     _projectId: string,
   ): Promise<void> {
     for (const reqSnapshot of snapshot.requirements || []) {

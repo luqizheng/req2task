@@ -9,6 +9,7 @@ import {
   SearchResult,
 } from '@req2task/core';
 import { RawRequirement } from '@req2task/core';
+import { ConflictType } from '@req2task/dto';
 
 export interface ConflictDetectionResult {
   hasConflict: boolean;
@@ -28,13 +29,6 @@ export interface Conflict {
   type: ConflictType;
   description: string;
   suggestion: string;
-}
-
-export enum ConflictType {
-  LOGICAL = 'logical',
-  TEMPORAL = 'temporal',
-  FUNCTIONAL = 'functional',
-  RESOURCE = 'resource',
 }
 
 @Injectable()

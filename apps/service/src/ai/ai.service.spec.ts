@@ -7,8 +7,8 @@ import {
   PromptService,
   ChromaVectorStore,
   LLMConfig,
-  LLMProviderType,
 } from '@req2task/core';
+import { LLMProviderType } from '@req2task/dto';
 
 describe('AiService', () => {
   let service: AiService;

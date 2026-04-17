@@ -11,21 +11,7 @@ import {
 } from 'typeorm';
 import { Requirement } from './requirement.entity';
 import { User } from './user.entity';
-
-export enum TaskStatus {
-  TODO = 'todo',
-  IN_PROGRESS = 'in_progress',
-  IN_REVIEW = 'in_review',
-  DONE = 'done',
-  BLOCKED = 'blocked',
-}
-
-export enum TaskPriority {
-  URGENT = 'urgent',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
-}
+import { TaskStatus, TaskPriority } from '@req2task/dto';
 
 @Entity('tasks')
 export class Task {

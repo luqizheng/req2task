@@ -1,12 +1,8 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Requirement,
-  RequirementStatus,
-  RequirementChangeLog,
-  ChangeType,
-} from '../entities';
+import { Requirement, RequirementChangeLog } from '../entities';
+import { RequirementStatus, ChangeType } from '@req2task/dto';
 
 const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.DRAFT]: [

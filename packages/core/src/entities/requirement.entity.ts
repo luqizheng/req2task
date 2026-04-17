@@ -11,29 +11,7 @@ import {
 import { FeatureModule } from './feature-module.entity';
 import { User } from './user.entity';
 import { UserStory } from './user-story.entity';
-
-export enum RequirementStatus {
-  DRAFT = 'draft',
-  REVIEWED = 'reviewed',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum Priority {
-  CRITICAL = 'critical',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
-}
-
-export enum RequirementSource {
-  MANUAL = 'manual',
-  AI_GENERATED = 'ai_generated',
-  DOCUMENT_IMPORT = 'document_import',
-}
+import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 
 @Entity('requirements')
 export class Requirement {

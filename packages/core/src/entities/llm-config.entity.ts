@@ -5,12 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum LLMProviderType {
-  DEEPSEEK = 'deepseek',
-  OPENAI = 'openai',
-  OLLAMA = 'ollama',
-}
+import { LLMProviderType } from '@req2task/dto';
 
 @Entity('llm_configs')
 export class LLMConfig {

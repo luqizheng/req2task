@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsBoolean } from 'class-validator';
-import { RequirementStatus } from '@req2task/core';
+import { RequirementStatus } from '../../enums';
 
 export class TransitionStatusDto {
   @IsEnum(RequirementStatus)

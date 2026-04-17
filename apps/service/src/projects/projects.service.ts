@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Project, ProjectStatus, User } from '@req2task/core';
+import { Project, User } from '@req2task/core';
+import { ProjectStatus } from '@req2task/dto';
 import {
   CreateProjectDto,
   UpdateProjectDto,

@@ -10,7 +10,7 @@ import {
   Max,
 } from 'class-validator';
 import { Type } from 'class-transformer';
-import { LLMProviderType } from '@req2task/core';
+import { LLMProviderType } from '../../enums';
 
 export class CreateLLMConfigDto {
   @IsString()

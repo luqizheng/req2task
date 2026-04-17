@@ -1,5 +1,5 @@
 import { IsEmail, IsEnum, IsOptional, IsString, IsNotEmpty, MinLength } from 'class-validator';
-import { UserRole } from '@req2task/core';
+import { UserRole } from '../../enums';
 
 export class CreateUserDto {
   @IsString()

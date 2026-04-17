@@ -1,4 +1,4 @@
-import { UserRole } from '@req2task/core';
+import { UserRole } from '../../enums';
 
 export class UserResponseDto {
   id!: string;

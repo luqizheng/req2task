@@ -7,7 +7,7 @@ import {
   IsDateString,
   IsNumber,
 } from 'class-validator';
-import { TaskStatus, TaskPriority } from '@req2task/core';
+import { TaskStatus, TaskPriority } from '../../enums';
 
 export class CreateTaskDto {
   @IsString()

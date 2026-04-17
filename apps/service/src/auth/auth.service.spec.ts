@@ -4,7 +4,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConflictException, UnauthorizedException } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
-import { User, UserRole } from '@req2task/core';
+import { User } from '@req2task/core';
+import { UserRole } from '@req2task/dto';
 
 interface MockRepository {
   findOne: jest.Mock;

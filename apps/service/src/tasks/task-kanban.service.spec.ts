@@ -3,7 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { TaskKanbanService } from './task-kanban.service';
-import { Task, TaskStatus, Requirement } from '@req2task/core';
+import { Task, Requirement } from '@req2task/core';
+import { TaskStatus } from '@req2task/dto';
 
 describe('TaskKanbanService', () => {
   let service: TaskKanbanService;

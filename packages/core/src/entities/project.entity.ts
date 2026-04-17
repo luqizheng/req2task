@@ -8,14 +8,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { User } from './user.entity';
-
-export enum ProjectStatus {
-  PLANNING = 'planning',
-  ACTIVE = 'active',
-  ON_HOLD = 'on_hold',
-  COMPLETED = 'completed',
-  ARCHIVED = 'archived',
-}
+import { ProjectStatus } from '@req2task/dto';
 
 @Entity('projects')
 export class Project {

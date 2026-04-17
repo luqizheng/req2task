@@ -1,7 +1,8 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { LLMConfig, LLMProviderType } from '../entities/llm-config.entity';
+import { LLMConfig } from '../entities/llm-config.entity';
+import { LLMProviderType } from '@req2task/dto';
 import { LLMProvider, LLMMessage, LLMOptions } from './llm-provider.interface';
 import { DeepSeekProvider } from './deepseek.provider';
 import { OpenAIProvider } from './openai.provider';

@@ -1,4 +1,4 @@
-import { CriteriaType } from '@req2task/core';
+import { CriteriaType } from '../../enums';
 
 export class AcceptanceCriteriaSummaryDto {
   id!: string;

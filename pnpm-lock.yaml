@@ -272,6 +272,9 @@ importers:
 
   packages/core:
     dependencies:
+      '@req2task/dto':
+        specifier: workspace:*
+        version: link:../dto
       axios:
         specifier: ^1.6.0
         version: 1.15.0
@@ -297,9 +300,6 @@ importers:
 
   packages/dto:
     dependencies:
-      '@req2task/core':
-        specifier: workspace:*
-        version: link:../core
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1

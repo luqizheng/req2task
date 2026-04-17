@@ -4,8 +4,7 @@ import { Plus, Edit, Delete, Check, Close, Setting } from '@element-plus/icons-v
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useAiStore } from '@/stores/ai';
-import type { CreateLLMConfigDto, UpdateLLMConfigDto } from '@req2task/dto';
-import { LLMProviderType } from '@req2task/core';
+import { type CreateLLMConfigDto, type UpdateLLMConfigDto, LLMProviderType } from '@req2task/dto';
 
 const aiStore = useAiStore();
 const loading = ref(false);

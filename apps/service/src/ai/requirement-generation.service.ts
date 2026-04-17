@@ -7,10 +7,8 @@ import {
   ChromaVectorStore,
   LLMMessage,
 } from '@req2task/core';
-import { RawRequirement, RawRequirementStatus } from '@req2task/core';
-import {
-  Priority,
-} from '@req2task/core';
+import { RawRequirement } from '@req2task/core';
+import { RawRequirementStatus, Priority } from '@req2task/dto';
 
 export interface GenerateRequirementResult {
   id: string;

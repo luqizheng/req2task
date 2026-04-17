@@ -4,14 +4,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Requirement,
-  RequirementStatus,
-  Priority,
-  RequirementSource,
-  UserStory,
-  AcceptanceCriteria,
-} from '@req2task/core';
+import { Requirement, UserStory, AcceptanceCriteria } from '@req2task/core';
+import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 import {
   CreateRequirementDto,
   UpdateRequirementDto,

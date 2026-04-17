@@ -9,7 +9,7 @@ import {
   Priority,
   RequirementSource,
   RequirementStatus,
-} from '@req2task/core';
+} from '../../enums';
 import { AcceptanceCriteriaSummaryDto } from './acceptance-criteria-summary.dto';
 
 export class CreateRequirementDto {

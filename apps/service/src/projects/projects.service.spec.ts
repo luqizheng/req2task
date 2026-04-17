@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { Project, ProjectStatus, User, UserRole } from '@req2task/core';
+import { Project, User } from '@req2task/core';
+import { ProjectStatus, UserRole } from '@req2task/dto';
 
 interface MockRepository {
   findAndCount: jest.Mock;
@@ -53,6 +54,10 @@ describe('ProjectsService', () => {
 
     userRepository = {
       findOne: jest.fn(),
+      findAndCount: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      remove: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({

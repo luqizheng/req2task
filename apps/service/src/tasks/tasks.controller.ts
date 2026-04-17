@@ -20,7 +20,7 @@ import {
   TaskResponseDto,
   TaskListResponseDto,
 } from '@req2task/dto';
-import { TaskStatus } from '@req2task/core';
+import { TaskStatus } from '@req2task/dto';
 
 interface ApiResponse<T> {
   code: number;

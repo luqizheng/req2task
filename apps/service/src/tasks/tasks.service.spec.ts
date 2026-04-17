@@ -3,7 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { Task, TaskStatus } from '@req2task/core';
+import { Task } from '@req2task/core';
+import { TaskStatus } from '@req2task/dto';
 
 describe('TasksService', () => {
   let service: TasksService;

@@ -3,7 +3,8 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { RequirementStateService } from '@req2task/core';
-import { Requirement, RequirementStatus, RequirementChangeLog } from '@req2task/core';
+import { Requirement, RequirementChangeLog } from '@req2task/core';
+import { RequirementStatus } from '@req2task/dto';
 
 describe('RequirementStateService', () => {
   let service: RequirementStateService;

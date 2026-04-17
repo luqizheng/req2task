@@ -2,14 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProjectProgressService } from './project-progress.service';
-import {
-  Project,
-  Requirement,
-  Task,
-  FeatureModule,
-  RequirementStatus,
-  TaskStatus,
-} from '@req2task/core';
+import { Project, Requirement, Task, FeatureModule } from '@req2task/core';
+import { RequirementStatus, TaskStatus } from '@req2task/dto';
 
 describe('ProjectProgressService', () => {
   let service: ProjectProgressService;

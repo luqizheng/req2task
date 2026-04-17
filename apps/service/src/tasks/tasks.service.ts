@@ -5,7 +5,8 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, TaskStatus, TaskPriority } from '@req2task/core';
+import { Task } from '@req2task/core';
+import { TaskStatus, TaskPriority } from '@req2task/dto';
 import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto } from '@req2task/dto';
 
 @Injectable()

@@ -7,8 +7,8 @@ import {
   PromptService,
   ChromaVectorStore,
   Task,
-  TaskPriority,
 } from '@req2task/core';
+import { TaskPriority } from '@req2task/dto';
 
 describe('TaskDecompositionService', () => {
   let service: TaskDecompositionService;

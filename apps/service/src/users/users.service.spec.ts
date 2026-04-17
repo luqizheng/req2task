@@ -2,7 +2,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { User, UserRole } from '@req2task/core';
+import { User } from '@req2task/core';
+import { UserRole } from '@req2task/dto';
 
 interface MockRepository {
   findAndCount: jest.Mock;

@@ -18,6 +18,10 @@ export class CreateUserDto {
   @IsString()
   @IsOptional()
   displayName?: string;
+
+  @IsEnum(UserRole)
+  @IsOptional()
+  role?: UserRole;
 }
 
 export class UpdateUserDto {

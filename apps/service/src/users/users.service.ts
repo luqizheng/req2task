@@ -14,7 +14,7 @@ import {
   ChangePasswordDto,
   UserResponseDto,
   UserListResponseDto,
-} from './dto';
+} from '@req2task/dto';
 
 @Injectable()
 export class UsersService {

@@ -112,3 +112,42 @@ export class VectorStoreRequestDto {
   @Type(() => VectorDocumentDto)
   documents!: VectorDocumentDto[];
 }
+
+export class LLMConfigResponseDto {
+  id!: string;
+  name!: string;
+  provider!: LLMProviderType;
+  modelName!: string;
+  baseUrl!: string | null;
+  maxTokens!: number;
+  temperature!: number;
+  isActive!: boolean;
+  isDefault!: boolean;
+  createdAt!: Date;
+  updatedAt!: Date;
+  apiKey?: string;
+}
+
+export class ChatResponseDto {
+  content!: string;
+  configId?: string;
+}
+
+export class PromptTemplateResponseDto {
+  code!: string;
+  name!: string;
+  category!: string;
+  description!: string;
+  systemPrompt!: string;
+  userPromptTemplate!: string;
+  temperature?: number;
+  maxTokens?: number;
+  isActive?: boolean;
+  parameters!: Array<{
+    name: string;
+    type: string;
+    required?: boolean;
+    defaultValue?: string;
+    description?: string;
+  }>;
+}

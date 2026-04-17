@@ -13,8 +13,20 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { TasksService } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
-import { CreateTaskDto, UpdateTaskDto, AddDependencyDto } from '@req2task/dto';
+import {
+  CreateTaskDto,
+  UpdateTaskDto,
+  AddDependencyDto,
+  TaskResponseDto,
+  TaskListResponseDto,
+} from '@req2task/dto';
 import { TaskStatus } from '@req2task/core';
+
+interface ApiResponse<T> {
+  code: number;
+  data?: T;
+  message?: string;
+}
 
 interface AuthenticatedRequest {
   user: {
@@ -36,7 +48,7 @@ export class TasksController {
     @Param('requirementId') requirementId: string,
     @Body() createDto: CreateTaskDto,
     @Request() req: AuthenticatedRequest,
-  ) {
+  ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.create(
       requirementId,
       createDto,
@@ -50,7 +62,7 @@ export class TasksController {
     @Param('requirementId') requirementId: string,
     @Query('page') page?: string,
     @Query('limit') limit?: string,
-  ) {
+  ): Promise<ApiResponse<TaskListResponseDto>> {
     const result = await this.tasksService.findByRequirement(
       requirementId,
       page ? parseInt(page, 10) : 1,
@@ -60,19 +72,19 @@ export class TasksController {
   }
 
   @Get('requirements/:requirementId/kanban')
-  async getKanbanBoard(@Param('requirementId') requirementId: string) {
+  async getKanbanBoard(@Param('requirementId') requirementId: string): Promise<ApiResponse<unknown>> {
     const result = await this.taskKanbanService.getKanbanBoard(requirementId);
     return { code: 0, data: result };
   }
 
   @Get('requirements/:requirementId/task-statistics')
-  async getTaskStatistics(@Param('requirementId') requirementId: string) {
+  async getTaskStatistics(@Param('requirementId') requirementId: string): Promise<ApiResponse<unknown>> {
     const result = await this.taskKanbanService.getTaskStatistics(requirementId);
     return { code: 0, data: result };
   }
 
   @Get('tasks/:id')
-  async findById(@Param('id') id: string) {
+  async findById(@Param('id') id: string): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.findById(id);
     return { code: 0, data: result };
   }
@@ -81,7 +93,7 @@ export class TasksController {
   async update(
     @Param('id') id: string,
     @Body() updateDto: UpdateTaskDto,
-  ) {
+  ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.update(id, updateDto);
     return { code: 0, data: result };
   }
@@ -90,20 +102,20 @@ export class TasksController {
   async transitionStatus(
     @Param('id') id: string,
     @Body('targetStatus') targetStatus: TaskStatus,
-  ) {
+  ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.taskKanbanService.transitionStatus(id, targetStatus);
     return { code: 0, data: result };
   }
 
   @Get('tasks/:id/allowed-transitions')
-  async getAllowedTransitions(@Param('id') id: string) {
+  async getAllowedTransitions(@Param('id') id: string): Promise<ApiResponse<{ allowedTransitions: string[] }>> {
     const task = await this.tasksService.findById(id);
     const allowedTransitions = await this.taskKanbanService.getAllowedTransitions(task.status);
     return { code: 0, data: { allowedTransitions } };
   }
 
   @Delete('tasks/:id')
-  async delete(@Param('id') id: string) {
+  async delete(@Param('id') id: string): Promise<ApiResponse<null>> {
     await this.tasksService.delete(id);
     return { code: 0, message: '删除成功' };
   }
@@ -112,7 +124,7 @@ export class TasksController {
   async addDependency(
     @Param('id') id: string,
     @Body() addDependencyDto: AddDependencyDto,
-  ) {
+  ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.addDependency(
       id,
       addDependencyDto.dependencyTaskId,
@@ -124,7 +136,7 @@ export class TasksController {
   async removeDependency(
     @Param('id') id: string,
     @Param('dependencyTaskId') dependencyTaskId: string,
-  ) {
+  ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.removeDependency(id, dependencyTaskId);
     return { code: 0, data: result };
   }

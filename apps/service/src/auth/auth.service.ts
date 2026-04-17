@@ -8,7 +8,11 @@ import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User, UserRole } from '@req2task/core';
-import { RegisterDto, LoginDto, LoginResponseDto } from './dto';
+import {
+  RegisterRequestDto,
+  LoginRequestDto,
+  LoginResponseDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +22,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(registerDto: RegisterRequestDto): Promise<Omit<User, 'passwordHash'>> {
     const existingUser = await this.userRepository.findOne({
       where: [
         { username: registerDto.username },
@@ -49,7 +53,7 @@ export class AuthService {
     return result;
   }
 
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+  async login(loginDto: LoginRequestDto): Promise<LoginResponseDto> {
     const user = await this.userRepository.findOne({
       where: { username: loginDto.username },
     });

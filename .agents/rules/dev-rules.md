@@ -1,4 +1,4 @@
-﻿# 开发规则
+# 开发规则
 
 ## 输出规则
 
@@ -23,6 +23,11 @@
 - 优先使用现有库和工具
 - 使用 `<script setup lang="ts">` 语法（Vue）
 - 使用 Constructor Injection（NestJS）
+
+## Service 规则
+
+- Controller 方法必须显式声明返回类型
+- Web 项目调用的 API 类型必须与 Service 保持一致（使用 `packages/dto` 中定义的类型）
 
 ## DTO 共享规则
 

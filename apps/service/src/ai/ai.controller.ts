@@ -21,8 +21,18 @@ import {
   ChatRequestDto,
   VectorStoreRequestDto,
   CreateRawRequirementDto,
+  LLMConfigResponseDto,
+  ChatResponseDto,
+  PromptTemplateResponseDto,
+  GenerateRequirementResponseDto,
 } from '@req2task/dto';
 import { LLMMessage } from '@req2task/core';
+
+interface ApiResponse<T> {
+  code: number;
+  data?: T;
+  message?: string;
+}
 
 interface AuthenticatedRequest {
   user: {
@@ -42,19 +52,19 @@ export class AiController {
   ) {}
 
   @Post('llm-configs')
-  async createLLMConfig(@Body() createDto: CreateLLMConfigDto) {
+  async createLLMConfig(@Body() createDto: CreateLLMConfigDto): Promise<ApiResponse<LLMConfigResponseDto>> {
     const result = await this.aiService.createLLMConfig(createDto);
     return { code: 0, data: result };
   }
 
   @Get('llm-configs')
-  async findAllLLMConfigs() {
+  async findAllLLMConfigs(): Promise<ApiResponse<LLMConfigResponseDto[]>> {
     const result = await this.aiService.findAllLLMConfigs();
     return { code: 0, data: result };
   }
 
   @Get('llm-configs/:id')
-  async findLLMConfig(@Param('id') id: string) {
+  async findLLMConfig(@Param('id') id: string): Promise<ApiResponse<LLMConfigResponseDto>> {
     const result = await this.aiService.findLLMConfig(id);
     return { code: 0, data: result };
   }
@@ -63,19 +73,19 @@ export class AiController {
   async updateLLMConfig(
     @Param('id') id: string,
     @Body() updateDto: UpdateLLMConfigDto,
-  ) {
+  ): Promise<ApiResponse<LLMConfigResponseDto>> {
     const result = await this.aiService.updateLLMConfig(id, updateDto);
     return { code: 0, data: result };
   }
 
   @Delete('llm-configs/:id')
-  async deleteLLMConfig(@Param('id') id: string) {
+  async deleteLLMConfig(@Param('id') id: string): Promise<ApiResponse<null>> {
     await this.aiService.deleteLLMConfig(id);
     return { code: 0, message: '删除成功' };
   }
 
   @Post('chat')
-  async chat(@Body() chatRequest: ChatRequestDto) {
+  async chat(@Body() chatRequest: ChatRequestDto): Promise<ApiResponse<ChatResponseDto>> {
     const result = await this.aiService.chat(chatRequest);
     return { code: 0, data: result };
   }
@@ -84,7 +94,7 @@ export class AiController {
   async generateRequirement(
     @Body('input') input: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<{ content: string }>> {
     const result = await this.aiService.generateRequirement(input, configId);
     return { code: 0, data: result };
   }
@@ -93,19 +103,19 @@ export class AiController {
   async searchVectorStore(
     @Body('query') query: string,
     @Body('limit') limit?: number,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.aiService.searchVectorStore(query, limit || 5);
     return { code: 0, data: result };
   }
 
   @Post('vector-store/add')
-  async addToVectorStore(@Body() request: VectorStoreRequestDto) {
+  async addToVectorStore(@Body() request: VectorStoreRequestDto): Promise<ApiResponse<null>> {
     await this.aiService.addToVectorStore(request.documents);
     return { code: 0, message: '添加成功' };
   }
 
   @Get('prompt-templates')
-  async getPromptTemplates() {
+  async getPromptTemplates(): Promise<ApiResponse<PromptTemplateResponseDto[]>> {
     const result = await this.aiService.getPromptTemplates();
     return { code: 0, data: result };
   }
@@ -115,7 +125,7 @@ export class AiController {
     @Param('moduleId') moduleId: string,
     @Body() createDto: CreateRawRequirementDto,
     @Request() req: AuthenticatedRequest,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.requirementGenerationService.createRawRequirement(
       moduleId,
       createDto.content,
@@ -125,7 +135,7 @@ export class AiController {
   }
 
   @Get('modules/:moduleId/raw-requirements')
-  async findRawRequirements(@Param('moduleId') moduleId: string) {
+  async findRawRequirements(@Param('moduleId') moduleId: string): Promise<ApiResponse<unknown[]>> {
     const result = await this.requirementGenerationService.findByModule(moduleId);
     return { code: 0, data: result };
   }
@@ -134,7 +144,7 @@ export class AiController {
   async generateFromRaw(
     @Param('id') id: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<GenerateRequirementResponseDto>> {
     const result = await this.requirementGenerationService.generateRequirement(id, configId);
     return { code: 0, data: result };
   }
@@ -143,7 +153,7 @@ export class AiController {
   async generateUserStories(
     @Body('requirementContent') requirementContent: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.requirementGenerationService.generateUserStories(
       requirementContent,
       configId,
@@ -155,7 +165,7 @@ export class AiController {
   async generateAcceptanceCriteria(
     @Body('requirementContent') requirementContent: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<string[]>> {
     const result = await this.requirementGenerationService.generateAcceptanceCriteria(
       requirementContent,
       configId,
@@ -167,7 +177,7 @@ export class AiController {
   async detectConflicts(
     @Param('id') id: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.conflictDetectionService.detectConflicts(id, configId);
     return { code: 0, data: result };
   }
@@ -176,7 +186,7 @@ export class AiController {
   async semanticSearch(
     @Query('query') query: string,
     @Query('limit') limit?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.conflictDetectionService.semanticSearch(
       query,
       limit ? parseInt(limit, 10) : 10,
@@ -189,7 +199,7 @@ export class AiController {
     @Body('messages') messages: LLMMessage[],
     @Body('contextRequirementId') contextRequirementId?: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<ChatResponseDto>> {
     const result = await this.conflictDetectionService.chat(
       messages,
       contextRequirementId,
@@ -202,7 +212,7 @@ export class AiController {
   async decomposeRequirement(
     @Body('requirementContent') requirementContent: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.taskDecompositionService.decomposeRequirement(
       requirementContent,
       configId,
@@ -214,7 +224,7 @@ export class AiController {
   async estimateWorkload(
     @Body('requirementContent') requirementContent: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.taskDecompositionService.estimateWorkload(
       requirementContent,
       configId,
@@ -227,7 +237,7 @@ export class AiController {
     @Query('requirementContent') requirementContent: string,
     @Query('moduleId') moduleId: string,
     @Query('limit') limit?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.taskDecompositionService.findSimilarRequirements(
       requirementContent,
       moduleId,
@@ -240,7 +250,7 @@ export class AiController {
   async generateSubTasks(
     @Param('id') id: string,
     @Body('configId') configId?: string,
-  ) {
+  ): Promise<ApiResponse<unknown>> {
     const result = await this.taskDecompositionService.generateSubTasks(id, configId);
     return { code: 0, data: result };
   }

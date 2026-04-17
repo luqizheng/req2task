@@ -10,15 +10,15 @@
     "sourceMap": true,
     "outDir": "./dist",
     "baseUrl": "./",
-    // "paths": {
-    //   "@req2task/core": ["../../packages/core/src"],
-    //   "@req2task/core/*": ["../../packages/core/src/*"],
-    //   "@req2task/dto": ["../../packages/dto/src"],
-    //   "@req2task/dto/*": ["../../packages/dto/src/*"],
-    //   "@req2task/core/entities/*": ["../../packages/core/src/entities/*"],
-    //   "@req2task/core/services/*": ["../../packages/core/src/services/*"],
-    //   "@req2task/core/bo/*": ["../../packages/core/src/bo/*"]
-    // },
+    "paths": {
+      "@req2task/core": ["../../packages/core/src"],
+      "@req2task/core/*": ["../../packages/core/src/*"],
+      "@req2task/dto": ["../../packages/dto/src"],
+      "@req2task/dto/*": ["../../packages/dto/src/*"],
+      "@req2task/core/entities/*": ["../../packages/core/src/entities/*"],
+      "@req2task/core/services/*": ["../../packages/core/src/services/*"],
+      "@req2task/core/bo/*": ["../../packages/core/src/bo/*"]
+    },
     "incremental": true,
     "skipLibCheck": true,
     "strictNullChecks": false,

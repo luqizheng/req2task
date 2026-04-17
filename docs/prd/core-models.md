@@ -1,4 +1,4 @@
-﻿# 核心模型
+# 核心模型
 
 ## 2.1 层级结构
 
@@ -168,14 +168,15 @@ Project（项目）
 
 ### RawRequirement（原始需求）
 
-| 字段名    | 类型        | 必填 | 说明               | 业务规则                                     |
-| --------- | ----------- | ---- | ------------------ | -------------------------------------------- |
-| id        | UUID        | 是   | 原始需求的唯一编号 | 系统自动生成                                 |
-| content   | text        | 是   | 原始需求内容       | 客户原话或原始描述                           |
-| source    | string(200) | 是   | 需求来源           | 客户姓名、文档名称等                         |
-| status    | enum        | 是   | 处理状态           | pending / processing / converted / discarded |
-| createdAt | datetime    | 是   | 创建时间           | 系统自动生成                                 |
-| updatedAt | datetime    | 是   | 更新时间           | 系统自动更新                                 |
+| 字段名                   | 类型        | 必填 | 说明                   | 业务规则                                     |
+| ------------------------ | ----------- | ---- | ---------------------- | -------------------------------------------- |
+| id                       | UUID        | 是   | 原始需求的唯一编号     | 系统自动生成                                 |
+| content                  | text        | 是   | 原始需求内容           | 客户原话或原始描述                           |
+| source                   | string(200) | 是   | 需求来源               | 客户姓名、文档名称等                         |
+| status                   | enum        | 是   | 处理状态               | pending / processing / converted / discarded |
+| relatedRawRequirementIds | json        | 否   | 关联的原始需求ID数组   | 如 [uuid1, uuid2]，支持版本链和关联需求      |
+| createdAt                | datetime    | 是   | 创建时间               | 系统自动生成                                 |
+| updatedAt                | datetime    | 是   | 更新时间               | 系统自动更新                                 |
 
 ### RawRequirementCollectionRequirement（原始需求关联）
 

@@ -252,6 +252,41 @@ AI生成请求
 | 未开始 + 需求取消 | 任务标记 `cancelled`，记录 `cancelledReason` | 自动更新需求关联状态 |
 | 进行中 + 需求取消 | 任务标记 `cancelled`，记录 `cancelledReason` | 标记 `isWasted=true` |
 
+#### Requirement 状态变更处理
+
+| 原状态 | 变更后 | 处理方式 |
+|--------|--------|----------|
+| `draft` | 变更 | 状态回退至 `draft`，重新评估 |
+| `reviewed` | 变更 | 状态回退至 `draft`，重新评估 |
+| `rejected` | 变更 | 状态回退至 `draft`，重新评估 |
+| `cancelled` | 变更 | 状态回退至 `draft`，重新评估 |
+| `processing` | 变更 | 列出关联任务，AI 评估 isWasted，用户确认 |
+| `completed` | 变更 | 列出关联任务，AI 评估 isWasted，用户确认 |
+
+#### processing/completed 状态变更处理流程
+
+```
+需求变更 → 判断 Requirement 状态
+       │
+       ├── draft / reviewed / rejected / cancelled
+       │   └── 直接回退至 draft，重新评估
+       │
+       └── processing / completed
+           │
+           ▼
+       列出该需求下所有任务
+           │
+           ▼
+       AI 评估每个任务是否需要废弃（isWasted）
+       │
+       ▼
+       展示任务列表 + AI 建议 + 用户确认
+       │
+       ├── 确认废弃 → 任务标记 cancelled，isWasted=true
+       ├── 确认继续 → 任务保持，创建新任务替代（replaced）
+       └── 部分保留 → 用户选择哪些保留、哪些废弃
+```
+
 #### 任务状态扩展
 
 ```
@@ -280,6 +315,25 @@ AI生成请求
 - 查看被替代的旧任务
 - 旧任务可查看替代的新任务
 - 工时统计显示返工成本
+```
+
+#### 原始需求版本链示例
+
+```
+场景：客户需求变更（第一次 → 第二次）
+
+第一次需求收集：
+- RawRequirement 001: "对接中国移动短信平台"
+- 生成 Requirement: "短信验证码-中移动"
+
+第二次需求收集（需求变更）：
+- RawRequirement 002: "对接中国电信短信平台"
+- RawRequirement 002.relatedRawRequirementIds = ["001_id"]
+
+版本链展示：
+- 002 可查看被替代的 001
+- 001 可查看替代的 002
+- AI 建议关联 + 用户手动管理
 ```
 
 ---

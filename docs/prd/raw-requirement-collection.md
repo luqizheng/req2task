@@ -289,6 +289,9 @@ export class RawRequirement {
   @JoinColumn({ name: "created_by_id" })
   createdBy!: User;
 
+  @Column({ name: "related_raw_requirement_ids", type: "json", nullable: true })
+  relatedRawRequirementIds!: string[] | null;
+
   @CreateDateColumn({ name: "created_at" })
   createdAt!: Date;
 
@@ -748,6 +751,9 @@ async handleRequirementChange(
 - [ ] 可以识别需求关联关系
 - [ ] 冲突需求根据状态正确处理（回退或保持）
 - [ ] 变更日志正确记录
+- [ ] **原始需求可关联多个其他原始需求（版本链、相关需求）**
+- [ ] **用户可手动添加/移除原始需求关联**
+- [ ] **AI 可建议原始需求关联并被用户采纳/拒绝**
 
 ### 9.2 界面验收
 

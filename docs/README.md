@@ -17,6 +17,7 @@ owner: req2task团队
 | 了解数据库设计 | [docs/design/database-design.md](design/database-design.md) |
 | 了解 AI 能力设计 | [docs/design/ai-assistant-design.md](design/ai-assistant-design.md) |
 | 了解实施计划 | [docs/design/implementation-plan.md](design/implementation-plan.md) |
+| **文档管理规则** | [docs/DOCS_MANAGEMENT.md](DOCS_MANAGEMENT.md) |
 
 ## 文档层级
 

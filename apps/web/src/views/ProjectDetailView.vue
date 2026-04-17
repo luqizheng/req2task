@@ -57,7 +57,7 @@ const loadProject = async () => {
 const loadModules = async () => {
   moduleLoading.value = true;
   try {
-    const { data } = await featureModulesApi.getList(projectId.value);
+    const data = await featureModulesApi.getList(projectId.value);
     modules.value = data.items;
   } finally {
     moduleLoading.value = false;

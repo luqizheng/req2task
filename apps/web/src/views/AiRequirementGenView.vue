@@ -60,17 +60,17 @@ const generateAll = async () => {
   isLoading.value = true;
   try {
     updateStepStatus('requirement', 'generating');
-    const response = await aiApi.generateRequirement(
+    const result = await aiApi.generateRequirement(
       rawInput.value,
       aiStore.getActiveConfigId()
     );
-    generatedRequirement.value = response.data.data;
-    editableRequirement.title = generatedRequirement.value.title;
-    editableRequirement.description = generatedRequirement.value.description;
-    editableRequirement.priority = generatedRequirement.value.priority;
-    editableRequirement.userStories = [...generatedRequirement.value.userStories];
+    generatedRequirement.value = result;
+    editableRequirement.title = result.title;
+    editableRequirement.description = result.description;
+    editableRequirement.priority = result.priority;
+    editableRequirement.userStories = [...result.userStories];
     editableRequirement.acceptanceCriteria = [
-      ...generatedRequirement.value.acceptanceCriteria,
+      ...result.acceptanceCriteria,
     ];
     updateStepStatus('requirement', 'completed');
 
@@ -96,11 +96,10 @@ const regenerateUserStories = async () => {
   try {
     updateStepStatus('userStory', 'generating');
     const content = `${editableRequirement.title}\n${editableRequirement.description}`;
-    const response = await aiApi.generateUserStories(
+    editableRequirement.userStories = await aiApi.generateUserStories(
       content,
       aiStore.getActiveConfigId()
     );
-    editableRequirement.userStories = response.data.data;
     updateStepStatus('userStory', 'completed');
     ElMessage.success('用户故事重新生成完成');
   } catch (error) {
@@ -121,11 +120,10 @@ const regenerateCriteria = async () => {
   try {
     updateStepStatus('criteria', 'generating');
     const content = `${editableRequirement.title}\n${editableRequirement.description}`;
-    const response = await aiApi.generateAcceptanceCriteria(
+    editableRequirement.acceptanceCriteria = await aiApi.generateAcceptanceCriteria(
       content,
       aiStore.getActiveConfigId()
     );
-    editableRequirement.acceptanceCriteria = response.data.data;
     updateStepStatus('criteria', 'completed');
     ElMessage.success('验收条件重新生成完成');
   } catch (error) {

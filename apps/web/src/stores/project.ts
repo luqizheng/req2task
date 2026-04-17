@@ -18,7 +18,7 @@ export const useProjectStore = defineStore('project', () => {
   const fetchProjectList = async (params: ProjectListParams = {}) => {
     loading.value = true;
     try {
-      const { data } = await projectsApi.getList(params);
+      const data = await projectsApi.getList(params);
       projectList.value = data.items;
       total.value = data.total;
     } finally {
@@ -29,8 +29,7 @@ export const useProjectStore = defineStore('project', () => {
   const fetchProjectById = async (id: string) => {
     loading.value = true;
     try {
-      const { data } = await projectsApi.getById(id);
-      currentProject.value = data;
+      currentProject.value = await projectsApi.getById(id);
     } finally {
       loading.value = false;
     }
@@ -39,8 +38,7 @@ export const useProjectStore = defineStore('project', () => {
   const createProject = async (data: CreateProjectDto) => {
     loading.value = true;
     try {
-      const { data: result } = await projectsApi.create(data);
-      return result;
+      return await projectsApi.create(data);
     } finally {
       loading.value = false;
     }
@@ -49,7 +47,7 @@ export const useProjectStore = defineStore('project', () => {
   const updateProject = async (id: string, data: UpdateProjectDto) => {
     loading.value = true;
     try {
-      const { data: result } = await projectsApi.update(id, data);
+      const result = await projectsApi.update(id, data);
       currentProject.value = result;
     } finally {
       loading.value = false;
@@ -68,8 +66,7 @@ export const useProjectStore = defineStore('project', () => {
   const addMember = async (projectId: string, data: AddMemberDto) => {
     loading.value = true;
     try {
-      const { data: result } = await projectsApi.addMember(projectId, data);
-      currentProject.value = result;
+      currentProject.value = await projectsApi.addMember(projectId, data);
     } finally {
       loading.value = false;
     }
@@ -78,8 +75,7 @@ export const useProjectStore = defineStore('project', () => {
   const removeMember = async (projectId: string, userId: string) => {
     loading.value = true;
     try {
-      const { data: result } = await projectsApi.removeMember(projectId, userId);
-      currentProject.value = result;
+      currentProject.value = await projectsApi.removeMember(projectId, userId);
     } finally {
       loading.value = false;
     }

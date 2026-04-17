@@ -32,9 +32,9 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.getListByModule(moduleId, params);
-      requirementList.value = data.items;
-      total.value = data.total;
+      const result = await requirementsApi.getListByModule(moduleId, params);
+      requirementList.value = result.items;
+      total.value = result.total;
     } finally {
       loading.value = false;
     }
@@ -43,7 +43,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const fetchRequirementById = async (id: string) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.getById(id);
+      const data = await requirementsApi.getById(id);
       currentRequirement.value = data;
     } finally {
       loading.value = false;
@@ -56,8 +56,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.create(moduleId, data);
-      return result;
+      return await requirementsApi.create(moduleId, data);
     } finally {
       loading.value = false;
     }
@@ -66,7 +65,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const updateRequirement = async (id: string, data: UpdateRequirementDto) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.update(id, data);
+      const result = await requirementsApi.update(id, data);
       currentRequirement.value = result;
     } finally {
       loading.value = false;
@@ -85,8 +84,8 @@ export const useRequirementStore = defineStore('requirement', () => {
   const fetchChangeHistory = async (id: string) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.getChangeHistory(id);
-      changeHistory.value = data.logs;
+      const result = await requirementsApi.getChangeHistory(id);
+      changeHistory.value = result.logs;
     } finally {
       loading.value = false;
     }
@@ -95,8 +94,8 @@ export const useRequirementStore = defineStore('requirement', () => {
   const fetchAllowedTransitions = async (id: string) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.getAllowedTransitions(id);
-      allowedTransitions.value = data.allowedTransitions;
+      const result = await requirementsApi.getAllowedTransitions(id);
+      allowedTransitions.value = result.allowedTransitions;
     } finally {
       loading.value = false;
     }
@@ -109,12 +108,12 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.transitionStatus(
+      const result = await requirementsApi.transitionStatus(
         id,
         targetStatus,
         comment
       );
-      currentRequirement.value = data;
+      currentRequirement.value = result;
       await fetchAllowedTransitions(id);
     } finally {
       loading.value = false;
@@ -128,8 +127,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.review(id, approved, comment);
-      currentRequirement.value = data;
+      currentRequirement.value = await requirementsApi.review(id, approved, comment);
     } finally {
       loading.value = false;
     }
@@ -138,8 +136,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const fetchUserStories = async (requirementId: string) => {
     loading.value = true;
     try {
-      const { data } = await requirementsApi.getUserStories(requirementId);
-      currentUserStories.value = data;
+      currentUserStories.value = await requirementsApi.getUserStories(requirementId);
     } finally {
       loading.value = false;
     }
@@ -151,7 +148,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.createUserStory(
+      const result = await requirementsApi.createUserStory(
         requirementId,
         data
       );
@@ -164,7 +161,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const updateUserStory = async (id: string, data: UpdateUserStoryDto) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.updateUserStory(id, data);
+      const result = await requirementsApi.updateUserStory(id, data);
       return result;
     } finally {
       loading.value = false;
@@ -186,11 +183,10 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.createAcceptanceCriteria(
+      return await requirementsApi.createAcceptanceCriteria(
         userStoryId,
         data
       );
-      return result;
     } finally {
       loading.value = false;
     }
@@ -202,7 +198,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const { data: result } = await requirementsApi.updateAcceptanceCriteria(
+      const result = await requirementsApi.updateAcceptanceCriteria(
         id,
         data
       );

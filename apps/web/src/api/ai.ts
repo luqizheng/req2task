@@ -26,12 +26,6 @@ export interface ChatResponse {
   configId: string;
 }
 
-export interface ApiErrorResponse {
-  code: number;
-  message: string;
-  data?: unknown;
-}
-
 export interface UserStory {
   role: string;
   goal: string;
@@ -58,72 +52,72 @@ export interface RawRequirementResponse {
 
 export const aiApi = {
   getLLMConfigs: () => {
-    return api.get<ApiErrorResponse & { data: LLMConfigResponse[] }>('/ai/llm-configs');
+    return api.get<LLMConfigResponse[]>('/ai/llm-configs');
   },
 
   getLLMConfigById: (id: string) => {
-    return api.get<ApiErrorResponse & { data: LLMConfigResponse }>(`/ai/llm-configs/${id}`);
+    return api.get<LLMConfigResponse>(`/ai/llm-configs/${id}`);
   },
 
   createLLMConfig: (data: CreateLLMConfigDto) => {
-    return api.post<ApiErrorResponse & { data: LLMConfigResponse }>('/ai/llm-configs', data);
+    return api.post<LLMConfigResponse>('/ai/llm-configs', data);
   },
 
   updateLLMConfig: (id: string, data: UpdateLLMConfigDto) => {
-    return api.put<ApiErrorResponse & { data: LLMConfigResponse }>(`/ai/llm-configs/${id}`, data);
+    return api.put<LLMConfigResponse>(`/ai/llm-configs/${id}`, data);
   },
 
   deleteLLMConfig: (id: string) => {
-    return api.delete<ApiErrorResponse>(`/ai/llm-configs/${id}`);
+    return api.delete(`/ai/llm-configs/${id}`);
   },
 
   chat: (data: ChatRequestDto) => {
-    return api.post<ApiErrorResponse & { data: ChatResponse }>('/ai/chat', data);
+    return api.post<ChatResponse>('/ai/chat', data);
   },
 
   aiChat: (messages: Array<{ role: string; content: string }>, configId?: string) => {
-    return api.post<ApiErrorResponse & { data: ChatResponse }>('/ai/ai-chat', {
+    return api.post<ChatResponse>('/ai/ai-chat', {
       messages,
       configId,
     });
   },
 
   generateRequirement: (input: string, configId?: string) => {
-    return api.post<ApiErrorResponse & { data: GenerateRequirementResponse }>(
+    return api.post<GenerateRequirementResponse>(
       '/ai/generate-requirement',
       { input, configId }
     );
   },
 
   generateUserStories: (requirementContent: string, configId?: string) => {
-    return api.post<ApiErrorResponse & { data: UserStory[] }>(
+    return api.post<UserStory[]>(
       '/ai/generate-user-stories',
       { requirementContent, configId }
     );
   },
 
   generateAcceptanceCriteria: (requirementContent: string, configId?: string) => {
-    return api.post<ApiErrorResponse & { data: string[] }>(
+    return api.post<string[]>(
       '/ai/generate-acceptance-criteria',
       { requirementContent, configId }
     );
   },
 
   createRawRequirement: (moduleId: string, data: CreateRawRequirementDto) => {
-    return api.post<ApiErrorResponse & { data: RawRequirementResponse }>(
+    return api.post<RawRequirementResponse>(
       `/ai/modules/${moduleId}/raw-requirements`,
       data
     );
   },
 
   getRawRequirements: (moduleId: string) => {
-    return api.get<ApiErrorResponse & { data: RawRequirementResponse[] }>(
+    return api.get<RawRequirementResponse[]>(
       `/ai/modules/${moduleId}/raw-requirements`
     );
   },
 
   generateFromRaw: (id: string, configId?: string) => {
-    return api.post<ApiErrorResponse & { data: GenerateRequirementResponse }>(
+    return api.post<GenerateRequirementResponse>(
       `/ai/raw-requirements/${id}/generate`,
       { configId }
     );

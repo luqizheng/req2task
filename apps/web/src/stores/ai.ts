@@ -15,7 +15,7 @@ export const useAiStore = defineStore('ai', () => {
     error.value = null;
     try {
       const response = await aiApi.getLLMConfigs();
-      configs.value = response.data.data || [];
+      configs.value = response || [];
       const defaultConfig = configs.value.find(c => c.isDefault);
       if (defaultConfig) {
         currentConfig.value = defaultConfig;
@@ -32,8 +32,7 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await aiApi.createLLMConfig(data);
-      const newConfig = response.data.data;
+      const newConfig = await aiApi.createLLMConfig(data);
       configs.value.push(newConfig);
       return newConfig;
     } catch (err) {
@@ -48,8 +47,7 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await aiApi.updateLLMConfig(id, data);
-      const updatedConfig = response.data.data;
+      const updatedConfig = await aiApi.updateLLMConfig(id, data);
       const index = configs.value.findIndex(c => c.id === id);
       if (index !== -1) {
         configs.value[index] = updatedConfig;

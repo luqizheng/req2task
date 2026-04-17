@@ -20,7 +20,7 @@ export const useUserManageStore = defineStore('userManage', () => {
   const fetchUserList = async (params: UserListParams = {}) => {
     loading.value = true;
     try {
-      const { data } = await usersApi.getList(params);
+      const data = await usersApi.getList(params);
       userList.value = data.items;
       total.value = data.total;
     } finally {
@@ -31,7 +31,7 @@ export const useUserManageStore = defineStore('userManage', () => {
   const fetchCurrentUser = async () => {
     loading.value = true;
     try {
-      const { data } = await usersApi.getMe();
+      const data = await usersApi.getMe();
       currentUser.value = data;
       const authStore = useAuthUserStore();
       authStore.setUserInfo(data);
@@ -70,7 +70,7 @@ export const useUserManageStore = defineStore('userManage', () => {
   const updateProfile = async (data: UpdateMeDto) => {
     loading.value = true;
     try {
-      const { data: result } = await usersApi.updateMe(data);
+      const result = await usersApi.updateMe(data);
       currentUser.value = result;
     } finally {
       loading.value = false;

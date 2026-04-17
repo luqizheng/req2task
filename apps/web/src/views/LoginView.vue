@@ -33,7 +33,7 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        const { data } = await authApi.login({
+        const data = await authApi.login({
           username: loginForm.value.username,
           password: loginForm.value.password
         })

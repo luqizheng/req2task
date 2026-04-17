@@ -67,8 +67,7 @@ describe('BaselineService', () => {
 
       const result = await service.createBaseline(
         '1',
-        'Baseline 1',
-        null,
+        { name: 'Baseline 1' },
         'user-1',
       );
 

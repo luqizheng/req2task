@@ -12,6 +12,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
+import { BaselineService, BaselineDetailDto, CreateBaselineDto } from './baseline.service';
+import {
+  ProjectProgressService,
+  BurndownData,
+  ModuleProgress,
+} from './project-progress.service';
 import {
   CreateProjectDto,
   UpdateProjectDto,
@@ -23,11 +29,24 @@ import {
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { User } from '@req2task/core';
+import { IsString, IsOptional, IsDateString } from 'class-validator';
+
+class BurndownQueryDto {
+  @IsDateString()
+  startDate!: string;
+
+  @IsDateString()
+  endDate!: string;
+}
 
 @Controller('projects')
 @UseGuards(JwtAuthGuard)
 export class ProjectsController {
-  constructor(private readonly projectsService: ProjectsService) {}
+  constructor(
+    private readonly projectsService: ProjectsService,
+    private readonly baselineService: BaselineService,
+    private readonly projectProgressService: ProjectProgressService,
+  ) {}
 
   @Get()
   async findAll(
@@ -88,5 +107,62 @@ export class ProjectsController {
     @Param('userId') userId: string,
   ): Promise<ProjectResponseDto> {
     return this.projectsService.removeMember(id, userId);
+  }
+
+  @Get(':id/progress')
+  async getProgress(@Param('id') id: string) {
+    return this.projectProgressService.getProjectProgress(id);
+  }
+
+  @Get(':id/burndown')
+  async getBurndown(
+    @Param('id') id: string,
+    @Query() query: BurndownQueryDto,
+  ): Promise<BurndownData> {
+    return this.projectProgressService.getDetailedBurndown(id, query);
+  }
+
+  @Get('modules/:moduleId/progress')
+  async getModuleProgress(@Param('moduleId') moduleId: string): Promise<ModuleProgress> {
+    return this.projectProgressService.getModuleProgress(moduleId);
+  }
+
+  @Post(':id/baselines')
+  async createBaseline(
+    @Param('id') projectId: string,
+    @Body() dto: CreateBaselineDto,
+    @CurrentUser() user: User,
+  ): Promise<BaselineDetailDto> {
+    return this.baselineService.createBaseline(projectId, dto, user.id);
+  }
+
+  @Get(':id/baselines')
+  async getBaselines(@Param('id') projectId: string): Promise<BaselineDetailDto[]> {
+    return this.baselineService.findByProject(projectId);
+  }
+
+  @Get('baselines/:baselineId')
+  async getBaseline(@Param('baselineId') baselineId: string): Promise<BaselineDetailDto> {
+    return this.baselineService.findById(baselineId);
+  }
+
+  @Post('baselines/:baselineId/restore')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async restoreBaseline(@Param('baselineId') baselineId: string): Promise<void> {
+    await this.baselineService.restoreBaseline(baselineId);
+  }
+
+  @Delete('baselines/:baselineId')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async deleteBaseline(@Param('baselineId') baselineId: string): Promise<void> {
+    await this.baselineService.deleteBaseline(baselineId);
+  }
+
+  @Get('baselines/:baselineId1/compare/:baselineId2')
+  async compareBaselines(
+    @Param('baselineId1') baselineId1: string,
+    @Param('baselineId2') baselineId2: string,
+  ) {
+    return this.baselineService.compareBaselines(baselineId1, baselineId2);
   }
 }

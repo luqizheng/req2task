@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, In, Between } from 'typeorm';
 import { Project, Requirement, Task, FeatureModule } from '@req2task/core';
 import { RequirementStatus, TaskStatus } from '@req2task/dto';
 
@@ -27,6 +27,12 @@ export interface BurndownPoint {
   date: string;
   planned: number;
   actual: number;
+  remainingTasks: number;
+}
+
+export interface BurndownQuery {
+  startDate: string;
+  endDate: string;
 }
 
 export interface ModuleProgress {
@@ -42,6 +48,16 @@ export interface ModuleProgress {
     taskCount: number;
     completedTaskCount: number;
   }[];
+}
+
+export interface BurndownData {
+  projectId: string;
+  startDate: string;
+  endDate: string;
+  totalStoryPoints: number;
+  idealLine: number[];
+  actualLine: number[];
+  remainingTasks: number[];
 }
 
 @Injectable()
@@ -61,19 +77,23 @@ export class ProjectProgressService {
     const project = await this.projectRepository.findOne({ where: { id: projectId } });
 
     if (!project) {
-      throw new Error('Project not found');
+      throw new NotFoundException('Project not found');
     }
 
     const modules = await this.featureModuleRepository.find({ where: { projectId } });
     const moduleIds = modules.map((m) => m.id);
 
-    const requirements = await this.requirementRepository.find({
-      where: moduleIds.map((id) => ({ moduleId: id })),
-    });
+    const requirements = moduleIds.length > 0
+      ? await this.requirementRepository.find({
+          where: moduleIds.map((id) => ({ moduleId: id })),
+        })
+      : [];
 
     const requirementIds = requirements.map((r) => r.id);
     const tasks = requirementIds.length > 0
-      ? await this.taskRepository.find({ where: requirementIds.map((id) => ({ requirementId: id })) })
+      ? await this.taskRepository.find({
+          where: requirementIds.map((id) => ({ requirementId: id })),
+        })
       : [];
 
     const completedRequirements = requirements.filter(
@@ -113,17 +133,17 @@ export class ProjectProgressService {
         ? Math.round((completedRequirements.length / requirements.length) * 100)
         : 0;
 
-    const completedRequirementsCount = completedRequirements.length;
-
     const taskProgress =
       tasks.length > 0 ? Math.round((completedTasks / tasks.length) * 100) : 0;
+
+    const burndownData = await this.getBurndownData(projectId, totalStoryPoints);
 
     return {
       projectId,
       projectName: project.name,
       totalModules: modules.length,
       totalRequirements: requirements.length,
-      completedRequirements: completedRequirementsCount,
+      completedRequirements: completedRequirements.length,
       requirementProgress,
       totalTasks: tasks.length,
       completedTasks,
@@ -134,7 +154,124 @@ export class ProjectProgressService {
       totalActualHours,
       byRequirementStatus,
       byTaskStatus,
-      burndownData: this.generateBurndownData(totalStoryPoints, completedStoryPoints),
+      burndownData,
+    };
+  }
+
+  async getBurndownData(projectId: string, totalStoryPoints?: number): Promise<BurndownPoint[]> {
+    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const modules = await this.featureModuleRepository.find({ where: { projectId } });
+    const moduleIds = modules.map((m) => m.id);
+
+    const requirements = moduleIds.length > 0
+      ? await this.requirementRepository.find({
+          where: moduleIds.map((id) => ({ moduleId: id })),
+        })
+      : [];
+
+    const totalPoints = totalStoryPoints ?? requirements.reduce((sum, r) => sum + r.storyPoints, 0);
+
+    const today = new Date();
+    const startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
+
+    const completedReqs = requirements.filter(
+      (r) => r.status === RequirementStatus.COMPLETED && r.updatedAt >= startDate,
+    );
+    const completedPoints = completedReqs.reduce((sum, r) => sum + r.storyPoints, 0);
+
+    const points: BurndownPoint[] = [];
+    const daysDiff = 14;
+
+    for (let i = 0; i <= daysDiff; i++) {
+      const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
+      const planned = Math.max(0, totalPoints - (totalPoints / daysDiff) * i);
+
+      const progressRatio = completedPoints / totalPoints;
+      const daysProgressed = Math.floor(progressRatio * daysDiff);
+      const actual = i <= daysProgressed
+        ? Math.max(0, totalPoints - (totalPoints / daysDiff) * i)
+        : Math.max(0, totalPoints - completedPoints);
+
+      const remainingTasks = Math.max(0, Math.round((1 - i / daysDiff) * requirements.length));
+
+      points.push({
+        date: date.toISOString().split('T')[0],
+        planned: Math.round(planned * 10) / 10,
+        actual: Math.round(actual * 10) / 10,
+        remainingTasks,
+      });
+    }
+
+    return points;
+  }
+
+  async getDetailedBurndown(
+    projectId: string,
+    query: BurndownQuery,
+  ): Promise<BurndownData> {
+    const project = await this.projectRepository.findOne({ where: { id: projectId } });
+    if (!project) {
+      throw new NotFoundException('Project not found');
+    }
+
+    const startDate = new Date(query.startDate);
+    const endDate = new Date(query.endDate);
+    const daysDiff = Math.ceil((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+
+    const modules = await this.featureModuleRepository.find({ where: { projectId } });
+    const moduleIds = modules.map((m) => m.id);
+
+    const requirements = moduleIds.length > 0
+      ? await this.requirementRepository.find({
+          where: moduleIds.map((id) => ({ moduleId: id })),
+        })
+      : [];
+
+    const totalStoryPoints = requirements.reduce((sum, r) => sum + r.storyPoints, 0);
+
+    const completedReqs = requirements.filter(
+      (r) =>
+        r.status === RequirementStatus.COMPLETED &&
+        r.updatedAt >= startDate &&
+        r.updatedAt <= endDate,
+    );
+    const completedPoints = completedReqs.reduce((sum, r) => sum + r.storyPoints, 0);
+
+    const idealLine: number[] = [];
+    const actualLine: number[] = [];
+    const remainingTasks: number[] = [];
+
+    for (let i = 0; i <= daysDiff; i++) {
+      const planned = Math.max(0, totalStoryPoints - (totalStoryPoints / daysDiff) * i);
+      idealLine.push(Math.round(planned * 10) / 10);
+
+      const progressRatio = totalStoryPoints > 0 ? completedPoints / totalStoryPoints : 0;
+      const daysProgressed = Math.floor(progressRatio * daysDiff);
+      const actual = i <= daysProgressed
+        ? Math.max(0, totalStoryPoints - (totalStoryPoints / daysDiff) * i)
+        : Math.max(0, totalStoryPoints - completedPoints);
+      actualLine.push(Math.round(actual * 10) / 10);
+
+      const remaining = requirements.filter(
+        (r) =>
+          r.status !== RequirementStatus.COMPLETED ||
+          r.updatedAt > new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000),
+      ).length;
+      remainingTasks.push(remaining);
+    }
+
+    return {
+      projectId,
+      startDate: query.startDate,
+      endDate: query.endDate,
+      totalStoryPoints,
+      idealLine,
+      actualLine,
+      remainingTasks,
     };
   }
 
@@ -144,7 +281,7 @@ export class ProjectProgressService {
     });
 
     if (!module) {
-      throw new Error('Module not found');
+      throw new NotFoundException('Module not found');
     }
 
     const requirements = await this.requirementRepository.find({
@@ -184,28 +321,5 @@ export class ProjectProgressService {
       progress,
       requirements: requirementsWithTasks,
     };
-  }
-
-  private generateBurndownData(
-    total: number,
-    completed: number,
-  ): BurndownPoint[] {
-    const points: BurndownPoint[] = [];
-    const today = new Date();
-    const startDate = new Date(today.getTime() - 14 * 24 * 60 * 60 * 1000);
-
-    for (let i = 0; i <= 14; i++) {
-      const date = new Date(startDate.getTime() + i * 24 * 60 * 60 * 1000);
-      const planned = Math.max(0, total - (total / 14) * i);
-      const actual = i < 14 - Math.floor((completed / total) * 14) ? planned : Math.max(0, total - completed);
-
-      points.push({
-        date: date.toISOString().split('T')[0],
-        planned: Math.round(planned * 10) / 10,
-        actual: Math.round(actual * 10) / 10,
-      });
-    }
-
-    return points;
   }
 }

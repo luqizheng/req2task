@@ -47,6 +47,16 @@ const router = createRouter({
       component: () => import('@/views/ProjectDetailView.vue')
     },
     {
+      path: '/projects/:id/progress',
+      name: 'projectProgress',
+      component: () => import('@/views/ProjectProgressView.vue')
+    },
+    {
+      path: '/projects/:id/baselines',
+      name: 'baselineManage',
+      component: () => import('@/views/BaselineManageView.vue')
+    },
+    {
       path: '/projects/:projectId/modules/:moduleId/requirements',
       name: 'requirementList',
       component: () => import('@/views/RequirementListView.vue')

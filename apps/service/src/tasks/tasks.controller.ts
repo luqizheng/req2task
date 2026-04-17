@@ -11,7 +11,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { TasksService } from './tasks.service';
+import { TasksService, MarkReplacedDto, MarkCancelledDto, WorkloadStats } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
 import {
   CreateTaskDto,
@@ -138,6 +138,36 @@ export class TasksController {
     @Param('dependencyTaskId') dependencyTaskId: string,
   ): Promise<ApiResponse<TaskResponseDto>> {
     const result = await this.tasksService.removeDependency(id, dependencyTaskId);
+    return { code: 0, data: result };
+  }
+
+  @Post('tasks/:id/mark-replaced')
+  async markReplaced(
+    @Param('id') id: string,
+    @Body() dto: MarkReplacedDto,
+  ): Promise<ApiResponse<TaskResponseDto>> {
+    const result = await this.tasksService.markReplaced(id, dto);
+    return { code: 0, data: result };
+  }
+
+  @Post('tasks/:id/mark-cancelled')
+  async markCancelled(
+    @Param('id') id: string,
+    @Body() dto: MarkCancelledDto,
+  ): Promise<ApiResponse<TaskResponseDto>> {
+    const result = await this.tasksService.markCancelled(id, dto);
+    return { code: 0, data: result };
+  }
+
+  @Get('tasks/:id/replaced-tasks')
+  async getReplacedTasks(@Param('id') id: string): Promise<ApiResponse<TaskResponseDto[]>> {
+    const result = await this.tasksService.getReplacedTasks(id);
+    return { code: 0, data: result };
+  }
+
+  @Get('projects/:projectId/workload-stats')
+  async getWorkloadStats(@Param('projectId') projectId: string): Promise<ApiResponse<WorkloadStats>> {
+    const result = await this.tasksService.getWorkloadStats(projectId);
     return { code: 0, data: result };
   }
 }

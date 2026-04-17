@@ -4,4 +4,5 @@ export enum TaskStatus {
   IN_REVIEW = 'in_review',
   DONE = 'done',
   BLOCKED = 'blocked',
+  CANCELLED = 'cancelled',
 }

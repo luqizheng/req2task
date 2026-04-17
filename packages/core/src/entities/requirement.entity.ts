@@ -11,7 +11,6 @@ import {
 import { FeatureModule } from './feature-module.entity';
 import { User } from './user.entity';
 import { UserStory } from './user-story.entity';
-import { RawRequirement } from './raw-requirement.entity';
 import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 
 @Entity('requirements')
@@ -67,12 +66,8 @@ export class Requirement {
   @OneToMany(() => Requirement, (req) => req.parent)
   children!: Requirement[];
 
-  @Column({ name: 'source_raw_requirement_id', nullable: true })
+  @Column({ name: 'source_raw_requirement_id', type: 'uuid', nullable: true })
   sourceRawRequirementId!: string | null;
-
-  @ManyToOne(() => RawRequirement, (raw) => raw.requirements, { nullable: true })
-  @JoinColumn({ name: 'source_raw_requirement_id' })
-  sourceRawRequirement!: RawRequirement | null;
 
   @OneToMany(() => UserStory, (us) => us.requirement)
   userStories!: UserStory[];

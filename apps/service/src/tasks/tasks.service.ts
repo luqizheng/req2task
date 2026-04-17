@@ -4,10 +4,34 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { Task } from '@req2task/core';
+import { Repository, In } from 'typeorm';
+import { Task, Requirement, FeatureModule } from '@req2task/core';
 import { TaskStatus, TaskPriority } from '@req2task/dto';
 import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto } from '@req2task/dto';
+
+export interface MarkReplacedDto {
+  replacedByTaskId: string;
+  reason: string;
+}
+
+export interface MarkCancelledDto {
+  reason: string;
+  type: 'replaced' | 'wasted';
+}
+
+export interface WorkloadStats {
+  projectId: string;
+  effectiveHours: number;
+  reworkHours: number;
+  wastedHours: number;
+  totalHours: number;
+  taskCounts: {
+    total: number;
+    completed: number;
+    cancelled: number;
+    replaced: number;
+  };
+}
 
 @Injectable()
 export class TasksService {
@@ -16,6 +40,10 @@ export class TasksService {
   constructor(
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
+    @InjectRepository(Requirement)
+    private requirementRepository: Repository<Requirement>,
+    @InjectRepository(FeatureModule)
+    private featureModuleRepository: Repository<FeatureModule>,
   ) {}
 
   private generateTaskNo(): string {
@@ -74,7 +102,7 @@ export class TasksService {
   async findById(id: string): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({
       where: { id },
-      relations: ['assignedTo', 'createdBy', 'dependencies', 'dependents', 'requirement'],
+      relations: ['assignedTo', 'createdBy', 'dependencies', 'dependents', 'requirement', 'replacedByTask'],
     });
 
     if (!task) {
@@ -160,6 +188,133 @@ export class TasksService {
     task.dependencies = task.dependencies.filter((d) => d.id !== dependencyTaskId);
     const updated = await this.taskRepository.save(task);
     return this.toResponseDto(updated);
+  }
+
+  async markReplaced(taskId: string, dto: MarkReplacedDto): Promise<TaskResponseDto> {
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId },
+      relations: ['assignedTo', 'createdBy'],
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    if (task.status !== TaskStatus.DONE && task.status !== TaskStatus.IN_PROGRESS) {
+      throw new BadRequestException('Only in-progress or done tasks can be marked as replaced');
+    }
+
+    const replacementTask = await this.taskRepository.findOne({
+      where: { id: dto.replacedByTaskId },
+    });
+
+    if (!replacementTask) {
+      throw new NotFoundException(`Replacement task with ID ${dto.replacedByTaskId} not found`);
+    }
+
+    task.status = TaskStatus.CANCELLED;
+    task.cancelledReason = dto.reason;
+    task.cancellationType = 'replaced';
+    task.replacedByTaskId = dto.replacedByTaskId;
+
+    const updated = await this.taskRepository.save(task);
+    return this.toResponseDto(updated);
+  }
+
+  async markCancelled(taskId: string, dto: MarkCancelledDto): Promise<TaskResponseDto> {
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId },
+      relations: ['assignedTo', 'createdBy'],
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    task.status = TaskStatus.CANCELLED;
+    task.cancelledReason = dto.reason;
+    task.cancellationType = dto.type;
+
+    const updated = await this.taskRepository.save(task);
+    return this.toResponseDto(updated);
+  }
+
+  async getReplacedTasks(taskId: string): Promise<TaskResponseDto[]> {
+    const task = await this.taskRepository.findOne({
+      where: { id: taskId },
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task with ID ${taskId} not found`);
+    }
+
+    const replacedTasks = await this.taskRepository.find({
+      where: { replacedByTaskId: taskId },
+      relations: ['assignedTo', 'createdBy'],
+    });
+
+    return replacedTasks.map((t) => this.toResponseDto(t));
+  }
+
+  async getWorkloadStats(projectId: string): Promise<WorkloadStats> {
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+    });
+    const moduleIds = modules.map((m) => m.id);
+
+    if (moduleIds.length === 0) {
+      return {
+        projectId,
+        effectiveHours: 0,
+        reworkHours: 0,
+        wastedHours: 0,
+        totalHours: 0,
+        taskCounts: { total: 0, completed: 0, cancelled: 0, replaced: 0 },
+      };
+    }
+
+    const requirements = await this.requirementRepository.find({
+      where: moduleIds.map((id) => ({ moduleId: id })),
+    });
+    const requirementIds = requirements.map((r) => r.id);
+
+    const tasks = requirementIds.length > 0
+      ? await this.taskRepository.find({
+          where: requirementIds.map((id) => ({ requirementId: id })),
+        })
+      : [];
+
+    let effectiveHours = 0;
+    let reworkHours = 0;
+    let wastedHours = 0;
+
+    for (const task of tasks) {
+      const hours = task.actualHours ? Number(task.actualHours) : 0;
+
+      if (task.cancellationType === 'replaced') {
+        reworkHours += hours;
+      } else if (task.cancellationType === 'wasted') {
+        wastedHours += hours;
+      } else if (task.status === TaskStatus.DONE) {
+        effectiveHours += hours;
+      }
+    }
+
+    const totalHours = effectiveHours + reworkHours + wastedHours;
+
+    return {
+      projectId,
+      effectiveHours: Math.round(effectiveHours * 100) / 100,
+      reworkHours: Math.round(reworkHours * 100) / 100,
+      wastedHours: Math.round(wastedHours * 100) / 100,
+      totalHours: Math.round(totalHours * 100) / 100,
+      taskCounts: {
+        total: tasks.length,
+        completed: tasks.filter((t) => t.status === TaskStatus.DONE).length,
+        cancelled: tasks.filter((t) => t.status === TaskStatus.CANCELLED).length,
+        replaced: tasks.filter((t) => t.cancellationType === 'replaced').length,
+      },
+    };
   }
 
   private toResponseDto(task: Task): TaskResponseDto {

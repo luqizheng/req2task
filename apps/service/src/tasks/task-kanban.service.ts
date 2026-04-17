@@ -10,6 +10,7 @@ const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TaskStatus.IN_REVIEW]: [TaskStatus.DONE, TaskStatus.IN_PROGRESS],
   [TaskStatus.DONE]: [TaskStatus.IN_PROGRESS],
   [TaskStatus.BLOCKED]: [TaskStatus.TODO, TaskStatus.IN_PROGRESS],
+  [TaskStatus.CANCELLED]: [],
 };
 
 @Injectable()
@@ -76,6 +77,7 @@ export class TaskKanbanService {
       [TaskStatus.IN_REVIEW]: [],
       [TaskStatus.DONE]: [],
       [TaskStatus.BLOCKED]: [],
+      [TaskStatus.CANCELLED]: [],
     };
 
     for (const task of tasks) {

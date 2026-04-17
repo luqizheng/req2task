@@ -3,10 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { TasksController } from './tasks.controller';
 import { TasksService } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
-import { Task, Requirement } from '@req2task/core';
+import { Task, Requirement, FeatureModule } from '@req2task/core';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Task, Requirement])],
+  imports: [TypeOrmModule.forFeature([Task, Requirement, FeatureModule])],
   controllers: [TasksController],
   providers: [TasksService, TaskKanbanService],
   exports: [TasksService, TaskKanbanService],

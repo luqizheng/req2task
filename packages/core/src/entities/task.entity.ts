@@ -80,6 +80,19 @@ export class Task {
   @OneToMany(() => Task, (task) => task.parentTask)
   children!: Task[];
 
+  @Column({ name: 'replaced_by_task_id', nullable: true })
+  replacedByTaskId!: string | null;
+
+  @ManyToOne(() => Task, { nullable: true })
+  @JoinColumn({ name: 'replaced_by_task_id' })
+  replacedByTask!: Task | null;
+
+  @Column({ name: 'cancelled_reason', type: 'text', nullable: true })
+  cancelledReason!: string | null;
+
+  @Column({ name: 'cancellation_type', type: 'varchar', length: 50, nullable: true })
+  cancellationType!: 'replaced' | 'wasted' | null;
+
   @Column({ name: 'created_by_id' })
   createdById!: string;
 

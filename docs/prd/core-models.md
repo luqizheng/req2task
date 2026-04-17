@@ -1,4 +1,4 @@
-﻿﻿# 核心模型
+﻿# 核心模型
 
 ## 2.1 层级结构
 
@@ -118,7 +118,7 @@ Project（项目）
 | title            | string(255)  | 是   | 任务标题       | 同一需求下标题不可重复                                     |
 | description      | string       | 是   | 任务描述       | 必须描述清楚具体工作                                       |
 | priority         | enum         | 是   | 任务优先级     | critical / high / medium / low                             |
-| status           | enum         | 是   | 任务状态       | todo / in_progress / in_review / done / blocked / cancelled   |
+| status           | enum         | 是   | 任务状态       | todo / in_progress / in_review / done / blocked / cancelled / replaced   |
 | type             | enum         | 是   | 任务类型       | development / testing / documentation / deployment / other |
 | assigneeType     | enum         | 是   | 负责人类型     | human / ai_agent                                           |
 | assigneeId       | UUID         | 否   | 负责人ID       | 人类用户或AI机器人，分配时必填                             |

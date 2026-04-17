@@ -21,7 +21,7 @@ body 如果是提交文件 ，则 body 为空
   "time": "datetime",
   "url": "string",
   "method": "string",
-  "body": "string" 
+  "body": "string"
 }
 ```
 
@@ -43,15 +43,15 @@ body 如果是提交文件 ，则 body 为空
 
 ### 1.4 错误码定义
 
-| 错误码 | 说明 |
-|--------|------|
-| 0 | 成功 |
-| 400 | 请求参数错误 |
-| 401 | 未认证 |
-| 403 | 无权限 |
-| 404 | 资源不存在 |
-| 409 | 资源冲突 |
-| 500 | 服务器内部错误 |
+| 错误码 | 说明           |
+| ------ | -------------- |
+| 0      | 成功           |
+| 400    | 请求参数错误   |
+| 401    | 未认证         |
+| 403    | 无权限         |
+| 404    | 资源不存在     |
+| 409    | 资源冲突       |
+| 500    | 服务器内部错误 |
 
 ---
 
@@ -64,6 +64,7 @@ POST /api/auth/login
 ```
 
 **请求**
+
 ```json
 {
   "email": "string",
@@ -72,6 +73,7 @@ POST /api/auth/login
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -100,6 +102,7 @@ POST /api/projects
 ```
 
 **请求**
+
 ```json
 {
   "name": "string",
@@ -112,6 +115,7 @@ POST /api/projects
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -147,6 +151,7 @@ GET /api/projects
 | keyword | string | 搜索关键词 |
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -177,6 +182,7 @@ GET /api/projects/:id
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -215,6 +221,7 @@ PUT /api/projects/:id
 ```
 
 **请求**
+
 ```json
 {
   "name": "string",
@@ -234,6 +241,7 @@ DELETE /api/projects/:id
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -250,6 +258,7 @@ POST /api/projects/:id/members
 ```
 
 **请求**
+
 ```json
 {
   "userId": "uuid",
@@ -258,6 +267,7 @@ POST /api/projects/:id/members
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -278,6 +288,7 @@ GET /api/projects/:id/members
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -314,6 +325,7 @@ POST /api/modules/:projectId/modules
 ```
 
 **请求**
+
 ```json
 {
   "name": "string",
@@ -325,6 +337,7 @@ POST /api/modules/:projectId/modules
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -351,6 +364,7 @@ GET /api/modules/:projectId/modules
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -380,6 +394,7 @@ POST /api/requirements/modules/:moduleId/requirements
 ```
 
 **请求**
+
 ```json
 {
   "title": "string",
@@ -391,6 +406,7 @@ POST /api/requirements/modules/:moduleId/requirements
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -428,6 +444,7 @@ GET /api/requirements/modules/:moduleId/requirements
 | pageSize | number | 每页数量 |
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -462,6 +479,7 @@ GET /api/requirements/:id
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -517,6 +535,7 @@ PUT /api/requirements/:id
 ```
 
 **请求**
+
 ```json
 {
   "title": "string",
@@ -533,6 +552,7 @@ POST /api/requirements/:id/approve
 ```
 
 **请求**
+
 ```json
 {
   "action": "approve",
@@ -547,6 +567,7 @@ GET /api/requirements/:id/changes
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -580,6 +601,7 @@ POST /api/user-stories/:requirementId/user-stories
 ```
 
 **请求**
+
 ```json
 {
   "role": "string",
@@ -590,6 +612,7 @@ POST /api/user-stories/:requirementId/user-stories
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -623,6 +646,7 @@ POST /api/acceptance-criteria/:userStoryId/acceptance-criteria
 ```
 
 **请求**
+
 ```json
 {
   "criteriaType": "functional",
@@ -632,6 +656,7 @@ POST /api/acceptance-criteria/:userStoryId/acceptance-criteria
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -664,6 +689,7 @@ POST /api/tasks/:requirementId/tasks
 ```
 
 **请求**
+
 ```json
 {
   "title": "string",
@@ -679,6 +705,7 @@ POST /api/tasks/:requirementId/tasks
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -720,6 +747,7 @@ GET /api/tasks/:requirementId/tasks
 | priority | enum | 优先级 |
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -757,6 +785,7 @@ PUT /api/tasks/:id
 ```
 
 **请求**
+
 ```json
 {
   "title": "string",
@@ -774,6 +803,7 @@ PUT /api/tasks/:id/status
 ```
 
 **请求**
+
 ```json
 {
   "status": "in_progress"
@@ -787,6 +817,7 @@ POST /api/tasks/:id/assign
 ```
 
 **请求**
+
 ```json
 {
   "assigneeType": "human",
@@ -803,6 +834,7 @@ POST /api/tasks/:id/dependencies
 ```
 
 **请求**
+
 ```json
 {
   "prerequisiteTaskId": "uuid",
@@ -833,6 +865,7 @@ POST /api/ai-generate
 ```
 
 **请求**
+
 ```json
 {
   "projectId": "uuid",
@@ -843,6 +876,7 @@ POST /api/ai-generate
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -877,6 +911,7 @@ POST /api/ai-breakdown
 ```
 
 **请求**
+
 ```json
 {
   "requirementId": "uuid",
@@ -885,6 +920,7 @@ POST /api/ai-breakdown
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -910,6 +946,7 @@ POST /api/ai-score
 ```
 
 **请求**
+
 ```json
 {
   "requirementId": "uuid",
@@ -918,6 +955,7 @@ POST /api/ai-score
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -959,6 +997,7 @@ GET /api/:projectId/ai-similar
 | limit | number | 返回数量 |
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -986,6 +1025,7 @@ POST /api/raw-collections/:projectId/raw-collections
 ```
 
 **请求**
+
 ```json
 {
   "title": "string",
@@ -1014,6 +1054,7 @@ POST /api/raw-collections/:collectionId/raw-requirements
 ```
 
 **请求**
+
 ```json
 {
   "content": "string",
@@ -1028,6 +1069,7 @@ GET /api/raw-collections/:collectionId/raw-requirements
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -1057,6 +1099,7 @@ POST /api/llm/configs
 ```
 
 **请求**
+
 ```json
 {
   "name": "DeepSeek 生产配置",
@@ -1117,13 +1160,12 @@ POST /api/llm/call
 ```
 
 **请求**
+
 ```json
 {
   "configId": "uuid",
   "provider": "deepseek",
-  "messages": [
-    { "role": "user", "content": "你好" }
-  ]
+  "messages": [{ "role": "user", "content": "你好" }]
 }
 ```
 
@@ -1138,6 +1180,7 @@ GET /api/prompts
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -1173,6 +1216,7 @@ POST /api/prompts/:code/render
 ```
 
 **请求**
+
 ```json
 {
   "projectName": "电商平台",
@@ -1181,6 +1225,7 @@ POST /api/prompts/:code/render
 ```
 
 **响应**
+
 ```json
 {
   "code": 0,
@@ -1198,46 +1243,69 @@ POST /api/prompts/:code/render
 
 ```typescript
 // 项目状态
-type ProjectStatus = 'planning' | 'active' | 'completed' | 'archived';
+type ProjectStatus = "planning" | "active" | "completed" | "archived";
 
 // 模块状态
-type ModuleStatus = 'planning' | 'development' | 'completed' | 'deprecated';
+type ModuleStatus = "planning" | "development" | "completed" | "deprecated";
 
 // 需求状态
-type RequirementStatus = 'draft' | 'reviewed' | 'approved' | 'rejected' | 'processing' | 'completed' | 'cancelled';
+type RequirementStatus =
+  | "draft"
+  | "reviewed"
+  | "approved"
+  | "rejected"
+  | "processing"
+  | "completed"
+  | "cancelled";
 
 // 需求优先级
-type Priority = 'critical' | 'high' | 'medium' | 'low';
+type Priority = "critical" | "high" | "medium" | "low";
 
 // 需求来源
-type RequirementSource = 'manual' | 'ai_generated' | 'document_import';
+type RequirementSource = "manual" | "ai_generated" | "document_import";
 
 // 任务状态
-type TaskStatus = 'todo' | 'in_progress' | 'in_review' | 'done' | 'blocked' | 'cancelled';
+type TaskStatus =
+  | "todo"
+  | "in_progress"
+  | "in_review"
+  | "done"
+  | "blocked"
+  | "cancelled"
+  | "replaced";
 
 // 任务类型
-type TaskType = 'development' | 'testing' | 'documentation' | 'deployment' | 'other';
+type TaskType =
+  | "development"
+  | "testing"
+  | "documentation"
+  | "deployment"
+  | "other";
 
 // 负责人类型
-type AssigneeType = 'human' | 'ai_agent';
+type AssigneeType = "human" | "ai_agent";
 
 // 原始需求状态
-type RawRequirementStatus = 'pending' | 'processing' | 'converted' | 'discarded';
+type RawRequirementStatus =
+  | "pending"
+  | "processing"
+  | "converted"
+  | "discarded";
 
 // 收集类型
-type CollectionType = 'meeting' | 'interview' | 'document' | 'other';
+type CollectionType = "meeting" | "interview" | "document" | "other";
 
 // 项目成员角色
-type ProjectRole = 'owner' | 'manager' | 'developer' | 'viewer';
+type ProjectRole = "owner" | "manager" | "developer" | "viewer";
 
 // LLM 提供商
-type LLMProvider = 'deepseek' | 'openai' | 'ollama' | 'minimax';
+type LLMProvider = "deepseek" | "openai" | "ollama" | "minimax";
 
 // 变更类型
-type ChangeType = 'create' | 'update' | 'delete' | 'status_change';
+type ChangeType = "create" | "update" | "delete" | "status_change";
 
 // 依赖类型
-type DependencyType = 'blocks' | 'relates_to';
+type DependencyType = "blocks" | "relates_to";
 ```
 
 ### 分页请求

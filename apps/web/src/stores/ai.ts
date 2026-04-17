@@ -89,6 +89,29 @@ export const useAiStore = defineStore('ai', () => {
     return currentConfig.value?.id;
   };
 
+  const setDefaultConfig = async (id: string) => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      await fetch(`/api/ai/llm-configs/${id}/set-default`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      configs.value = configs.value.map(c => ({
+        ...c,
+        isDefault: c.id === id,
+      }));
+      if (currentConfig.value?.id === id) {
+        currentConfig.value = configs.value.find(c => c.id === id) || null;
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to set default config';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   return {
     configs,
     currentConfig,
@@ -100,5 +123,6 @@ export const useAiStore = defineStore('ai', () => {
     deleteConfig,
     setActiveConfig,
     getActiveConfigId,
+    setDefaultConfig,
   };
 });

@@ -96,6 +96,16 @@ const router = createRouter({
       path: '/requirements/:id/chat',
       name: 'requirementChat',
       component: () => import('@/views/RequirementChatView.vue')
+    },
+    {
+      path: '/projects/:projectId/modules/:moduleId/raw-requirements',
+      name: 'rawRequirementCollect',
+      component: () => import('@/views/RawRequirementCollectView.vue')
+    },
+    {
+      path: '/requirements/:requirementId/user-stories',
+      name: 'userStoryManage',
+      component: () => import('@/views/UserStoryManageView.vue')
     }
   ]
 })

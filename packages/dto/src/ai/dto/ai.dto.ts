@@ -41,6 +41,12 @@ export class CreateLLMConfigDto {
   temperature?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  topP?: number;
+
+  @IsOptional()
   @IsBoolean()
   isActive?: boolean;
 
@@ -76,6 +82,12 @@ export class UpdateLLMConfigDto {
   @Min(0)
   @Max(2)
   temperature?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1)
+  topP?: number;
 
   @IsOptional()
   @IsBoolean()
@@ -121,6 +133,7 @@ export class LLMConfigResponseDto {
   baseUrl!: string | null;
   maxTokens!: number;
   temperature!: number;
+  topP!: number;
   isActive!: boolean;
   isDefault!: boolean;
   createdAt!: Date;

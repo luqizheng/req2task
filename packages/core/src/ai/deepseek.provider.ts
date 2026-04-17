@@ -23,7 +23,7 @@ export class DeepSeekProvider implements LLMProvider {
       messages,
       temperature: options?.temperature ?? this.config.temperature,
       max_tokens: options?.maxTokens ?? this.config.maxTokens,
-      top_p: options?.topP,
+      top_p: options?.topP ?? this.config.topP,
       stop: options?.stop,
     });
 

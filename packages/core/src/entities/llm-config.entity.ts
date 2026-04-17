@@ -37,6 +37,9 @@ export class LLMConfig {
   @Column({ name: 'temperature', type: 'decimal', precision: 3, scale: 2, default: 0.7 })
   temperature!: number;
 
+  @Column({ name: 'top_p', type: 'decimal', precision: 3, scale: 2, default: 1.0 })
+  topP!: number;
+
   @Column({ name: 'is_active', default: true })
   isActive!: boolean;
 

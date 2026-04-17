@@ -1,4 +1,0 @@
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "extends": ["./node_modules/@ai-sowf/shared-dev-config/dist/configs/oxlint/vue.json"]
-}

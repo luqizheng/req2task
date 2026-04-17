@@ -40,7 +40,6 @@ export function useStream() {
         body.conversationId = conversationId;
       }
 
-      // 使用适配器转换请求格式
       body = adapterRegistry.transformRequest(adapterName, body) as Record<string, unknown>;
 
       const response = await fetch(endpoint, {
@@ -64,9 +63,8 @@ export function useStream() {
 
       const decoder = new TextDecoder();
       let buffer = '';
-      let fullContent = '';
 
-      while (true) {
+      while (reader) {
         const { done, value } = await reader.read();
 
         if (done) {
@@ -95,7 +93,6 @@ export function useStream() {
           try {
             let parsed = JSON.parse(dataStr);
 
-            // 使用适配器转换响应格式
             parsed = adapterRegistry.transformResponse(adapterName, parsed) as Record<string, unknown>;
 
             if (parsed.type === 'metadata' || parsed.conversationId) {
@@ -108,7 +105,6 @@ export function useStream() {
             }
 
             if (parsed.type === 'content' && parsed.content) {
-              fullContent += parsed.content;
               onChunk?.({
                 type: 'content',
                 content: parsed.content,

@@ -5,8 +5,14 @@ import { Edit, Delete, Plus, Check, Close } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementStore } from '@/stores/requirement';
-import type { UpdateRequirementDto, CreateUserStoryDto, UpdateUserStoryDto, CreateAcceptanceCriteriaDto } from '@req2task/dto';
-import type { UserStoryResponseDto, AcceptanceCriteriaResponseDto } from '@req2task/dto';
+import type {
+  UpdateRequirementDto,
+  CreateUserStoryDto,
+  UpdateUserStoryDto,
+  CreateAcceptanceCriteriaDto,
+  UserStoryResponseDto,
+  AcceptanceCriteriaResponseDto,
+} from '@req2task/dto';
 
 const route = useRoute();
 const router = useRouter();
@@ -28,6 +34,12 @@ const infoForm = reactive({
 const infoRules: FormRules = {
   title: [{ required: true, message: '请输入需求标题', trigger: 'blur' }],
 };
+
+const transitionDialogVisible = ref(false);
+const transitionComment = ref('');
+
+const reviewDialogVisible = ref(false);
+const reviewComment = ref('');
 
 const userStoryDialogVisible = ref(false);
 const userStoryDialogTitle = ref('添加用户故事');
@@ -92,13 +104,13 @@ const priorityOptions = [
 ];
 
 const statusOptions = [
-  { value: RequirementStatus.DRAFT, label: '草稿' },
-  { value: RequirementStatus.REVIEWED, label: '已评审' },
-  { value: RequirementStatus.APPROVED, label: '已批准' },
-  { value: RequirementStatus.REJECTED, label: '已拒绝' },
-  { value: RequirementStatus.PROCESSING, label: '进行中' },
-  { value: RequirementStatus.COMPLETED, label: '已完成' },
-  { value: RequirementStatus.CANCELLED, label: '已取消' },
+  { value: RequirementStatus.DRAFT, label: '草稿', color: 'info' },
+  { value: RequirementStatus.REVIEWED, label: '已评审', color: '' },
+  { value: RequirementStatus.APPROVED, label: '已批准', color: 'success' },
+  { value: RequirementStatus.REJECTED, label: '已拒绝', color: 'danger' },
+  { value: RequirementStatus.PROCESSING, label: '进行中', color: 'warning' },
+  { value: RequirementStatus.COMPLETED, label: '已完成', color: 'success' },
+  { value: RequirementStatus.CANCELLED, label: '已取消', color: 'info' },
 ];
 
 const criteriaTypeOptions = [
@@ -119,7 +131,11 @@ const loadRequirement = async () => {
       infoForm.priority = requirementStore.currentRequirement.priority;
       infoForm.storyPoints = requirementStore.currentRequirement.storyPoints;
     }
-    await requirementStore.fetchUserStories(requirementId.value);
+    await Promise.all([
+      requirementStore.fetchUserStories(requirementId.value),
+      requirementStore.fetchChangeHistory(requirementId.value),
+      requirementStore.fetchAllowedTransitions(requirementId.value),
+    ]);
   } finally {
     loading.value = false;
   }
@@ -172,6 +188,48 @@ const handleDelete = async () => {
     if ((error as Error).message !== 'cancel') {
       ElMessage.error((error as Error).message || '删除失败');
     }
+  }
+};
+
+const handleTransition = async (to: string) => {
+  transitionComment.value = '';
+  transitionDialogVisible.value = true;
+  (window as unknown as { _transitionTarget: string })._transitionTarget = to;
+};
+
+const handleSubmitTransition = async () => {
+  const target = (window as unknown as { _transitionTarget: string })._transitionTarget;
+  try {
+    await requirementStore.transitionStatus(requirementId.value, target, transitionComment.value || undefined);
+    ElMessage.success('状态流转成功');
+    transitionDialogVisible.value = false;
+    await loadRequirement();
+  } catch (error) {
+    ElMessage.error((error as Error).message || '流转失败');
+  }
+};
+
+const handleApprove = async () => {
+  reviewComment.value = '';
+  reviewDialogVisible.value = true;
+  (window as unknown as { _reviewApproved: boolean })._reviewApproved = true;
+};
+
+const handleReject = async () => {
+  reviewComment.value = '';
+  reviewDialogVisible.value = true;
+  (window as unknown as { _reviewApproved: boolean })._reviewApproved = false;
+};
+
+const handleSubmitReview = async () => {
+  const approved = (window as unknown as { _reviewApproved: boolean })._reviewApproved;
+  try {
+    await requirementStore.reviewRequirement(requirementId.value, approved, reviewComment.value || undefined);
+    ElMessage.success(approved ? '已通过' : '已拒绝');
+    reviewDialogVisible.value = false;
+    await loadRequirement();
+  } catch (error) {
+    ElMessage.error((error as Error).message || '评审失败');
   }
 };
 
@@ -287,7 +345,18 @@ const handleSubmitAC = async () => {
 };
 
 const getStatusLabel = (status: string) => statusOptions.find(s => s.value === status)?.label || status;
+const getStatusTagType = (status: string) => statusOptions.find(s => s.value === status)?.color || '';
 const getCriteriaTypeLabel = (type: string) => criteriaTypeOptions.find(t => t.value === type)?.label || type;
+
+const getChangeTypeLabel = (type: string) => {
+  const map: Record<string, string> = {
+    STATUS_CHANGE: '状态变更',
+    FIELD_UPDATE: '字段更新',
+    COMMENT: '评论',
+    REVIEW: '评审',
+  };
+  return map[type] || type;
+};
 
 onMounted(() => {
   loadRequirement();
@@ -333,7 +402,9 @@ onMounted(() => {
               </el-select>
             </el-form-item>
             <el-form-item label="状态">
-              <el-tag>{{ getStatusLabel(requirementStore.currentRequirement?.status || '') }}</el-tag>
+              <el-tag :type="getStatusTagType(requirementStore.currentRequirement?.status || '')">
+                {{ getStatusLabel(requirementStore.currentRequirement?.status || '') }}
+              </el-tag>
             </el-form-item>
             <el-form-item label="故事点">
               <span>{{ infoForm.storyPoints }}</span>
@@ -342,6 +413,35 @@ onMounted(() => {
               <span>{{ requirementStore.currentRequirement?.createdAt ? new Date(requirementStore.currentRequirement.createdAt).toLocaleString() : '-' }}</span>
             </el-form-item>
           </el-form>
+        </el-card>
+
+        <el-card class="mt-16">
+          <template #header>
+            <span class="card-title">状态流转</span>
+          </template>
+          <div class="status-transition">
+            <div class="current-status">
+              当前状态：
+              <el-tag :type="getStatusTagType(requirementStore.currentRequirement?.status || '')" size="large">
+                {{ getStatusLabel(requirementStore.currentRequirement?.status || '') }}
+              </el-tag>
+            </div>
+            <div class="transition-buttons" v-if="requirementStore.allowedTransitions.length">
+              <el-button
+                v-for="t in requirementStore.allowedTransitions"
+                :key="t.to"
+                :type="t.color as any"
+                @click="handleTransition(t.to)"
+              >
+                {{ t.label }}
+              </el-button>
+            </div>
+            <div v-else class="no-transitions">暂无可用的状态流转</div>
+          </div>
+          <div class="review-buttons mt-16">
+            <el-button type="success" @click="handleApprove">通过评审</el-button>
+            <el-button type="danger" @click="handleReject">拒绝</el-button>
+          </div>
         </el-card>
       </el-tab-pane>
 
@@ -382,7 +482,66 @@ onMounted(() => {
           </div>
         </el-card>
       </el-tab-pane>
+
+      <el-tab-pane label="变更历史" name="history">
+        <el-card>
+          <template #header>
+            <span class="card-title">变更历史</span>
+          </template>
+          <el-timeline v-if="requirementStore.changeHistory.length">
+            <el-timeline-item
+              v-for="log in requirementStore.changeHistory"
+              :key="log.id"
+              :timestamp="new Date(log.createdAt).toLocaleString()"
+              placement="top"
+            >
+              <div class="change-log-item">
+                <div class="log-header">
+                  <el-tag size="small" type="info">{{ getChangeTypeLabel(log.changeType) }}</el-tag>
+                  <span class="log-user">{{ log.changedBy?.displayName || '系统' }}</span>
+                </div>
+                <div v-if="log.fromStatus || log.toStatus" class="log-status-change">
+                  <span class="old-value">{{ getStatusLabel(log.fromStatus || '') }}</span>
+                  <span class="arrow">→</span>
+                  <span class="new-value">{{ getStatusLabel(log.toStatus || '') }}</span>
+                </div>
+                <div v-else-if="log.oldValue || log.newValue" class="log-field-change">
+                  <span class="old-value">{{ log.oldValue }}</span>
+                  <span class="arrow">→</span>
+                  <span class="new-value">{{ log.newValue }}</span>
+                </div>
+                <div v-if="log.comment" class="log-comment">{{ log.comment }}</div>
+              </div>
+            </el-timeline-item>
+          </el-timeline>
+          <div v-else class="empty-tip">暂无变更记录</div>
+        </el-card>
+      </el-tab-pane>
     </el-tabs>
+
+    <el-dialog v-model="transitionDialogVisible" title="状态流转" width="400px" destroy-on-close>
+      <el-form label-width="80">
+        <el-form-item label="备注">
+          <el-input v-model="transitionComment" type="textarea" :rows="3" placeholder="请输入备注（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="transitionDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitTransition">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="reviewDialogVisible" title="评审意见" width="400px" destroy-on-close>
+      <el-form label-width="80">
+        <el-form-item label="意见">
+          <el-input v-model="reviewComment" type="textarea" :rows="3" placeholder="请输入评审意见（可选）" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="reviewDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmitReview">提交</el-button>
+      </template>
+    </el-dialog>
 
     <el-dialog v-model="userStoryDialogVisible" :title="userStoryDialogTitle" width="500px" destroy-on-close>
       <el-form ref="userStoryFormRef" :model="userStoryForm" :rules="userStoryFormRules" label-width="80">
@@ -463,6 +622,37 @@ onMounted(() => {
   font-weight: 600;
 }
 
+.mt-16 {
+  margin-top: 16px;
+}
+
+.status-transition {
+  padding: 8px 0;
+}
+
+.current-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.transition-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.no-transitions {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+.review-buttons {
+  display: flex;
+  gap: 8px;
+}
+
 .user-story-list {
   display: flex;
   flex-direction: column;
@@ -514,6 +704,53 @@ onMounted(() => {
 
 .ac-content {
   flex: 1;
+}
+
+.change-log-item {
+  background: #f8fafc;
+  padding: 12px;
+  border-radius: 8px;
+}
+
+.log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.log-user {
+  font-size: 13px;
+  color: #64748b;
+}
+
+.log-status-change,
+.log-field-change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+}
+
+.old-value {
+  color: #ef4444;
+  text-decoration: line-through;
+}
+
+.arrow {
+  color: #94a3b8;
+}
+
+.new-value {
+  color: #22c55e;
+}
+
+.log-comment {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #e2e8f0;
+  font-size: 14px;
+  color: #64748b;
 }
 
 .empty-tip {

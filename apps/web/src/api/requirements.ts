@@ -19,6 +19,34 @@ export interface RequirementListParams {
   priority?: string;
 }
 
+export interface ChangeLogItem {
+  id: string;
+  requirementId: string;
+  changeType: string;
+  oldValue: string | null;
+  newValue: string | null;
+  fromStatus: string | null;
+  toStatus: string | null;
+  comment: string | null;
+  changedBy?: {
+    id: string;
+    displayName: string;
+    username: string;
+  };
+  createdAt: string;
+}
+
+export interface ChangeHistoryResponse {
+  logs: ChangeLogItem[];
+  total: number;
+}
+
+export interface TransitionOption {
+  to: string;
+  label: string;
+  color: string;
+}
+
 export const requirementsApi = {
   getListByModule: (moduleId: string, params?: RequirementListParams) => {
     const { page = 1, limit = 20, ...rest } = params || {};
@@ -43,14 +71,26 @@ export const requirementsApi = {
   delete: (id: string) => api.delete(`/requirements/${id}`),
 
   getChangeHistory: (id: string) =>
-    api.get(`/requirements/${id}/change-history`),
+    api.get<ChangeHistoryResponse>(`/requirements/${id}/change-history`),
 
   getAllowedTransitions: (id: string) =>
-    api.get(`/requirements/${id}/allowed-transitions`),
+    api.get<{ allowedTransitions: TransitionOption[] }>(
+      `/requirements/${id}/allowed-transitions`
+    ),
 
-  transitionStatus: (id: string, targetStatus: string, comment?: string) =>
+  transitionStatus: (
+    id: string,
+    targetStatus: string,
+    comment?: string
+  ) =>
     api.post<RequirementResponseDto>(`/requirements/${id}/transition`, {
       targetStatus,
+      comment,
+    }),
+
+  review: (id: string, approved: boolean, comment?: string) =>
+    api.post<RequirementResponseDto>(`/requirements/${id}/review`, {
+      approved,
       comment,
     }),
 

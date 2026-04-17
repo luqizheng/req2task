@@ -11,12 +11,18 @@ import type {
   UpdateAcceptanceCriteriaDto,
 } from '@req2task/dto';
 import { requirementsApi } from '@/api/requirements';
-import type { RequirementListParams } from '@/api/requirements';
+import type {
+  RequirementListParams,
+  ChangeLogItem,
+  TransitionOption,
+} from '@/api/requirements';
 
 export const useRequirementStore = defineStore('requirement', () => {
   const requirementList = ref<RequirementResponseDto[]>([]);
   const currentRequirement = ref<RequirementResponseDto | null>(null);
   const currentUserStories = ref<UserStoryResponseDto[]>([]);
+  const changeHistory = ref<ChangeLogItem[]>([]);
+  const allowedTransitions = ref<TransitionOption[]>([]);
   const loading = ref(false);
   const total = ref(0);
 
@@ -71,6 +77,59 @@ export const useRequirementStore = defineStore('requirement', () => {
     loading.value = true;
     try {
       await requirementsApi.delete(id);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchChangeHistory = async (id: string) => {
+    loading.value = true;
+    try {
+      const { data } = await requirementsApi.getChangeHistory(id);
+      changeHistory.value = data.logs;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const fetchAllowedTransitions = async (id: string) => {
+    loading.value = true;
+    try {
+      const { data } = await requirementsApi.getAllowedTransitions(id);
+      allowedTransitions.value = data.allowedTransitions;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const transitionStatus = async (
+    id: string,
+    targetStatus: string,
+    comment?: string
+  ) => {
+    loading.value = true;
+    try {
+      const { data } = await requirementsApi.transitionStatus(
+        id,
+        targetStatus,
+        comment
+      );
+      currentRequirement.value = data;
+      await fetchAllowedTransitions(id);
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  const reviewRequirement = async (
+    id: string,
+    approved: boolean,
+    comment?: string
+  ) => {
+    loading.value = true;
+    try {
+      const { data } = await requirementsApi.review(id, approved, comment);
+      currentRequirement.value = data;
     } finally {
       loading.value = false;
     }
@@ -166,6 +225,8 @@ export const useRequirementStore = defineStore('requirement', () => {
     requirementList,
     currentRequirement,
     currentUserStories,
+    changeHistory,
+    allowedTransitions,
     loading,
     total,
     fetchRequirementList,
@@ -173,6 +234,10 @@ export const useRequirementStore = defineStore('requirement', () => {
     createRequirement,
     updateRequirement,
     deleteRequirement,
+    fetchChangeHistory,
+    fetchAllowedTransitions,
+    transitionStatus,
+    reviewRequirement,
     fetchUserStories,
     createUserStory,
     updateUserStory,

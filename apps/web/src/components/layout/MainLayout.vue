@@ -17,7 +17,8 @@ import {
   ArrowRight,
   ArrowLeft,
   ChatDotRound,
-  Tools
+  Tools,
+  MagicStick as AiIcon,
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -91,6 +92,7 @@ const menuItems = [
   { path: '/versions', icon: Ticket, label: '版本管理', name: 'versions' },
   { path: '/milestones', icon: Flag, label: '里程碑', name: 'milestones' },
   { path: '/ai/chat', icon: ChatDotRound, label: 'AI 对话', name: 'aiChat' },
+  { path: '/ai/requirement-gen', icon: AiIcon, label: 'AI 需求生成', name: 'aiRequirementGen' },
   { path: '/ai/config', icon: Tools, label: 'AI 配置', name: 'aiConfig' },
   { path: '/users', icon: User, label: '用户管理', name: 'users' },
 ]

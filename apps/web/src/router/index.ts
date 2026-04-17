@@ -65,6 +65,11 @@ const router = createRouter({
       path: '/ai/chat',
       name: 'aiChat',
       component: () => import('@/views/AiChatView.vue')
+    },
+    {
+      path: '/ai/requirement-gen',
+      name: 'aiRequirementGen',
+      component: () => import('@/views/AiRequirementGenView.vue')
     }
   ]
 })

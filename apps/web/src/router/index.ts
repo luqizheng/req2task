@@ -57,6 +57,16 @@ const router = createRouter({
       component: () => import('@/views/RequirementDetailView.vue')
     },
     {
+      path: '/requirements/:requirementId/tasks',
+      name: 'taskBoard',
+      component: () => import('@/views/TaskBoardView.vue')
+    },
+    {
+      path: '/tasks/:id',
+      name: 'taskDetail',
+      component: () => import('@/views/TaskDetailView.vue')
+    },
+    {
       path: '/ai/config',
       name: 'aiConfig',
       component: () => import('@/views/AiConfigView.vue')

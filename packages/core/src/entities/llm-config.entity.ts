@@ -25,7 +25,7 @@ export class LLMConfig {
   @Column()
   apiKey!: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   baseUrl!: string | null;
 
   @Column({ name: 'model_name' })

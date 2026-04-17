@@ -39,13 +39,15 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    const userCount = await this.userRepository.count();
+    const role = userCount === 0 ? UserRole.ADMIN : UserRole.USER;
 
     const user = this.userRepository.create({
       username: registerDto.username,
       email: registerDto.email,
       displayName: registerDto.displayName,
       passwordHash,
-      role: UserRole.USER,
+      role,
     });
 
     const savedUser = await this.userRepository.save(user);

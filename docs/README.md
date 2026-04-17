@@ -65,6 +65,15 @@ owner: req2task团队
 | [current-sprint.md](plans/current-sprint.md) | 当前迭代任务 | 📋 规划中 |
 | [backlog.md](plans/backlog.md) | 待办事项 | 📋 规划中 |
 
+### manuals/ - 用户手册层
+
+| 文档 | 说明 | 状态 |
+|------|------|------|
+| [index.md](manuals/index.md) | 用户手册索引 | ✅ 已实现 |
+| [project-management.md](manuals/project-management.md) | 项目管理指南 | ✅ 已实现 |
+| [user-management.md](manuals/user-management.md) | 用户管理指南 | ✅ 已实现 |
+| [admin-permissions.md](manuals/admin-permissions.md) | 管理员权限说明 | ✅ 已实现 |
+
 ### reference/ - 参考层（自动生成）
 
 | 文档 | 说明 | 状态 |

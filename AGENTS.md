@@ -21,7 +21,7 @@ req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端和 
 
 ```bash
 pnpm dev:web        # 启动前端开发服务器
-pnpm dev:service    # 启动后端开发服务器
+pnpm dev:service    # 启动后端开发服务器（自动检查4000端口占用情况）
 pnpm dev:infra      # 启动开发基础设施服务（PostgreSQL, Redis, ChromaDB等）
 pnpm dev:infra:stop # 停止开发基础设施服务
 pnpm check:env      # 检查开发环境工具（Node.js, pnpm, Docker等）

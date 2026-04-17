@@ -44,6 +44,35 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
 - 在 web 或 service 中单独定义已存在于 dto 包的类型
 - 直接在 controller 中返回数据库实体（应使用 DTO 转换）
 
+## 枚举/常量共享规则
+
+枚举和常量类型必须定义在 `packages/dto` 中，供前后端共享：
+
+- `packages/dto/src/enums/` - 共享枚举定义
+- 命名：PascalCase（如 `RequirementStatus`, `TaskPriority`）
+- 导出文件：kebab-case + `.enum.ts` 后缀（如 `requirement-status.enum.ts`）
+
+适用场景：
+- 状态类型（Draft/Approved/Rejected 等）
+- 优先级类型（High/Medium/Low 等）
+- 角色类型（Admin/User/Guest 等）
+- 任何前后端需要一致使用的常量
+
+禁止：
+
+- 将枚举放入 `packages/core`（实体文件除外）
+- 在 web 或 service 中重复定义已存在于 dto 的枚举
+- core 向 dto 单向依赖，core 不得反向依赖 dto
+
+当前共享枚举：
+
+| 枚举名 | 路径 | 用途 |
+| ------ | ---- | ---- |
+| RequirementStatus | `dto/src/enums/requirement-status.enum.ts` | 需求状态 |
+| Priority | `dto/src/enums/priority.enum.ts` | 优先级 |
+| TaskStatus | `dto/src/enums/task-status.enum.ts` | 任务状态 |
+| TaskPriority | `dto/src/enums/task-priority.enum.ts` | 任务优先级 |
+
 ## 命名规范
 
 ### TypeScript 文件

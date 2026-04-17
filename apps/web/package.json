@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",
+    "@req2task/ai-chat": "workspace:*",
     "@req2task/dto": "workspace:*",
     "axios": "^1.15.0",
     "element-plus": "^2.13.7",

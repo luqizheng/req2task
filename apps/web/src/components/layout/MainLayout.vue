@@ -15,7 +15,9 @@ import {
   Bell,
   MagicStick,
   ArrowRight,
-  ArrowLeft
+  ArrowLeft,
+  ChatDotRound,
+  Tools
 } from '@element-plus/icons-vue'
 
 const route = useRoute()
@@ -88,6 +90,8 @@ const menuItems = [
   { path: '/requirements', icon: Document, label: '需求管理', name: 'requirements' },
   { path: '/versions', icon: Ticket, label: '版本管理', name: 'versions' },
   { path: '/milestones', icon: Flag, label: '里程碑', name: 'milestones' },
+  { path: '/ai/chat', icon: ChatDotRound, label: 'AI 对话', name: 'aiChat' },
+  { path: '/ai/config', icon: Tools, label: 'AI 配置', name: 'aiConfig' },
   { path: '/users', icon: User, label: '用户管理', name: 'users' },
 ]
 
@@ -183,7 +187,13 @@ const bottomMenuItems = [
 
     <div class="ai-assistant">
       <el-tooltip content="AI 智能助手" placement="left">
-        <el-button type="primary" circle size="large" class="ai-btn">
+        <el-button
+          type="primary"
+          circle
+          size="large"
+          class="ai-btn"
+          @click="router.push('/ai/chat')"
+        >
           <el-icon :size="24"><MagicStick /></el-icon>
         </el-button>
       </el-tooltip>

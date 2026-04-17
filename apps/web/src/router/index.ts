@@ -55,6 +55,16 @@ const router = createRouter({
       path: '/requirements/:id',
       name: 'requirementDetail',
       component: () => import('@/views/RequirementDetailView.vue')
+    },
+    {
+      path: '/ai/config',
+      name: 'aiConfig',
+      component: () => import('@/views/AiConfigView.vue')
+    },
+    {
+      path: '/ai/chat',
+      name: 'aiChat',
+      component: () => import('@/views/AiChatView.vue')
     }
   ]
 })

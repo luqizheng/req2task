@@ -113,13 +113,14 @@ const bottomMenuItems = [
       </div>
 
       <el-menu
-        :default-active="route.name as string"
+        :default-active="route.path"
         class="sidebar-menu"
         :collapse="isCollapsed"
         :collapse-transition="false"
+        :router="true"
       >
         <template v-for="item in menuItems" :key="item.name">
-          <el-menu-item :index="item.name">
+          <el-menu-item :index="item.path">
             <el-icon><component :is="item.icon" /></el-icon>
             <template #title>{{ item.label }}</template>
           </el-menu-item>
@@ -128,7 +129,7 @@ const bottomMenuItems = [
         <div class="menu-divider" v-if="!isCollapsed"></div>
         
         <template v-for="item in bottomMenuItems" :key="item.name">
-          <el-menu-item :index="item.name">
+          <el-menu-item :index="item.path">
             <el-icon><component :is="item.icon" /></el-icon>
             <template #title>{{ item.label }}</template>
           </el-menu-item>

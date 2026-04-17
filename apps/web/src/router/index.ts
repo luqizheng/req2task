@@ -19,7 +19,8 @@ const router = createRouter({
     {
       path: '/',
       name: 'home',
-      component: () => import('@/views/HomeView.vue')
+      component: () => import('@/views/HomeView.vue'),
+      meta: { public: true }
     },
     {
       path: '/dashboard',
@@ -106,6 +107,8 @@ router.beforeEach((to, _from, next) => {
   if (!isPublic && !userStore.isLoggedIn()) {
     next('/login')
   } else if ((to.path === '/login' || to.path === '/register') && userStore.isLoggedIn()) {
+    next('/dashboard')
+  } else if (to.path === '/' && userStore.isLoggedIn()) {
     next('/dashboard')
   } else {
     next()

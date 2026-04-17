@@ -7,7 +7,7 @@ const route = useRoute()
 const showLayout = ref(true)
 
 watch(() => route.path, (newPath) => {
-  showLayout.value = newPath !== '/login' && newPath !== '/register'
+  showLayout.value = newPath !== '/login' && newPath !== '/register' && newPath !== '/'
 }, { immediate: true })
 </script>
 

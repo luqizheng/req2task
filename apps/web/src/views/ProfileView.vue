@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
-import { Lock, Edit, Check, Close } from '@element-plus/icons-vue';
+import { Edit, Check, Close } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage } from 'element-plus';
 import { useUserManageStore } from '@/stores/userManage';
@@ -19,16 +19,10 @@ const loading = ref(false);
 const isEditing = ref(false);
 
 const profileFormRef = ref<FormInstance>();
-const passwordFormRef = ref<FormInstance>();
 
 const profileForm = reactive({
   displayName: '',
   email: '',
-});
-
-const passwordForm = reactive({
-  newPassword: '',
-  confirmPassword: '',
 });
 
 const profileRules: FormRules = {
@@ -38,26 +32,6 @@ const profileRules: FormRules = {
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
     { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
-  ],
-};
-
-const passwordRules: FormRules = {
-  newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码至少6位', trigger: 'blur' },
-  ],
-  confirmPassword: [
-    { required: true, message: '请确认密码', trigger: 'blur' },
-    {
-      validator: (_rule, value, callback) => {
-        if (value !== passwordForm.newPassword) {
-          callback(new Error('两次输入的密码不一致'));
-        } else {
-          callback();
-        }
-      },
-      trigger: 'blur',
-    },
   ],
 };
 
@@ -121,24 +95,6 @@ const handleSaveProfile = async () => {
         isEditing.value = false;
       } catch (error) {
         ElMessage.error((error as Error).message || '更新失败');
-      }
-    }
-  });
-};
-
-const handleChangePassword = async () => {
-  if (!passwordFormRef.value) return;
-  await passwordFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        await userManageStore.changePassword({
-          newPassword: passwordForm.newPassword,
-        });
-        ElMessage.success('密码修改成功');
-        passwordForm.newPassword = '';
-        passwordForm.confirmPassword = '';
-      } catch (error) {
-        ElMessage.error((error as Error).message || '修改失败');
       }
     }
   });
@@ -209,50 +165,6 @@ const handleChangePassword = async () => {
                   : '-'
               }}
             </span>
-          </el-form-item>
-        </el-form>
-      </el-card>
-
-      <el-card class="password-card">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">
-              <el-icon><Lock /></el-icon>
-              安全设置
-            </span>
-          </div>
-        </template>
-
-        <el-form
-          ref="passwordFormRef"
-          :model="passwordForm"
-          :rules="passwordRules"
-          label-width="100"
-        >
-          <el-form-item label="新密码" prop="newPassword">
-            <el-input
-              v-model="passwordForm.newPassword"
-              type="password"
-              show-password
-              placeholder="请输入新密码"
-            />
-          </el-form-item>
-          <el-form-item label="确认密码" prop="confirmPassword">
-            <el-input
-              v-model="passwordForm.confirmPassword"
-              type="password"
-              show-password
-              placeholder="请再次输入新密码"
-            />
-          </el-form-item>
-          <el-form-item>
-            <el-button
-              type="primary"
-              :loading="userManageStore.loading"
-              @click="handleChangePassword"
-            >
-              修改密码
-            </el-button>
           </el-form-item>
         </el-form>
       </el-card>

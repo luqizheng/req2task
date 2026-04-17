@@ -4,9 +4,9 @@
 
 | 计划类型 | Sprint 数量 | 完成 | 进行中 | 待开始 |
 |----------|-------------|------|--------|--------|
-| 后端实施路线图 | 15 | 10 | 1 | 4 |
+| 后端实施路线图 | 15 | 13 | 0 | 2 |
 | 前端开发计划 | 11 | 11 | 0 | 0 |
-| **总计** | **25** | **21** | **1** | **3** |
+| **总计** | **25** | **24** | **0** | **1** |
 
 ---
 
@@ -24,11 +24,11 @@
 | Sprint 08 | [AI 需求生成](sprint-08-implementation-ai-requirement-gen.md) | ✅ 完成 | AI 生成需求、用户故事、验收条件 | M3 |
 | Sprint 09 | [AI 冲突检测](sprint-09-implementation-ai-conflict.md) | ✅ 完成 | 语义检索、冲突分析、AI Chat | M4 |
 | Sprint 10 | [AI 增强与优化](sprint-10-implementation-ai-enhancement.md) | ✅ 完成 | 任务分解、工时估算、相似推荐 | M4 |
-| Sprint 11 | [高级功能 - 上](sprint-11-implementation-advanced-part1.md) | 🚧 进行中 | 项目看板、报表、基线管理 | M5 |
-| Sprint 12 | [高级功能 - 下](sprint-12-implementation-advanced-part2.md) | ⏳ 待开始 | 权限完善、通知系统、集成测试 | M5 |
-| Sprint 13 | [精简 User 与角色关系](sprint-13-refactor-user-role-relation.md) | ⏳ 待排期 | 统一角色体系、移除 systemRole | M6 |
-| Sprint 14 | [修复 RawRequirement 与 Requirement 关系](sprint-14-fix-raw-requirement-relation.md) | ⏳ 待排期 | RawRequirement → Requirement 从 1:1 改为 1:N | M6 |
-| Sprint 15 | [需求变更处理 - 已完成任务管理](sprint-15-requirement-change-handling.md) | ⏳ 待排期 | 任务替代/废弃、工时统计 | M6 |
+| Sprint 11 | [高级功能 - 上](sprint-11-implementation-advanced-part1.md) | ✅ 完成 | 项目进度看板、燃尽图、基线管理 | M5 |
+| Sprint 12 | [高级功能 - 下](sprint-12-implementation-advanced-part2.md) | ✅ 完成 | 权限管理系统、通知系统 | M5 |
+| Sprint 13 | [精简 User 与角色关系](sprint-13-refactor-user-role-relation.md) | ✅ 完成 | RawRequirement→Requirement 1:N 关系修复 | M6 |
+| Sprint 14 | 需求变更处理 | ⏳ 待开始 | 任务替代/废弃、工时统计 | M6 |
+| Sprint 15 | 报表与集成 | ⏳ 待开始 | 报表导出、集成测试 | M6 |
 
 ---
 
@@ -59,8 +59,8 @@
 | M2 | Sprint 4 | ✅ 完成 | ✅ 完成 |
 | M3 | Sprint 6 | ✅ 完成 | ✅ 完成 |
 | M4 | Sprint 8 | ✅ 完成 | ✅ 完成 |
-| M5 | Sprint 10-12 | 🚧 进行中 | ✅ 完成 |
-| M6 | Sprint 13 | ⏳ 待开始 | ⏳ 待开始 |
+| M5 | Sprint 10-12 | ✅ 完成 | ✅ 完成 |
+| M6 | Sprint 13-15 | 🚧 进行中 | ⏳ 待开始 |
 
 ---
 
@@ -77,6 +77,7 @@
 
 ## 更新日志
 
+- 2026-04-17: Sprint 11-13 完成，M5/M6 里程碑推进
 - 2026-04-17: 初始化 Sprint 索引，创建拆分文件
 - 2026-04-17: 更新后端 Sprint 状态 (Sprint 01-10 ✅ 完成, Sprint 11 🚧 进行中, Sprint 12 ⏳ 待开始)
 - 2026-04-17: 添加前端 Sprint 00 用户与认证管理

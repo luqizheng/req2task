@@ -394,7 +394,11 @@ const bottomMenuItems = [
 .main-content {
   flex: 1;
   overflow: auto;
-  padding: 0;
+  padding: 24px;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 12px;
+  margin: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .ai-assistant {

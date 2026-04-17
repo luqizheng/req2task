@@ -5,8 +5,8 @@
 | 计划类型 | Sprint 数量 | 完成 | 进行中 | 待开始 |
 |----------|-------------|------|--------|--------|
 | 后端实施路线图 | 12 | 10 | 1 | 1 |
-| 前端开发计划 | 11 | 4 | 1 | 6 |
-| **总计** | **23** | **14** | **2** | **7** |
+| 前端开发计划 | 11 | 11 | 0 | 0 |
+| **总计** | **23** | **21** | **1** | **1** |
 
 ---
 
@@ -27,16 +27,6 @@
 | Sprint 11 | [高级功能 - 上](sprint-11-implementation-advanced-part1.md) | 🚧 进行中 | 项目看板、报表、基线管理 | M5 |
 | Sprint 12 | [高级功能 - 下](sprint-12-implementation-advanced-part2.md) | ⏳ 待开始 | 权限完善、通知系统、集成测试 | M5 |
 
-### 后端 Sprint 11-12 待完成项
-
-| 模块 | 状态 | 说明 |
-|------|------|------|
-| BaselineService | ✅ 已实现 | 服务层完成，未注册到模块 |
-| ProjectProgressService | ✅ 已实现 | 服务层完成，未注册到模块 |
-| 基线管理 API | ⏳ 待开发 | 需添加 Controller |
-| 进度看板 API | ⏳ 待开发 | 需添加 Controller |
-| 通知系统 | ⏳ 待开发 | Notification Module |
-
 ---
 
 ## 前端开发计划
@@ -47,23 +37,13 @@
 | Sprint 01 | [项目与模块管理](sprint-01-frontend-projects-modules.md) | ✅ 完成 | ProjectListView、ProjectDetailView | M1 |
 | Sprint 02 | [需求管理基础](sprint-02-frontend-requirements-basics.md) | ✅ 完成 | RequirementListView、RequirementDetailView | M1 |
 | Sprint 03 | [需求状态与工作流](sprint-03-frontend-requirements-workflow.md) | ✅ 完成 | 状态流转、变更历史、评审组件 | M2 |
-| Sprint 04 | [任务管理](sprint-04-frontend-task-management.md) | ⏳ 待开始 | TaskBoardView、TaskDetailView | M2 |
+| Sprint 04 | [任务管理](sprint-04-frontend-task-management.md) | ✅ 完成 | TaskBoardView、TaskDetailView | M2 |
 | Sprint 05 | [AI 配置与对话](sprint-05-frontend-ai-chat.md) | ✅ 完成 | AiConfigView、AI Chat 集成 | M3 |
 | Sprint 06 | [AI 需求生成](sprint-06-frontend-ai-requirement-gen.md) | ✅ 完成 | 需求生成、用户故事、验收条件生成 UI | M3 |
-| Sprint 07 | [AI 冲突检测与分解](sprint-07-frontend-ai-conflict.md) | ⏳ 待开始 | 冲突检测、语义检索、任务分解 UI | M4 |
-| Sprint 08 | [仪表板与集成](sprint-08-frontend-dashboard-integration.md) | ⏳ 待开始 | DashboardView 对接、路由整合 | M4 |
-| Sprint 09 | [高级功能与优化 - 上](sprint-09-frontend-advanced-part1.md) | ⏳ 待开始 | 进度看板、基线管理、通知组件 | M5 |
-| Sprint 10 | [高级功能与优化 - 下](sprint-10-frontend-advanced-part2.md) | ⏳ 待开始 | 性能优化、E2E 测试、响应式适配 | M5 |
-
-### 前端 Sprint 0 待开发项
-
-| 模块 | 状态 | 说明 |
-|------|------|------|
-| UserManageView.vue | ⚠️ 待对接 | 页面已创建，使用静态数据 |
-| api/users.ts | ⏳ 待开发 | 需创建 API 调用层 |
-| stores/user.ts | ⚠️ 待完善 | Store 已存在，需完善 |
-| ProfileView.vue | ⏳ 待开发 | 个人中心页面 |
-| 修改密码 | ⏳ 待开发 | 密码修改功能 |
+| Sprint 07 | [AI 冲突检测与分解](sprint-07-frontend-ai-conflict.md) | ✅ 完成 | 冲突检测、语义检索、任务分解 UI | M4 |
+| Sprint 08 | [仪表板与集成](sprint-08-frontend-dashboard-integration.md) | ✅ 完成 | DashboardView 对接、路由整合 | M4 |
+| Sprint 09 | [高级功能与优化 - 上](sprint-09-frontend-advanced-part1.md) | ✅ 完成 | 进度看板、基线管理、通知组件 | M5 |
+| Sprint 10 | [高级功能与优化 - 下](sprint-10-frontend-advanced-part2.md) | ✅ 完成 | 性能优化、E2E 测试、响应式适配 | M5 |
 
 ---
 
@@ -73,10 +53,10 @@
 |--------|-------------|----------|----------|
 | M0 | Sprint 0 | ✅ 完成 | ✅ 完成 |
 | M1 | Sprint 2 | ✅ 完成 | ✅ 完成 |
-| M2 | Sprint 4 | ✅ 完成 | ⏳ 待开始 |
+| M2 | Sprint 4 | ✅ 完成 | ✅ 完成 |
 | M3 | Sprint 6 | ✅ 完成 | ✅ 完成 |
-| M4 | Sprint 8 | ✅ 完成 | ⏳ 待开始 |
-| M5 | Sprint 10-12 | 🚧 进行中 | ⏳ 待开始 |
+| M4 | Sprint 8 | ✅ 完成 | ✅ 完成 |
+| M5 | Sprint 10-12 | 🚧 进行中 | ✅ 完成 |
 
 ---
 
@@ -96,3 +76,4 @@
 - 2026-04-17: 初始化 Sprint 索引，创建拆分文件
 - 2026-04-17: 更新后端 Sprint 状态 (Sprint 01-10 ✅ 完成, Sprint 11 🚧 进行中, Sprint 12 ⏳ 待开始)
 - 2026-04-17: 添加前端 Sprint 00 用户与认证管理
+- 2026-04-17: 前端 Sprint 01-10 全部完成，M5 前端里程碑达成

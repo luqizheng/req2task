@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { User } from './user.entity';
@@ -21,13 +22,6 @@ export class RawRequirement {
 
   @Column({ name: 'original_content', type: 'text' })
   originalContent!: string;
-
-  @Column({ name: 'generated_requirement_id', nullable: true })
-  generatedRequirementId!: string | null;
-
-  @ManyToOne(() => Requirement, { nullable: true })
-  @JoinColumn({ name: 'generated_requirement_id' })
-  generatedRequirement!: Requirement | null;
 
   @Column({
     type: 'enum',
@@ -48,6 +42,9 @@ export class RawRequirement {
   @ManyToOne(() => User)
   @JoinColumn({ name: 'created_by_id' })
   createdBy!: User;
+
+  @OneToMany(() => Requirement, (requirement) => requirement.sourceRawRequirement)
+  requirements!: Requirement[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

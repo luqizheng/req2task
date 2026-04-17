@@ -1,39 +1,23 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { projectsApi, type ProjectProgressDto } from '@/api/projects';
+import { ElMessage } from 'element-plus';
+import BurndownChart from '@/components/project/BurndownChart.vue';
 
 const route = useRoute();
 const router = useRouter();
 
 const projectId = computed(() => route.params.id as string);
 const loading = ref(false);
+const progressData = ref<ProjectProgressDto | null>(null);
 
-const projectProgress = computed(() => {
-  return {
-    overall: 65,
-    modules: [
-      { name: '用户管理', total: 8, completed: 6 },
-      { name: '项目管理', total: 5, completed: 3 },
-      { name: '需求管理', total: 12, completed: 8 },
-      { name: '任务管理', total: 15, completed: 9 },
-    ],
-    requirements: {
-      total: 30,
-      completed: 18,
-      inProgress: 8,
-      pending: 4,
-    },
-    tasks: {
-      total: 100,
-      todo: 20,
-      inProgress: 30,
-      done: 50,
-    },
-  };
-});
-
-const getPercentage = (completed: number, total: number) => {
-  return total > 0 ? Math.round((completed / total) * 100) : 0;
+const taskStatusMap: Record<string, { label: string; type: string }> = {
+  TODO: { label: '待办', type: 'info' },
+  IN_PROGRESS: { label: '进行中', type: 'primary' },
+  IN_REVIEW: { label: '审核中', type: 'warning' },
+  DONE: { label: '已完成', type: 'success' },
+  CANCELLED: { label: '已取消', type: 'danger' },
 };
 
 const getProgressColor = (percentage: number) => {
@@ -41,6 +25,31 @@ const getProgressColor = (percentage: number) => {
   if (percentage >= 50) return '#f59e0b';
   return '#ef4444';
 };
+
+const taskStatusList = computed(() => {
+  if (!progressData.value) return [];
+  return Object.entries(progressData.value.byTaskStatus).map(([status, count]) => ({
+    status,
+    ...taskStatusMap[status] || { label: status, type: 'info' },
+    count,
+  }));
+});
+
+const fetchProgress = async () => {
+  loading.value = true;
+  try {
+    const res = await projectsApi.getProgress(projectId.value);
+    progressData.value = res.data;
+  } catch (error) {
+    ElMessage.error('获取项目进度失败');
+  } finally {
+    loading.value = false;
+  }
+};
+
+onMounted(() => {
+  fetchProgress();
+});
 </script>
 
 <template>
@@ -48,80 +57,116 @@ const getProgressColor = (percentage: number) => {
     <div class="page-header">
       <el-button @click="router.push(`/projects/${projectId}`)">返回</el-button>
       <h2 class="page-title">项目进度</h2>
+      <el-button @click="fetchProgress" :loading="loading">刷新</el-button>
     </div>
 
-    <el-row :gutter="24">
-      <el-col :span="24">
-        <el-card class="overall-card">
-          <template #header>
-            <span class="card-title">整体进度</span>
-          </template>
-          <div class="overall-progress">
-            <el-progress
-              type="circle"
-              :percentage="projectProgress.overall"
-              :width="180"
-              :color="getProgressColor(projectProgress.overall)"
-            />
-            <div class="progress-details">
-              <p>已完成: {{ projectProgress.requirements.completed }} / {{ projectProgress.requirements.total }} 需求</p>
-              <p>已完成: {{ projectProgress.tasks.done }} / {{ projectProgress.tasks.total }} 任务</p>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
-    </el-row>
-
-    <el-row :gutter="24" class="module-row">
-      <el-col :span="12">
-        <el-card>
-          <template #header>
-            <span class="card-title">模块进度</span>
-          </template>
-          <div class="module-list">
-            <div v-for="module in projectProgress.modules" :key="module.name" class="module-item">
-              <div class="module-header">
-                <span class="module-name">{{ module.name }}</span>
-                <span class="module-stats">{{ module.completed }}/{{ module.total }}</span>
-              </div>
+    <template v-if="progressData">
+      <el-row :gutter="24">
+        <el-col :span="24">
+          <el-card class="overall-card">
+            <template #header>
+              <span class="card-title">整体进度</span>
+            </template>
+            <div class="overall-progress">
               <el-progress
-                :percentage="getPercentage(module.completed, module.total)"
-                :stroke-width="8"
-                :color="getProgressColor(getPercentage(module.completed, module.total))"
+                type="circle"
+                :percentage="progressData.taskProgress"
+                :width="180"
+                :color="getProgressColor(progressData.taskProgress)"
               />
+              <div class="progress-details">
+                <p>需求完成: {{ progressData.completedRequirements }} / {{ progressData.totalRequirements }}</p>
+                <p>任务完成: {{ progressData.completedTasks }} / {{ progressData.totalTasks }}</p>
+                <p>故事点: {{ progressData.completedStoryPoints }} / {{ progressData.totalStoryPoints }}</p>
+              </div>
             </div>
-          </div>
-        </el-card>
-      </el-col>
+          </el-card>
+        </el-col>
+      </el-row>
 
-      <el-col :span="12">
-        <el-card>
-          <template #header>
-            <span class="card-title">任务分布</span>
-          </template>
-          <div class="task-distribution">
-            <div class="stat-item">
-              <el-tag type="info">待办</el-tag>
-              <span class="stat-value">{{ projectProgress.tasks.todo }}</span>
+      <el-row :gutter="24" class="module-row">
+        <el-col :span="12">
+          <el-card>
+            <template #header>
+              <span class="card-title">需求统计</span>
+            </template>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">总需求</span>
+                <span class="stat-value">{{ progressData.totalRequirements }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">已完成</span>
+                <span class="stat-value success">{{ progressData.completedRequirements }}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">需求进度</span>
+                <el-progress
+                  :percentage="progressData.requirementProgress"
+                  :stroke-width="12"
+                  :color="getProgressColor(progressData.requirementProgress)"
+                />
+              </div>
             </div>
-            <div class="stat-item">
-              <el-tag type="primary">进行中</el-tag>
-              <span class="stat-value">{{ projectProgress.tasks.inProgress }}</span>
+          </el-card>
+        </el-col>
+
+        <el-col :span="12">
+          <el-card>
+            <template #header>
+              <span class="card-title">任务分布</span>
+            </template>
+            <div class="task-distribution">
+              <div
+                v-for="item in taskStatusList"
+                :key="item.status"
+                class="stat-item"
+              >
+                <el-tag :type="item.type as any">{{ item.label }}</el-tag>
+                <span class="stat-value">{{ item.count }}</span>
+              </div>
             </div>
-            <div class="stat-item">
-              <el-tag type="success">已完成</el-tag>
-              <span class="stat-value">{{ projectProgress.tasks.done }}</span>
+            <el-progress
+              type="dashboard"
+              :percentage="progressData.taskProgress"
+              :width="150"
+              color="#22c55e"
+            />
+          </el-card>
+        </el-col>
+      </el-row>
+
+      <el-row :gutter="24">
+        <el-col :span="12">
+          <el-card>
+            <template #header>
+              <span class="card-title">工时统计</span>
+            </template>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">预估工时</span>
+                <span class="stat-value">{{ progressData.totalEstimatedHours }}h</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">实际工时</span>
+                <span class="stat-value">{{ progressData.totalActualHours }}h</span>
+              </div>
             </div>
-          </div>
-          <el-progress
-            type="dashboard"
-            :percentage="projectProgress.tasks.done"
-            :width="150"
-            color="#22c55e"
-          />
-        </el-card>
-      </el-col>
-    </el-row>
+          </el-card>
+        </el-col>
+
+        <el-col :span="12">
+          <el-card>
+            <template #header>
+              <span class="card-title">燃尽图（近14天）</span>
+            </template>
+            <BurndownChart :data="progressData.burndownData" />
+          </el-card>
+        </el-col>
+      </el-row>
+    </template>
+
+    <el-empty v-else description="暂无数据" />
   </div>
 </template>
 
@@ -140,6 +185,7 @@ const getProgressColor = (percentage: number) => {
 }
 
 .page-title {
+  flex: 1;
   font-size: 20px;
   font-weight: 600;
   color: #1e293b;
@@ -172,32 +218,31 @@ const getProgressColor = (percentage: number) => {
   margin-bottom: 24px;
 }
 
-.module-list {
+.stats-grid {
   display: flex;
   flex-direction: column;
   gap: 16px;
 }
 
-.module-item {
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-.module-header {
+.stat-item {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
-.module-name {
-  font-weight: 500;
+.stat-label {
+  color: #64748b;
+  min-width: 80px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 600;
   color: #1e293b;
 }
 
-.module-stats {
-  color: #64748b;
-  font-size: 14px;
+.stat-value.success {
+  color: #22c55e;
 }
 
 .task-distribution {
@@ -206,16 +251,4 @@ const getProgressColor = (percentage: number) => {
   margin-bottom: 24px;
 }
 
-.stat-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1e293b;
-}
 </style>

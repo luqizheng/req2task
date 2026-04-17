@@ -1,14 +1,18 @@
+import { UserRole } from '@req2task/core';
+
 export class UserResponseDto {
-  id!: string
-  username!: string
-  email!: string
-  nickname?: string
-  createdAt!: Date
-  updatedAt!: Date
+  id!: string;
+  username!: string;
+  email!: string;
+  displayName!: string;
+  role!: UserRole;
+  createdAt!: Date;
+  updatedAt!: Date;
 }
 
 export class UserListResponseDto {
-  id!: string
-  username!: string
-  nickname?: string
+  items!: UserResponseDto[];
+  total!: number;
+  page!: number;
+  limit!: number;
 }

@@ -138,9 +138,9 @@ const priorityLabel = (priority: string) => {
         :is-regenerating="isRegeneratingUserStory"
         @add="emit('add-user-story')"
         @remove="emit('remove-user-story', $event)"
-        @update:role="emit('update-user-story-role', $event, arguments[1])"
-        @update:goal="emit('update-user-story-goal', $event, arguments[1])"
-        @update:benefit="emit('update-user-story-benefit', $event, arguments[1])"
+        @update:role="(a, b) => emit('update-user-story-role', a, b)"
+        @update:goal="(a, b) => emit('update-user-story-goal', a, b)"
+        @update:benefit="(a, b) => emit('update-user-story-benefit', a, b)"
         @regenerate="emit('regenerate-user-stories')"
       />
 
@@ -152,7 +152,7 @@ const priorityLabel = (priority: string) => {
         :is-regenerating="isRegeneratingCriteria"
         @add="emit('add-criteria')"
         @remove="emit('remove-criteria', $event)"
-        @update="emit('update-criteria', $event, arguments[1])"
+        @update="(a, b) => emit('update-criteria', a, b)"
         @regenerate="emit('regenerate-criteria')"
       />
     </div>

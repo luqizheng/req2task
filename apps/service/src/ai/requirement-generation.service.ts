@@ -7,7 +7,7 @@ import {
   ChromaVectorStore,
   LLMMessage,
 } from '@req2task/core';
-import { RawRequirement } from '@req2task/core';
+import { RawRequirement, ChatMessage } from '@req2task/core';
 import { RawRequirementStatus, Priority } from '@req2task/dto';
 
 export interface GenerateRequirementResult {
@@ -21,6 +21,13 @@ export interface GenerateRequirementResult {
     goal: string;
     benefit: string;
   }[];
+}
+
+export interface AnalyzeWithFollowUpResult {
+  summary: string;
+  keyElements: string[];
+  followUpQuestions: string[];
+  sessionHistory: ChatMessage[];
 }
 
 @Injectable()
@@ -39,15 +46,135 @@ export class RequirementGenerationService {
     moduleId: string,
     content: string,
     createdById: string,
+    collectionId?: string,
   ): Promise<RawRequirement> {
     const rawRequirement = this.rawRequirementRepository.create({
       moduleId,
       originalContent: content,
       status: RawRequirementStatus.PENDING,
       createdById,
+      collectionId: collectionId || null,
+      sessionHistory: [],
+      followUpQuestions: [],
+      keyElements: [],
     });
 
     return this.rawRequirementRepository.save(rawRequirement);
+  }
+
+  async analyzeWithFollowUp(
+    rawRequirementId: string,
+    newMessage: string,
+    configId?: string,
+  ): Promise<AnalyzeWithFollowUpResult> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    if (!rawRequirement) {
+      throw new BadRequestException('Raw requirement not found');
+    }
+
+    const sessionHistory = rawRequirement.sessionHistory || [];
+    sessionHistory.push({
+      role: 'user',
+      content: newMessage,
+      timestamp: new Date().toISOString(),
+    });
+
+    const systemPrompt = `You are an expert requirements analyst helping to collect and clarify user requirements.
+Your role is to:
+1. Understand and summarize the user's requirement
+2. Extract key elements from the requirement
+3. Generate follow-up questions if the requirement is incomplete or ambiguous
+4. Help the user refine their requirements through conversation
+
+Be concise and ask targeted questions to clarify requirements.`;
+
+    const conversationContext = sessionHistory
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n');
+
+    const analysisPrompt = `Please analyze the following requirement and provide a structured response:
+
+${conversationContext}
+
+Provide your response in the following JSON format:
+{
+  "summary": "A brief summary of the requirement (1-2 sentences)",
+  "keyElements": ["element1", "element2", "..."],
+  "followUpQuestions": ["Question 1?", "Question 2?", "..."]
+}
+
+Only generate follow-up questions if the requirement needs clarification on:
+- Missing details or specifications
+- Ambiguous terms or requirements
+- User roles or stakeholders
+- Acceptance criteria
+- Edge cases or error handling`;
+
+    const messages: LLMMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: analysisPrompt },
+    ];
+
+    try {
+      const response = await this.llmService.chatWithConfig(messages, configId, {
+        temperature: 0.7,
+        maxTokens: 2048,
+      });
+
+      const parsed = this.parseAnalysisResponse(response.content);
+
+      sessionHistory.push({
+        role: 'assistant',
+        content: response.content,
+        timestamp: new Date().toISOString(),
+      });
+
+      await this.rawRequirementRepository.update(rawRequirementId, {
+        sessionHistory,
+        followUpQuestions: parsed.followUpQuestions,
+        keyElements: parsed.keyElements,
+        generatedContent: parsed.summary,
+        status: parsed.followUpQuestions.length > 0 
+          ? RawRequirementStatus.PENDING 
+          : RawRequirementStatus.PROCESSING,
+      });
+
+      return {
+        summary: parsed.summary,
+        keyElements: parsed.keyElements,
+        followUpQuestions: parsed.followUpQuestions,
+        sessionHistory,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to analyze requirement ${rawRequirementId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
+
+  async chatCollect(
+    rawRequirementId: string,
+    userMessage: string,
+    configId?: string,
+  ): Promise<{
+    assistantMessage: string;
+    followUpQuestions: string[];
+    isComplete: boolean;
+  }> {
+    const result = await this.analyzeWithFollowUp(rawRequirementId, userMessage, configId);
+
+    const lastAssistantMessage = result.sessionHistory[result.sessionHistory.length - 1];
+
+    return {
+      assistantMessage: lastAssistantMessage?.content || '',
+      followUpQuestions: result.followUpQuestions,
+      isComplete: result.followUpQuestions.length === 0,
+    };
   }
 
   async generateRequirement(
@@ -232,5 +359,34 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
     }
 
     return criteria;
+  }
+
+  private parseAnalysisResponse(content: string): {
+    summary: string;
+    keyElements: string[];
+    followUpQuestions: string[];
+  } {
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          summary: parsed.summary || '',
+          keyElements: Array.isArray(parsed.keyElements) ? parsed.keyElements : [],
+          followUpQuestions: Array.isArray(parsed.followUpQuestions) ? parsed.followUpQuestions : [],
+        };
+      }
+    } catch {
+      this.logger.warn('Failed to parse analysis response as JSON, using fallback');
+    }
+
+    const summaryMatch = content.match(/summary:?\s*(.+?)(?=\n\n|keyElements|followUpQuestions|$)/is);
+    const summary = summaryMatch?.[1]?.trim() || content.substring(0, 200);
+
+    return {
+      summary,
+      keyElements: [],
+      followUpQuestions: [],
+    };
   }
 }

@@ -2,6 +2,7 @@ export * from './user.entity';
 export * from './project.entity';
 export * from './feature-module.entity';
 export * from './raw-requirement.entity';
+export * from './raw-requirement-collection.entity';
 export * from './requirement.entity';
 export * from './requirement-change-log.entity';
 export * from './user-story.entity';

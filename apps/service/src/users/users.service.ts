@@ -14,6 +14,7 @@ import {
   ChangePasswordDto,
   UserResponseDto,
   UserListResponseDto,
+  PublicUserListResponseDto,
 } from '@req2task/dto';
 
 @Injectable()
@@ -22,6 +23,25 @@ export class UsersService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
   ) {}
+
+  async findAllPublic(
+    page: number = 1,
+    limit: number = 10,
+  ): Promise<PublicUserListResponseDto> {
+    const [items, total] = await this.userRepository.findAndCount({
+      select: ['id', 'displayName'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { displayName: 'ASC' },
+    });
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+    };
+  }
 
   private toResponseDto(user: User): UserResponseDto {
     const { passwordHash: _passwordHash, ...result } = user;

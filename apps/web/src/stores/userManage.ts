@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { UserResponseDto } from '@req2task/dto';
+import type { UserResponseDto, PublicUserDto } from '@req2task/dto';
 import { useUserStore as useAuthUserStore } from './user';
 import { usersApi } from '@/api/users';
 import type { UserListParams } from '@/api/users';
@@ -13,9 +13,21 @@ import type {
 
 export const useUserManageStore = defineStore('userManage', () => {
   const userList = ref<UserResponseDto[]>([]);
+  const publicUserList = ref<PublicUserDto[]>([]);
   const currentUser = ref<UserResponseDto | null>(null);
   const loading = ref(false);
   const total = ref(0);
+
+  const fetchPublicUserList = async (params: Pick<UserListParams, 'page' | 'limit'> = {}) => {
+    loading.value = true;
+    try {
+      const data = await usersApi.getPublicList(params);
+      publicUserList.value = data.items;
+      total.value = data.total;
+    } finally {
+      loading.value = false;
+    }
+  };
 
   const fetchUserList = async (params: UserListParams = {}) => {
     loading.value = true;
@@ -88,9 +100,11 @@ export const useUserManageStore = defineStore('userManage', () => {
 
   return {
     userList,
+    publicUserList,
     currentUser,
     loading,
     total,
+    fetchPublicUserList,
     fetchUserList,
     fetchCurrentUser,
     createUser,

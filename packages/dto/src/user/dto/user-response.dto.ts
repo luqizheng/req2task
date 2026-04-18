@@ -16,3 +16,15 @@ export class UserListResponseDto {
   page!: number;
   limit!: number;
 }
+
+export class PublicUserDto {
+  id!: string;
+  displayName!: string;
+}
+
+export class PublicUserListResponseDto {
+  items!: PublicUserDto[];
+  total!: number;
+  page!: number;
+  limit!: number;
+}

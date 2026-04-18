@@ -14,6 +14,8 @@ import {
   LLMConfig,
   Baseline,
   Notification,
+  RawRequirement,
+  RawRequirementCollection,
 } from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -23,6 +25,8 @@ import { RequirementsModule } from "./requirements/requirements.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { AiModule } from "./ai/ai.module";
 import { NotificationModule } from "./notifications/notification.module";
+import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
+import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 
 @Module({
   imports: [
@@ -45,6 +49,8 @@ import { NotificationModule } from "./notifications/notification.module";
         LLMConfig,
         Baseline,
         Notification,
+        RawRequirement,
+        RawRequirementCollection,
       ],
       synchronize: false,
     }),
@@ -56,6 +62,8 @@ import { NotificationModule } from "./notifications/notification.module";
     TasksModule,
     AiModule,
     NotificationModule,
+    RawRequirementCollectionModule,
+    DeveloperWsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

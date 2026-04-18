@@ -1,0 +1,29 @@
+[package]
+name = "req2task-runner"
+version = "0.1.0"
+edition = "2021"
+authors = ["req2task team"]
+description = "A runner for req2task that manages developer containers"
+
+[dependencies]
+tokio = { version = "1.36", features = ["full"] }
+tokio-tungstenite = { version = "0.21", features = ["native-tls"] }
+futures-util = "0.3"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+bollard = "0.16"
+tokio-native-tls = "0.3"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+uuid = { version = "1.7", features = ["v4"] }
+hostname = "0.4"
+sysinfo = "0.30"
+once_cell = "1.19"
+parking_lot = "0.12"
+anyhow = "1.0"
+
+[profile.release]
+lto = true
+codegen-units = 1

@@ -5,6 +5,7 @@ import type {
   ChangePasswordDto,
   UserResponseDto,
   UserListResponseDto,
+  PublicUserListResponseDto,
 } from '@req2task/dto';
 import api from './axios';
 
@@ -17,6 +18,13 @@ export interface UserListParams {
 }
 
 export const usersApi = {
+  getPublicList: (params: Pick<UserListParams, 'page' | 'limit'> = {}) => {
+    const { page = 1, limit = 100 } = params;
+    return api.get<PublicUserListResponseDto>('/users/public', {
+      params: { page, limit },
+    });
+  },
+
   getList: (params: UserListParams) => {
     const { page = 1, limit = 10, ...rest } = params;
     return api.get<UserListResponseDto>('/users', {

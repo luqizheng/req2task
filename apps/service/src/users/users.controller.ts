@@ -19,6 +19,7 @@ import {
   ChangePasswordDto,
   UserResponseDto,
   UserListResponseDto,
+  PublicUserListResponseDto,
 } from '@req2task/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../common/guards/roles.guard';
@@ -30,6 +31,14 @@ import { UserRole } from '@req2task/dto';
 @Controller('users')
 export class UsersController {
   constructor(private usersService: UsersService) {}
+
+  @Get('public')
+  async findAllPublic(
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ): Promise<PublicUserListResponseDto> {
+    return this.usersService.findAllPublic(parseInt(page), parseInt(limit));
+  }
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)

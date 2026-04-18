@@ -2,15 +2,8 @@
 import { ref } from 'vue';
 import { Plus } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
-import type { ProjectResponseDto } from '@req2task/dto';
+import type { ProjectResponseDto, PublicUserDto } from '@req2task/dto';
 import { useUserManageStore } from '@/stores/userManage';
-import type { UserListParams } from '@/api/users';
-
-interface MemberItem {
-  id: string;
-  displayName: string;
-  email: string;
-}
 
 interface Props {
   project: ProjectResponseDto | null;
@@ -30,18 +23,13 @@ const userManageStore = useUserManageStore();
 const dialogVisible = ref(false);
 const search = ref('');
 const memberLoading = ref(false);
-const availableUsers = ref<MemberItem[]>([]);
+const availableUsers = ref<PublicUserDto[]>([]);
 
 const loadAvailableUsers = async () => {
   memberLoading.value = true;
   try {
-    const params: UserListParams = { limit: 100 };
-    await userManageStore.fetchUserList(params);
-    availableUsers.value = userManageStore.userList.map(u => ({
-      id: u.id,
-      displayName: u.displayName,
-      email: u.email,
-    }));
+    await userManageStore.fetchPublicUserList({ limit: 100 });
+    availableUsers.value = userManageStore.publicUserList;
   } finally {
     memberLoading.value = false;
   }
@@ -73,7 +61,7 @@ const filteredUsers = () => {
   return availableUsers.value.filter(
     u =>
       !props.project?.members?.some(m => m.id === u.id) &&
-      (u.displayName.includes(search.value) || u.email.includes(search.value))
+      u.displayName.includes(search.value)
   );
 };
 </script>
@@ -121,7 +109,6 @@ const filteredUsers = () => {
         <el-avatar size="small">{{ user.displayName?.charAt(0) || '?' }}</el-avatar>
         <div class="member-info">
           <div class="member-name">{{ user.displayName }}</div>
-          <div class="member-email">{{ user.email }}</div>
         </div>
         <el-button type="primary" size="small" @click="handleAddMember(user.id)">
           添加

@@ -176,6 +176,112 @@ Only generate follow-up questions if the requirement needs clarification on:
     };
   }
 
+  async *streamChatCollect(
+    rawRequirementId: string,
+    userMessage: string,
+    configId?: string,
+  ): AsyncGenerator<{ type: 'content' | 'metadata' | 'done'; content?: string; conversationId?: string; followUpQuestions?: string[]; keyElements?: string[] }> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    if (!rawRequirement) {
+      throw new BadRequestException('Raw requirement not found');
+    }
+
+    const sessionHistory = rawRequirement.sessionHistory || [];
+    sessionHistory.push({
+      role: 'user',
+      content: userMessage,
+      timestamp: new Date().toISOString(),
+    });
+
+    const systemPrompt = `You are an expert requirements analyst helping to collect and clarify user requirements.
+Your role is to:
+1. Understand and summarize the user's requirement
+2. Extract key elements from the requirement
+3. Generate follow-up questions if the requirement is incomplete or ambiguous
+4. Help the user refine their requirements through conversation
+
+Be concise and ask targeted questions to clarify requirements.`;
+
+    const conversationContext = sessionHistory
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n');
+
+    const analysisPrompt = `Please analyze the following requirement and provide a structured response:
+
+${conversationContext}
+
+Provide your response in the following JSON format:
+{
+  "summary": "A brief summary of the requirement (1-2 sentences)",
+  "keyElements": ["element1", "element2", "..."],
+  "followUpQuestions": ["Question 1?", "Question 2?", "..."]
+}
+
+Only generate follow-up questions if the requirement needs clarification on:
+- Missing details or specifications
+- Ambiguous terms or requirements
+- User roles or stakeholders
+- Acceptance criteria
+- Edge cases or error handling`;
+
+    const messages: LLMMessage[] = [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: analysisPrompt },
+    ];
+
+    try {
+      let fullContent = '';
+      let followUpQuestions: string[] = [];
+      let keyElements: string[] = [];
+
+      for await (const chunk of this.llmService.generateStream(messages, configId, {
+        temperature: 0.7,
+        maxTokens: 2048,
+      })) {
+        if (chunk.content) {
+          fullContent += chunk.content;
+          yield { type: 'content', content: chunk.content };
+        }
+      }
+
+      const parsed = this.parseAnalysisResponse(fullContent);
+      followUpQuestions = parsed.followUpQuestions;
+      keyElements = parsed.keyElements;
+
+      sessionHistory.push({
+        role: 'assistant',
+        content: fullContent,
+        timestamp: new Date().toISOString(),
+      });
+
+      await this.rawRequirementRepository.update(rawRequirementId, {
+        sessionHistory,
+        followUpQuestions,
+        keyElements,
+        generatedContent: parsed.summary,
+        status: followUpQuestions.length > 0
+          ? RawRequirementStatus.PENDING
+          : RawRequirementStatus.PROCESSING,
+      });
+
+      yield {
+        type: 'metadata',
+        conversationId: rawRequirementId,
+        followUpQuestions,
+        keyElements,
+      };
+    } catch (error) {
+      this.logger.error(
+        `Failed to stream chat collect for ${rawRequirementId}`,
+        error instanceof Error ? error.stack : String(error),
+      );
+      throw error;
+    }
+  }
+
   async generateRequirement(
     rawRequirementId: string,
     configId?: string,

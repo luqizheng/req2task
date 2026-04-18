@@ -118,11 +118,6 @@ const router = createRouter({
       component: () => import('@/views/RequirementCollectView.vue')
     },
     {
-      path: '/projects/:projectId/modules/:moduleId/raw-requirements',
-      name: 'rawRequirementCollect',
-      component: () => import('@/views/RawRequirementCollectView.vue')
-    },
-    {
       path: '/projects/:projectId/modules/:moduleId/collect',
       name: 'requirementCollect',
       component: () => import('@/views/RequirementCollectView.vue')

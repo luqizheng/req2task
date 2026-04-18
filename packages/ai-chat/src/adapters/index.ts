@@ -1,4 +1,5 @@
 import type { MessageAdapter, AdapterRegistry, AdapterOptions, DataMapping } from '../types/adapter';
+export { requirementCollectAdapter } from './requirement-collect';
 import type { AIChatMessage, MessageRole } from '../types';
 import { generateId } from '../utils/id-generator';
 import { handleAdapterError, validateAdapterInput, ValidationError } from '../utils/error-handler';

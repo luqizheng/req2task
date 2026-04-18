@@ -9,7 +9,11 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
+  Sse,
+  MessageEvent,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { RawRequirementCollectionService } from './raw-requirement-collection.service';
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
@@ -151,6 +155,43 @@ export class RawRequirementCollectionController {
     return { code: 0, data: result };
   }
 
+  @Sse('raw-requirements/:rawRequirementId/stream')
+  async streamChatCollect(
+    @Param('rawRequirementId') rawRequirementId: string,
+    @Body('message') message: string,
+    @Body('configId') configId: string | undefined,
+    @Res() res: Response,
+  ): Promise<MessageEvent> {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = this.requirementGenerationService.streamChatCollect(
+      rawRequirementId,
+      message,
+      configId,
+    );
+
+    (async () => {
+      try {
+        for await (const chunk of stream) {
+          if (chunk.type === 'content' && chunk.content) {
+            res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+          } else if (chunk.type === 'metadata') {
+            res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: chunk.conversationId, followUpQuestions: chunk.followUpQuestions, keyElements: chunk.keyElements })}\n\n`);
+          }
+        }
+        res.write('data: [DONE]\n\n');
+      } catch (error) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
+      } finally {
+        res.end();
+      }
+    })();
+
+    return {} as MessageEvent;
+  }
+
   @Post('raw-requirements/:rawRequirementId/clarify')
   async clarifyRawRequirement(
     @Param('rawRequirementId') rawRequirementId: string,
@@ -202,5 +243,56 @@ export class RawRequirementCollectionController {
         ...result,
       },
     };
+  }
+
+  @Sse(':id/stream')
+  async streamChatWithCollection(
+    @Param('id') collectionId: string,
+    @Body('message') message: string,
+    @Body('source') source: string,
+    @Body('configId') configId: string | undefined,
+    @Request() req: AuthenticatedRequest,
+    @Res() res: Response,
+  ): Promise<MessageEvent> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
+
+    const rawRequirement = await this.collectionService.addRawRequirement(
+      collectionId,
+      message,
+      source,
+      userId!,
+    );
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+
+    const stream = this.requirementGenerationService.streamChatCollect(
+      rawRequirement.id,
+      message,
+      configId,
+    );
+
+    (async () => {
+      try {
+        res.write(`data: ${JSON.stringify({ type: 'metadata', isNewConversation: true, conversationId: rawRequirement.id })}\n\n`);
+
+        for await (const chunk of stream) {
+          if (chunk.type === 'content' && chunk.content) {
+            res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+          } else if (chunk.type === 'metadata') {
+            res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: chunk.conversationId, followUpQuestions: chunk.followUpQuestions, keyElements: chunk.keyElements })}\n\n`);
+          }
+        }
+        res.write('data: [DONE]\n\n');
+      } catch (error) {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
+      } finally {
+        res.end();
+      }
+    })();
+
+    return {} as MessageEvent;
   }
 }

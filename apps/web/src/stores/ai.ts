@@ -15,10 +15,18 @@ export const useAiStore = defineStore('ai', () => {
     error.value = null;
     try {
       const response = await aiApi.getLLMConfigs();
-      configs.value = response || [];
-      const defaultConfig = configs.value.find(c => c.isDefault);
-      if (defaultConfig) {
-        currentConfig.value = defaultConfig;
+      let data = response;
+      if (data && typeof data === 'object' && 'data' in data) {
+        data = (data as { data: LLMConfigResponse[] }).data;
+      }
+      if (Array.isArray(data)) {
+        configs.value = data;
+        const defaultConfig = data.find(c => c.isDefault);
+        if (defaultConfig) {
+          currentConfig.value = defaultConfig;
+        }
+      } else {
+        configs.value = [];
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch AI configs';

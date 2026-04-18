@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "d823593e24d7493ab740db8f082cbe3b148ed29af9e804d11f5302ad79e4b96d"
     },
+    "element-plus-vue3": {
+      "source": "teachingai/full-stack-skills",
+      "sourceType": "github",
+      "computedHash": "134c5e69fc64bba22d73416f3091fe7767ad1cac170772e7d6c82b12b24178e4"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "sourceType": "github",

@@ -14,6 +14,7 @@ export interface LLMConfigResponse {
   baseUrl?: string | null;
   maxTokens: number;
   temperature: number;
+  topP: number;
   isActive: boolean;
   isDefault: boolean;
   createdAt: string;

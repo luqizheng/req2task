@@ -2,16 +2,16 @@ import { LLMConfig } from '../entities/llm-config.entity';
 import { BaseLLMProvider } from './base-llm-provider';
 import { LLMProviderType } from '@req2task/dto';
 
-const OPENAI_BASE_URL = 'https://api.openai.com/v1';
+const OLLAMA_BASE_URL = 'http://localhost:11434';
 
-export class OpenAIProvider extends BaseLLMProvider {
-  readonly providerType = LLMProviderType.OPENAI;
+export class OllamaProvider extends BaseLLMProvider {
+  readonly providerType = LLMProviderType.OLLAMA;
 
   constructor(config: LLMConfig) {
     super(config);
   }
 
   protected getDefaultBaseUrl(): string {
-    return OPENAI_BASE_URL;
+    return OLLAMA_BASE_URL;
   }
 }

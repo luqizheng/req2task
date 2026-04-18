@@ -80,7 +80,7 @@ const router = createRouter({
     {
       path: '/ai/config',
       name: 'aiConfig',
-      component: () => import('@/views/AiConfigView.vue')
+      component: () => import('@/views/AiConfig/AiConfigView.vue')
     },
     {
       path: '/ai/chat',

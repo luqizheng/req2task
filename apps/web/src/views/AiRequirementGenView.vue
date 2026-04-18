@@ -2,6 +2,9 @@
 import { ref, reactive, computed } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Refresh, Edit, Check, Close } from '@element-plus/icons-vue';
+import { AIChat } from '@req2task/ai-chat';
+import "@req2task/ai-chat/dist/index.css"
+import type { AIChatMessage } from '@req2task/ai-chat';
 import { aiApi } from '@/api/ai';
 import { useAiStore } from '@/stores/ai';
 import type { GenerateRequirementResponse, UserStory } from '@/api/ai';
@@ -17,6 +20,8 @@ const isLoading = ref(false);
 const rawInput = ref('');
 const generatedRequirement = ref<GenerateRequirementResponse | null>(null);
 const isEditing = ref(false);
+const chatRef = ref<InstanceType<typeof AIChat> | null>(null);
+const showChat = ref(false);
 
 const errorDialogVisible = ref(false);
 const errorMessage = ref('');
@@ -45,10 +50,52 @@ const currentStep = computed(() => {
   return completedIndex === -1 ? steps.length : completedIndex;
 });
 
+const chatConfig = computed(() => ({
+  endpoint: '/api/ai/chat',
+  sessionId: `req-gen-${Date.now()}`,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+  userRoleName: '需求分析师',
+  assistantRoleName: '需求助手',
+}));
+
 const handleClear = () => {
   rawInput.value = '';
   generatedRequirement.value = null;
   steps.forEach((s) => (s.status = 'pending'));
+};
+
+const handleChatMessage = (message: AIChatMessage) => {
+  console.log('Chat message received:', message);
+};
+
+const handleChatDone = (message: AIChatMessage, conversationId: string) => {
+  console.log('Chat done:', message, conversationId);
+  
+  ElMessage.info('对话已完成，请查看右侧生成结果');
+};
+
+const handleGenerateFromChat = () => {
+  const chatMessages = chatRef.value?.getMessages();
+  if (!chatMessages || chatMessages.length === 0) {
+    ElMessage.warning('对话内容为空');
+    return;
+  }
+  
+  const conversationContent = chatMessages
+    .filter(m => m.role === 'user' || m.role === 'assistant')
+    .map(m => `${m.roleName}: ${m.content}`)
+    .join('\n\n');
+  
+  if (conversationContent) {
+    rawInput.value = conversationContent;
+    generateAll();
+  }
+};
+
+const handleToggleChat = () => {
+  showChat.value = !showChat.value;
 };
 
 const updateStepStatus = (key: string, status: GenerationStep['status']) => {
@@ -196,7 +243,31 @@ const handleRemoveCriteria = (index: number) => {
   <div class="ai-requirement-gen-view">
     <div class="page-header">
       <h2 class="page-title">AI 需求生成</h2>
+      <el-button 
+        type="primary" 
+        @click="handleToggleChat"
+        :icon="showChat ? Close : Edit"
+      >
+        {{ showChat ? '关闭对话' : '开启对话' }}
+      </el-button>
     </div>
+
+    <el-card v-if="showChat" class="chat-container">
+      <AIChat
+        ref="chatRef"
+        :config="chatConfig"
+        title="需求对话助手"
+        placeholder="输入您的需求描述..."
+        @message-received="handleChatMessage"
+        @done="handleChatDone"
+      />
+      <div class="chat-actions">
+        <el-button type="primary" @click="handleGenerateFromChat">
+          从对话生成需求
+        </el-button>
+        <el-button @click="chatRef?.clearMessages">清空对话</el-button>
+      </div>
+    </el-card>
 
     <el-row :gutter="24">
       <el-col :span="10">
@@ -513,6 +584,9 @@ const handleRemoveCriteria = (index: number) => {
 
 .page-header {
   margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .page-title {
@@ -520,6 +594,17 @@ const handleRemoveCriteria = (index: number) => {
   font-weight: 600;
   color: #1e293b;
   margin: 0;
+}
+
+.chat-container {
+  margin-bottom: 24px;
+}
+
+.chat-actions {
+  margin-top: 16px;
+  display: flex;
+  gap: 12px;
+  justify-content: center;
 }
 
 .card-header {

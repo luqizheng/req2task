@@ -113,7 +113,8 @@ export abstract class BaseLLMProvider implements LLMProvider {
     let finishReason: string | undefined;
 
     try {
-      console.warn(`[${this.providerType}] generateStream request: ${JSON.stringify(requestBody)} to ${this.config.baseUrl}${this.getChatEndpoint()}`);  
+    
+      console.warn(`[${this.providerType}] ge111111111111111111111111111111111111111nerateStream request: ${JSON.stringify(requestBody)} to ${this.config.baseUrl}${this.getChatEndpoint()}`);  
       const response = await this.client.post(
         this.getChatEndpoint(),
         requestBody,

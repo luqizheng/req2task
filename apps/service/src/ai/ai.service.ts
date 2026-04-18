@@ -51,10 +51,15 @@ export class AiService {
 
   async updateLLMConfig(id: string, updateDto: UpdateLLMConfigDto): Promise<LLMConfigResponseDto> {
     if (updateDto.isDefault) {
-      await this.llmConfigRepository.update({ isDefault: true }, { isDefault: false });
+      const oldDefault = await this.llmConfigRepository.findOne({ where: { isDefault: true } });
+      if (oldDefault && oldDefault.id !== id) {
+        await this.llmConfigRepository.update({ isDefault: true }, { isDefault: false });
+        await this.llmService.invalidateCache(oldDefault.id);
+      }
     }
 
     await this.llmConfigRepository.update(id, updateDto);
+    await this.llmService.invalidateCache(id);
     return this.findLLMConfig(id);
   }
 
@@ -77,6 +82,7 @@ export class AiService {
   }
 
   async deleteLLMConfig(id: string): Promise<void> {
+    await this.llmService.invalidateCache(id);
     await this.llmConfigRepository.delete(id);
   }
 

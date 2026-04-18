@@ -174,7 +174,7 @@ As a user, I want to reset password, so that I can recover my account`,
 
   describe('generateAcceptanceCriteria', () => {
     it('should generate acceptance criteria', async () => {
-      llmService.generate.mockResolvedValue({
+      llmService.chatWithConfig.mockResolvedValue({
         content: `Given I am on the login page
 When I enter valid credentials
 Then I should be logged in

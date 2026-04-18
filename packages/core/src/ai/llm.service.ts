@@ -145,4 +145,20 @@ export class LLMService {
       console.log(`Cache invalidated for config: ${configId}`);
     }
   }
+
+  async chat(messages: LLMMessage[], configId?: string): Promise<LLMResponse & { configId: string }> {
+    const config = await this.findConfig(configId);
+    const result = await this.generate(messages, configId);
+    return { ...result, configId: config.id };
+  }
+
+  async chatWithConfig(
+    messages: LLMMessage[],
+    configId: string,
+    options?: LLMOptions,
+  ): Promise<LLMResponse & { configId: string }> {
+    const config = await this.findConfig(configId);
+    const result = await this.generate(messages, configId, options);
+    return { ...result, configId: config.id };
+  }
 }

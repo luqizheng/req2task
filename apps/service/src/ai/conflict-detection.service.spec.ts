@@ -151,7 +151,7 @@ Suggestion: Consolidate user data collection`,
 
   describe('chat', () => {
     it('should generate chat response without context', async () => {
-      llmService.generate.mockResolvedValue({
+      llmService.chatWithConfig.mockResolvedValue({
         content: 'This is a response',
         configId: 'default',
       });
@@ -174,7 +174,7 @@ Suggestion: Consolidate user data collection`,
       vectorStore.search.mockResolvedValue([
         { id: '2', content: 'Related feature', score: 0.8 },
       ]);
-      llmService.generate.mockResolvedValue({
+      llmService.chatWithConfig.mockResolvedValue({
         content: 'Context-aware response',
         configId: 'default',
       });

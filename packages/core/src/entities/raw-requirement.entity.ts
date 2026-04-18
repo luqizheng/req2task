@@ -44,7 +44,7 @@ export class RawRequirement {
   })
   status!: RawRequirementStatus;
 
-  @Column({ name: 'source', length: 200, nullable: true })
+  @Column({ name: 'source', type: 'varchar', length: 200, nullable: true })
   source!: string | null;
 
   @Column({ name: 'generated_content', type: 'text', nullable: true })

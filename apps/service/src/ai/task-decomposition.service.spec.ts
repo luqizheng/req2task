@@ -119,7 +119,6 @@ Description: Implement REST API endpoints`,
       llmService.generate.mockResolvedValue({
         content: `Hours: 16
 Reasoning: The feature requires database design, API development, and testing. Estimated at 16 hours.`,
-        configId: 'default',
       });
 
       const result = await service.estimateWorkload('Build a feature');
@@ -131,7 +130,6 @@ Reasoning: The feature requires database design, API development, and testing. E
     it('should return 0 hours when no hours found', async () => {
       llmService.generate.mockResolvedValue({
         content: 'Unable to estimate workload.',
-        configId: 'default',
       });
 
       const result = await service.estimateWorkload('Build a feature');

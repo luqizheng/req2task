@@ -17,7 +17,7 @@
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js",
     "migration:generate": "pnpm build && ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js migration:generate -d ./dist/src/data-source.js ",
     "migration:run": "pnpm build && pnpm typeorm migration:run -d ./dist/src/data-source.js",
-    "migration:drop": "pnpm build && pnpm typeorm migration:drop -d ./dist/src/data-source.js",
+    "migration:drop": "pnpm build && pnpm typeorm schema:drop -d ./dist/src/data-source.js",
     "migration:revert": "pnpm typeorm migration:revert -d ./dist/src/data-source.js",
     "migration:show": "pnpm typeorm migration:show -d ./dist/src/data-source.js"
   },
@@ -28,6 +28,7 @@
     "@nestjs/passport": "^10.0.3",
     "@nestjs/platform-express": "^10.3.0",
     "@nestjs/typeorm": "^10.0.0",
+    "@nestjs/websockets": "^10.4.22",
     "@req2task/core": "workspace:*",
     "@req2task/dto": "workspace:*",
     "bcrypt": "^5.1.1",
@@ -39,6 +40,7 @@
     "pg": "^8.11.0",
     "reflect-metadata": "^0.2.1",
     "rxjs": "^7.8.1",
+    "socket.io": "^4.8.3",
     "typeorm": "^0.3.19"
   },
   "devDependencies": {

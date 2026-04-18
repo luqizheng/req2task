@@ -12,12 +12,8 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { ProjectsService } from './projects.service';
-import { BaselineService, BaselineDetailDto, CreateBaselineDto } from './baseline.service';
-import {
-  ProjectProgressService,
-  BurndownData,
-  ModuleProgress,
-} from './project-progress.service';
+import { BaselineService } from './baseline.service';
+import { ProjectProgressService } from './project-progress.service';
 import {
   CreateProjectDto,
   UpdateProjectDto,
@@ -25,6 +21,10 @@ import {
   ProjectListResponseDto,
   AddMemberDto,
   ProjectMemberDto,
+  CreateBaselineDto,
+  BaselineDto,
+  BurndownDataDto,
+  ModuleProgressDto,
 } from '@req2task/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/current-user.decorator';
@@ -118,12 +118,12 @@ export class ProjectsController {
   async getBurndown(
     @Param('id') id: string,
     @Query() query: BurndownQueryDto,
-  ): Promise<BurndownData> {
+  ): Promise<BurndownDataDto> {
     return this.projectProgressService.getDetailedBurndown(id, query);
   }
 
   @Get('modules/:moduleId/progress')
-  async getModuleProgress(@Param('moduleId') moduleId: string): Promise<ModuleProgress> {
+  async getModuleProgress(@Param('moduleId') moduleId: string): Promise<ModuleProgressDto> {
     return this.projectProgressService.getModuleProgress(moduleId);
   }
 
@@ -132,17 +132,17 @@ export class ProjectsController {
     @Param('id') projectId: string,
     @Body() dto: CreateBaselineDto,
     @CurrentUser() user: User,
-  ): Promise<BaselineDetailDto> {
+  ): Promise<BaselineDto> {
     return this.baselineService.createBaseline(projectId, dto, user.id);
   }
 
   @Get(':id/baselines')
-  async getBaselines(@Param('id') projectId: string): Promise<BaselineDetailDto[]> {
+  async getBaselines(@Param('id') projectId: string): Promise<BaselineDto[]> {
     return this.baselineService.findByProject(projectId);
   }
 
   @Get('baselines/:baselineId')
-  async getBaseline(@Param('baselineId') baselineId: string): Promise<BaselineDetailDto> {
+  async getBaseline(@Param('baselineId') baselineId: string): Promise<BaselineDto> {
     return this.baselineService.findById(baselineId);
   }
 

@@ -87,8 +87,6 @@ export class AuthService {
         email: user.email,
         displayName: user.displayName,
         role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
       },
     };
   }

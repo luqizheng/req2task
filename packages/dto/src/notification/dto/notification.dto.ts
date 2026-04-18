@@ -9,7 +9,6 @@ export class NotificationDto {
   data?: Record<string, unknown>;
   isRead!: boolean;
   createdAt!: Date;
-  updatedAt!: Date;
 }
 
 export class NotificationListDto {

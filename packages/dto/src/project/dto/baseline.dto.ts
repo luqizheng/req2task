@@ -1,5 +1,10 @@
 import { RequirementStatus, TaskStatus } from '../../enums';
 
+export class CreateBaselineDto {
+  name!: string;
+  description?: string | null;
+}
+
 export class BaselineDto {
   id!: string;
   name!: string;

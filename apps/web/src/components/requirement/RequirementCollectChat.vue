@@ -146,7 +146,7 @@ const getMessageClass = (message: ChatMessageUI) => {
         </div>
 
         <div
-          v-if="store.currentRawRequirement?.followUpQuestions?.length > 0"
+          v-if="store.currentRawRequirement?.followUpQuestions && store.currentRawRequirement.followUpQuestions.length > 0"
           class="follow-up-section"
         >
           <div class="section-title">💭 AI 追问</div>

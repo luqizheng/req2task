@@ -24,7 +24,7 @@ import {
   LLMConfigResponseDto,
   ChatResponseDto,
   PromptTemplateResponseDto,
-  GenerateRequirementResponseDto,
+  GenerateRequirementResultDto,
 } from '@req2task/dto';
 import { LLMMessage } from '@req2task/core';
 
@@ -110,7 +110,7 @@ export class AiController {
     @Body('input') input: string,
     @Body('configId') configId?: string,
     @Request() req?: AuthenticatedRequest,
-  ): Promise<ApiResponse<GenerateRequirementResponseDto>> {
+  ): Promise<ApiResponse<GenerateRequirementResultDto>> {
     const userId = req?.user?.id || req?.user?.username || 'anonymous';
     const rawRequirement = await this.requirementGenerationService.createRawRequirement(
       input,
@@ -167,7 +167,7 @@ export class AiController {
   async generateFromRaw(
     @Param('id') id: string,
     @Body('configId') configId?: string,
-  ): Promise<ApiResponse<GenerateRequirementResponseDto>> {
+  ): Promise<ApiResponse<GenerateRequirementResultDto>> {
     const result = await this.requirementGenerationService.generateRequirement(id, configId);
     return { code: 0, data: result };
   }

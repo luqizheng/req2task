@@ -32,7 +32,6 @@ export class NotificationService {
       data: entity.data || undefined,
       isRead: entity.isRead,
       createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
     };
   }
 

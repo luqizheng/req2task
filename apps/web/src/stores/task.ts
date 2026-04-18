@@ -4,19 +4,22 @@ import type {
   TaskResponseDto,
   CreateTaskDto,
   UpdateTaskDto,
+  TaskStatisticsDto,
 } from '@req2task/dto';
 import { tasksApi } from '@/api/tasks';
-import type {
-  TaskListParams,
-  KanbanColumn,
-  TaskStatistics,
-} from '@/api/tasks';
+import type { TaskListParams } from '@/api/tasks';
+
+interface KanbanColumn {
+  status: string;
+  label: string;
+  tasks: TaskResponseDto[];
+}
 
 export const useTaskStore = defineStore('task', () => {
   const taskList = ref<TaskResponseDto[]>([]);
   const kanbanBoard = ref<KanbanColumn[]>([]);
   const currentTask = ref<TaskResponseDto | null>(null);
-  const taskStatistics = ref<TaskStatistics | null>(null);
+  const taskStatistics = ref<TaskStatisticsDto | null>(null);
   const loading = ref(false);
   const total = ref(0);
   const allowedTransitions = ref<string[]>([]);
@@ -49,7 +52,7 @@ export const useTaskStore = defineStore('task', () => {
         'blocked': '阻塞',
         'cancelled': '已取消',
       };
-      kanbanBoard.value = Object.entries(data).map(([status, tasks]) => ({
+      kanbanBoard.value = Object.entries(data.byStatus).map(([status, tasks]) => ({
         status,
         label: statusLabels[status] || status,
         tasks,

@@ -2,10 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { getRepositoryToken } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { BadRequestException } from "@nestjs/common";
-import {
-  RequirementGenerationService,
-  GenerateRequirementResult,
-} from "./requirement-generation.service";
+import { RequirementGenerationService } from "./requirement-generation.service";
 import {
   LLMService,
   PromptService,
@@ -99,7 +96,7 @@ describe("RequirementGenerationService", () => {
       );
 
       expect(result.id).toBe("1");
-      expect(result.originalContent).toBe("Build a login feature");
+      expect(result.content).toBe("Build a login feature");
       expect(rawRequirementRepository.create).toHaveBeenCalled();
       expect(rawRequirementRepository.save).toHaveBeenCalled();
     });

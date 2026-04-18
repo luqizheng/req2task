@@ -3,25 +3,14 @@ import type {
   UpdateTaskDto,
   TaskResponseDto,
   TaskListResponseDto,
+  TaskKanbanBoardDto,
+  TaskStatisticsDto,
 } from '@req2task/dto';
 import api from './axios';
 
 export interface TaskListParams {
   page?: number;
   limit?: number;
-}
-
-export interface KanbanColumn {
-  status: string;
-  label: string;
-  tasks: TaskResponseDto[];
-}
-
-export interface TaskStatistics {
-  total: number;
-  todo: number;
-  inProgress: number;
-  done: number;
 }
 
 export const tasksApi = {
@@ -50,16 +39,16 @@ export const tasksApi = {
   },
 
   getKanbanBoard: (requirementId: string) =>
-    api.get<KanbanColumn[]>(`/requirements/${requirementId}/kanban`),
+    api.get<TaskKanbanBoardDto>(`/requirements/${requirementId}/kanban`),
 
   getProjectKanbanBoard: (projectId: string) =>
-    api.get<KanbanColumn[]>(`/projects/${projectId}/kanban`),
+    api.get<TaskKanbanBoardDto>(`/projects/${projectId}/kanban`),
 
   getTaskStatistics: (requirementId: string) =>
-    api.get<TaskStatistics>(`/requirements/${requirementId}/task-statistics`),
+    api.get<TaskStatisticsDto>(`/requirements/${requirementId}/task-statistics`),
 
   getProjectTaskStatistics: (projectId: string) =>
-    api.get<TaskStatistics>(`/projects/${projectId}/task-statistics`),
+    api.get<TaskStatisticsDto>(`/projects/${projectId}/task-statistics`),
 
   getById: (id: string) => api.get<TaskResponseDto>(`/tasks/${id}`),
 

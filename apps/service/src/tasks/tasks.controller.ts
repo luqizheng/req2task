@@ -11,7 +11,7 @@ import {
   Request,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { TasksService, MarkReplacedDto, MarkCancelledDto, WorkloadStats } from './tasks.service';
+import { TasksService, MarkReplacedDto, MarkCancelledDto } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
 import {
   CreateTaskDto,
@@ -19,6 +19,7 @@ import {
   AddDependencyDto,
   TaskResponseDto,
   TaskListResponseDto,
+  WorkloadStatsDto,
 } from '@req2task/dto';
 import { TaskStatus } from '@req2task/dto';
 
@@ -208,7 +209,7 @@ export class TasksController {
   }
 
   @Get('projects/:projectId/workload-stats')
-  async getWorkloadStats(@Param('projectId') projectId: string): Promise<ApiResponse<WorkloadStats>> {
+  async getWorkloadStats(@Param('projectId') projectId: string): Promise<ApiResponse<WorkloadStatsDto>> {
     const result = await this.tasksService.getWorkloadStats(projectId);
     return { code: 0, data: result };
   }

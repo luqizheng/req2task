@@ -63,10 +63,9 @@ const getTasksByColumn = (status: string) => {
 const loadBoard = async () => {
   loading.value = true;
   try {
-    const res = await tasksApi.getProjectKanbanBoard(props.projectId);
-    const data = res.data?.data;
-    if (data) {
-      kanbanBoard.value = Object.entries(data).map(([status, tasks]) => ({
+    const data = await tasksApi.getProjectKanbanBoard(props.projectId);
+    if (data && data.byStatus) {
+      kanbanBoard.value = Object.entries(data.byStatus).map(([status, tasks]) => ({
         status,
         label: statusLabels[status] || status,
         tasks: tasks as TaskResponseDto[],
@@ -130,8 +129,8 @@ defineExpose({ reload: loadBoard });
               </el-tag>
             </div>
             <div class="task-title">{{ task.title }}</div>
-            <div v-if="task.requirement" class="task-requirement" @click.stop="handleViewRequirement(task)">
-              📋 {{ (task.requirement as any).title || task.requirementId.slice(0, 8) }}
+            <div class="task-requirement" @click.stop="handleViewRequirement(task)">
+              📋 {{ task.requirementId.slice(0, 8) }}
             </div>
             <div class="task-footer">
               <span v-if="task.assignedTo" class="task-assignee">

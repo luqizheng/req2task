@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import { useRouter } from "vue-router";
 import { Plus, Setting } from "@element-plus/icons-vue";
 import { useAiStore } from "@/stores/ai";
 import type { LLMConfigResponse } from "@/api/ai";
@@ -8,6 +9,7 @@ import { useAiConfigForm } from "./composables/useAiConfigForm";
 import ConfigCard from "./components/ConfigCard.vue";
 import ConfigForm from "./components/ConfigForm.vue";
 
+const router = useRouter();
 const aiStore = useAiStore();
 
 const {
@@ -48,6 +50,10 @@ const handleEdit = (config: LLMConfigResponse) => {
   fillFormForEdit(config);
   editingConfigId.value = config.id;
   drawerVisible.value = true;
+};
+
+const handleTest = (config: LLMConfigResponse) => {
+  router.push({ name: "aiConfigTest", params: { id: config.id } });
 };
 
 const handleClose = () => {
@@ -110,6 +116,7 @@ const handleSave = async () => {
               @delete="deleteConfig"
               @set-default="setDefault"
               @set-active="setActive"
+              @test="handleTest"
             />
           </el-col>
         </el-row>

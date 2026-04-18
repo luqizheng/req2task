@@ -122,4 +122,14 @@ export const aiApi = {
       { configId }
     );
   },
+
+  testLLMConfig: (configId: string, testMessage?: string) => {
+    return api.post<{
+      success: boolean;
+      content: string;
+      configId: string;
+      latencyMs?: number;
+      error?: string;
+    }>(`/ai/llm-configs/${configId}/test`, { testMessage });
+  },
 };

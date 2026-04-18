@@ -88,6 +88,11 @@ const router = createRouter({
       component: () => import('@/views/AiConfig/AiConfigView.vue')
     },
     {
+      path: '/ai/config/test/:id?',
+      name: 'aiConfigTest',
+      component: () => import('@/views/AiConfig/AiConfigTestView.vue')
+    },
+    {
       path: '/ai/chat',
       name: 'aiChat',
       component: () => import('@/views/AiChatView.vue')

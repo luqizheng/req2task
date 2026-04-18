@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { BusinessException } from '@req2task/core';
 
 @Catch()
 export class ApiExceptionFilter implements ExceptionFilter {
@@ -18,12 +19,18 @@ export class ApiExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
 
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let message = '服务器内部错误';
+    let message = '未知错误';
 
-    if (exception instanceof HttpException) {
+    const businessException = exception as BusinessException;
+    if (businessException.statusCode !== undefined && businessException.message) {
+      status = businessException.statusCode;
+      message = businessException.message;
+    } else if (exception instanceof HttpException) {
       status = exception.getStatus();
       const res = exception.getResponse();
       message = typeof res === 'string' ? res : (res as { message?: string }).message || message;
+    } else if (exception instanceof Error) {
+      message = exception.message;
     }
 
     const errorInfo = {

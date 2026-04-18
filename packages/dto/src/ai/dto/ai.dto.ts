@@ -146,6 +146,23 @@ export class ChatResponseDto {
   configId?: string;
 }
 
+export class TestLLMConfigDto {
+  @IsString()
+  configId!: string;
+
+  @IsOptional()
+  @IsString()
+  testMessage?: string;
+}
+
+export class TestLLMResponseDto {
+  success!: boolean;
+  content!: string;
+  configId!: string;
+  latencyMs?: number;
+  error?: string;
+}
+
 export class PromptTemplateResponseDto {
   code!: string;
   name!: string;

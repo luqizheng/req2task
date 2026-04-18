@@ -123,4 +123,40 @@ export class AiService {
   async getPromptTemplates() {
     return this.promptService.getAll();
   }
+
+  async testLLMConfig(configId: string, testMessage?: string): Promise<{
+    success: boolean;
+    content: string;
+    configId: string;
+    latencyMs?: number;
+    error?: string;
+  }> {
+    const startTime = Date.now();
+    const message = testMessage || '请回复"配置测试成功"以确认连接正常。';
+
+    try {
+      const messages: LLMMessage[] = [
+        { role: 'user', content: message },
+      ];
+
+      const result = await this.llmService.chatWithConfig(messages, configId);
+      const latencyMs = Date.now() - startTime;
+
+      return {
+        success: true,
+        content: result.content,
+        configId,
+        latencyMs,
+      };
+    } catch (error) {
+      const latencyMs = Date.now() - startTime;
+      return {
+        success: false,
+        content: '',
+        configId,
+        latencyMs,
+        error: error instanceof Error ? error.message : '测试失败',
+      };
+    }
+  }
 }

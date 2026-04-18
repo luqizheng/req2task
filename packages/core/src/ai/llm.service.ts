@@ -86,8 +86,28 @@ export class LLMService {
 
       return response;
     } catch (error) {
-      console.error(`LLM generation failed: ${(error as Error).message}`);
-      throw new BusinessException('LLM generation failed', 'LLM_ERROR', 500);
+      const err = error as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+      const status = err.response?.status;
+      let errorMessage = 'LLM generation failed';
+      
+      if (status === 401) {
+        errorMessage = 'AI API 认证失败，请检查 API Key 是否正确';
+      } else if (status === 403) {
+        errorMessage = 'AI API 访问被拒绝，请检查 API Key 权限';
+      } else if (status === 404) {
+        errorMessage = 'AI 服务不可用，请检查配置或服务是否启动';
+      } else if (status === 429) {
+        errorMessage = 'AI API 请求频率超限，请稍后重试';
+      } else if (status && status >= 500) {
+        errorMessage = 'AI 服务端错误，请稍后重试';
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+        errorMessage = '无法连接到 AI 服务，请检查网络和服务配置';
+      } else if (err.message) {
+        errorMessage = `AI 调用失败: ${err.message}`;
+      }
+      
+      console.error(`LLM generation failed: ${errorMessage}`, error);
+      throw new BusinessException(errorMessage, 'LLM_ERROR', 500);
     }
   }
 
@@ -118,8 +138,28 @@ export class LLMService {
         console.log(`Stream completed, total tokens: ${totalTokens}`);
       }
     } catch (error) {
-      console.error(`LLM stream failed: ${(error as Error).message}`);
-      throw new BusinessException('LLM stream failed', 'LLM_ERROR', 500);
+      const err = error as { response?: { status?: number; data?: unknown }; message?: string; code?: string };
+      const status = err.response?.status;
+      let errorMessage = 'LLM stream failed';
+      
+      if (status === 401) {
+        errorMessage = 'AI API 认证失败，请检查 API Key 是否正确';
+      } else if (status === 403) {
+        errorMessage = 'AI API 访问被拒绝，请检查 API Key 权限';
+      } else if (status === 404) {
+        errorMessage = 'AI 服务不可用，请检查配置或服务是否启动';
+      } else if (status === 429) {
+        errorMessage = 'AI API 请求频率超限，请稍后重试';
+      } else if (status && status >= 500) {
+        errorMessage = 'AI 服务端错误，请稍后重试';
+      } else if (err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+        errorMessage = '无法连接到 AI 服务，请检查网络和服务配置';
+      } else if (err.message) {
+        errorMessage = `AI 调用失败: ${err.message}`;
+      }
+      
+      console.error(`LLM stream failed: ${errorMessage}`, error);
+      throw new BusinessException(errorMessage, 'LLM_ERROR', 500);
     }
   }
 

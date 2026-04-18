@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Edit, Delete } from "@element-plus/icons-vue";
+import { Edit, Delete, VideoPlay } from "@element-plus/icons-vue";
 import type { LLMConfigResponse } from "@/api/ai";
 import { getProviderName, getProviderTagType, maskApiKey } from "../composables/useProviderUtils";
 
@@ -15,6 +15,7 @@ const emit = defineEmits<{
   delete: [config: LLMConfigResponse];
   setDefault: [config: LLMConfigResponse];
   setActive: [config: LLMConfigResponse];
+  test: [config: LLMConfigResponse];
 }>();
 </script>
 
@@ -84,6 +85,15 @@ const emit = defineEmits<{
     </div>
 
     <div class="config-footer">
+      <el-button
+        size="small"
+        type="primary"
+        :icon="VideoPlay"
+        @click="emit('test', config)"
+        :disabled="isEditing"
+      >
+        测试
+      </el-button>
       <el-button
         v-if="!config.isDefault"
         size="small"

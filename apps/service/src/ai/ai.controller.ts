@@ -36,7 +36,7 @@ interface ApiResponse<T> {
 
 interface AuthenticatedRequest {
   user: {
-    userId: string;
+    id: string;
     username: string;
   };
 }
@@ -84,6 +84,21 @@ export class AiController {
     return { code: 0, message: '删除成功' };
   }
 
+  @Post('llm-configs/:id/test')
+  async testLLMConfig(
+    @Param('id') id: string,
+    @Body('testMessage') testMessage?: string,
+  ): Promise<ApiResponse<{
+    success: boolean;
+    content: string;
+    configId: string;
+    latencyMs?: number;
+    error?: string;
+  }>> {
+    const result = await this.aiService.testLLMConfig(id, testMessage);
+    return { code: 0, data: result };
+  }
+
   @Post('chat')
   async chat(@Body() chatRequest: ChatRequestDto): Promise<ApiResponse<ChatResponseDto>> {
     const result = await this.aiService.chat(chatRequest);
@@ -94,8 +109,17 @@ export class AiController {
   async generateRequirement(
     @Body('input') input: string,
     @Body('configId') configId?: string,
-  ): Promise<ApiResponse<{ content: string }>> {
-    const result = await this.aiService.generateRequirement(input, configId);
+    @Request() req?: AuthenticatedRequest,
+  ): Promise<ApiResponse<GenerateRequirementResponseDto>> {
+    const userId = req?.user?.id || req?.user?.username || 'anonymous';
+    const rawRequirement = await this.requirementGenerationService.createRawRequirement(
+      input,
+      userId,
+    );
+    const result = await this.requirementGenerationService.generateRequirement(
+      rawRequirement.id,
+      configId,
+    );
     return { code: 0, data: result };
   }
 
@@ -125,8 +149,7 @@ export class AiController {
     @Body() createDto: CreateRawRequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<unknown>> {
-    const user = req.user as { id?: string; userId?: string };
-    const userId = user.id || user.userId;
+    const userId = req.user.id;
     const result = await this.requirementGenerationService.createRawRequirement(
       createDto.content,
       userId!,
@@ -153,7 +176,7 @@ export class AiController {
   async generateUserStories(
     @Body('requirementContent') requirementContent: string,
     @Body('configId') configId?: string,
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<{ role: string; goal: string; benefit: string }[]>> {
     const result = await this.requirementGenerationService.generateUserStories(
       requirementContent,
       configId,

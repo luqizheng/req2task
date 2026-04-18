@@ -17,7 +17,14 @@ const isLoading = ref(false);
 const rawInput = ref('');
 const generatedRequirement = ref<GenerateRequirementResponse | null>(null);
 const isEditing = ref(false);
-const selectedModuleId = ref<string>('');
+
+const errorDialogVisible = ref(false);
+const errorMessage = ref('');
+
+const showError = (message: string) => {
+  errorMessage.value = message || '发生未知错误';
+  errorDialogVisible.value = true;
+};
 
 const steps = reactive<GenerationStep[]>([
   { key: 'requirement', label: '生成需求', status: 'pending' },
@@ -80,7 +87,7 @@ const generateAll = async () => {
     ElMessage.success('需求生成完成');
   } catch (error) {
     updateStepStatus('requirement', 'failed');
-    ElMessage.error((error as Error).message || '生成失败');
+    showError((error as Error).message);
   } finally {
     isLoading.value = false;
   }
@@ -104,7 +111,7 @@ const regenerateUserStories = async () => {
     ElMessage.success('用户故事重新生成完成');
   } catch (error) {
     updateStepStatus('userStory', 'failed');
-    ElMessage.error((error as Error).message || '生成失败');
+    showError((error as Error).message);
   } finally {
     isLoading.value = false;
   }
@@ -128,7 +135,7 @@ const regenerateCriteria = async () => {
     ElMessage.success('验收条件重新生成完成');
   } catch (error) {
     updateStepStatus('criteria', 'failed');
-    ElMessage.error((error as Error).message || '生成失败');
+    showError((error as Error).message);
   } finally {
     isLoading.value = false;
   }
@@ -183,22 +190,6 @@ const handleAddCriteria = () => {
 const handleRemoveCriteria = (index: number) => {
   editableRequirement.acceptanceCriteria.splice(index, 1);
 };
-
-const handleSaveToModule = async () => {
-  if (!selectedModuleId.value) {
-    ElMessage.warning('请选择目标模块');
-    return;
-  }
-
-  try {
-    await aiApi.createRawRequirement({
-      content: rawInput.value,
-    });
-    ElMessage.success('已保存');
-  } catch (error) {
-    ElMessage.error((error as Error).message || '保存失败');
-  }
-};
 </script>
 
 <template>
@@ -250,30 +241,6 @@ const handleSaveToModule = async () => {
               :status="step.status"
             />
           </el-steps>
-        </el-card>
-
-        <el-card class="module-card">
-          <template #header>
-            <span class="card-title">保存到模块</span>
-          </template>
-
-          <el-select
-            v-model="selectedModuleId"
-            placeholder="选择目标模块"
-            style="width: 100%; margin-bottom: 12px"
-          >
-            <el-option label="模块1" value="module1" />
-            <el-option label="模块2" value="module2" />
-          </el-select>
-
-          <el-button
-            type="success"
-            :icon="Check"
-            @click="handleSaveToModule"
-            :disabled="!selectedModuleId || !rawInput"
-          >
-            保存原始需求
-          </el-button>
         </el-card>
       </el-col>
 
@@ -513,6 +480,27 @@ const handleSaveToModule = async () => {
         </el-card>
       </el-col>
     </el-row>
+
+    <el-dialog
+      v-model="errorDialogVisible"
+      title="操作失败"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <div style="padding: 16px 0">
+        <el-alert
+          type="error"
+          :title="errorMessage"
+          :closable="false"
+          show-icon
+        />
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="errorDialogVisible = false">
+          我知道了
+        </el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -552,8 +540,7 @@ const handleSaveToModule = async () => {
 }
 
 .input-card,
-.progress-card,
-.module-card {
+.progress-card {
   margin-bottom: 20px;
 }
 

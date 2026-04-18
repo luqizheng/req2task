@@ -46,6 +46,20 @@ cd apps/web && pnpm type-check  # TypeScript 类型检查
 
 ```
 apps/web/src/
+├── components/      # 组件目录
+│   └── common/      # 通用组件
+│       ├── AppAvatar.vue    # 头像组件
+│       ├── AppBadge.vue     # 徽章组件
+│       ├── AppButton.vue    # 按钮组件
+│       ├── AppCard.vue      # 卡片组件
+│       ├── AppEmpty.vue     # 空状态组件
+│       ├── AppForm.vue      # 表单组件
+│       ├── AppLoading.vue   # 加载组件
+│       ├── AppModal.vue     # 模态框组件
+│       ├── AppPagination.vue# 分页组件
+│       ├── AppTable.vue     # 表格组件
+│       ├── AppTag.vue       # 标签组件
+│       └── index.ts         # 组件导出
 ├── views/           # 页面组件
 │   └── HomeView.vue
 ├── stores/          # Pinia 状态管理
@@ -54,6 +68,29 @@ apps/web/src/
 │   └── index.ts
 ├── App.vue          # 根组件
 └── main.ts          # 入口文件
+```
+
+## 通用组件
+
+位于 `src/components/common/` 目录，提供开箱即用的基础 UI 组件：
+
+| 组件 | 用途 |
+|------|------|
+| `AppAvatar` | 用户头像展示 |
+| `AppBadge` | 状态徽章、计数徽章 |
+| `AppButton` | 按钮，支持多种变体和状态 |
+| `AppCard` | 卡片容器 |
+| `AppEmpty` | 空状态占位 |
+| `AppForm` | 表单容器和布局 |
+| `AppLoading` | 加载状态指示器 |
+| `AppModal` | 模态对话框 |
+| `AppPagination` | 分页导航 |
+| `AppTable` | 表格组件 |
+| `AppTag` | 标签组件 |
+
+使用方式：
+```typescript
+import { AppButton, AppCard, AppTable } from '@/components/common';
 ```
 
 ## 开发规范

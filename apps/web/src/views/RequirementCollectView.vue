@@ -224,39 +224,38 @@ watch([projectId, collectionId], () => {
         <h1 class="view-title">需求收集</h1>
       </div>
       <div class="header-actions">
+        <el-select
+          v-model="selectedCollectionId"
+          placeholder="选择收集"
+          clearable
+          class="collection-select"
+        >
+          <template #prefix><el-icon><FolderOpened /></el-icon></template>
+          <el-option
+            v-for="c in store.collections"
+            :key="c.id"
+            :label="c.title"
+            :value="c.id"
+          >
+            <div class="collection-option">
+              <span class="option-title">{{ c.title }}</span>
+              <span class="option-count">{{ c.rawRequirementCount }} 条</span>
+              <el-button
+                :icon="Delete"
+                text
+                size="small"
+                class="option-delete"
+                @click.stop="handleDelete(c.id, c.title)"
+              />
+            </div>
+          </el-option>
+        </el-select>
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">新建</el-button>
         <el-button :icon="Refresh" @click="loadData" :loading="store.isLoading">刷新</el-button>
       </div>
     </header>
 
     <div class="view-toolbar" v-if="store.currentCollection">
-      <el-select
-        v-model="selectedCollectionId"
-        placeholder="选择收集"
-        clearable
-        class="collection-select"
-      >
-        <template #prefix><el-icon><FolderOpened /></el-icon></template>
-        <el-option
-          v-for="c in store.collections"
-          :key="c.id"
-          :label="c.title"
-          :value="c.id"
-        >
-          <div class="collection-option">
-            <span class="option-title">{{ c.title }}</span>
-            <span class="option-count">{{ c.rawRequirementCount }} 条</span>
-            <el-button
-              :icon="Delete"
-              text
-              size="small"
-              class="option-delete"
-              @click.stop="handleDelete(c.id, c.title)"
-            />
-          </div>
-        </el-option>
-      </el-select>
-      <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">新建</el-button>
-      <div class="toolbar-divider"></div>
       <el-tag size="large" effect="plain">
         {{ collectionTypeOptions.find(t => t.value === store.currentCollection?.collectionType)?.label }}
       </el-tag>
@@ -453,7 +452,7 @@ watch([projectId, collectionId], () => {
 }
 
 .collection-select {
-  width: 220px;
+  width: 200px;
 }
 
 .collection-option {

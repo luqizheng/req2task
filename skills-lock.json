@@ -11,6 +11,11 @@
       "sourceType": "github",
       "computedHash": "d823593e24d7493ab740db8f082cbe3b148ed29af9e804d11f5302ad79e4b96d"
     },
+    "element-plus-skills": {
+      "source": "jiaiyan/element-plus-skills",
+      "sourceType": "github",
+      "computedHash": "3604c38953c20f99daef7200a0df2a552081e5c5d98f2878d95c41a24f66ed5a"
+    },
     "element-plus-vue3": {
       "source": "teachingai/full-stack-skills",
       "sourceType": "github",

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
-import { Send, Loading } from '@element-plus/icons-vue';
+import { Promotion, Loading } from '@element-plus/icons-vue';
 import { useRequirementCollectStore, ChatMessageUI, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
 
@@ -152,7 +152,7 @@ const getMessageClass = (message: ChatMessageUI) => {
           <div class="section-title">💭 AI 追问</div>
           <div class="follow-up-buttons">
             <el-button
-              v-for="(question, index) in store.currentRawRequirement.followUpQuestions"
+              v-for="(question, index) in (store.currentRawRequirement?.followUpQuestions || [])"
               :key="index"
               size="small"
               @click="handleFollowUpClick(question)"
@@ -176,7 +176,7 @@ const getMessageClass = (message: ChatMessageUI) => {
         />
         <el-button
           type="primary"
-          :icon="store.isSending ? Loading : Send"
+          :icon="store.isSending ? Loading : Promotion"
           :disabled="!inputMessage.trim() || disabled || store.isMaxQuestionReached"
           :loading="store.isSending"
           @click="handleSend"

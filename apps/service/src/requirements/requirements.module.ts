@@ -9,12 +9,19 @@ import {
   UserStory,
   AcceptanceCriteria,
   RequirementChangeLog,
+  FeatureModule,
 } from '@req2task/core';
 import { Repository } from 'typeorm';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Requirement, UserStory, AcceptanceCriteria, RequirementChangeLog]),
+    TypeOrmModule.forFeature([
+      Requirement,
+      UserStory,
+      AcceptanceCriteria,
+      RequirementChangeLog,
+      FeatureModule,
+    ]),
   ],
   controllers: [RequirementsController],
   providers: [

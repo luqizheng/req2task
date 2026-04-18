@@ -38,7 +38,7 @@ const loadStats = async () => {
   try {
     const { requirementsApi } = await import('@/api/requirements');
     const res = await requirementsApi.getListByProject(projectId.value, { limit: 1 });
-    requirementCount.value = res.data?.data?.total || 0;
+    requirementCount.value = res?.total || 0;
   } catch {
     requirementCount.value = 0;
   }

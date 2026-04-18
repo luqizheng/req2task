@@ -156,9 +156,9 @@ const isClarified = (status: RawRequirementStatus) => {
               <span>{{ requirement.followUpQuestions.length }} 个</span>
             </div>
 
-            <div v-if="requirement.generatedContent" class="generated-summary">
-              <span class="info-label">AI 摘要：</span>
-              <div class="summary-text">{{ requirement.generatedContent }}</div>
+            <div v-if="requirement.clarifiedContent" class="generated-summary">
+              <span class="info-label">澄清内容：</span>
+              <div class="summary-text">{{ requirement.clarifiedContent }}</div>
             </div>
 
             <div class="full-content">

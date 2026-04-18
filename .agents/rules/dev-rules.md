@@ -69,9 +69,18 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
 | 枚举名 | 路径 | 用途 |
 | ------ | ---- | ---- |
 | RequirementStatus | `dto/src/enums/requirement-status.enum.ts` | 需求状态 |
+| RawRequirementStatus | `dto/src/enums/raw-requirement-status.enum.ts` | 原始需求状态 |
 | Priority | `dto/src/enums/priority.enum.ts` | 优先级 |
 | TaskStatus | `dto/src/enums/task-status.enum.ts` | 任务状态 |
 | TaskPriority | `dto/src/enums/task-priority.enum.ts` | 任务优先级 |
+| ProjectStatus | `dto/src/enums/project-status.enum.ts` | 项目状态 |
+| UserRole | `dto/src/enums/user-role.enum.ts` | 用户角色 |
+| Permission | `dto/src/enums/permission.enum.ts` | 权限 |
+| LLMProviderType | `dto/src/enums/llm-provider-type.enum.ts` | LLM 提供商 |
+| CriteriaType | `dto/src/enums/criteria-type.enum.ts` | 验收标准类型 |
+| RequirementSource | `dto/src/enums/requirement-source.enum.ts` | 需求来源 |
+| ChangeType | `dto/src/enums/change-type.enum.ts` | 变更类型 |
+| ConflictType | `dto/src/enums/conflict-type.enum.ts` | 冲突类型 |
 
 ## 命名规范
 

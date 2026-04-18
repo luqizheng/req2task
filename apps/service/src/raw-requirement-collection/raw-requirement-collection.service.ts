@@ -1,23 +1,23 @@
-import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository } from "typeorm";
 import {
   RawRequirementCollection,
   RawRequirement,
   CollectionStatus,
   ChatMessage,
-} from '@req2task/core';
+} from "@req2task/core";
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
   RawRequirementStatus,
-} from '@req2task/dto';
-
-export interface CompleteCollectionResult {
-  success: boolean;
-  unclarifiedRequirements?: RawRequirement[];
-  message?: string;
-}
+  CompleteCollectionResultDto,
+} from "@req2task/dto";
 
 @Injectable()
 export class RawRequirementCollectionService {
@@ -48,18 +48,20 @@ export class RawRequirementCollectionService {
     return this.collectionRepository.save(collection);
   }
 
-  async findAllByProject(projectId: string): Promise<RawRequirementCollection[]> {
+  async findAllByProject(
+    projectId: string,
+  ): Promise<RawRequirementCollection[]> {
     return this.collectionRepository.find({
       where: { projectId },
-      relations: ['collectedBy', 'rawRequirements'],
-      order: { createdAt: 'DESC' },
+      relations: ["collectedBy", "rawRequirements"],
+      order: { createdAt: "DESC" },
     });
   }
 
   async findById(id: string): Promise<RawRequirementCollection> {
     const collection = await this.collectionRepository.findOne({
       where: { id },
-      relations: ['collectedBy', 'rawRequirements', 'project'],
+      relations: ["collectedBy", "rawRequirements", "project"],
     });
 
     if (!collection) {
@@ -69,7 +71,12 @@ export class RawRequirementCollectionService {
     return collection;
   }
 
-  async findByIdWithDetails(id: string): Promise<RawRequirementCollection & { rawRequirementCount: number; chatRoundCount: number }> {
+  async findByIdWithDetails(id: string): Promise<
+    RawRequirementCollection & {
+      rawRequirementCount: number;
+      chatRoundCount: number;
+    }
+  > {
     const collection = await this.findById(id);
 
     const rawRequirements = await this.rawRequirementRepository.find({
@@ -93,9 +100,12 @@ export class RawRequirementCollectionService {
   ): Promise<RawRequirementCollection> {
     const updateData: Partial<RawRequirementCollection> = {};
     if (dto.title !== undefined) updateData.title = dto.title;
-    if (dto.collectionType !== undefined) updateData.collectionType = dto.collectionType;
-    if (dto.collectedAt !== undefined) updateData.collectedAt = new Date(dto.collectedAt);
-    if (dto.meetingMinutes !== undefined) updateData.meetingMinutes = dto.meetingMinutes;
+    if (dto.collectionType !== undefined)
+      updateData.collectionType = dto.collectionType;
+    if (dto.collectedAt !== undefined)
+      updateData.collectedAt = new Date(dto.collectedAt);
+    if (dto.meetingMinutes !== undefined)
+      updateData.meetingMinutes = dto.meetingMinutes;
 
     await this.collectionRepository.update(id, updateData);
 
@@ -107,13 +117,13 @@ export class RawRequirementCollectionService {
     await this.collectionRepository.remove(collection);
   }
 
-  async complete(id: string): Promise<CompleteCollectionResult> {
+  async complete(id: string): Promise<CompleteCollectionResultDto> {
     const collection = await this.findById(id);
 
     if (collection.status === CollectionStatus.COMPLETED) {
       return {
         success: false,
-        message: '收集已完成，无法再次完成',
+        message: "收集已完成，无法再次完成",
       };
     }
 
@@ -121,15 +131,17 @@ export class RawRequirementCollectionService {
       where: { collectionId: id },
     });
 
-    const unclarifiedRequirements = rawRequirements.filter(
-      (r) => r.status !== RawRequirementStatus.CONVERTED && r.status !== RawRequirementStatus.DISCARDED
+    const unprocessedRequirements = rawRequirements.filter(
+      (r) =>
+        r.status === RawRequirementStatus.PENDING ||
+        r.status === RawRequirementStatus.PROCESSING,
     );
 
-    if (unclarifiedRequirements.length > 0) {
+    if (unprocessedRequirements.length > 0) {
       return {
         success: false,
-        unclarifiedRequirements,
-        message: `还有 ${unclarifiedRequirements.length} 个需求未澄清，请先澄清或删除`,
+        unclarifiedRequirements: unprocessedRequirements,
+        message: `还有 ${unprocessedRequirements.length} 个需求未处理，请先处理或删除`,
       };
     }
 
@@ -150,7 +162,7 @@ export class RawRequirementCollectionService {
     const collection = await this.findById(collectionId);
 
     if (collection.status === CollectionStatus.COMPLETED) {
-      throw new BadRequestException('收集已完成，无法添加新需求');
+      throw new BadRequestException("收集已完成，无法添加新需求");
     }
 
     const rawRequirement = this.rawRequirementRepository.create({
@@ -186,32 +198,41 @@ export class RawRequirementCollectionService {
     });
 
     if (!rawRequirement) {
-      throw new NotFoundException(`Raw requirement ${rawRequirementId} not found`);
+      throw new NotFoundException(
+        `Raw requirement ${rawRequirementId} not found`,
+      );
     }
 
     const updateData: Partial<RawRequirement> = {};
     if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.generatedContent !== undefined) updateData.generatedContent = updates.generatedContent;
-    if (updates.sessionHistory !== undefined) updateData.sessionHistory = updates.sessionHistory;
-    if (updates.followUpQuestions !== undefined) updateData.followUpQuestions = updates.followUpQuestions;
-    if (updates.keyElements !== undefined) updateData.keyElements = updates.keyElements;
-    if (updates.questionCount !== undefined) updateData.questionCount = updates.questionCount;
-    if (updates.clarifiedContent !== undefined) updateData.clarifiedContent = updates.clarifiedContent;
-    if (updates.clarifiedAt !== undefined) updateData.clarifiedAt = updates.clarifiedAt;
+    if (updates.generatedContent !== undefined)
+      updateData.generatedContent = updates.generatedContent;
+    if (updates.sessionHistory !== undefined)
+      updateData.sessionHistory = updates.sessionHistory;
+    if (updates.followUpQuestions !== undefined)
+      updateData.followUpQuestions = updates.followUpQuestions;
+    if (updates.keyElements !== undefined)
+      updateData.keyElements = updates.keyElements;
+    if (updates.questionCount !== undefined)
+      updateData.questionCount = updates.questionCount;
+    if (updates.clarifiedContent !== undefined)
+      updateData.clarifiedContent = updates.clarifiedContent;
+    if (updates.clarifiedAt !== undefined)
+      updateData.clarifiedAt = updates.clarifiedAt;
 
     await this.rawRequirementRepository.update(rawRequirementId, updateData);
 
     return this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
-      relations: ['createdBy'],
+      relations: ["createdBy"],
     }) as Promise<RawRequirement>;
   }
 
   async getRawRequirements(collectionId: string): Promise<RawRequirement[]> {
     return this.rawRequirementRepository.find({
       where: { collectionId },
-      relations: ['createdBy'],
-      order: { createdAt: 'DESC' },
+      relations: ["createdBy"],
+      order: { createdAt: "DESC" },
     });
   }
 
@@ -221,16 +242,20 @@ export class RawRequirementCollectionService {
     });
 
     if (!rawRequirement) {
-      throw new NotFoundException(`Raw requirement ${rawRequirementId} not found`);
+      throw new NotFoundException(
+        `Raw requirement ${rawRequirementId} not found`,
+      );
     }
 
     return rawRequirement.followUpQuestions || [];
   }
 
-  async getRawRequirementById(rawRequirementId: string): Promise<RawRequirement | null> {
+  async getRawRequirementById(
+    rawRequirementId: string,
+  ): Promise<RawRequirement | null> {
     return this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
-      relations: ['createdBy'],
+      relations: ["createdBy"],
     });
   }
 
@@ -239,7 +264,7 @@ export class RawRequirementCollectionService {
     clarifiedContent: string,
   ): Promise<RawRequirement> {
     return this.updateRawRequirement(rawRequirementId, {
-      status: RawRequirementStatus.CONVERTED,
+      status: RawRequirementStatus.COMPLETED,
       clarifiedContent,
       clarifiedAt: new Date(),
     });
@@ -251,7 +276,9 @@ export class RawRequirementCollectionService {
     });
 
     if (!rawRequirement) {
-      throw new NotFoundException(`Raw requirement ${rawRequirementId} not found`);
+      throw new NotFoundException(
+        `Raw requirement ${rawRequirementId} not found`,
+      );
     }
 
     await this.rawRequirementRepository.remove(rawRequirement);
@@ -267,7 +294,9 @@ export class RawRequirementCollectionService {
     });
 
     if (!rawRequirement) {
-      throw new NotFoundException(`Raw requirement ${rawRequirementId} not found`);
+      throw new NotFoundException(
+        `Raw requirement ${rawRequirementId} not found`,
+      );
     }
 
     const newCount = (rawRequirement.questionCount || 0) + 1;

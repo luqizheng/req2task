@@ -2,6 +2,11 @@ import { CollectionType } from './create-collection.dto';
 import { RawRequirementStatus } from '../../enums/raw-requirement-status.enum';
 import { UserResponseDto } from '../../user/dto';
 
+export enum CollectionStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+}
+
 export class RawRequirementCollectionResponseDto {
   id!: string;
   projectId!: string;
@@ -16,11 +21,6 @@ export class RawRequirementCollectionResponseDto {
   chatRoundCount!: number;
   createdAt!: string;
   updatedAt!: string;
-}
-
-export enum CollectionStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
 }
 
 export class RawRequirementCollectionDetailDto extends RawRequirementCollectionResponseDto {

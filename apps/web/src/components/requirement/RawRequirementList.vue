@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import { Delete, Check, ArrowRight } from '@element-plus/icons-vue';
+import { Delete, Check } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import type { RawRequirementStatus } from '@/api/requirementCollection';

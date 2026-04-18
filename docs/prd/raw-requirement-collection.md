@@ -383,6 +383,7 @@ export enum CollectionType {
 export enum RawRequirementStatus {
   PENDING = "pending", // 待处理
   PROCESSING = "processing", // 处理中
+  CLARIFIED = "clarified", // 已澄清
   CONVERTED = "converted", // 已转换为需求
   DISCARDED = "discarded", // 已丢弃
 }

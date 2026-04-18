@@ -17,8 +17,11 @@ import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
   AddRawRequirementDto,
-  ClarifyRawRequirementDto,
 } from '@req2task/dto';
+
+class ClarifyRawRequirementDto {
+  clarifiedContent!: string;
+}
 
 interface ApiResponse<T> {
   code: number;

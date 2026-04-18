@@ -23,7 +23,7 @@ const formInitialData = ref({
   meetingMinutes: '',
 });
 
-const collectionTypeOptions = [
+const collectionTypeOptions: { value: CollectionType; label: string }[] = [
   { value: 'meeting', label: '会议' },
   { value: 'interview', label: '访谈' },
   { value: 'document', label: '文档' },

@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Requirement, UserStory, AcceptanceCriteria } from '@req2task/core';
+import { Requirement, UserStory, AcceptanceCriteria, FeatureModule } from '@req2task/core';
 import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 import {
   CreateRequirementDto,
@@ -28,6 +28,8 @@ export class RequirementsService {
     private userStoryRepository: Repository<UserStory>,
     @InjectRepository(AcceptanceCriteria)
     private acceptanceCriteriaRepository: Repository<AcceptanceCriteria>,
+    @InjectRepository(FeatureModule)
+    private featureModuleRepository: Repository<FeatureModule>,
   ) {}
 
   async create(
@@ -59,6 +61,37 @@ export class RequirementsService {
   ): Promise<RequirementListResponseDto> {
     const [items, total] = await this.requirementRepository.findAndCount({
       where: { moduleId },
+      relations: ['createdBy', 'userStories', 'children'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      items: items.map((r) => this.toListItemDto(r)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findByProject(
+    projectId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<RequirementListResponseDto> {
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+      select: ['id'],
+    });
+    const moduleIds = modules.map((m) => m.id);
+
+    if (moduleIds.length === 0) {
+      return { items: [], total: 0, page, limit };
+    }
+
+    const [items, total] = await this.requirementRepository.findAndCount({
+      where: moduleIds.map((id) => ({ moduleId: id })),
       relations: ['createdBy', 'userStories', 'children'],
       skip: (page - 1) * limit,
       take: limit,

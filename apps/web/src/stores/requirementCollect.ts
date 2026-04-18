@@ -8,12 +8,15 @@ import {
   CreateCollectionDto,
   ChatMessage,
   ChatResult,
+  CompleteCollectionResult,
 } from '@/api/requirementCollection';
 
 export interface ChatMessageUI extends ChatMessage {
   id: string;
   isLoading?: boolean;
 }
+
+export const MAX_QUESTION_COUNT = 5;
 
 export const useRequirementCollectStore = defineStore('requirementCollect', () => {
   const collections = ref<RawRequirementCollectionResponse[]>([]);
@@ -32,6 +35,28 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
 
   const chatRoundCount = computed(() => {
     return chatHistory.value.filter(m => m.role === 'assistant').length;
+  });
+
+  const currentQuestionCount = computed(() => {
+    return currentRawRequirement.value?.questionCount || 0;
+  });
+
+  const isMaxQuestionReached = computed(() => {
+    return currentQuestionCount.value >= MAX_QUESTION_COUNT;
+  });
+
+  const canCompleteCollection = computed(() => {
+    if (!currentCollection.value) return false;
+    const unhandledRequirements = rawRequirements.value.filter(
+      r => r.status !== 'converted' && r.status !== 'discarded' && r.status !== 'clarified'
+    );
+    return unhandledRequirements.length === 0;
+  });
+
+  const unclarifiedRequirements = computed(() => {
+    return rawRequirements.value.filter(
+      r => r.status !== 'converted' && r.status !== 'discarded' && r.status !== 'clarified'
+    );
   });
 
   const createCollection = async (dto: CreateCollectionDto): Promise<RawRequirementCollectionResponse> => {
@@ -154,6 +179,7 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
         assistantMessage: result.assistantMessage,
         followUpQuestions: result.followUpQuestions,
         isComplete: result.isComplete,
+        questionCount: result.questionCount,
       };
     } catch (err) {
       const loadingIndex = chatHistory.value.findIndex(m => m.id === loadingMessage.id);
@@ -195,6 +221,11 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     message: string,
     configId?: string
   ): Promise<ChatResult> => {
+    if (isMaxQuestionReached.value) {
+      error.value = `追问次数已达上限（${MAX_QUESTION_COUNT}轮）`;
+      throw new Error(error.value);
+    }
+
     isSending.value = true;
     error.value = null;
 
@@ -251,6 +282,72 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     }
   };
 
+  const completeCollection = async (): Promise<CompleteCollectionResult> => {
+    if (!currentCollection.value) {
+      return { success: false, message: '没有选中的收集' };
+    }
+
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const result = await requirementCollectionApi.completeCollection(currentCollection.value.id);
+      if (result.success) {
+        currentCollection.value = {
+          ...currentCollection.value,
+          status: 'completed',
+        };
+      }
+      return result;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '完成收集失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const clarifyRequirement = async (
+    rawRequirementId: string,
+    clarifiedContent: string
+  ): Promise<RawRequirementInCollection | null> => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const result = await requirementCollectionApi.clarifyRawRequirement(
+        rawRequirementId,
+        clarifiedContent
+      );
+      const index = rawRequirements.value.findIndex(r => r.id === rawRequirementId);
+      if (index !== -1) {
+        rawRequirements.value[index] = result;
+      }
+      return result;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '标记澄清失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const deleteRequirement = async (rawRequirementId: string): Promise<void> => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      await requirementCollectionApi.deleteRawRequirement(rawRequirementId);
+      rawRequirements.value = rawRequirements.value.filter(r => r.id !== rawRequirementId);
+      if (currentRawRequirementId.value === rawRequirementId) {
+        currentRawRequirementId.value = null;
+        chatHistory.value = [];
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '删除需求失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
   const clearError = (): void => {
     error.value = null;
   };
@@ -277,6 +374,10 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     currentRawRequirementId,
     currentRawRequirement,
     chatRoundCount,
+    currentQuestionCount,
+    isMaxQuestionReached,
+    canCompleteCollection,
+    unclarifiedRequirements,
     createCollection,
     fetchCollections,
     selectCollection,
@@ -285,6 +386,9 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     addRequirement,
     continueChat,
     deleteCollection,
+    completeCollection,
+    clarifyRequirement,
+    deleteRequirement,
     clearError,
     reset,
   };

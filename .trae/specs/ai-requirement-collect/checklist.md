@@ -18,8 +18,11 @@
 - [ ] RawRequirementCollectionService.getCollections() 实现正确
 - [ ] RawRequirementCollectionService.getCollectionDetail() 实现正确
 - [ ] RawRequirementCollectionService.addRawRequirement() 实现正确
+- [ ] RawRequirementCollectionService.completeCollection() 验证所有需求已澄清
+- [ ] RawRequirementCollectionService.clarifyRawRequirement() 标记已澄清
 - [ ] RequirementGenerationService.analyzeWithFollowUp() 生成追问
 - [ ] RequirementGenerationService.chatCollect() 保持对话上下文
+- [ ] 追问计数逻辑（5轮上限）实现正确
 - [ ] RawRequirementCollectionController 所有接口路由正确
 - [ ] 接口权限控制正确（需要登录）
 
@@ -30,6 +33,10 @@
 - [ ] useRequirementCollectStore.sendMessage action 正确
 - [ ] useRequirementCollectStore.addRequirement action 正确
 - [ ] useRequirementCollectStore.convertToRequirement action 正确
+- [ ] useRequirementCollectStore.selectRawRequirement action 正确
+- [ ] useRequirementCollectStore.continueChat action 正确
+- [ ] useRequirementCollectStore.clarifyRequirement action 正确
+- [ ] useRequirementCollectStore.completeCollection action 正确
 - [ ] requirementCollectionApi 接口定义完整
 - [ ] API 类型与后端 DTO 一致
 
@@ -64,11 +71,20 @@
 - [ ] AI 返回包含需求摘要
 - [ ] AI 生成追问问题正确显示
 - [ ] 点击追问自动发送
+- [ ] **追问问题持久化存储**
+- [ ] **追问答案持久化存储**
+- [ ] **追问轮次限制5轮**
 - [ ] 右侧面板实时更新
 - [ ] 原始需求列表显示完整
 - [ ] 冲突需求正确标红
 - [ ] 相似需求正确标绿
 - [ ] 可以生成正式需求
+- [ ] 可以点击需求进入独立会话
+- [ ] 独立会话历史正确加载
+- [ ] 可以标记需求已澄清
+- [ ] 可以删除不需要的需求
+- [ ] **结束收集时验证所有需求已澄清或已删除**
+- [ ] **有未澄清需求时阻止结束收集**
 
 ## UI 验收
 

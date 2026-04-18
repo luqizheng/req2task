@@ -81,6 +81,20 @@ export class RequirementsController {
     return { code: 0, data: result };
   }
 
+  @Get('requirements/projects/:projectId/requirements')
+  async findByProject(
+    @Param('projectId') projectId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<RequirementListResponseDto>> {
+    const result = await this.requirementsService.findByProject(
+      projectId,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+    return { code: 0, data: result };
+  }
+
   @Get('requirements/:id')
   async findById(@Param('id') id: string): Promise<ApiResponse<RequirementResponseDto>> {
     const result = await this.requirementsService.findById(id);

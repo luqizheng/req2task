@@ -1,6 +1,7 @@
 export enum RawRequirementStatus {
   PENDING = 'pending',
   PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
+  CLARIFIED = 'clarified',
+  CONVERTED = 'converted',
+  DISCARDED = 'discarded',
 }

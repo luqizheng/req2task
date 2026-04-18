@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
 import { Send, Loading } from '@element-plus/icons-vue';
-import { useRequirementCollectStore, ChatMessageUI } from '@/stores/requirementCollect';
+import { useRequirementCollectStore, ChatMessageUI, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
 
 const props = defineProps<{
@@ -15,6 +15,17 @@ const inputMessage = ref('');
 const chatContainerRef = ref<HTMLElement | null>(null);
 
 const activeConfigId = computed(() => aiStore.getActiveConfigId());
+
+const isIndependentSession = computed(() => !!store.currentRawRequirementId);
+
+const questionProgress = computed(() => {
+  if (!isIndependentSession.value) return null;
+  return {
+    current: store.currentQuestionCount,
+    max: MAX_QUESTION_COUNT,
+    percentage: Math.min((store.currentQuestionCount / MAX_QUESTION_COUNT) * 100, 100),
+  };
+});
 
 const scrollToBottom = () => {
   nextTick(() => {
@@ -78,6 +89,28 @@ const getMessageClass = (message: ChatMessageUI) => {
     </div>
 
     <template v-else>
+      <div class="chat-header">
+        <div v-if="store.currentRawRequirement" class="session-info">
+          <span class="session-label">当前需求分析</span>
+          <span class="session-content">{{ store.currentRawRequirement.content.substring(0, 50) }}...</span>
+          <div v-if="questionProgress" class="question-progress">
+            <span class="progress-text">追问轮次：{{ questionProgress.current }}/{{ questionProgress.max }}</span>
+            <el-progress
+              :percentage="questionProgress.percentage"
+              :show-text="false"
+              :stroke-width="4"
+              :color="questionProgress.current >= MAX_QUESTION_COUNT ? '#67c23a' : '#409eff'"
+            />
+          </div>
+          <el-tag v-if="store.isMaxQuestionReached" type="warning" size="small">
+            已达追问上限
+          </el-tag>
+        </div>
+        <div v-else class="welcome-hint">
+          请输入需求开始分析
+        </div>
+      </div>
+
       <div class="chat-messages" ref="chatContainerRef">
         <div v-if="store.chatHistory.length === 0" class="welcome-message">
           <div class="welcome-icon">🤖</div>
@@ -136,15 +169,15 @@ const getMessageClass = (message: ChatMessageUI) => {
           v-model="inputMessage"
           type="textarea"
           :rows="2"
-          placeholder="输入需求内容，AI 将帮助您分析和追问..."
-          :disabled="disabled || store.isSending"
+          :placeholder="isIndependentSession ? '回复 AI 的追问...' : '输入需求内容，AI 将帮助您分析和追问...'"
+          :disabled="disabled || store.isSending || store.isMaxQuestionReached"
           @keydown="handleKeyDown"
           resize="none"
         />
         <el-button
           type="primary"
           :icon="store.isSending ? Loading : Send"
-          :disabled="!inputMessage.trim() || disabled"
+          :disabled="!inputMessage.trim() || disabled || store.isMaxQuestionReached"
           :loading="store.isSending"
           @click="handleSend"
           class="send-button"
@@ -376,5 +409,47 @@ const getMessageClass = (message: ChatMessageUI) => {
 
 .send-button {
   align-self: flex-end;
+}
+
+.chat-header {
+  padding: 12px 20px;
+  background: #f5f7fa;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.session-label {
+  font-size: 12px;
+  color: #909399;
+}
+
+.session-content {
+  font-size: 14px;
+  color: #303133;
+  font-weight: 500;
+}
+
+.question-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 300px;
+}
+
+.progress-text {
+  font-size: 12px;
+  color: #606266;
+  white-space: nowrap;
+}
+
+.welcome-hint {
+  font-size: 14px;
+  color: #909399;
+  text-align: center;
 }
 </style>

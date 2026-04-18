@@ -48,6 +48,14 @@ export interface TransitionOption {
 }
 
 export const requirementsApi = {
+  getListByProject: (projectId: string, params?: RequirementListParams) => {
+    const { page = 1, limit = 20, ...rest } = params || {};
+    return api.get<RequirementListResponseDto>(
+      `/requirements/projects/${projectId}/requirements`,
+      { params: { page, limit, ...rest } }
+    );
+  },
+
   getListByModule: (moduleId: string, params?: RequirementListParams) => {
     const { page = 1, limit = 20, ...rest } = params || {};
     return api.get<RequirementListResponseDto>(

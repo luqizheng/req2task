@@ -7,13 +7,20 @@ export class RawRequirementCollectionResponseDto {
   projectId!: string;
   title!: string;
   collectionType!: CollectionType;
+  status!: CollectionStatus;
   collectedBy!: UserResponseDto;
   collectedAt!: string;
+  completedAt?: string;
   meetingMinutes?: string;
   rawRequirementCount!: number;
   chatRoundCount!: number;
   createdAt!: string;
   updatedAt!: string;
+}
+
+export enum CollectionStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
 }
 
 export class RawRequirementCollectionDetailDto extends RawRequirementCollectionResponseDto {
@@ -27,6 +34,9 @@ export class RawRequirementInCollectionDto {
   sessionHistory!: ChatMessage[];
   followUpQuestions!: string[];
   keyElements!: string[];
+  questionCount!: number;
+  clarifiedContent?: string;
+  clarifiedAt?: string;
   createdAt!: string;
   updatedAt!: string;
 }
@@ -51,6 +61,9 @@ export class RawRequirementResponseDto {
   sessionHistory!: ChatMessage[];
   followUpQuestions!: string[];
   keyElements!: string[];
+  questionCount!: number;
+  clarifiedContent?: string;
+  clarifiedAt?: string;
   analysisResult?: RequirementAnalysisResult;
   createdAt!: string;
   updatedAt!: string;
@@ -79,6 +92,7 @@ export class CollectionChatResponseDto {
   rawRequirementId!: string;
   followUpQuestions!: FollowUpQuestionDto[];
   analysisResult?: RequirementAnalysisResult;
+  questionCount?: number;
 }
 
 export class ConvertToRequirementDto {
@@ -87,4 +101,14 @@ export class ConvertToRequirementDto {
   title?: string;
   description?: string;
   priority?: string;
+}
+
+export class ClarifyRawRequirementDto {
+  clarifiedContent!: string;
+}
+
+export class CompleteCollectionResultDto {
+  success!: boolean;
+  unclarifiedRequirements?: RawRequirementInCollectionDto[];
+  message?: string;
 }

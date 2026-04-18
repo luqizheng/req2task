@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Plus, Delete, FolderOpened } from '@element-plus/icons-vue';
+import { Plus, Delete, FolderOpened, Check, Warning } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import type { CollectionType, CreateCollectionDto } from '@/api/requirementCollection';
@@ -36,6 +36,10 @@ const selectedCollectionId = computed({
       store.selectCollection(value);
     }
   },
+});
+
+const isCollectionActive = computed(() => {
+  return store.currentCollection?.status === 'active';
 });
 
 const handleCreate = async () => {
@@ -82,6 +86,37 @@ const handleDelete = async (id: string, title: string) => {
   } catch (error) {
     if ((error as Error).message !== 'cancel') {
       ElMessage.error('删除失败');
+    }
+  }
+};
+
+const handleComplete = async () => {
+  const unclarified = store.unclarifiedRequirements;
+  if (unclarified.length > 0) {
+    ElMessageBox.confirm(
+      `还有 ${unclarified.length} 个需求未澄清，请先澄清或删除。\n\n未澄清需求：\n${unclarified.slice(0, 3).map(r => `• ${r.content.substring(0, 30)}...`).join('\n')}${unclarified.length > 3 ? '\n• ...' : ''}`,
+      '无法完成收集',
+      { confirmButtonText: '知道了', cancelButtonText: '取消', type: 'warning' }
+    );
+    return;
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要完成这次收集吗？\n\n收集总数：${store.rawRequirements.length} 条\n\n完成后将无法继续向此收集添加需求。`,
+      '完成收集确认',
+      { confirmButtonText: '确认完成', cancelButtonText: '取消', type: 'info' }
+    );
+
+    const result = await store.completeCollection();
+    if (result.success) {
+      ElMessage.success('收集已完成');
+    } else {
+      ElMessage.warning(result.message || '完成收集失败');
+    }
+  } catch (error) {
+    if ((error as Error).message !== 'cancel') {
+      ElMessage.error('操作失败');
     }
   }
 };
@@ -139,12 +174,36 @@ const getCollectionTypeIcon = (type: CollectionType) => {
         {{ getCollectionTypeIcon(store.currentCollection.collectionType) }}
         {{ getCollectionTypeLabel(store.currentCollection.collectionType) }}
       </el-tag>
+      <el-tag
+        :type="isCollectionActive ? 'success' : 'info'"
+        size="large"
+        effect="plain"
+      >
+        {{ isCollectionActive ? '进行中' : '已完成' }}
+      </el-tag>
       <span class="info-text">
         创建者：{{ store.currentCollection.collectedBy?.displayName || '未知' }}
       </span>
       <span class="info-text">
         {{ store.currentCollection.rawRequirementCount }} 条原始需求
       </span>
+      <el-button
+        v-if="isCollectionActive"
+        type="success"
+        :icon="Check"
+        size="small"
+        @click="handleComplete"
+        :disabled="store.unclarifiedRequirements.length > 0"
+      >
+        完成收集
+      </el-button>
+      <el-tooltip
+        v-if="isCollectionActive && store.unclarifiedRequirements.length > 0"
+        content="所有需求澄清或删除后才能完成收集"
+        placement="top"
+      >
+        <el-icon class="warning-icon"><Warning /></el-icon>
+      </el-tooltip>
     </div>
 
     <el-dialog
@@ -251,5 +310,11 @@ const getCollectionTypeIcon = (type: CollectionType) => {
 .info-text {
   color: #606266;
   font-size: 14px;
+}
+
+.warning-icon {
+  color: #e6a23c;
+  font-size: 18px;
+  margin-left: 8px;
 }
 </style>

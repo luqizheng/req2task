@@ -1,7 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Task, Requirement } from '@req2task/core';
+import { Task, Requirement, FeatureModule } from '@req2task/core';
 import { TaskStatus, RequirementStatus } from '@req2task/dto';
 
 const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
@@ -20,6 +20,8 @@ export class TaskKanbanService {
     private taskRepository: Repository<Task>,
     @InjectRepository(Requirement)
     private requirementRepository: Repository<Requirement>,
+    @InjectRepository(FeatureModule)
+    private featureModuleRepository: Repository<FeatureModule>,
   ) {}
 
   async canTransition(currentStatus: TaskStatus, targetStatus: TaskStatus): Promise<boolean> {
@@ -96,6 +98,143 @@ export class TaskKanbanService {
     actualHours: number;
   }> {
     const tasks = await this.taskRepository.find({ where: { requirementId } });
+
+    const byStatus: Record<string, number> = {};
+    const byPriority: Record<string, number> = {};
+    let estimatedHours = 0;
+    let actualHours = 0;
+
+    for (const task of tasks) {
+      byStatus[task.status] = (byStatus[task.status] || 0) + 1;
+      byPriority[task.priority] = (byPriority[task.priority] || 0) + 1;
+
+      if (task.estimatedHours) estimatedHours += Number(task.estimatedHours);
+      if (task.actualHours) actualHours += Number(task.actualHours);
+    }
+
+    const completedCount = byStatus[TaskStatus.DONE] || 0;
+    const completedPercentage = tasks.length > 0
+      ? Math.round((completedCount / tasks.length) * 100)
+      : 0;
+
+    return {
+      total: tasks.length,
+      byStatus: byStatus as Record<TaskStatus, number>,
+      byPriority,
+      completedPercentage,
+      estimatedHours,
+      actualHours,
+    };
+  }
+
+  async getProjectKanbanBoard(projectId: string): Promise<Record<TaskStatus, Task[]>> {
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+      select: ['id'],
+    });
+    const moduleIds = modules.map((m) => m.id);
+
+    if (moduleIds.length === 0) {
+      return {
+        [TaskStatus.TODO]: [],
+        [TaskStatus.IN_PROGRESS]: [],
+        [TaskStatus.IN_REVIEW]: [],
+        [TaskStatus.DONE]: [],
+        [TaskStatus.BLOCKED]: [],
+        [TaskStatus.CANCELLED]: [],
+      };
+    }
+
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .where('req.moduleId IN (:...moduleIds)', { moduleIds })
+      .select(['req.id'])
+      .getMany();
+    const requirementIds = requirements.map((r) => r.id);
+
+    if (requirementIds.length === 0) {
+      return {
+        [TaskStatus.TODO]: [],
+        [TaskStatus.IN_PROGRESS]: [],
+        [TaskStatus.IN_REVIEW]: [],
+        [TaskStatus.DONE]: [],
+        [TaskStatus.BLOCKED]: [],
+        [TaskStatus.CANCELLED]: [],
+      };
+    }
+
+    const tasks = await this.taskRepository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.assignedTo', 'assignedTo')
+      .leftJoinAndSelect('task.createdBy', 'createdBy')
+      .leftJoinAndSelect('task.requirement', 'requirement')
+      .where('task.requirementId IN (:...requirementIds)', { requirementIds })
+      .orderBy('task.createdAt', 'ASC')
+      .getMany();
+
+    const kanban: Record<TaskStatus, Task[]> = {
+      [TaskStatus.TODO]: [],
+      [TaskStatus.IN_PROGRESS]: [],
+      [TaskStatus.IN_REVIEW]: [],
+      [TaskStatus.DONE]: [],
+      [TaskStatus.BLOCKED]: [],
+      [TaskStatus.CANCELLED]: [],
+    };
+
+    for (const task of tasks) {
+      kanban[task.status].push(task);
+    }
+
+    return kanban;
+  }
+
+  async getProjectTaskStatistics(projectId: string): Promise<{
+    total: number;
+    byStatus: Record<TaskStatus, number>;
+    byPriority: Record<string, number>;
+    completedPercentage: number;
+    estimatedHours: number;
+    actualHours: number;
+  }> {
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+      select: ['id'],
+    });
+    const moduleIds = modules.map((m) => m.id);
+
+    if (moduleIds.length === 0) {
+      return {
+        total: 0,
+        byStatus: {} as Record<TaskStatus, number>,
+        byPriority: {},
+        completedPercentage: 0,
+        estimatedHours: 0,
+        actualHours: 0,
+      };
+    }
+
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .where('req.moduleId IN (:...moduleIds)', { moduleIds })
+      .select(['req.id'])
+      .getMany();
+    const requirementIds = requirements.map((r) => r.id);
+
+    if (requirementIds.length === 0) {
+      return {
+        total: 0,
+        byStatus: {} as Record<TaskStatus, number>,
+        byPriority: {},
+        completedPercentage: 0,
+        estimatedHours: 0,
+        actualHours: 0,
+      };
+    }
+
+    const tasks = await this.taskRepository
+      .createQueryBuilder('task')
+      .where('task.requirementId IN (:...requirementIds)', { requirementIds })
+      .getMany();
 
     const byStatus: Record<string, number> = {};
     const byPriority: Record<string, number> = {};

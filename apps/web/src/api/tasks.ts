@@ -25,6 +25,22 @@ export interface TaskStatistics {
 }
 
 export const tasksApi = {
+  getListByProject: (projectId: string, params?: TaskListParams) => {
+    const { page = 1, limit = 50 } = params || {};
+    return api.get<TaskListResponseDto>(
+      `/projects/${projectId}/tasks`,
+      { params: { page, limit } }
+    );
+  },
+
+  getListByModule: (moduleId: string, params?: TaskListParams) => {
+    const { page = 1, limit = 50 } = params || {};
+    return api.get<TaskListResponseDto>(
+      `/modules/${moduleId}/tasks`,
+      { params: { page, limit } }
+    );
+  },
+
   getListByRequirement: (requirementId: string, params?: TaskListParams) => {
     const { page = 1, limit = 20 } = params || {};
     return api.get<TaskListResponseDto>(
@@ -36,8 +52,14 @@ export const tasksApi = {
   getKanbanBoard: (requirementId: string) =>
     api.get<KanbanColumn[]>(`/requirements/${requirementId}/kanban`),
 
+  getProjectKanbanBoard: (projectId: string) =>
+    api.get<KanbanColumn[]>(`/projects/${projectId}/kanban`),
+
   getTaskStatistics: (requirementId: string) =>
     api.get<TaskStatistics>(`/requirements/${requirementId}/task-statistics`),
+
+  getProjectTaskStatistics: (projectId: string) =>
+    api.get<TaskStatistics>(`/projects/${projectId}/task-statistics`),
 
   getById: (id: string) => api.get<TaskResponseDto>(`/tasks/${id}`),
 

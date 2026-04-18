@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
+import { Delete, Check, ArrowRight } from '@element-plus/icons-vue';
+import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import type { RawRequirementStatus } from '@/api/requirementCollection';
 
@@ -8,14 +10,52 @@ const expandedId = ref<string | null>(null);
 
 const statusMap: Record<RawRequirementStatus, { label: string; type: string }> = {
   pending: { label: '待处理', type: 'info' },
-  processing: { label: '处理中', type: 'warning' },
-  completed: { label: '已完成', type: 'success' },
-  failed: { label: '失败', type: 'danger' },
+  processing: { label: '分析中', type: 'warning' },
+  clarified: { label: '已澄清', type: 'success' },
+  converted: { label: '已转换', type: 'success' },
+  discarded: { label: '已删除', type: 'info' },
 };
 
 const toggleExpand = (id: string) => {
   expandedId.value = expandedId.value === id ? null : id;
   store.selectRawRequirement(expandedId.value);
+};
+
+const handleDelete = async (id: string, event: Event) => {
+  event.stopPropagation();
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这个需求吗？',
+      '删除确认',
+      { confirmButtonText: '删除', cancelButtonText: '取消', type: 'warning' }
+    );
+    await store.deleteRequirement(id);
+    ElMessage.success('删除成功');
+  } catch (error) {
+    if ((error as Error).message !== 'cancel') {
+      ElMessage.error('删除失败');
+    }
+  }
+};
+
+const handleClarify = async (id: string, event: Event) => {
+  event.stopPropagation();
+  try {
+    await ElMessageBox.confirm(
+      '确定要标记这个需求为已澄清吗？',
+      '确认',
+      { confirmButtonText: '确认', cancelButtonText: '取消', type: 'info' }
+    );
+    const raw = store.rawRequirements.find(r => r.id === id);
+    if (raw) {
+      await store.clarifyRequirement(id, raw.content);
+      ElMessage.success('已标记为澄清');
+    }
+  } catch (error) {
+    if ((error as Error).message !== 'cancel') {
+      ElMessage.error('操作失败');
+    }
+  }
 };
 
 const truncateContent = (content: string, maxLength: number = 100) => {
@@ -32,6 +72,10 @@ const formatTime = (dateString: string) => {
   if (diff < 3600000) return `${Math.floor(diff / 60000)} 分钟前`;
   if (diff < 86400000) return `${Math.floor(diff / 3600000)} 小时前`;
   return date.toLocaleDateString('zh-CN');
+};
+
+const isClarified = (status: RawRequirementStatus) => {
+  return status === 'clarified' || status === 'converted' || status === 'discarded';
 };
 </script>
 
@@ -58,6 +102,25 @@ const formatTime = (dateString: string) => {
           <el-tag :type="statusMap[requirement.status].type" size="small">
             {{ statusMap[requirement.status].label }}
           </el-tag>
+          <div class="item-actions">
+            <el-button
+              v-if="!isClarified(requirement.status)"
+              :icon="Check"
+              text
+              size="small"
+              type="success"
+              @click="handleClarify(requirement.id, $event)"
+              title="标记为已澄清"
+            />
+            <el-button
+              :icon="Delete"
+              text
+              size="small"
+              type="danger"
+              @click="handleDelete(requirement.id, $event)"
+              title="删除需求"
+            />
+          </div>
           <span class="item-time">{{ formatTime(requirement.createdAt) }}</span>
         </div>
 
@@ -178,8 +241,14 @@ const formatTime = (dateString: string) => {
 .item-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
+}
+
+.item-actions {
+  display: flex;
+  gap: 4px;
+  margin-left: auto;
 }
 
 .item-time {

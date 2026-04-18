@@ -4,21 +4,20 @@ import { useRoute, useRouter } from 'vue-router';
 import { Delete } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useProjectStore } from '@/stores/project';
-import { featureModulesApi } from '@/api/featureModules';
-import type { FeatureModuleResponseDto, UpdateProjectDto } from '@req2task/dto';
+import type { UpdateProjectDto } from '@req2task/dto';
 import ProjectStatsCard from './components/ProjectStatsCard.vue';
 import ProjectQuickActions from './components/ProjectQuickActions.vue';
 import ProjectInfoCard from './components/ProjectInfoCard.vue';
 import ProjectMemberCard from './components/ProjectMemberCard.vue';
-import ProjectModuleCard from './components/ProjectModuleCard.vue';
+import ProjectTaskBoard from './components/ProjectTaskBoard.vue';
+import ModuleTree from '@/components/common/ModuleTree.vue';
+import type { FeatureModuleResponseDto } from '@req2task/dto';
 
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
 
 const loading = ref(false);
-const modules = ref<FeatureModuleResponseDto[]>([]);
-const moduleLoading = ref(false);
 
 const requirementCount = ref(0);
 const taskCount = ref(0);
@@ -35,25 +34,11 @@ const loadProject = async () => {
   }
 };
 
-const loadModules = async () => {
-  moduleLoading.value = true;
-  try {
-    const data = await featureModulesApi.getList(projectId.value);
-    modules.value = data.items;
-  } finally {
-    moduleLoading.value = false;
-  }
-};
-
 const loadStats = async () => {
   try {
     const { requirementsApi } = await import('@/api/requirements');
-    let totalReq = 0;
-    for (const mod of modules.value) {
-      const result = await requirementsApi.getListByModule(mod.id, { limit: 1 });
-      totalReq += result.total;
-    }
-    requirementCount.value = totalReq;
+    const res = await requirementsApi.getListByProject(projectId.value, { limit: 1 });
+    requirementCount.value = res.data?.data?.total || 0;
   } catch {
     requirementCount.value = 0;
   }
@@ -106,13 +91,12 @@ const handleRemoveMember = async (userId: string) => {
   }
 };
 
-const handleReloadModules = () => {
-  loadModules();
+const handleModuleClick = (module: FeatureModuleResponseDto) => {
+  router.push(`/projects/${projectId.value}/modules/${module.id}/requirements`);
 };
 
 onMounted(async () => {
   await loadProject();
-  await loadModules();
   await loadStats();
 });
 </script>
@@ -135,6 +119,8 @@ onMounted(async () => {
         :completed-task-count="completedTaskCount"
       />
 
+      <ProjectTaskBoard :project-id="projectId" />
+
       <ProjectQuickActions :project-id="projectId" />
 
       <el-row :gutter="16">
@@ -155,12 +141,18 @@ onMounted(async () => {
         </el-col>
       </el-row>
 
-      <ProjectModuleCard
-        :modules="modules"
-        :loading="moduleLoading"
-        :project-id="projectId"
-        @reload="handleReloadModules"
-      />
+      <el-card class="module-section">
+        <template #header>
+          <div class="section-header">
+            <span class="section-title">功能模块</span>
+            <span class="section-hint">点击模块查看详情</span>
+          </div>
+        </template>
+        <ModuleTree
+          :project-id="projectId"
+          @node-click="handleModuleClick"
+        />
+      </el-card>
     </div>
   </div>
 </template>
@@ -194,5 +186,25 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+}
+
+.module-section {
+  margin-bottom: 16px;
+}
+
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.section-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.section-hint {
+  font-size: 12px;
+  color: #909399;
 }
 </style>

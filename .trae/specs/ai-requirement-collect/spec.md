@@ -59,6 +59,13 @@
 - **WHEN** 页面头部渲染
 - **THEN** 显示当前收集标题 + 类型标签 + 创建时间
 
+#### Scenario: 结束收集
+- **WHEN** 用户点击"完成收集"按钮
+- **THEN** 系统检查是否所有需求都已澄清或已删除
+- **AND** 如果有未澄清需求，阻止完成并提示用户
+- **AND** 用户可选择删除不需要的需求
+- **AND** 所有需求澄清后可成功结束收集
+
 ### Requirement: AI 对话收集模式
 
 系统应支持通过 AI 对话方式收集原始需求。
@@ -68,6 +75,7 @@
 - **AND** 点击发送或按 Enter
 - **THEN** 显示用户消息气泡
 - **AND** 调用后端 AI 分析接口
+- **AND** 问题和答案必须持久化存储
 
 #### Scenario: AI 响应分析
 - **WHEN** AI 返回分析结果
@@ -76,17 +84,20 @@
   - 自动提取的关键词
   - 生成的追问问题（如有）
 - **AND** 自动保存为 RawRequirement
+- **AND** 追问问题持久化到数据库
 
 #### Scenario: 追问机制
 - **WHEN** AI 检测到需求不完整
 - **THEN** 在响应中展示追问问题列表
 - **AND** 支持用户点击追问自动发送
-- **AND** 追问内容格式为："针对您提到的 XXX，能否详细说明一下？"
+- **AND** 追问内容由 LLM 自动生成（无需模板）
+- **AND** 追问轮次限制为 5 轮
 
 #### Scenario: 多轮对话
 - **WHEN** 用户继续输入或点击追问
 - **THEN** 保持对话上下文，形成完整的需求收集记录
-- **AND** 每次交互都更新 RawRequirement 的 generatedContent
+- **AND** 每次交互都更新 RawRequirement 的 sessionHistory
+- **AND** 追问计数 +1，超过 5 轮后 AI 停止追问
 
 ### Requirement: 右侧需求分析面板
 
@@ -169,9 +180,12 @@
 | 新增字段 | 类型 | 说明 |
 |---------|------|------|
 | collectionId | UUID | 关联的需求收集 ID |
-| sessionHistory | JSON | 对话历史记录 |
-| followUpQuestions | JSON | 生成的追问问题列表 |
+| sessionHistory | JSON | 对话历史记录（持久化） |
+| followUpQuestions | JSON | 生成的追问问题列表（持久化） |
 | keyElements | JSON | 提取的关键词列表 |
+| questionCount | INT | 追问轮次计数（默认5轮上限） |
+| clarifiedContent | TEXT | 澄清后的内容 |
+| clarifiedAt | DATETIME | 澄清时间 |
 
 ### Requirement: API 层扩展
 
@@ -186,6 +200,10 @@
 | `/api/collections/:id/chat` | POST | AI 对话接口 |
 | `/api/collections/:id/follow-up-questions` | GET | 获取追问问题 |
 | `/api/collections/:id/convert-to-requirement` | POST | 转换为正式需求 |
+| `/api/collections/:id/complete` | POST | 结束收集（验证所有需求已澄清） |
+| `/api/raw-requirements/:id/chat` | POST | 继续追问（独立会话） |
+| `/api/raw-requirements/:id/clarify` | POST | 标记需求已澄清 |
+| `/api/raw-requirements/:id` | DELETE | 删除原始需求 |
 
 ## REMOVED Requirements
 

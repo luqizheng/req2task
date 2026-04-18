@@ -59,6 +59,15 @@ export class RawRequirement {
   @Column({ name: 'key_elements', type: 'json', nullable: true })
   keyElements!: string[] | null;
 
+  @Column({ name: 'question_count', type: 'int', default: 0 })
+  questionCount!: number;
+
+  @Column({ name: 'clarified_content', type: 'text', nullable: true })
+  clarifiedContent!: string | null;
+
+  @Column({ name: 'clarified_at', type: 'timestamp', nullable: true })
+  clarifiedAt!: Date | null;
+
   @Column({ name: 'created_by_id' })
   createdById!: string;
 

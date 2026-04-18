@@ -15,7 +15,9 @@ export interface UserSummary {
 
 export type CollectionType = 'meeting' | 'interview' | 'document' | 'other';
 
-export type RawRequirementStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type CollectionStatus = 'active' | 'completed';
+
+export type RawRequirementStatus = 'pending' | 'processing' | 'clarified' | 'converted' | 'discarded';
 
 export interface CreateCollectionDto {
   projectId: string;
@@ -37,8 +39,10 @@ export interface RawRequirementCollectionResponse {
   projectId: string;
   title: string;
   collectionType: CollectionType;
+  status: CollectionStatus;
   collectedBy: UserSummary;
   collectedAt: string;
+  completedAt?: string;
   meetingMinutes?: string;
   rawRequirementCount: number;
   chatRoundCount: number;
@@ -54,6 +58,9 @@ export interface RawRequirementInCollection {
   sessionHistory: ChatMessage[];
   followUpQuestions: string[];
   keyElements: string[];
+  questionCount: number;
+  clarifiedContent?: string;
+  clarifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -77,6 +84,13 @@ export interface ChatResult {
   assistantMessage: string;
   followUpQuestions: string[];
   isComplete: boolean;
+  questionCount?: number;
+}
+
+export interface CompleteCollectionResult {
+  success: boolean;
+  unclarifiedRequirements?: RawRequirementInCollection[];
+  message?: string;
 }
 
 export const requirementCollectionApi = {
@@ -100,6 +114,10 @@ export const requirementCollectionApi = {
     return api.delete(`/collections/${id}`);
   },
 
+  completeCollection: (id: string): Promise<CompleteCollectionResult> => {
+    return api.post(`/collections/${id}/complete`);
+  },
+
   addRawRequirement: (
     collectionId: string,
     dto: AddRawRequirementDto
@@ -109,6 +127,10 @@ export const requirementCollectionApi = {
 
   getRawRequirements: (collectionId: string): Promise<RawRequirementInCollection[]> => {
     return api.get(`/collections/${collectionId}/raw-requirements`);
+  },
+
+  getRawRequirement: (rawRequirementId: string): Promise<RawRequirementInCollection> => {
+    return api.get(`/collections/raw-requirements/${rawRequirementId}`);
   },
 
   getFollowUpQuestions: (rawRequirementId: string): Promise<string[]> => {
@@ -130,5 +152,16 @@ export const requirementCollectionApi = {
     configId?: string
   ): Promise<{ rawRequirementId: string } & ChatResult> => {
     return api.post(`/collections/${collectionId}/chat`, { message, source, configId });
+  },
+
+  clarifyRawRequirement: (
+    rawRequirementId: string,
+    clarifiedContent: string
+  ): Promise<RawRequirementInCollection> => {
+    return api.post(`/collections/raw-requirements/${rawRequirementId}/clarify`, { clarifiedContent });
+  },
+
+  deleteRawRequirement: (rawRequirementId: string): Promise<void> => {
+    return api.delete(`/collections/raw-requirements/${rawRequirementId}`);
   },
 };

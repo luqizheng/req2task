@@ -13,6 +13,11 @@ import { User } from './user.entity';
 import { RawRequirement } from './raw-requirement.entity';
 import { CollectionType } from '@req2task/dto';
 
+export enum CollectionStatus {
+  ACTIVE = 'active',
+  COMPLETED = 'completed',
+}
+
 @Entity('raw_requirement_collections')
 export class RawRequirementCollection {
   @PrimaryGeneratedColumn('uuid')
@@ -35,6 +40,13 @@ export class RawRequirementCollection {
   })
   collectionType!: CollectionType;
 
+  @Column({
+    type: 'enum',
+    enum: CollectionStatus,
+    default: CollectionStatus.ACTIVE,
+  })
+  status!: CollectionStatus;
+
   @Column({ name: 'collected_by_id' })
   collectedById!: string;
 
@@ -44,6 +56,9 @@ export class RawRequirementCollection {
 
   @Column({ name: 'collected_at', type: 'timestamp' })
   collectedAt!: Date;
+
+  @Column({ name: 'completed_at', type: 'timestamp', nullable: true })
+  completedAt!: Date | null;
 
   @Column({ name: 'meeting_minutes', type: 'text', nullable: true })
   meetingMinutes!: string | null;

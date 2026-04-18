@@ -73,6 +73,34 @@ export class TasksController {
     return { code: 0, data: result };
   }
 
+  @Get('modules/:moduleId/tasks')
+  async findByModule(
+    @Param('moduleId') moduleId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<TaskListResponseDto>> {
+    const result = await this.tasksService.findByModule(
+      moduleId,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Get('projects/:projectId/tasks')
+  async findByProject(
+    @Param('projectId') projectId: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ): Promise<ApiResponse<TaskListResponseDto>> {
+    const result = await this.tasksService.findByProject(
+      projectId,
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+    return { code: 0, data: result };
+  }
+
   @Get('requirements/:requirementId/kanban')
   async getKanbanBoard(@Param('requirementId') requirementId: string): Promise<ApiResponse<unknown>> {
     const result = await this.taskKanbanService.getKanbanBoard(requirementId);
@@ -82,6 +110,18 @@ export class TasksController {
   @Get('requirements/:requirementId/task-statistics')
   async getTaskStatistics(@Param('requirementId') requirementId: string): Promise<ApiResponse<unknown>> {
     const result = await this.taskKanbanService.getTaskStatistics(requirementId);
+    return { code: 0, data: result };
+  }
+
+  @Get('projects/:projectId/kanban')
+  async getProjectKanbanBoard(@Param('projectId') projectId: string): Promise<ApiResponse<unknown>> {
+    const result = await this.taskKanbanService.getProjectKanbanBoard(projectId);
+    return { code: 0, data: result };
+  }
+
+  @Get('projects/:projectId/task-statistics')
+  async getProjectTaskStatistics(@Param('projectId') projectId: string): Promise<ApiResponse<unknown>> {
+    const result = await this.taskKanbanService.getProjectTaskStatistics(projectId);
     return { code: 0, data: result };
   }
 

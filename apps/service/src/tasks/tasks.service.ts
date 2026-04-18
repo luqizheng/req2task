@@ -99,6 +99,79 @@ export class TasksService {
     };
   }
 
+  async findByModule(
+    moduleId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<TaskListResponseDto> {
+    const requirements = await this.requirementRepository.find({
+      where: { moduleId },
+      select: ['id'],
+    });
+    const requirementIds = requirements.map((r) => r.id);
+
+    if (requirementIds.length === 0) {
+      return { items: [], total: 0, page, limit };
+    }
+
+    const [items, total] = await this.taskRepository.findAndCount({
+      where: requirementIds.map((id) => ({ requirementId: id })),
+      relations: ['assignedTo', 'createdBy', 'dependencies', 'requirement'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      items: items.map((t) => this.toResponseDto(t)),
+      total,
+      page,
+      limit,
+    };
+  }
+
+  async findByProject(
+    projectId: string,
+    page: number = 1,
+    limit: number = 20,
+  ): Promise<TaskListResponseDto> {
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+      select: ['id'],
+    });
+    const moduleIds = modules.map((m) => m.id);
+
+    if (moduleIds.length === 0) {
+      return { items: [], total: 0, page, limit };
+    }
+
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .where('req.moduleId IN (:...moduleIds)', { moduleIds })
+      .select(['req.id'])
+      .getMany();
+    const requirementIds = requirements.map((r) => r.id);
+
+    if (requirementIds.length === 0) {
+      return { items: [], total: 0, page, limit };
+    }
+
+    const [items, total] = await this.taskRepository.findAndCount({
+      where: requirementIds.map((id) => ({ requirementId: id })),
+      relations: ['assignedTo', 'createdBy', 'dependencies', 'requirement'],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: 'DESC' },
+    });
+
+    return {
+      items: items.map((t) => this.toResponseDto(t)),
+      total,
+      page,
+      limit,
+    };
+  }
+
   async findById(id: string): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({
       where: { id },

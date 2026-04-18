@@ -17,6 +17,7 @@ import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
   AddRawRequirementDto,
+  ClarifyRawRequirementDto,
 } from '@req2task/dto';
 
 interface ApiResponse<T> {
@@ -84,6 +85,14 @@ export class RawRequirementCollectionController {
     return { code: 0, message: '删除成功' };
   }
 
+  @Post(':id/complete')
+  async completeCollection(
+    @Param('id') id: string,
+  ): Promise<ApiResponse<unknown>> {
+    const result = await this.collectionService.complete(id);
+    return { code: result.success ? 0 : 1, data: result, message: result.message };
+  }
+
   @Post(':id/raw-requirements')
   async addRawRequirement(
     @Param('id') collectionId: string,
@@ -117,6 +126,14 @@ export class RawRequirementCollectionController {
     return { code: 0, data: result };
   }
 
+  @Get('raw-requirements/:rawRequirementId')
+  async getRawRequirement(
+    @Param('rawRequirementId') rawRequirementId: string,
+  ): Promise<ApiResponse<unknown>> {
+    const result = await this.collectionService.getRawRequirementById(rawRequirementId);
+    return { code: 0, data: result };
+  }
+
   @Post('raw-requirements/:rawRequirementId/chat')
   async chatCollect(
     @Param('rawRequirementId') rawRequirementId: string,
@@ -129,6 +146,26 @@ export class RawRequirementCollectionController {
       configId,
     );
     return { code: 0, data: result };
+  }
+
+  @Post('raw-requirements/:rawRequirementId/clarify')
+  async clarifyRawRequirement(
+    @Param('rawRequirementId') rawRequirementId: string,
+    @Body() dto: ClarifyRawRequirementDto,
+  ): Promise<ApiResponse<unknown>> {
+    const result = await this.collectionService.clarifyRawRequirement(
+      rawRequirementId,
+      dto.clarifiedContent,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Delete('raw-requirements/:rawRequirementId')
+  async deleteRawRequirement(
+    @Param('rawRequirementId') rawRequirementId: string,
+  ): Promise<ApiResponse<null>> {
+    await this.collectionService.deleteRawRequirement(rawRequirementId);
+    return { code: 0, message: '删除成功' };
   }
 
   @Post(':id/chat')

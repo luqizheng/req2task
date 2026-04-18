@@ -7,7 +7,6 @@ import type { CollectionType, CreateCollectionDto } from '@/api/requirementColle
 
 const props = defineProps<{
   projectId: string;
-  moduleId: string;
 }>();
 
 const emit = defineEmits<{

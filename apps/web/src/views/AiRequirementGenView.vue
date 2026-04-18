@@ -191,10 +191,10 @@ const handleSaveToModule = async () => {
   }
 
   try {
-    await aiApi.createRawRequirement(selectedModuleId.value, {
+    await aiApi.createRawRequirement({
       content: rawInput.value,
     });
-    ElMessage.success('已保存到模块');
+    ElMessage.success('已保存');
   } catch (error) {
     ElMessage.error((error as Error).message || '保存失败');
   }

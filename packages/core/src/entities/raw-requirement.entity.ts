@@ -31,9 +31,6 @@ export class RawRequirement {
   @JoinColumn({ name: 'collection_id' })
   collection!: RawRequirementCollection | null;
 
-  @Column({ name: 'module_id' })
-  moduleId!: string;
-
   @Column({ name: 'original_content', type: 'text' })
   originalContent!: string;
 

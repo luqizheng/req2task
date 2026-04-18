@@ -60,7 +60,7 @@ export class RequirementsController {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
     const result = await this.requirementsService.create(
-      moduleId,
+      moduleId || null,
       createDto,
       userId!,
     );

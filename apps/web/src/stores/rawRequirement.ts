@@ -5,7 +5,6 @@ import type { GenerateRequirementResponseDto } from '@req2task/dto';
 
 export interface RawCollection {
   id: string;
-  moduleId: string;
   name: string;
   description?: string;
   requirements: RawRequirementResponse[];
@@ -20,30 +19,29 @@ export const useRawRequirementStore = defineStore('rawRequirement', () => {
   const isLoading = ref(false);
   const error = ref<string | null>(null);
 
-  const fetchCollectionsByModule = async (moduleId: string) => {
+  const fetchRequirements = async () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const result = await fetch(`/api/ai/modules/${moduleId}/raw-requirements`, {
+      const result = await fetch(`/api/ai/raw-requirements`, {
         headers: { 'Content-Type': 'application/json' },
       }).then(res => res.json());
       requirements.value = result.data || [];
       return requirements.value;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to fetch raw requirements';
+      error.value = err instanceof Error ? err.message : 'Failed to fetch requirements';
       throw err;
     } finally {
       isLoading.value = false;
     }
   };
 
-  const createCollection = async (moduleId: string, name: string, description?: string) => {
+  const createCollection = async (name: string, description?: string) => {
     isLoading.value = true;
     error.value = null;
     try {
       const newCollection: RawCollection = {
         id: crypto.randomUUID(),
-        moduleId,
         name,
         description,
         requirements: [],
@@ -67,35 +65,17 @@ export const useRawRequirementStore = defineStore('rawRequirement', () => {
     }
   };
 
-  const fetchRequirements = async (moduleId: string) => {
+  const addRequirement = async (content: string) => {
     isLoading.value = true;
     error.value = null;
     try {
-      const result = await fetch(`/api/ai/modules/${moduleId}/raw-requirements`, {
-        headers: { 'Content-Type': 'application/json' },
-      }).then(res => res.json());
-      requirements.value = result.data || [];
-      return requirements.value;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : 'Failed to fetch requirements';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  const addRequirement = async (moduleId: string, content: string) => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const result = await fetch(`/api/ai/modules/${moduleId}/raw-requirements`, {
+      const result = await fetch(`/api/ai/raw-requirements`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       }).then(res => res.json());
       const newRequirement: RawRequirementResponse = {
         id: result.data?.id || crypto.randomUUID(),
-        moduleId,
         content,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -156,7 +136,6 @@ export const useRawRequirementStore = defineStore('rawRequirement', () => {
     requirements,
     isLoading,
     error,
-    fetchCollectionsByModule,
     createCollection,
     selectCollection,
     fetchRequirements,

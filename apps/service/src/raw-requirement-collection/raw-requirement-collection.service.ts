@@ -103,13 +103,11 @@ export class RawRequirementCollectionService {
     content: string,
     source: string,
     userId: string,
-    moduleId: string,
   ): Promise<RawRequirement> {
     const collection = await this.findById(collectionId);
 
     const rawRequirement = this.rawRequirementRepository.create({
       collectionId: collection.id,
-      moduleId,
       originalContent: content,
       source,
       status: RawRequirementStatus.PENDING,

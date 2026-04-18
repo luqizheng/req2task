@@ -19,12 +19,15 @@ export class Requirement {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'module_id' })
-  moduleId!: string;
+  @Column({ name: 'module_id', nullable: true })
+  moduleId!: string | null;
 
-  @ManyToOne(() => FeatureModule, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FeatureModule, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'module_id' })
-  module!: FeatureModule;
+  module!: FeatureModule | null;
+
+  @Column({ name: 'module_ids', type: 'simple-array', nullable: true })
+  moduleIds!: string[] | null;
 
   @Column()
   title!: string;

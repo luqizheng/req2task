@@ -97,7 +97,6 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
 
   const sendMessage = async (
     message: string,
-    moduleId: string,
     source: string = '对话收集',
     configId?: string
   ): Promise<ChatResult | null> => {
@@ -127,7 +126,6 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
       const result = await requirementCollectionApi.chatWithCollection(
         currentCollection.value.id,
         message,
-        moduleId,
         source,
         configId
       );
@@ -171,7 +169,6 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
 
   const addRequirement = async (
     content: string,
-    moduleId: string,
     source: string = '手动添加'
   ): Promise<RawRequirementInCollection | null> => {
     if (!currentCollection.value) return null;
@@ -181,8 +178,7 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     try {
       const result = await requirementCollectionApi.addRawRequirement(
         currentCollection.value.id,
-        { content, source },
-        moduleId
+        { content, source }
       );
       rawRequirements.value.unshift(result);
       return result;

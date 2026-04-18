@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsInt,
   Min,
+  IsArray,
 } from 'class-validator';
 import {
   Priority,
@@ -31,6 +32,11 @@ export class CreateRequirementDto {
   @IsOptional()
   @IsString()
   parentRequirementId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  moduleIds?: string[];
 }
 
 export class UpdateRequirementDto {
@@ -80,7 +86,8 @@ export class ChildRequirementSummaryDto {
 
 export class RequirementResponseDto {
   id!: string;
-  moduleId!: string;
+  moduleId!: string | null;
+  moduleIds!: string[] | null;
   title!: string;
   description!: string | null;
   priority!: Priority;

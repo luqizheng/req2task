@@ -5,7 +5,6 @@ import { useRequirementCollectStore, ChatMessageUI } from '@/stores/requirementC
 import { useAiStore } from '@/stores/ai';
 
 const props = defineProps<{
-  moduleId: string;
   disabled?: boolean;
 }>();
 
@@ -38,7 +37,6 @@ const handleSend = async () => {
   try {
     await store.sendMessage(
       message,
-      props.moduleId,
       '对话收集',
       activeConfigId.value
     );

@@ -43,13 +43,11 @@ export class RequirementGenerationService {
   ) {}
 
   async createRawRequirement(
-    moduleId: string,
     content: string,
     createdById: string,
     collectionId?: string,
   ): Promise<RawRequirement> {
     const rawRequirement = this.rawRequirementRepository.create({
-      moduleId,
       originalContent: content,
       status: RawRequirementStatus.PENDING,
       createdById,
@@ -221,7 +219,6 @@ Only generate follow-up questions if the requirement needs clarification on:
           id: rawRequirementId,
           content: rawRequirement.originalContent,
           metadata: {
-            moduleId: rawRequirement.moduleId,
             type: 'raw_requirement',
           },
         },
@@ -229,7 +226,6 @@ Only generate follow-up questions if the requirement needs clarification on:
           id: `${rawRequirementId}-generated`,
           content: response.content,
           metadata: {
-            moduleId: rawRequirement.moduleId,
             type: 'generated_requirement',
           },
         },
@@ -294,6 +290,12 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
   async findByModule(moduleId: string): Promise<RawRequirement[]> {
     return this.rawRequirementRepository.find({
       where: { moduleId },
+      order: { createdAt: 'DESC' },
+    });
+  }
+
+  async findAll(): Promise<RawRequirement[]> {
+    return this.rawRequirementRepository.find({
       order: { createdAt: 'DESC' },
     });
   }

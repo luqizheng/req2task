@@ -88,7 +88,6 @@ export class RawRequirementCollectionController {
   async addRawRequirement(
     @Param('id') collectionId: string,
     @Body() dto: AddRawRequirementDto,
-    @Query('moduleId') moduleId: string,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<unknown>> {
     const user = req.user as { id?: string; userId?: string };
@@ -98,7 +97,6 @@ export class RawRequirementCollectionController {
       dto.content,
       dto.source,
       userId!,
-      moduleId,
     );
     return { code: 0, data: result };
   }
@@ -137,7 +135,6 @@ export class RawRequirementCollectionController {
   async chatWithCollection(
     @Param('id') collectionId: string,
     @Body('message') message: string,
-    @Body('moduleId') moduleId: string,
     @Body('source') source: string,
     @Body('configId') configId: string | undefined,
     @Request() req: AuthenticatedRequest,
@@ -150,7 +147,6 @@ export class RawRequirementCollectionController {
       message,
       source,
       userId!,
-      moduleId,
     );
 
     const result = await this.requirementGenerationService.chatCollect(

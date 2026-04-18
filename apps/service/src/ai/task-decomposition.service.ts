@@ -85,27 +85,16 @@ Reasoning: [explanation]`;
 
   async findSimilarRequirements(
     requirementContent: string,
-    moduleId: string,
     limit: number = 5,
   ): Promise<SimilarRecommendation[]> {
-    const results = await this.vectorStore.search(requirementContent, limit * 2);
+    const results = await this.vectorStore.search(requirementContent, limit);
 
-    const similar: SimilarRecommendation[] = [];
-
-    for (const result of results) {
-      if (result.metadata?.moduleId === moduleId) {
-        similar.push({
-          requirementId: result.id,
-          content: result.content,
-          similarity: result.score,
-          reason: `语义相似度: ${(result.score * 100).toFixed(1)}%`,
-        });
-      }
-
-      if (similar.length >= limit) break;
-    }
-
-    return similar;
+    return results.map((result) => ({
+      requirementId: result.id,
+      content: result.content,
+      similarity: result.score,
+      reason: `语义相似度: ${(result.score * 100).toFixed(1)}%`,
+    }));
   }
 
   async generateSubTasks(

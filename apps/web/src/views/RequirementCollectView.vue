@@ -15,7 +15,6 @@ const store = useRequirementCollectStore();
 const aiStore = useAiStore();
 
 const projectId = computed(() => route.params.projectId as string);
-const moduleId = computed(() => route.params.moduleId as string);
 const showSidebar = ref(true);
 
 const handleBack = () => {
@@ -70,14 +69,12 @@ watch(projectId, () => {
 
     <RequirementCollectHeader
       :project-id="projectId"
-      :module-id="moduleId"
       @create-success="handleCreateSuccess"
     />
 
     <div class="main-content">
       <div class="chat-area">
         <RequirementCollectChat
-          :module-id="moduleId"
           :disabled="!store.currentCollection"
         />
       </div>

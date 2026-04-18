@@ -31,12 +31,13 @@ export class RequirementsService {
   ) {}
 
   async create(
-    moduleId: string,
+    moduleId: string | null,
     createDto: CreateRequirementDto,
     createdById: string,
   ): Promise<RequirementResponseDto> {
     const requirement = this.requirementRepository.create({
       moduleId,
+      moduleIds: createDto.moduleIds || null,
       title: createDto.title,
       description: createDto.description || null,
       priority: createDto.priority || Priority.MEDIUM,
@@ -243,6 +244,7 @@ export class RequirementsService {
     const dto: RequirementResponseDto = {
       id: requirement.id,
       moduleId: requirement.moduleId,
+      moduleIds: requirement.moduleIds,
       title: requirement.title,
       description: requirement.description,
       priority: requirement.priority,
@@ -283,6 +285,7 @@ export class RequirementsService {
     const dto: RequirementResponseDto = {
       id: requirement.id,
       moduleId: requirement.moduleId,
+      moduleIds: requirement.moduleIds,
       title: requirement.title,
       description: requirement.description,
       priority: requirement.priority,

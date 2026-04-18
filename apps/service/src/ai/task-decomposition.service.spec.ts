@@ -139,31 +139,24 @@ Reasoning: The feature requires database design, API development, and testing. E
   });
 
   describe('findSimilarRequirements', () => {
-    it('should find similar requirements in same module', async () => {
+    it('should find similar requirements', async () => {
       vectorStore.search.mockResolvedValue([
         {
           id: '1',
           content: 'Login feature',
           score: 0.9,
-          metadata: { moduleId: 'module-1', type: 'raw_requirement' },
+          metadata: { type: 'raw_requirement' },
         },
         {
           id: '2',
           content: 'Registration feature',
           score: 0.8,
-          metadata: { moduleId: 'module-1', type: 'raw_requirement' },
-        },
-        {
-          id: '3',
-          content: 'Other module feature',
-          score: 0.7,
-          metadata: { moduleId: 'module-2', type: 'raw_requirement' },
+          metadata: { type: 'raw_requirement' },
         },
       ]);
 
       const result = await service.findSimilarRequirements(
         'Authentication feature',
-        'module-1',
         5,
       );
 
@@ -172,18 +165,10 @@ Reasoning: The feature requires database design, API development, and testing. E
     });
 
     it('should return empty when no similar requirements found', async () => {
-      vectorStore.search.mockResolvedValue([
-        {
-          id: '1',
-          content: 'Different module',
-          score: 0.5,
-          metadata: { moduleId: 'module-2', type: 'raw_requirement' },
-        },
-      ]);
+      vectorStore.search.mockResolvedValue([]);
 
       const result = await service.findSimilarRequirements(
         'Authentication feature',
-        'module-1',
         5,
       );
 

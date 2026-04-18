@@ -120,25 +120,23 @@ export class AiController {
     return { code: 0, data: result };
   }
 
-  @Post('modules/:moduleId/raw-requirements')
+  @Post('raw-requirements')
   async createRawRequirement(
-    @Param('moduleId') moduleId: string,
     @Body() createDto: CreateRawRequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<unknown>> {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
     const result = await this.requirementGenerationService.createRawRequirement(
-      moduleId,
       createDto.content,
       userId!,
     );
     return { code: 0, data: result };
   }
 
-  @Get('modules/:moduleId/raw-requirements')
-  async findRawRequirements(@Param('moduleId') moduleId: string): Promise<ApiResponse<unknown[]>> {
-    const result = await this.requirementGenerationService.findByModule(moduleId);
+  @Get('raw-requirements')
+  async findRawRequirements(): Promise<ApiResponse<unknown[]>> {
+    const result = await this.requirementGenerationService.findAll();
     return { code: 0, data: result };
   }
 
@@ -237,12 +235,10 @@ export class AiController {
   @Get('similar-requirements')
   async findSimilarRequirements(
     @Query('requirementContent') requirementContent: string,
-    @Query('moduleId') moduleId: string,
     @Query('limit') limit?: string,
   ): Promise<ApiResponse<unknown>> {
     const result = await this.taskDecompositionService.findSimilarRequirements(
       requirementContent,
-      moduleId,
       limit ? parseInt(limit, 10) : 5,
     );
     return { code: 0, data: result };

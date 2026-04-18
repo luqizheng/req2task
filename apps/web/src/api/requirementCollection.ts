@@ -102,10 +102,9 @@ export const requirementCollectionApi = {
 
   addRawRequirement: (
     collectionId: string,
-    dto: AddRawRequirementDto,
-    moduleId: string
+    dto: AddRawRequirementDto
   ): Promise<RawRequirementInCollection> => {
-    return api.post(`/collections/${collectionId}/raw-requirements?moduleId=${moduleId}`, dto);
+    return api.post(`/collections/${collectionId}/raw-requirements`, dto);
   },
 
   getRawRequirements: (collectionId: string): Promise<RawRequirementInCollection[]> => {
@@ -127,10 +126,9 @@ export const requirementCollectionApi = {
   chatWithCollection: (
     collectionId: string,
     message: string,
-    moduleId: string,
     source: string,
     configId?: string
   ): Promise<{ rawRequirementId: string } & ChatResult> => {
-    return api.post(`/collections/${collectionId}/chat`, { message, moduleId, source, configId });
+    return api.post(`/collections/${collectionId}/chat`, { message, source, configId });
   },
 };

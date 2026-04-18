@@ -44,7 +44,6 @@ export interface GenerateRequirementResponse {
 
 export interface RawRequirementResponse {
   id: string;
-  moduleId: string;
   content: string;
   generatedRequirement?: GenerateRequirementResponse;
   createdAt: string;
@@ -104,16 +103,16 @@ export const aiApi = {
     );
   },
 
-  createRawRequirement: (moduleId: string, data: CreateRawRequirementDto) => {
+  createRawRequirement: (data: CreateRawRequirementDto) => {
     return api.post<RawRequirementResponse>(
-      `/ai/modules/${moduleId}/raw-requirements`,
+      `/ai/raw-requirements`,
       data
     );
   },
 
-  getRawRequirements: (moduleId: string) => {
+  getRawRequirements: () => {
     return api.get<RawRequirementResponse[]>(
-      `/ai/modules/${moduleId}/raw-requirements`
+      `/ai/raw-requirements`
     );
   },
 

@@ -22,7 +22,7 @@ const actions = [
     label: '需求收集',
     icon: ChatDotRound,
     type: 'success',
-    path: () => `/projects/${props.projectId}/modules`,
+    path: () => `/projects/${props.projectId}/collections`,
   },
   {
     key: 'progress',

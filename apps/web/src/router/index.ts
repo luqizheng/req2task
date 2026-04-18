@@ -108,6 +108,11 @@ const router = createRouter({
       component: () => import('@/views/RequirementChatView.vue')
     },
     {
+      path: '/projects/:projectId/collections',
+      name: 'projectCollections',
+      component: () => import('@/views/ProjectCollectionsView/ProjectCollectionsView.vue')
+    },
+    {
       path: '/projects/:projectId/modules/:moduleId/raw-requirements',
       name: 'rawRequirementCollect',
       component: () => import('@/views/RawRequirementCollectView.vue')

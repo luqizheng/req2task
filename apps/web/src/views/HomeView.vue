@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, markRaw } from 'vue'
 import { useRouter } from 'vue-router'
 import {
   Document,
@@ -15,37 +15,37 @@ const router = useRouter()
 
 const features = ref([
   {
-    icon: Document,
+    icon: markRaw(Document),
     title: '需求管理',
     desc: '完整的需求生命周期管理，支持层级嵌套和状态流转',
     color: '#2563eb'
   },
   {
-    icon: MagicStick,
+    icon: markRaw(MagicStick),
     title: 'AI 智能辅助',
     desc: 'AI 自动生成需求、拆分任务、检测冲突',
     color: '#6366f1'
   },
   {
-    icon: Check,
+    icon: markRaw(Check),
     title: '变更追溯',
     desc: '完整的变更历史记录，支持版本对比',
     color: '#10b981'
   },
   {
-    icon: User,
+    icon: markRaw(User),
     title: '团队协作',
     desc: '多角色权限管理，项目成员协同工作',
     color: '#f59e0b'
   },
   {
-    icon: Connection,
+    icon: markRaw(Connection),
     title: '知识库构建',
     desc: 'RAG 向量检索，构建项目知识图谱',
     color: '#ec4899'
   },
   {
-    icon: Setting,
+    icon: markRaw(Setting),
     title: '可视化看板',
     desc: '任务看板、燃尽图、进度统计一览无余',
     color: '#8b5cf6'

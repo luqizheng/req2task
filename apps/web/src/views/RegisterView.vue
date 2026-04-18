@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, markRaw } from "vue";
 import { useRouter } from "vue-router";
 import { User, Lock, Message, MagicStick } from "@element-plus/icons-vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
@@ -8,6 +8,12 @@ import { authApi } from "@/api";
 const router = useRouter();
 const registerFormRef = ref<FormInstance>();
 const loading = ref(false);
+
+const icons = {
+  user: markRaw(User),
+  lock: markRaw(Lock),
+  message: markRaw(Message),
+};
 const registerForm = ref({
   username: "",
   email: "",
@@ -108,7 +114,7 @@ const goToLogin = () => {
             v-model="registerForm.username"
             placeholder="用户名"
             size="large"
-            :prefix-icon="User"
+            :prefix-icon="icons.user"
           />
         </el-form-item>
 
@@ -117,7 +123,7 @@ const goToLogin = () => {
             v-model="registerForm.email"
             placeholder="邮箱"
             size="large"
-            :prefix-icon="Message"
+            :prefix-icon="icons.message"
           />
         </el-form-item>
 
@@ -126,7 +132,7 @@ const goToLogin = () => {
             v-model="registerForm.displayName"
             placeholder="显示名称（可选）"
             size="large"
-            :prefix-icon="User"
+            :prefix-icon="icons.user"
           />
         </el-form-item>
 
@@ -136,7 +142,7 @@ const goToLogin = () => {
             type="password"
             placeholder="密码（至少6位）"
             size="large"
-            :prefix-icon="Lock"
+            :prefix-icon="icons.lock"
             show-password
           />
         </el-form-item>
@@ -147,7 +153,7 @@ const goToLogin = () => {
             type="password"
             placeholder="确认密码"
             size="large"
-            :prefix-icon="Lock"
+            :prefix-icon="icons.lock"
             show-password
           />
         </el-form-item>

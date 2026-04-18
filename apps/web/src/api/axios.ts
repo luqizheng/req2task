@@ -3,7 +3,7 @@ import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } f
 const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
 const axiosInstance = axios.create({
   baseURL: baseUrl ? `${baseUrl}/api` : '/api',
-  timeout: 10000,
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
   },

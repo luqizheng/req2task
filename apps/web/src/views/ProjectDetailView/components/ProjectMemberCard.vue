@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { Plus } from '@element-plus/icons-vue';
 import { ElMessageBox } from 'element-plus';
 import type { ProjectResponseDto, PublicUserDto } from '@req2task/dto';
@@ -57,13 +57,13 @@ const handleRemoveMember = (userId: string, displayName: string) => {
     .catch(() => {});
 };
 
-const filteredUsers = () => {
+const filteredUsers = computed(() => {
   return availableUsers.value.filter(
     u =>
       !props.project?.members?.some(m => m.id === u.id) &&
       u.displayName.includes(search.value)
   );
-};
+});
 </script>
 
 <template>
@@ -102,7 +102,7 @@ const filteredUsers = () => {
     <el-input v-model="search" placeholder="搜索成员" clearable style="margin-bottom: 16px" />
     <div class="available-members" v-loading="memberLoading">
       <div
-        v-for="user in filteredUsers()"
+        v-for="user in filteredUsers"
         :key="user.id"
         class="member-item"
       >
@@ -115,7 +115,7 @@ const filteredUsers = () => {
         </el-button>
       </div>
       <div v-if="!availableUsers.length" class="empty-tip">暂无可添加的成员</div>
-      <div v-else-if="!filteredUsers().length" class="empty-tip">无匹配结果</div>
+      <div v-else-if="!filteredUsers.length" class="empty-tip">无匹配结果</div>
     </div>
   </el-dialog>
 </template>

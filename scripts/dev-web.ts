@@ -1,37 +1,59 @@
 import * as net from 'net';
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import * as path from 'path';
 
 const WEB_PORT = 3000;
 
-function checkPort(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once('error', (err: NodeJS.ErrnoException) => {
-      if (err.code === 'EADDRINUSE') {
-        resolve(true);
-      } else {
-        resolve(false);
+function getProcessInfoByPort(port: number): { pid: number | null; command: string } {
+  try {
+    const result = execSync(
+      `powershell -Command "Get-NetTCPConnection -LocalPort ${port} -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess"`,
+      { encoding: 'utf-8', windowsHide: true }
+    ).trim();
+    const pid = result ? parseInt(result, 10) : null;
+    let command = '';
+    if (pid) {
+      try {
+        command = execSync(
+          `powershell -Command "(Get-Process -Id ${pid} -ErrorAction SilentlyContinue).Path"`,
+          { encoding: 'utf-8', windowsHide: true }
+        ).trim();
+      } catch {
+        command = '';
       }
-    });
-    server.once('listening', () => {
-      server.close();
+    }
+    return { pid, command };
+  } catch {
+    return { pid: null, command: '' };
+  }
+}
+
+function killProcess(pid: number): Promise<boolean> {
+  return new Promise((resolve) => {
+    try {
+      execSync(`taskkill /PID ${pid} /F`, { windowsHide: true });
+      resolve(true);
+    } catch {
       resolve(false);
-    });
-    server.listen(port, '0.0.0.0');
+    }
   });
 }
 
 async function main() {
-  console.log(`Checking port ${WEB_PORT}...`);
-  const isInUse = await checkPort(WEB_PORT);
+  const processInfo = getProcessInfoByPort(WEB_PORT);
 
-  if (isInUse) {
-    console.log(`Port ${WEB_PORT} is already in use. Skipping web server start.`);
-    return;
+  if (processInfo.pid) {
+    console.log(`Port ${WEB_PORT} is in use by PID ${processInfo.pid} (${processInfo.command || 'unknown'}). Killing...`);
+    const killed = await killProcess(processInfo.pid);
+    if (!killed) {
+      console.error(`Failed to kill process ${processInfo.pid}.`);
+      process.exit(1);
+    }
+    console.log(`Process ${processInfo.pid} killed.`);
+    await new Promise((resolve) => setTimeout(resolve, 1000));
   }
 
-  console.log(`Port ${WEB_PORT} is available. Starting web server...`);
+  console.log(`Starting web server on port ${WEB_PORT}...`);
 
   const rootDir = path.resolve(__dirname, '..');
   const webDir = path.join(rootDir, 'apps', 'web');

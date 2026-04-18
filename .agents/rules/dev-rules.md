@@ -117,3 +117,39 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
   - `users`, `items`, `roles`
 - 临时变量：`tmp`, `temp` 前缀
   - `tmpUser`, `tempFile`
+
+## 视图目录组织规则
+
+视图的私有组件应放在视图目录下，而非平铺在 `components/` 中：
+
+```
+views/
+└── {ViewName}/
+    ├── {ViewName}.vue          # 主视图文件
+    ├── components/             # 视图私有组件（可选）
+    │   ├── ComponentA.vue
+    │   └── ComponentB.vue
+    └── composables/            # 视图私有组合式函数（可选）
+        └── useViewLogic.ts
+```
+
+适用范围：
+- 视图强依赖的组件（仅被该视图使用）
+- 视图专用的组合式函数
+
+适用示例（推荐）：
+```
+views/
+└── ProjectDetailView/
+    ├── ProjectDetailView.vue
+    ├── components/
+    │   ├── ProjectStatsCard.vue
+    │   ├── ProjectInfoCard.vue
+    │   └── ProjectMemberCard.vue
+    └── composables/
+        └── useProjectDetail.ts
+```
+
+不适用示例（应保留在 `components/`）：
+- 被多个视图共享的组件
+- `ui/` 下的通用 UI 组件

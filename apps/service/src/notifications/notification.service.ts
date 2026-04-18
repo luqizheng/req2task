@@ -3,14 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from '@req2task/core';
 import { NotificationType } from '@req2task/dto';
-
-export interface CreateNotificationDto {
-  userId: string;
-  type: NotificationType;
-  title: string;
-  message: string;
-  data?: Record<string, unknown>;
-}
+import {
+  NotificationDto,
+  NotificationListDto,
+  CreateNotificationDto as CreateNotificationInputDto,
+} from '@req2task/dto';
 
 export interface NotificationQuery {
   page?: string;
@@ -25,7 +22,21 @@ export class NotificationService {
     private notificationRepository: Repository<Notification>,
   ) {}
 
-  async create(dto: CreateNotificationDto): Promise<Notification> {
+  private toDto(entity: Notification): NotificationDto {
+    return {
+      id: entity.id,
+      userId: entity.userId,
+      type: entity.type,
+      title: entity.title,
+      message: entity.message,
+      data: entity.data || undefined,
+      isRead: entity.isRead,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
+    };
+  }
+
+  async create(dto: CreateNotificationInputDto): Promise<NotificationDto> {
     const notification = this.notificationRepository.create({
       userId: dto.userId,
       type: dto.type,
@@ -33,13 +44,14 @@ export class NotificationService {
       message: dto.message,
       data: dto.data || null,
     });
-    return this.notificationRepository.save(notification);
+    const saved = await this.notificationRepository.save(notification);
+    return this.toDto(saved);
   }
 
   async findByUser(
     userId: string,
     query: NotificationQuery,
-  ): Promise<{ items: Notification[]; total: number; unreadCount: number }> {
+  ): Promise<NotificationListDto> {
     const page = parseInt(query.page || '1');
     const limit = parseInt(query.limit || '20');
 
@@ -59,16 +71,20 @@ export class NotificationService {
       where: { userId, isRead: false },
     });
 
-    return { items, total, unreadCount };
+    return {
+      items: items.map((n) => this.toDto(n)),
+      total,
+      unreadCount,
+    };
   }
 
-  async markAsRead(id: string, userId: string): Promise<Notification> {
+  async markAsRead(id: string, userId: string): Promise<NotificationDto> {
     await this.notificationRepository.update({ id, userId }, { isRead: true });
     const notification = await this.notificationRepository.findOne({ where: { id } });
     if (!notification) {
       throw new Error('Notification not found');
     }
-    return notification;
+    return this.toDto(notification);
   }
 
   async markAllAsRead(userId: string): Promise<void> {

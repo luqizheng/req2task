@@ -7,28 +7,14 @@ import {
   ChromaVectorStore,
   LLMMessage,
 } from '@req2task/core';
-import { RawRequirement, ChatMessage } from '@req2task/core';
+import { RawRequirement } from '@req2task/core';
 import { RawRequirementStatus, Priority } from '@req2task/dto';
-
-export interface GenerateRequirementResult {
-  id: string;
-  title: string;
-  description: string;
-  priority: Priority;
-  acceptanceCriteria: string[];
-  userStories: {
-    role: string;
-    goal: string;
-    benefit: string;
-  }[];
-}
-
-export interface AnalyzeWithFollowUpResult {
-  summary: string;
-  keyElements: string[];
-  followUpQuestions: string[];
-  sessionHistory: ChatMessage[];
-}
+import {
+  GenerateRequirementResultDto,
+  AnalyzeWithFollowUpResultDto,
+  ChatCollectResultDto,
+  RawRequirementResponseDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class RequirementGenerationService {
@@ -42,11 +28,29 @@ export class RequirementGenerationService {
     private vectorStore: ChromaVectorStore,
   ) {}
 
+  private toRawRequirementResponseDto(entity: RawRequirement): RawRequirementResponseDto {
+    return {
+      id: entity.id,
+      collectionId: entity.collectionId || '',
+      content: entity.originalContent,
+      source: entity.source || '',
+      status: entity.status,
+      sessionHistory: entity.sessionHistory || [],
+      followUpQuestions: entity.followUpQuestions || [],
+      keyElements: entity.keyElements || [],
+      questionCount: entity.questionCount,
+      clarifiedContent: entity.clarifiedContent || undefined,
+      clarifiedAt: entity.clarifiedAt?.toISOString(),
+      createdAt: entity.createdAt.toISOString(),
+      updatedAt: entity.updatedAt.toISOString(),
+    };
+  }
+
   async createRawRequirement(
     content: string,
     createdById: string,
     collectionId?: string,
-  ): Promise<RawRequirement> {
+  ): Promise<RawRequirementResponseDto> {
     const rawRequirement = this.rawRequirementRepository.create({
       originalContent: content,
       status: RawRequirementStatus.PENDING,
@@ -57,14 +61,15 @@ export class RequirementGenerationService {
       keyElements: [],
     });
 
-    return this.rawRequirementRepository.save(rawRequirement);
+    const saved = await this.rawRequirementRepository.save(rawRequirement);
+    return this.toRawRequirementResponseDto(saved);
   }
 
   async analyzeWithFollowUp(
     rawRequirementId: string,
     newMessage: string,
     configId?: string,
-  ): Promise<AnalyzeWithFollowUpResult> {
+  ): Promise<AnalyzeWithFollowUpResultDto> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
@@ -135,8 +140,8 @@ Only generate follow-up questions if the requirement needs clarification on:
         followUpQuestions: parsed.followUpQuestions,
         keyElements: parsed.keyElements,
         generatedContent: parsed.summary,
-        status: parsed.followUpQuestions.length > 0 
-          ? RawRequirementStatus.PENDING 
+        status: parsed.followUpQuestions.length > 0
+          ? RawRequirementStatus.PENDING
           : RawRequirementStatus.PROCESSING,
       });
 
@@ -159,11 +164,7 @@ Only generate follow-up questions if the requirement needs clarification on:
     rawRequirementId: string,
     userMessage: string,
     configId?: string,
-  ): Promise<{
-    assistantMessage: string;
-    followUpQuestions: string[];
-    isComplete: boolean;
-  }> {
+  ): Promise<ChatCollectResultDto> {
     const result = await this.analyzeWithFollowUp(rawRequirementId, userMessage, configId);
 
     const lastAssistantMessage = result.sessionHistory[result.sessionHistory.length - 1];
@@ -178,7 +179,7 @@ Only generate follow-up questions if the requirement needs clarification on:
   async generateRequirement(
     rawRequirementId: string,
     configId?: string,
-  ): Promise<GenerateRequirementResult> {
+  ): Promise<GenerateRequirementResultDto> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
@@ -287,20 +288,22 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
     return this.parseAcceptanceCriteria(response.content);
   }
 
-  async findAll(): Promise<RawRequirement[]> {
-    return this.rawRequirementRepository.find({
+  async findAll(): Promise<RawRequirementResponseDto[]> {
+    const rawRequirements = await this.rawRequirementRepository.find({
       order: { createdAt: 'DESC' },
     });
+    return rawRequirements.map((r) => this.toRawRequirementResponseDto(r));
   }
 
-  async findById(id: string): Promise<RawRequirement | null> {
-    return this.rawRequirementRepository.findOne({
+  async findById(id: string): Promise<RawRequirementResponseDto | null> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id },
       relations: ['createdBy'],
     });
+    return rawRequirement ? this.toRawRequirementResponseDto(rawRequirement) : null;
   }
 
-  private parseGeneratedContent(content: string): Omit<GenerateRequirementResult, 'id'> {
+  private parseGeneratedContent(content: string): Omit<GenerateRequirementResultDto, 'id'> {
     const titleMatch = content.match(/Title:\s*(.+)/i);
     const descMatch = content.match(/Description:\s*([\s\S]*?)(?=Acceptance|User\s*Story|$)/i);
     const priorityMatch = content.match(/Priority:\s*(critical|high|medium|low)/i);

@@ -13,6 +13,7 @@ import {
   RegisterRequestDto,
   LoginRequestDto,
   LoginResponseDto,
+  UserResponseDto,
 } from '@req2task/dto';
 
 @Injectable()
@@ -23,7 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterRequestDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(registerDto: RegisterRequestDto): Promise<UserResponseDto> {
     const existingUser = await this.userRepository.findOne({
       where: [
         { username: registerDto.username },
@@ -51,9 +52,7 @@ export class AuthService {
     });
 
     const savedUser = await this.userRepository.save(user);
-    const { passwordHash: _passwordHash, ...result } = savedUser;
-    void _passwordHash;
-    return result;
+    return this.toUserResponseDto(savedUser);
   }
 
   async login(loginDto: LoginRequestDto): Promise<LoginResponseDto> {
@@ -88,7 +87,21 @@ export class AuthService {
         email: user.email,
         displayName: user.displayName,
         role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
       },
+    };
+  }
+
+  private toUserResponseDto(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 }

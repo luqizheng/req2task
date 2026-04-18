@@ -18,12 +18,99 @@ import {
   RawRequirementStatus,
   CompleteCollectionResultDto,
   RawRequirementInCollectionDto,
+  RawRequirementCollectionResponseDto,
+  RawRequirementCollectionDetailDto,
+  RawRequirementResponseDto,
 } from "@req2task/dto";
 
 @Injectable()
 export class RawRequirementCollectionService {
   private readonly logger = new Logger(RawRequirementCollectionService.name);
   private readonly MAX_QUESTION_COUNT = 5;
+
+  private toResponseDto(
+    entity: RawRequirementCollection,
+    rawRequirementCount: number,
+    chatRoundCount: number,
+  ): RawRequirementCollectionResponseDto {
+    return {
+      id: entity.id,
+      projectId: entity.projectId,
+      title: entity.title,
+      collectionType: entity.collectionType,
+      status: entity.status,
+      collectedBy: entity.collectedBy
+        ? {
+            id: entity.collectedBy.id,
+            username: entity.collectedBy.username,
+            email: entity.collectedBy.email,
+            displayName: entity.collectedBy.displayName,
+            role: entity.collectedBy.role,
+            createdAt: entity.collectedBy.createdAt,
+            updatedAt: entity.collectedBy.updatedAt,
+          }
+        : undefined!,
+      collectedAt: entity.collectedAt.toISOString(),
+      completedAt: entity.completedAt?.toISOString(),
+      meetingMinutes: entity.meetingMinutes || undefined,
+      rawRequirementCount,
+      chatRoundCount,
+      createdAt: entity.createdAt.toISOString(),
+      updatedAt: entity.updatedAt.toISOString(),
+    };
+  }
+
+  private toDetailDto(
+    entity: RawRequirementCollection,
+    rawRequirementCount: number,
+    chatRoundCount: number,
+    rawRequirements: RawRequirement[],
+  ): RawRequirementCollectionDetailDto {
+    return {
+      ...this.toResponseDto(entity, rawRequirementCount, chatRoundCount),
+      rawRequirements: rawRequirements.map((r) =>
+        this.toRawRequirementInDto(r),
+      ),
+    };
+  }
+
+  private toRawRequirementInDto(
+    entity: RawRequirement,
+  ): RawRequirementInCollectionDto {
+    return {
+      id: entity.id,
+      content: entity.originalContent,
+      status: entity.status,
+      sessionHistory: entity.sessionHistory || [],
+      followUpQuestions: entity.followUpQuestions || [],
+      keyElements: entity.keyElements || [],
+      questionCount: entity.questionCount,
+      clarifiedContent: entity.clarifiedContent || undefined,
+      clarifiedAt: entity.clarifiedAt?.toISOString(),
+      createdAt: entity.createdAt.toISOString(),
+      updatedAt: entity.updatedAt.toISOString(),
+    };
+  }
+
+  private toRawRequirementResponseDto(
+    entity: RawRequirement,
+  ): RawRequirementResponseDto {
+    return {
+      id: entity.id,
+      collectionId: entity.collectionId || "",
+      content: entity.originalContent,
+      source: entity.source || "",
+      status: entity.status,
+      sessionHistory: entity.sessionHistory || [],
+      followUpQuestions: entity.followUpQuestions || [],
+      keyElements: entity.keyElements || [],
+      questionCount: entity.questionCount,
+      clarifiedContent: entity.clarifiedContent || undefined,
+      clarifiedAt: entity.clarifiedAt?.toISOString(),
+      createdAt: entity.createdAt.toISOString(),
+      updatedAt: entity.updatedAt.toISOString(),
+    };
+  }
 
   constructor(
     @InjectRepository(RawRequirementCollection)
@@ -35,7 +122,7 @@ export class RawRequirementCollectionService {
   async create(
     dto: CreateRawRequirementCollectionDto,
     userId: string,
-  ): Promise<RawRequirementCollection> {
+  ): Promise<RawRequirementCollectionResponseDto> {
     const collection = this.collectionRepository.create({
       projectId: dto.projectId,
       title: dto.title,
@@ -46,20 +133,25 @@ export class RawRequirementCollectionService {
       meetingMinutes: dto.meetingMinutes || null,
     });
 
-    return this.collectionRepository.save(collection);
+    const saved = await this.collectionRepository.save(collection);
+    return this.toResponseDto(saved, 0, 0);
   }
 
   async findAllByProject(
     projectId: string,
-  ): Promise<RawRequirementCollection[]> {
-    return this.collectionRepository.find({
+  ): Promise<RawRequirementCollectionResponseDto[]> {
+    const collections = await this.collectionRepository.find({
       where: { projectId },
       relations: ["collectedBy", "rawRequirements"],
       order: { createdAt: "DESC" },
     });
+
+    return collections.map((c) =>
+      this.toResponseDto(c, c.rawRequirements?.length || 0, 0),
+    );
   }
 
-  async findById(id: string): Promise<RawRequirementCollection> {
+  async findById(id: string): Promise<RawRequirementCollectionResponseDto> {
     const collection = await this.collectionRepository.findOne({
       where: { id },
       relations: ["collectedBy", "rawRequirements", "project"],
@@ -69,16 +161,24 @@ export class RawRequirementCollectionService {
       throw new NotFoundException(`Collection ${id} not found`);
     }
 
-    return collection;
+    return this.toResponseDto(
+      collection,
+      collection.rawRequirements?.length || 0,
+      0,
+    );
   }
 
-  async findByIdWithDetails(id: string): Promise<
-    RawRequirementCollection & {
-      rawRequirementCount: number;
-      chatRoundCount: number;
+  async findByIdWithDetails(
+    id: string,
+  ): Promise<RawRequirementCollectionDetailDto> {
+    const collection = await this.collectionRepository.findOne({
+      where: { id },
+      relations: ["collectedBy", "rawRequirements", "project"],
+    });
+
+    if (!collection) {
+      throw new NotFoundException(`Collection ${id} not found`);
     }
-  > {
-    const collection = await this.findById(id);
 
     const rawRequirements = await this.rawRequirementRepository.find({
       where: { collectionId: id },
@@ -88,17 +188,18 @@ export class RawRequirementCollectionService {
       return count + (raw.sessionHistory?.length || 0) / 2;
     }, 0);
 
-    return {
-      ...collection,
-      rawRequirementCount: rawRequirements.length,
-      chatRoundCount: Math.floor(chatRoundCount),
-    };
+    return this.toDetailDto(
+      collection,
+      rawRequirements.length,
+      Math.floor(chatRoundCount),
+      rawRequirements,
+    );
   }
 
   async update(
     id: string,
     dto: UpdateRawRequirementCollectionDto,
-  ): Promise<RawRequirementCollection> {
+  ): Promise<RawRequirementCollectionResponseDto> {
     const updateData: Partial<RawRequirementCollection> = {};
     if (dto.title !== undefined) updateData.title = dto.title;
     if (dto.collectionType !== undefined)
@@ -114,12 +215,24 @@ export class RawRequirementCollectionService {
   }
 
   async delete(id: string): Promise<void> {
-    const collection = await this.findById(id);
+    const collection = await this.collectionRepository.findOne({
+      where: { id },
+    });
+    if (!collection) {
+      throw new NotFoundException(`Collection ${id} not found`);
+    }
     await this.collectionRepository.remove(collection);
   }
 
   async complete(id: string): Promise<CompleteCollectionResultDto> {
-    const collection = await this.findById(id);
+    const collection = await this.collectionRepository.findOne({
+      where: { id },
+      relations: ["collectedBy"],
+    });
+
+    if (!collection) {
+      throw new NotFoundException(`Collection ${id} not found`);
+    }
 
     if (collection.status === CollectionStatus.COMPLETED) {
       return {
@@ -173,8 +286,14 @@ export class RawRequirementCollectionService {
     content: string,
     source: string,
     userId: string,
-  ): Promise<RawRequirement> {
-    const collection = await this.findById(collectionId);
+  ): Promise<RawRequirementResponseDto> {
+    const collection = await this.collectionRepository.findOne({
+      where: { id: collectionId },
+    });
+
+    if (!collection) {
+      throw new NotFoundException(`Collection ${collectionId} not found`);
+    }
 
     if (collection.status === CollectionStatus.COMPLETED) {
       throw new BadRequestException("收集已完成，无法添加新需求");
@@ -192,7 +311,8 @@ export class RawRequirementCollectionService {
       questionCount: 0,
     });
 
-    return this.rawRequirementRepository.save(rawRequirement);
+    const saved = await this.rawRequirementRepository.save(rawRequirement);
+    return this.toRawRequirementResponseDto(saved);
   }
 
   async updateRawRequirement(
@@ -207,7 +327,7 @@ export class RawRequirementCollectionService {
       clarifiedContent?: string;
       clarifiedAt?: Date;
     },
-  ): Promise<RawRequirement> {
+  ): Promise<RawRequirementResponseDto> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
@@ -237,18 +357,22 @@ export class RawRequirementCollectionService {
 
     await this.rawRequirementRepository.update(rawRequirementId, updateData);
 
-    return this.rawRequirementRepository.findOne({
+    const updated = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
       relations: ["createdBy"],
-    }) as Promise<RawRequirement>;
+    });
+    return this.toRawRequirementResponseDto(updated!);
   }
 
-  async getRawRequirements(collectionId: string): Promise<RawRequirement[]> {
-    return this.rawRequirementRepository.find({
+  async getRawRequirements(
+    collectionId: string,
+  ): Promise<RawRequirementInCollectionDto[]> {
+    const rawRequirements = await this.rawRequirementRepository.find({
       where: { collectionId },
       relations: ["createdBy"],
       order: { createdAt: "DESC" },
     });
+    return rawRequirements.map((r) => this.toRawRequirementInDto(r));
   }
 
   async getFollowUpQuestions(rawRequirementId: string): Promise<string[]> {
@@ -267,17 +391,20 @@ export class RawRequirementCollectionService {
 
   async getRawRequirementById(
     rawRequirementId: string,
-  ): Promise<RawRequirement | null> {
-    return this.rawRequirementRepository.findOne({
+  ): Promise<RawRequirementResponseDto | null> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
       relations: ["createdBy"],
     });
+    return rawRequirement
+      ? this.toRawRequirementResponseDto(rawRequirement)
+      : null;
   }
 
   async clarifyRawRequirement(
     rawRequirementId: string,
     clarifiedContent: string,
-  ): Promise<RawRequirement> {
+  ): Promise<RawRequirementResponseDto> {
     return this.updateRawRequirement(rawRequirementId, {
       status: RawRequirementStatus.COMPLETED,
       clarifiedContent,

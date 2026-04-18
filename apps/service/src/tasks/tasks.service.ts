@@ -7,7 +7,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Task, Requirement, FeatureModule } from '@req2task/core';
 import { TaskStatus, TaskPriority } from '@req2task/dto';
-import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto } from '@req2task/dto';
+import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto, WorkloadStatsDto } from '@req2task/dto';
 
 export interface MarkReplacedDto {
   replacedByTaskId: string;
@@ -17,20 +17,6 @@ export interface MarkReplacedDto {
 export interface MarkCancelledDto {
   reason: string;
   type: 'replaced' | 'wasted';
-}
-
-export interface WorkloadStats {
-  projectId: string;
-  effectiveHours: number;
-  reworkHours: number;
-  wastedHours: number;
-  totalHours: number;
-  taskCounts: {
-    total: number;
-    completed: number;
-    cancelled: number;
-    replaced: number;
-  };
 }
 
 @Injectable()
@@ -329,7 +315,7 @@ export class TasksService {
     return replacedTasks.map((t) => this.toResponseDto(t));
   }
 
-  async getWorkloadStats(projectId: string): Promise<WorkloadStats> {
+  async getWorkloadStats(projectId: string): Promise<WorkloadStatsDto> {
     const modules = await this.featureModuleRepository.find({
       where: { projectId },
     });

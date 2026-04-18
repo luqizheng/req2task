@@ -1,49 +1,14 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Baseline, Project, Requirement, Task, FeatureModule } from '@req2task/core';
 import { RequirementStatus, TaskStatus } from '@req2task/dto';
-
-export interface SnapshotData {
-  [key: string]: unknown;
-  modules?: Array<{
-    id: string;
-    name: string;
-  }>;
-  requirements?: Array<{
-    id: string;
-    title: string;
-    status: RequirementStatus;
-    priority: string;
-    storyPoints: number;
-  }>;
-  tasks?: Array<{
-    id: string;
-    title: string;
-    status: TaskStatus;
-    priority: string;
-    estimatedHours: number | null;
-  }>;
-  timestamp?: string;
-}
-
-export interface CreateBaselineDto {
-  name: string;
-  description?: string | null;
-}
-
-export interface BaselineDetailDto {
-  id: string;
-  name: string;
-  projectId: string;
-  description: string | null;
-  createdBy: {
-    id: string;
-    name: string;
-  };
-  createdAt: Date;
-  snapshotData: SnapshotData;
-}
+import {
+  BaselineDto,
+  BaselineComparisonDto,
+  CreateBaselineDto as CreateBaselineInputDto,
+  SnapshotDataDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class BaselineService {
@@ -60,11 +25,30 @@ export class BaselineService {
     private taskRepository: Repository<Task>,
   ) {}
 
+  private toSnapshotData(entity: Baseline): SnapshotDataDto {
+    return entity.snapshotData as SnapshotDataDto;
+  }
+
+  private toBaselineDto(entity: Baseline): BaselineDto {
+    return {
+      id: entity.id,
+      name: entity.name,
+      projectId: entity.projectId,
+      description: entity.description,
+      createdBy: {
+        id: entity.createdBy?.id ?? '',
+        name: entity.createdBy?.displayName ?? '',
+      },
+      createdAt: entity.createdAt,
+      snapshotData: this.toSnapshotData(entity),
+    };
+  }
+
   async createBaseline(
     projectId: string,
-    dto: CreateBaselineDto,
+    dto: CreateBaselineInputDto,
     createdById: string,
-  ): Promise<BaselineDetailDto> {
+  ): Promise<BaselineDto> {
     const project = await this.projectRepository.findOne({ where: { id: projectId } });
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -84,28 +68,17 @@ export class BaselineService {
     return this.findById(saved.id);
   }
 
-  async findByProject(projectId: string): Promise<BaselineDetailDto[]> {
+  async findByProject(projectId: string): Promise<BaselineDto[]> {
     const baselines = await this.baselineRepository.find({
       where: { projectId },
       relations: ['createdBy'],
       order: { createdAt: 'DESC' },
     });
 
-    return baselines.map((b) => ({
-      id: b.id,
-      name: b.name,
-      projectId: b.projectId,
-      description: b.description,
-      createdBy: {
-        id: b.createdBy?.id ?? '',
-        name: b.createdBy?.displayName ?? '',
-      },
-      createdAt: b.createdAt,
-      snapshotData: b.snapshotData as SnapshotData,
-    }));
+    return baselines.map((b) => this.toBaselineDto(b));
   }
 
-  async findById(id: string): Promise<BaselineDetailDto> {
+  async findById(id: string): Promise<BaselineDto> {
     const baseline = await this.baselineRepository.findOne({
       where: { id },
       relations: ['createdBy', 'project'],
@@ -115,18 +88,7 @@ export class BaselineService {
       throw new NotFoundException('Baseline not found');
     }
 
-    return {
-      id: baseline.id,
-      name: baseline.name,
-      projectId: baseline.projectId,
-      description: baseline.description,
-      createdBy: {
-        id: baseline.createdBy?.id ?? '',
-        name: baseline.createdBy?.displayName ?? '',
-      },
-      createdAt: baseline.createdAt,
-      snapshotData: baseline.snapshotData as SnapshotData,
-    };
+    return this.toBaselineDto(baseline);
   }
 
   async restoreBaseline(baselineId: string): Promise<void> {
@@ -142,26 +104,7 @@ export class BaselineService {
     await this.baselineRepository.remove(baseline);
   }
 
-  async compareBaselines(baselineId1: string, baselineId2: string): Promise<{
-    baseline1: BaselineDetailDto;
-    baseline2: BaselineDetailDto;
-    differences: {
-      requirementsAdded: string[];
-      requirementsRemoved: string[];
-      requirementsChanged: Array<{
-        id: string;
-        title: string;
-        changes: Record<string, { from: unknown; to: unknown }>;
-      }>;
-      tasksAdded: string[];
-      tasksRemoved: string[];
-      tasksChanged: Array<{
-        id: string;
-        title: string;
-        changes: Record<string, { from: unknown; to: unknown }>;
-      }>;
-    };
-  }> {
+  async compareBaselines(baselineId1: string, baselineId2: string): Promise<BaselineComparisonDto> {
     const baseline1 = await this.findById(baselineId1);
     const baseline2 = await this.findById(baselineId2);
 
@@ -258,7 +201,7 @@ export class BaselineService {
     };
   }
 
-  private async takeSnapshot(projectId: string): Promise<SnapshotData> {
+  private async takeSnapshot(projectId: string): Promise<SnapshotDataDto> {
     const modules = await this.featureModuleRepository.find({ where: { projectId } });
     const moduleIds = modules.map((m) => m.id);
 
@@ -298,7 +241,7 @@ export class BaselineService {
     };
   }
 
-  private async restoreSnapshot(snapshot: SnapshotData): Promise<void> {
+  private async restoreSnapshot(snapshot: SnapshotDataDto): Promise<void> {
     for (const reqSnapshot of snapshot.requirements || []) {
       await this.requirementRepository.update(reqSnapshot.id, {
         status: reqSnapshot.status,

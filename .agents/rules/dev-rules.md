@@ -28,6 +28,11 @@
 
 - Controller 方法必须显式声明返回类型
 - Web 项目调用的 API 类型必须与 Service 保持一致（使用 `packages/dto` 中定义的类型）
+- **Service 层输入和输出参数必须使用 DTO**：
+  - 输入参数：使用 `packages/dto` 中定义的 Request DTO
+  - 输出参数：使用 `packages/dto` 中定义的 Response DTO
+  - 禁止在 Service 方法签名中直接使用实体类型作为输入/输出
+  - 实体仅限 Service 内部逻辑使用，跨层交互必须转换为 DTO
 
 ## DTO 共享规则
 

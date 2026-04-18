@@ -2,7 +2,13 @@ import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Task, Requirement, FeatureModule } from '@req2task/core';
-import { TaskStatus, RequirementStatus } from '@req2task/dto';
+import {
+  TaskStatus,
+  RequirementStatus,
+  TaskResponseDto,
+  TaskStatisticsDto,
+  TaskKanbanBoardDto,
+} from '@req2task/dto';
 
 const TASK_STATUS_TRANSITIONS: Record<TaskStatus, TaskStatus[]> = {
   [TaskStatus.TODO]: [TaskStatus.IN_PROGRESS, TaskStatus.BLOCKED],
@@ -24,6 +30,44 @@ export class TaskKanbanService {
     private featureModuleRepository: Repository<FeatureModule>,
   ) {}
 
+  private toResponseDto(task: Task): TaskResponseDto {
+    const dto: TaskResponseDto = {
+      id: task.id,
+      taskNo: task.taskNo,
+      title: task.title,
+      description: task.description,
+      requirementId: task.requirementId,
+      status: task.status,
+      priority: task.priority,
+      assignedToId: task.assignedToId,
+      estimatedHours: task.estimatedHours,
+      actualHours: task.actualHours,
+      dueDate: task.dueDate,
+      parentTaskId: task.parentTaskId,
+      createdById: task.createdById,
+      createdAt: task.createdAt,
+      updatedAt: task.updatedAt,
+    };
+
+    if (task.assignedTo) {
+      dto.assignedTo = {
+        id: task.assignedTo.id,
+        displayName: task.assignedTo.displayName,
+        username: task.assignedTo.username,
+      };
+    }
+
+    if (task.createdBy) {
+      dto.createdBy = {
+        id: task.createdBy.id,
+        displayName: task.createdBy.displayName,
+        username: task.createdBy.username,
+      };
+    }
+
+    return dto;
+  }
+
   async canTransition(currentStatus: TaskStatus, targetStatus: TaskStatus): Promise<boolean> {
     if (currentStatus === targetStatus) return true;
     const allowedTransitions = TASK_STATUS_TRANSITIONS[currentStatus] || [];
@@ -34,7 +78,7 @@ export class TaskKanbanService {
     taskId: string,
     targetStatus: TaskStatus,
     _userId?: string,
-  ): Promise<Task> {
+  ): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({ where: { id: taskId } });
 
     if (!task) {
@@ -42,9 +86,9 @@ export class TaskKanbanService {
     }
 
     const currentStatus = task.status;
-    const canTransition = await this.canTransition(currentStatus, targetStatus);
+    const canTransitionResult = await this.canTransition(currentStatus, targetStatus);
 
-    if (!canTransition) {
+    if (!canTransitionResult) {
       throw new BadRequestException(
         `Cannot transition from ${currentStatus} to ${targetStatus}`,
       );
@@ -57,23 +101,21 @@ export class TaskKanbanService {
       await this.checkRequirementCompletion(task.requirementId);
     }
 
-    return updated;
+    return this.toResponseDto(updated);
   }
 
   async getAllowedTransitions(currentStatus: TaskStatus): Promise<TaskStatus[]> {
     return TASK_STATUS_TRANSITIONS[currentStatus] || [];
   }
 
-  async getKanbanBoard(
-    requirementId: string,
-  ): Promise<Record<TaskStatus, Task[]>> {
+  async getKanbanBoard(requirementId: string): Promise<TaskKanbanBoardDto> {
     const tasks = await this.taskRepository.find({
       where: { requirementId },
       relations: ['assignedTo', 'createdBy'],
       order: { createdAt: 'ASC' },
     });
 
-    const kanban: Record<TaskStatus, Task[]> = {
+    const kanban: Record<TaskStatus, TaskResponseDto[]> = {
       [TaskStatus.TODO]: [],
       [TaskStatus.IN_PROGRESS]: [],
       [TaskStatus.IN_REVIEW]: [],
@@ -83,20 +125,13 @@ export class TaskKanbanService {
     };
 
     for (const task of tasks) {
-      kanban[task.status].push(task);
+      kanban[task.status].push(this.toResponseDto(task));
     }
 
-    return kanban;
+    return { byStatus: kanban };
   }
 
-  async getTaskStatistics(requirementId: string): Promise<{
-    total: number;
-    byStatus: Record<TaskStatus, number>;
-    byPriority: Record<string, number>;
-    completedPercentage: number;
-    estimatedHours: number;
-    actualHours: number;
-  }> {
+  async getTaskStatistics(requirementId: string): Promise<TaskStatisticsDto> {
     const tasks = await this.taskRepository.find({ where: { requirementId } });
 
     const byStatus: Record<string, number> = {};
@@ -127,22 +162,24 @@ export class TaskKanbanService {
     };
   }
 
-  async getProjectKanbanBoard(projectId: string): Promise<Record<TaskStatus, Task[]>> {
+  async getProjectKanbanBoard(projectId: string): Promise<TaskKanbanBoardDto> {
     const modules = await this.featureModuleRepository.find({
       where: { projectId },
       select: ['id'],
     });
     const moduleIds = modules.map((m) => m.id);
 
+    const emptyKanban: Record<TaskStatus, TaskResponseDto[]> = {
+      [TaskStatus.TODO]: [],
+      [TaskStatus.IN_PROGRESS]: [],
+      [TaskStatus.IN_REVIEW]: [],
+      [TaskStatus.DONE]: [],
+      [TaskStatus.BLOCKED]: [],
+      [TaskStatus.CANCELLED]: [],
+    };
+
     if (moduleIds.length === 0) {
-      return {
-        [TaskStatus.TODO]: [],
-        [TaskStatus.IN_PROGRESS]: [],
-        [TaskStatus.IN_REVIEW]: [],
-        [TaskStatus.DONE]: [],
-        [TaskStatus.BLOCKED]: [],
-        [TaskStatus.CANCELLED]: [],
-      };
+      return { byStatus: emptyKanban };
     }
 
     const requirements = await this.requirementRepository
@@ -153,14 +190,7 @@ export class TaskKanbanService {
     const requirementIds = requirements.map((r) => r.id);
 
     if (requirementIds.length === 0) {
-      return {
-        [TaskStatus.TODO]: [],
-        [TaskStatus.IN_PROGRESS]: [],
-        [TaskStatus.IN_REVIEW]: [],
-        [TaskStatus.DONE]: [],
-        [TaskStatus.BLOCKED]: [],
-        [TaskStatus.CANCELLED]: [],
-      };
+      return { byStatus: emptyKanban };
     }
 
     const tasks = await this.taskRepository
@@ -172,7 +202,7 @@ export class TaskKanbanService {
       .orderBy('task.createdAt', 'ASC')
       .getMany();
 
-    const kanban: Record<TaskStatus, Task[]> = {
+    const kanban: Record<TaskStatus, TaskResponseDto[]> = {
       [TaskStatus.TODO]: [],
       [TaskStatus.IN_PROGRESS]: [],
       [TaskStatus.IN_REVIEW]: [],
@@ -182,20 +212,13 @@ export class TaskKanbanService {
     };
 
     for (const task of tasks) {
-      kanban[task.status].push(task);
+      kanban[task.status].push(this.toResponseDto(task));
     }
 
-    return kanban;
+    return { byStatus: kanban };
   }
 
-  async getProjectTaskStatistics(projectId: string): Promise<{
-    total: number;
-    byStatus: Record<TaskStatus, number>;
-    byPriority: Record<string, number>;
-    completedPercentage: number;
-    estimatedHours: number;
-    actualHours: number;
-  }> {
+  async getProjectTaskStatistics(projectId: string): Promise<TaskStatisticsDto> {
     const modules = await this.featureModuleRepository.find({
       where: { projectId },
       select: ['id'],

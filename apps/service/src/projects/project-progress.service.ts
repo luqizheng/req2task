@@ -1,64 +1,15 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In, Between } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Project, Requirement, Task, FeatureModule } from '@req2task/core';
 import { RequirementStatus, TaskStatus } from '@req2task/dto';
-
-export interface ProjectProgress {
-  projectId: string;
-  projectName: string;
-  totalModules: number;
-  totalRequirements: number;
-  completedRequirements: number;
-  requirementProgress: number;
-  totalTasks: number;
-  completedTasks: number;
-  taskProgress: number;
-  totalStoryPoints: number;
-  completedStoryPoints: number;
-  totalEstimatedHours: number;
-  totalActualHours: number;
-  byRequirementStatus: Record<string, number>;
-  byTaskStatus: Record<string, number>;
-  burndownData: BurndownPoint[];
-}
-
-export interface BurndownPoint {
-  date: string;
-  planned: number;
-  actual: number;
-  remainingTasks: number;
-}
-
-export interface BurndownQuery {
-  startDate: string;
-  endDate: string;
-}
-
-export interface ModuleProgress {
-  moduleId: string;
-  moduleName: string;
-  totalRequirements: number;
-  completedRequirements: number;
-  progress: number;
-  requirements: {
-    id: string;
-    title: string;
-    status: RequirementStatus;
-    taskCount: number;
-    completedTaskCount: number;
-  }[];
-}
-
-export interface BurndownData {
-  projectId: string;
-  startDate: string;
-  endDate: string;
-  totalStoryPoints: number;
-  idealLine: number[];
-  actualLine: number[];
-  remainingTasks: number[];
-}
+import {
+  ProjectProgressDto,
+  BurndownPointDto,
+  BurndownQueryDto,
+  BurndownDataDto,
+  ModuleProgressDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class ProjectProgressService {
@@ -73,7 +24,7 @@ export class ProjectProgressService {
     private featureModuleRepository: Repository<FeatureModule>,
   ) {}
 
-  async getProjectProgress(projectId: string): Promise<ProjectProgress> {
+  async getProjectProgress(projectId: string): Promise<ProjectProgressDto> {
     const project = await this.projectRepository.findOne({ where: { id: projectId } });
 
     if (!project) {
@@ -158,7 +109,7 @@ export class ProjectProgressService {
     };
   }
 
-  async getBurndownData(projectId: string, totalStoryPoints?: number): Promise<BurndownPoint[]> {
+  async getBurndownData(projectId: string, totalStoryPoints?: number): Promise<BurndownPointDto[]> {
     const project = await this.projectRepository.findOne({ where: { id: projectId } });
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -183,7 +134,7 @@ export class ProjectProgressService {
     );
     const completedPoints = completedReqs.reduce((sum, r) => sum + r.storyPoints, 0);
 
-    const points: BurndownPoint[] = [];
+    const points: BurndownPointDto[] = [];
     const daysDiff = 14;
 
     for (let i = 0; i <= daysDiff; i++) {
@@ -211,8 +162,8 @@ export class ProjectProgressService {
 
   async getDetailedBurndown(
     projectId: string,
-    query: BurndownQuery,
-  ): Promise<BurndownData> {
+    query: BurndownQueryDto,
+  ): Promise<BurndownDataDto> {
     const project = await this.projectRepository.findOne({ where: { id: projectId } });
     if (!project) {
       throw new NotFoundException('Project not found');
@@ -275,7 +226,7 @@ export class ProjectProgressService {
     };
   }
 
-  async getModuleProgress(moduleId: string): Promise<ModuleProgress> {
+  async getModuleProgress(moduleId: string): Promise<ModuleProgressDto> {
     const module = await this.featureModuleRepository.findOne({
       where: { id: moduleId },
     });
@@ -292,14 +243,14 @@ export class ProjectProgressService {
     const requirementsWithTasks = await Promise.all(
       requirements.map(async (r) => {
         const tasks = await this.taskRepository.find({ where: { requirementId: r.id } });
-        const completedTasks = tasks.filter((t) => t.status === TaskStatus.DONE).length;
+        const completedTasksCount = tasks.filter((t) => t.status === TaskStatus.DONE).length;
 
         return {
           id: r.id,
           title: r.title,
           status: r.status,
           taskCount: tasks.length,
-          completedTaskCount: completedTasks,
+          completedTaskCount: completedTasksCount,
         };
       }),
     );

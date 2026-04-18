@@ -10,26 +10,11 @@ import {
 } from '@req2task/core';
 import { RawRequirement } from '@req2task/core';
 import { ConflictType } from '@req2task/dto';
-
-export interface ConflictDetectionResult {
-  hasConflict: boolean;
-  conflicts: Conflict[];
-  relatedRequirements: SearchResult[];
-}
-
-export interface Conflict {
-  requirement1: {
-    id: string;
-    content: string;
-  };
-  requirement2: {
-    id: string;
-    content: string;
-  };
-  type: ConflictType;
-  description: string;
-  suggestion: string;
-}
+import {
+  ConflictDetectionResultDto,
+  ConflictDto,
+  SearchResultDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class ConflictDetectionService {
@@ -44,7 +29,7 @@ export class ConflictDetectionService {
   async detectConflicts(
     requirementId: string,
     configId?: string,
-  ): Promise<ConflictDetectionResult> {
+  ): Promise<ConflictDetectionResultDto> {
     const requirement = await this.rawRequirementRepository.findOne({
       where: { id: requirementId },
     });
@@ -86,8 +71,9 @@ export class ConflictDetectionService {
   async semanticSearch(
     query: string,
     limit: number = 10,
-  ): Promise<SearchResult[]> {
-    return this.vectorStore.search(query, limit);
+  ): Promise<SearchResultDto[]> {
+    const results = await this.vectorStore.search(query, limit);
+    return results;
   }
 
   async chat(
@@ -138,7 +124,7 @@ export class ConflictDetectionService {
     targetRequirement: string,
     relatedRequirements: SearchResult[],
     configId?: string,
-  ): Promise<Conflict[]> {
+  ): Promise<ConflictDto[]> {
     const requirementsText = relatedRequirements
       .map((r, i) => `${i + 1}. ${r.content}`)
       .join('\n');
@@ -164,8 +150,8 @@ export class ConflictDetectionService {
     content: string,
     targetRequirement: string,
     relatedRequirements: SearchResult[],
-  ): Conflict[] {
-    const conflicts: Conflict[] = [];
+  ): ConflictDto[] {
+    const conflicts: ConflictDto[] = [];
     const conflictBlocks = content.split(/\n(?=\d+\.|Conflict)/i);
 
     for (const block of conflictBlocks) {

@@ -6,27 +6,15 @@ import {
   PromptService,
   ChromaVectorStore,
   LLMMessage,
+  SearchResult,
 } from '@req2task/core';
 import { Task } from '@req2task/core';
 import { TaskPriority } from '@req2task/dto';
-
-export interface TaskDecomposition {
-  tasks: {
-    title: string;
-    estimatedHours: number;
-    priority: TaskPriority;
-    dependencies: string[];
-    description: string;
-  }[];
-  totalEstimatedHours: number;
-}
-
-export interface SimilarRecommendation {
-  requirementId: string;
-  content: string;
-  similarity: number;
-  reason: string;
-}
+import {
+  TaskDecompositionDto,
+  WorkloadEstimateDto,
+  SimilarRecommendationDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class TaskDecompositionService {
@@ -41,7 +29,7 @@ export class TaskDecompositionService {
   async decomposeRequirement(
     requirementContent: string,
     configId?: string,
-  ): Promise<TaskDecomposition> {
+  ): Promise<TaskDecompositionDto> {
     const rendered = this.promptService.render('TASK_BREAKDOWN', {
       modules: requirementContent,
     });
@@ -61,7 +49,7 @@ export class TaskDecompositionService {
   async estimateWorkload(
     requirementContent: string,
     configId?: string,
-  ): Promise<{ estimatedHours: number; reasoning: string }> {
+  ): Promise<WorkloadEstimateDto> {
     const prompt = `Estimate the workload for implementing the following requirement:
 
 ${requirementContent}
@@ -86,7 +74,7 @@ Reasoning: [explanation]`;
   async findSimilarRequirements(
     requirementContent: string,
     limit: number = 5,
-  ): Promise<SimilarRecommendation[]> {
+  ): Promise<SimilarRecommendationDto[]> {
     const results = await this.vectorStore.search(requirementContent, limit);
 
     return results.map((result) => ({
@@ -100,7 +88,7 @@ Reasoning: [explanation]`;
   async generateSubTasks(
     parentTaskId: string,
     configId?: string,
-  ): Promise<TaskDecomposition> {
+  ): Promise<TaskDecompositionDto> {
     const parentTask = await this.taskRepository.findOne({
       where: { id: parentTaskId },
       relations: ['requirement'],
@@ -114,8 +102,8 @@ Reasoning: [explanation]`;
     return this.decomposeRequirement(content, configId);
   }
 
-  private parseDecompositionResult(content: string): TaskDecomposition {
-    const tasks: TaskDecomposition['tasks'] = [];
+  private parseDecompositionResult(content: string): TaskDecompositionDto {
+    const tasks: TaskDecompositionDto['tasks'] = [];
     const taskBlocks = content.split(/\n(?=\d+\.|Task\s*\d)/i);
 
     let totalHours = 0;
@@ -146,9 +134,7 @@ Reasoning: [explanation]`;
     return { tasks, totalEstimatedHours: totalHours };
   }
 
-  private parseWorkloadEstimate(
-    content: string,
-  ): { estimatedHours: number; reasoning: string } {
+  private parseWorkloadEstimate(content: string): WorkloadEstimateDto {
     const hoursMatch = content.match(/hours?:\s*(\d+(?:\.\d+)?)/i);
     const reasoningMatch = content.match(/reasoning?:\s*([\s\S]*?)$/i);
 

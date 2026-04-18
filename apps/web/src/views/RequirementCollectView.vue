@@ -15,6 +15,7 @@ const store = useRequirementCollectStore();
 const aiStore = useAiStore();
 
 const projectId = computed(() => route.params.projectId as string);
+const collectionId = computed(() => route.params.collectionId as string | undefined);
 const showSidebar = ref(true);
 
 const handleBack = () => {
@@ -31,20 +32,24 @@ const loadData = async () => {
     if (aiStore.configs.length === 0) {
       await aiStore.fetchConfigs();
     }
+    if (collectionId.value) {
+      await store.selectCollection(collectionId.value);
+    }
   } catch (error) {
     ElMessage.error('加载数据失败');
   }
 };
 
-const handleCreateSuccess = async (collectionId: string) => {
-  await store.selectCollection(collectionId);
+const handleCreateSuccess = async (newCollectionId: string) => {
+  router.replace(`/projects/${projectId.value}/collect/${newCollectionId}`);
+  await store.selectCollection(newCollectionId);
 };
 
 onMounted(() => {
   loadData();
 });
 
-watch(projectId, () => {
+watch([projectId, collectionId], () => {
   store.reset();
   loadData();
 });

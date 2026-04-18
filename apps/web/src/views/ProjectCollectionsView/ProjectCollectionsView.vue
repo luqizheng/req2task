@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Plus, Delete, ChatDotRound, ArrowLeft, Refresh } from '@element-plus/icons-vue';
+import { Plus, Delete, ChatDotRound, ArrowLeft, Refresh, MagicStick } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import { useProjectStore } from '@/stores/project';
@@ -58,14 +58,24 @@ const handleCreate = async (data: { title: string; collectionType: CollectionTyp
     }
     const collection = await store.createCollection(dto);
     ElMessage.success('创建成功');
-    handleOpenCollection(collection.id);
+    showCreateDialog.value = false;
+    try {
+      await ElMessageBox.confirm(
+        '是否跳转到 AI 收集工作台？',
+        '创建成功',
+        { confirmButtonText: '跳转', cancelButtonText: '留在本页', type: 'info' }
+      );
+      router.push(`/projects/${projectId.value}/collect/${collection.id}`);
+    } catch {
+      loadCollections();
+    }
   } catch {
     ElMessage.error('创建失败');
   }
 };
 
 const handleOpenCollection = (collectionId: string) => {
-  router.push(`/projects/${projectId.value}/modules/collect?collectionId=${collectionId}`);
+  router.push(`/projects/${projectId.value}/collect/${collectionId}`);
 };
 
 const handleDelete = async (collectionId: string, title: string) => {
@@ -145,6 +155,9 @@ onMounted(async () => {
             <div class="collection-actions">
               <el-button type="primary" @click="handleOpenCollection(collection.id)">
                 打开
+              </el-button>
+              <el-button type="warning" :icon="MagicStick" @click="router.push(`/projects/${projectId}/collect/${collection.id}`)">
+                AI收集
               </el-button>
               <el-button type="danger" :icon="Delete" @click="handleDelete(collection.id, collection.title)">
                 删除

@@ -39,7 +39,21 @@ export const useTaskStore = defineStore('task', () => {
     loading.value = true;
     try {
       const data = await tasksApi.getKanbanBoard(requirementId);
-      kanbanBoard.value = data;
+      const statusLabels: Record<string, string> = {
+        'todo': '待办',
+        'in_progress': '进行中',
+        'code_review': '代码审查',
+        'testing': '测试',
+        'done': '完成',
+        'in_review': '审核中',
+        'blocked': '阻塞',
+        'cancelled': '已取消',
+      };
+      kanbanBoard.value = Object.entries(data).map(([status, tasks]) => ({
+        status,
+        label: statusLabels[status] || status,
+        tasks,
+      }));
     } finally {
       loading.value = false;
     }

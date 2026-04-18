@@ -13,10 +13,10 @@ export interface FeatureModuleListParams {
 
 export const featureModulesApi = {
   getList: (projectId: string, params?: FeatureModuleListParams) => {
-    const { page = 1, limit = 100, ...rest } = params || {};
+    const { page = 1, limit = 100 } = params || {};
     return api.get<FeatureModuleListResponseDto>(
-      `/projects/${projectId}/feature-modules`,
-      { params: { page, limit, ...rest } }
+      `/feature-modules`,
+      { params: { projectId, page, limit } }
     );
   },
 
@@ -24,10 +24,7 @@ export const featureModulesApi = {
     api.get<FeatureModuleResponseDto>(`/feature-modules/${id}`),
 
   create: (projectId: string, data: CreateFeatureModuleDto) =>
-    api.post<FeatureModuleResponseDto>(
-      `/projects/${projectId}/feature-modules`,
-      data
-    ),
+    api.post<FeatureModuleResponseDto>(`/feature-modules`, { ...data, projectId }),
 
   update: (id: string, data: UpdateFeatureModuleDto) =>
     api.put<FeatureModuleResponseDto>(`/feature-modules/${id}`, data),

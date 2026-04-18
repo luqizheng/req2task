@@ -1,7 +1,8 @@
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
+const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
 const axiosInstance = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`,
+  baseURL: baseUrl ? `${baseUrl}/api` : '/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -35,7 +36,11 @@ axiosInstance.interceptors.response.use(
     if (!apiResponse.success) {
       return Promise.reject(new Error(apiResponse.message));
     }
-    return apiResponse.data as never;
+    let data = apiResponse.data;
+    while (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+      data = (data as { code: number; data: unknown }).data;
+    }
+    return data as never;
   },
   (error: AxiosError<ApiResponse>) => {
     if (error.response?.status === 401) {

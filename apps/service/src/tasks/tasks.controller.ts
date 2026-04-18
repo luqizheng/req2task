@@ -49,10 +49,12 @@ export class TasksController {
     @Body() createDto: CreateTaskDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<TaskResponseDto>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
     const result = await this.tasksService.create(
       requirementId,
       createDto,
-      req.user.userId,
+      userId!,
     );
     return { code: 0, data: result };
   }

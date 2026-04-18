@@ -126,10 +126,12 @@ export class AiController {
     @Body() createDto: CreateRawRequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<unknown>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
     const result = await this.requirementGenerationService.createRawRequirement(
       moduleId,
       createDto.content,
-      req.user.userId,
+      userId!,
     );
     return { code: 0, data: result };
   }

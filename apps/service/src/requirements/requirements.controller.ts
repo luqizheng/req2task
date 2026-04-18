@@ -57,10 +57,12 @@ export class RequirementsController {
     @Body() createDto: CreateRequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<RequirementResponseDto>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
     const result = await this.requirementsService.create(
       moduleId,
       createDto,
-      req.user.userId,
+      userId!,
     );
     return { code: 0, data: result };
   }
@@ -106,10 +108,12 @@ export class RequirementsController {
     @Body() transitionDto: TransitionStatusDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<RequirementResponseDto>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
     const result = await this.requirementStateService.transitionStatus(
       id,
       transitionDto.targetStatus,
-      req.user.userId,
+      userId!,
       transitionDto.comment,
     );
     return { code: 0, data: result };
@@ -158,10 +162,12 @@ export class RequirementsController {
     @Body() reviewDto: ReviewRequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<RequirementResponseDto>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
     const result = await this.requirementStateService.reviewRequirement(
       id,
       reviewDto.approved,
-      req.user.userId,
+      userId!,
       reviewDto.comment,
     );
     return { code: 0, data: result };

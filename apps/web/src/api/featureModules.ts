@@ -30,4 +30,8 @@ export const featureModulesApi = {
     api.put<FeatureModuleResponseDto>(`/feature-modules/${id}`, data),
 
   delete: (id: string) => api.delete(`/feature-modules/${id}`),
+
+  getTree: (projectId: string) => {
+    return api.get<FeatureModuleResponseDto[]>(`/feature-modules/tree/${projectId}`);
+  },
 };

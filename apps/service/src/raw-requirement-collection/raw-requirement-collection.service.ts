@@ -17,6 +17,7 @@ import {
   UpdateRawRequirementCollectionDto,
   RawRequirementStatus,
   CompleteCollectionResultDto,
+  RawRequirementInCollectionDto,
 } from "@req2task/dto";
 
 @Injectable()
@@ -138,9 +139,23 @@ export class RawRequirementCollectionService {
     );
 
     if (unprocessedRequirements.length > 0) {
+      const unclarifiedRequirements: RawRequirementInCollectionDto[] =
+        unprocessedRequirements.map((r) => ({
+          id: r.id,
+          content: r.originalContent,
+          status: r.status,
+          sessionHistory: r.sessionHistory || [],
+          followUpQuestions: r.followUpQuestions || [],
+          keyElements: r.keyElements || [],
+          questionCount: r.questionCount,
+          clarifiedContent: r.clarifiedContent || undefined,
+          clarifiedAt: r.clarifiedAt?.toISOString(),
+          createdAt: r.createdAt.toISOString(),
+          updatedAt: r.updatedAt.toISOString(),
+        }));
       return {
         success: false,
-        unclarifiedRequirements: unprocessedRequirements,
+        unclarifiedRequirements,
         message: `还有 ${unprocessedRequirements.length} 个需求未处理，请先处理或删除`,
       };
     }

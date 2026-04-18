@@ -1,20 +1,20 @@
 <script setup lang="ts">
 import { Edit, Delete } from "@element-plus/icons-vue";
-import type { LLMConfigResponseDto } from "@req2task/dto";
+import type { LLMConfigResponse } from "@/api/ai";
 import { getProviderName, getProviderTagType, maskApiKey } from "../composables/useProviderUtils";
 
 defineProps<{
-  config: LLMConfigResponseDto;
+  config: LLMConfigResponse;
   isEditing: boolean;
   deletingId: string | null;
   actionLoadingId: string | null;
 }>();
 
 const emit = defineEmits<{
-  edit: [config: LLMConfigResponseDto];
-  delete: [config: LLMConfigResponseDto];
-  setDefault: [config: LLMConfigResponseDto];
-  setActive: [config: LLMConfigResponseDto];  
+  edit: [config: LLMConfigResponse];
+  delete: [config: LLMConfigResponse];
+  setDefault: [config: LLMConfigResponse];
+  setActive: [config: LLMConfigResponse];
 }>();
 </script>
 

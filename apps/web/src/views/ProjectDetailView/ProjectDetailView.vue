@@ -6,11 +6,11 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { useProjectStore } from '@/stores/project';
 import { featureModulesApi } from '@/api/featureModules';
 import type { FeatureModuleResponseDto, UpdateProjectDto } from '@req2task/dto';
-import ProjectStatsCard from '@/components/project/ProjectStatsCard.vue';
-import ProjectQuickActions from '@/components/project/ProjectQuickActions.vue';
-import ProjectInfoCard from '@/components/project/ProjectInfoCard.vue';
-import ProjectMemberCard from '@/components/project/ProjectMemberCard.vue';
-import ProjectModuleCard from '@/components/project/ProjectModuleCard.vue';
+import ProjectStatsCard from './components/ProjectStatsCard.vue';
+import ProjectQuickActions from './components/ProjectQuickActions.vue';
+import ProjectInfoCard from './components/ProjectInfoCard.vue';
+import ProjectMemberCard from './components/ProjectMemberCard.vue';
+import ProjectModuleCard from './components/ProjectModuleCard.vue';
 
 const route = useRoute();
 const router = useRouter();

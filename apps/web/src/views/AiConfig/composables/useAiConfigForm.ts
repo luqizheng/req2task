@@ -78,16 +78,26 @@ export const useAiConfigForm = () => {
     }
   };
 
-  const fillFormForEdit = (config: (typeof aiStore.configs)[0]) => {
+  const fillFormForEdit = (config: {
+    name: string;
+    provider: string;
+    baseUrl?: string | null;
+    modelName: string;
+    maxTokens: number;
+    temperature: number;
+    topP?: number;
+    isActive: boolean;
+    isDefault: boolean;
+  }) => {
     Object.assign(configForm, {
       name: config.name,
       provider: config.provider,
       apiKey: "",
       baseUrl: config.baseUrl || "",
       modelName: config.modelName,
-      maxTokens: config.maxTokens,
-      temperature: config.temperature,
-      topP: config.topP ?? 1.0,
+      maxTokens: Number(config.maxTokens),
+      temperature: Number(config.temperature),
+      topP: Number(config.topP ?? 1.0),
       isActive: config.isActive,
       isDefault: config.isDefault,
     });

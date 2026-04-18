@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import { Plus, Setting } from "@element-plus/icons-vue";
 import { useAiStore } from "@/stores/ai";
-import type { LLMConfig } from "@req2task/dto";
+import type { LLMConfigResponse } from "@/api/ai";
 import { useAiConfig } from "./composables/useAiConfig";
 import { useAiConfigForm } from "./composables/useAiConfigForm";
 import ConfigCard from "./components/ConfigCard.vue";
@@ -29,25 +29,29 @@ const {
   saveConfig,
 } = useAiConfigForm();
 
-const isEditing = ref(false);
+const drawerVisible = ref(false);
 const editingConfigId = ref<string | null>(null);
 const configFormRef = ref<InstanceType<typeof ConfigForm>>();
+
+const drawerTitle = computed(() =>
+  editingConfigId.value ? "编辑配置" : "添加配置"
+);
 
 const handleAdd = () => {
   resetForm();
   applyProviderDefaults(configForm.provider);
   editingConfigId.value = null;
-  isEditing.value = true;
+  drawerVisible.value = true;
 };
 
-const handleEdit = (config: LLMConfig) => {
+const handleEdit = (config: LLMConfigResponse) => {
   fillFormForEdit(config);
   editingConfigId.value = config.id;
-  isEditing.value = true;
+  drawerVisible.value = true;
 };
 
-const handleCancel = () => {
-  isEditing.value = false;
+const handleClose = () => {
+  drawerVisible.value = false;
   editingConfigId.value = null;
   resetForm();
 };
@@ -55,7 +59,7 @@ const handleCancel = () => {
 const handleSave = async () => {
   const success = await saveConfig(editingConfigId.value);
   if (success) {
-    handleCancel();
+    handleClose();
   }
 };
 </script>
@@ -64,72 +68,72 @@ const handleSave = async () => {
   <div class="ai-config-view">
     <div class="page-header">
       <h2 class="page-title">AI 配置管理</h2>
-      <el-button
-        type="primary"
-        :icon="Plus"
-        @click="handleAdd"
-        :disabled="isEditing"
-      >
+      <el-button type="primary" :icon="Plus" @click="handleAdd">
         添加配置
       </el-button>
     </div>
 
-    <div class="config-content">
-      <el-card v-loading="loading">
-        <template #header>
-          <div class="card-header">
-            <span class="card-title">
-              <el-icon><Setting /></el-icon>
-              LLM 配置列表
-            </span>
-          </div>
-        </template>
-
-        <div
-          v-if="aiStore.configs.length === 0 && !isEditing"
-          class="empty-state"
-        >
-          <el-empty description="暂无AI配置，请点击添加按钮创建">
-            <el-button type="primary" @click="handleAdd">添加配置</el-button>
-          </el-empty>
+    <el-card v-loading="loading">
+      <template #header>
+        <div class="card-header">
+          <span class="card-title">
+            <el-icon><Setting /></el-icon>
+            LLM 配置列表
+          </span>
         </div>
+      </template>
 
-        <div v-else class="config-list">
-          <el-row :gutter="16">
-            <el-col
-              v-for="config in aiStore.configs"
-              :key="config.id"
-              :xs="24"
-              :sm="12"
-              :lg="8"
-            >
-              <ConfigCard
-                :config="config"
-                :is-editing="isEditing"
-                :deleting-id="deletingId"
-                :action-loading-id="actionLoadingId"
-                @edit="handleEdit"
-                @delete="deleteConfig"
-                @set-default="setDefault"
-                @set-active="setActive"
-              />
-            </el-col>
-          </el-row>
-        </div>
-      </el-card>
+      <div
+        v-if="aiStore.configs.length === 0"
+        class="empty-state"
+      >
+        <el-empty description="暂无AI配置，请点击添加按钮创建">
+          <el-button type="primary" @click="handleAdd">添加配置</el-button>
+        </el-empty>
+      </div>
 
+      <div v-else class="config-list">
+        <el-row :gutter="16">
+          <el-col
+            v-for="config in aiStore.configs"
+            :key="config.id"
+            :xs="24"
+            :sm="12"
+            :lg="8"
+          >
+            <ConfigCard
+              :config="config"
+              :is-editing="drawerVisible"
+              :deleting-id="deletingId"
+              :action-loading-id="actionLoadingId"
+              @edit="handleEdit"
+              @delete="deleteConfig"
+              @set-default="setDefault"
+              @set-active="setActive"
+            />
+          </el-col>
+        </el-row>
+      </div>
+    </el-card>
+
+    <el-drawer
+      v-model="drawerVisible"
+      :title="drawerTitle"
+      direction="rtl"
+      size="480px"
+      :before-close="handleClose"
+    >
       <ConfigForm
-        v-if="isEditing"
         ref="configFormRef"
         :editing-config-id="editingConfigId"
         :config-form="configForm"
         :config-rules="configRules"
         :saving="saving"
         @save="handleSave"
-        @cancel="handleCancel"
+        @cancel="handleClose"
         @apply-defaults="applyProviderDefaults"
       />
-    </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -163,7 +167,7 @@ const handleSave = async () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--app-space-xl, 32px);
+  margin-bottom: var(--app-space-lg, 24px);
 }
 
 .page-title {
@@ -171,12 +175,6 @@ const handleSave = async () => {
   font-weight: 600;
   color: var(--el-text-color-primary);
   margin: 0;
-}
-
-.config-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--app-space-lg, 24px);
 }
 
 .card-header {

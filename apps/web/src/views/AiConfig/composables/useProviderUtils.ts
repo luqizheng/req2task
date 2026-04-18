@@ -34,8 +34,8 @@ export const getProviderName = (provider: string) => {
   return PROVIDER_NAMES[provider] || provider;
 };
 
-export const getProviderTagType = (provider: string) => {
-  return PROVIDER_TAG_TYPES[provider] || "";
+export const getProviderTagType = (provider: string): "primary" | "success" | "info" | "warning" | "danger" => {
+  return (PROVIDER_TAG_TYPES[provider] as "primary" | "success" | "info" | "warning" | "danger") || "info";
 };
 
 export const maskApiKey = (apiKey?: string) => {

@@ -27,6 +27,7 @@ import { AiModule } from "./ai/ai.module";
 import { NotificationModule } from "./notifications/notification.module";
 import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
+import { SeedModule } from "./commands/seed/seed.module";
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
     NotificationModule,
     RawRequirementCollectionModule,
     DeveloperWsModule,
+    SeedModule,
   ],
   controllers: [AppController],
   providers: [AppService],

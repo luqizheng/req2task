@@ -245,6 +245,7 @@ watch([projectId, collectionId], () => {
                 text
                 size="small"
                 class="option-delete"
+                aria-label="删除收集"
                 @click.stop="handleDelete(c.id, c.title)"
               />
             </div>
@@ -293,7 +294,7 @@ watch([projectId, collectionId], () => {
                 :percentage="questionProgress.percentage"
                 :show-text="false"
                 :stroke-width="3"
-                :color="questionProgress.current >= 5 ? '#67c23a' : '#409eff'"
+                :color="questionProgress.current >= 5 ? 'var(--el-color-success)' : 'var(--el-color-primary)'"
                 style="width: 80px"
               />
             </div>
@@ -364,6 +365,7 @@ watch([projectId, collectionId], () => {
                     text
                     size="small"
                     type="success"
+                    aria-label="标记为已澄清"
                     @click.stop="handleClarify(req.id)"
                   />
                   <el-button
@@ -371,6 +373,7 @@ watch([projectId, collectionId], () => {
                     text
                     size="small"
                     type="danger"
+                    aria-label="删除需求"
                     @click.stop="handleDeleteRequirement(req.id)"
                   />
                 </div>
@@ -453,6 +456,7 @@ watch([projectId, collectionId], () => {
 
 .collection-select {
   width: 200px;
+  max-width: 100%;
 }
 
 .collection-option {
@@ -481,12 +485,6 @@ watch([projectId, collectionId], () => {
 
 .collection-option:hover .option-delete {
   opacity: 1;
-}
-
-.toolbar-divider {
-  width: 1px;
-  height: 24px;
-  background: var(--el-border-color-light);
 }
 
 .info-text {
@@ -725,6 +723,37 @@ watch([projectId, collectionId], () => {
     bottom: 0;
     z-index: 100;
     box-shadow: -2px 0 12px rgba(0, 0, 0, 0.1);
+  }
+  .view-header {
+    padding: 10px 16px;
+  }
+  .header-actions {
+    gap: 6px;
+  }
+  .collection-select {
+    width: 150px;
+  }
+}
+
+@media (max-width: 768px) {
+  .view-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .header-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .view-toolbar {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .collection-select {
+    width: 140px;
+  }
+  .summary-panel {
+    width: 280px;
   }
 }
 </style>

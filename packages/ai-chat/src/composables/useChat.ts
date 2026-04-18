@@ -91,6 +91,26 @@ export function useChat(options: UseChatOptions = {}) {
     isStreaming.value = false;
   }
 
+  function deleteMessage(id: string): void {
+    const index = messages.value.findIndex((m) => m.id === id);
+    if (index !== -1) {
+      messages.value.splice(index, 1);
+    }
+  }
+
+  function resendMessage(id: string): Promise<void> | undefined {
+    const msg = messages.value.find((m) => m.id === id);
+    if (!msg || msg.role !== 'user' || isStreaming.value) {
+      return;
+    }
+    deleteMessage(msg.id);
+    const nextAiMsg = messages.value.find((m) => m.isStreaming);
+    if (nextAiMsg) {
+      deleteMessage(nextAiMsg.id);
+    }
+    return sendMessage(msg.content);
+  }
+
   function getMessages(): AIChatMessage[] {
     return messages.value.map((msg) => ({
       ...msg,
@@ -221,6 +241,8 @@ export function useChat(options: UseChatOptions = {}) {
     createMessage,
     addMessage,
     updateMessage,
+    deleteMessage,
+    resendMessage,
     clearMessages,
     getMessages,
     sendMessage,

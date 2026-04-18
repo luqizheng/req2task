@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { ref, computed } from 'vue';
 import type { AIChatMessage, MessageRole } from '../types';
 import ThinkingBlock from './ThinkingBlock.vue';
 import { useMarkdown } from '../composables/useMarkdown';
@@ -8,7 +8,14 @@ interface Props {
   message: AIChatMessage;
 }
 
+interface Emits {
+  (e: 'delete', id: string): void;
+  (e: 'resend', id: string): void;
+  (e: 'retry'): void;
+}
+
 const props = defineProps<Props>();
+const emit = defineEmits<Emits>();
 
 const isUser = computed(() => props.message.role === 'user');
 const isAssistant = computed(() => props.message.role === 'assistant');
@@ -38,6 +45,8 @@ const isStreaming = computed(() => props.message.status === 'streaming');
 const isSending = computed(() => props.message.status === 'sending');
 const isError = computed(() => props.message.status === 'error');
 
+const showActions = ref(false);
+
 const timeFormat = computed(() => {
   if (!props.message.createdAt) return '';
   const date = new Date(props.message.createdAt);
@@ -58,18 +67,39 @@ function getDefaultRoleName(role: MessageRole): string {
 
 function getDefaultAvatar(role: MessageRole): string {
   const colors: Record<MessageRole, string> = {
-    user: '#667eea',
-    assistant: '#764ba2',
-    system: '#67c23a',
+    user: '#2563eb',
+    assistant: '#6366f1',
+    system: '#10b981',
   };
-  const color = colors[role] || '#999';
+  const color = colors[role] || '#6366f1';
+  const textColor = '#ffffff';
   const initial = getDefaultRoleName(role).charAt(0);
   return `data:image/svg+xml,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40">
-      <rect width="40" height="40" fill="${color}" rx="8"/>
-      <text x="20" y="26" text-anchor="middle" fill="white" font-size="16" font-weight="600">${initial}</text>
+    `<svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 36 36">
+      <circle cx="18" cy="18" r="18" fill="${color}"/>
+      <text x="18" y="23" text-anchor="middle" fill="${textColor}" font-size="14" font-weight="600">${initial}</text>
     </svg>`,
   )}`;
+}
+
+function handleCopy() {
+  navigator.clipboard.writeText(props.message.content).catch(() => {});
+  showActions.value = false;
+}
+
+function handleResend() {
+  emit('resend', props.message.id);
+  showActions.value = false;
+}
+
+function handleDelete() {
+  emit('delete', props.message.id);
+  showActions.value = false;
+}
+
+function handleRetry() {
+  emit('retry');
+  showActions.value = false;
 }
 </script>
 
@@ -84,6 +114,8 @@ function getDefaultAvatar(role: MessageRole): string {
       'is-sending': isSending,
       'is-error': isError,
     }"
+    @mouseenter="showActions = true"
+    @mouseleave="showActions = false"
   >
     <div class="message-avatar">
       <img
@@ -99,8 +131,6 @@ function getDefaultAvatar(role: MessageRole): string {
       <div class="message-header">
         <span class="message-author">{{ displayRoleName }}</span>
         <span v-if="timeFormat" class="message-time">{{ timeFormat }}</span>
-        <span v-if="isStreaming" class="message-status">发送中...</span>
-        <span v-if="isError" class="message-status error">发送失败</span>
       </div>
 
       <ThinkingBlock
@@ -112,6 +142,37 @@ function getDefaultAvatar(role: MessageRole): string {
         class="message-body"
         v-html="renderedContent.html"
       ></div>
+
+      <div v-if="isError" class="message-error">
+        <span class="error-text">发送失败</span>
+        <button class="retry-btn" @click="handleRetry">重试</button>
+      </div>
+
+      <div v-if="isStreaming" class="message-status">
+        <span class="status-dot"></span>
+        <span>生成中...</span>
+      </div>
+
+      <div v-if="showActions && !isStreaming" class="message-actions">
+        <button class="action-btn" title="复制" @click="handleCopy">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        </button>
+        <button v-if="isUser" class="action-btn" title="重新发送" @click="handleResend">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+        </button>
+        <button v-if="!isSystem" class="action-btn action-btn--danger" title="删除" @click="handleDelete">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -121,13 +182,13 @@ function getDefaultAvatar(role: MessageRole): string {
   display: flex;
   gap: 12px;
   margin-bottom: 16px;
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -141,13 +202,14 @@ function getDefaultAvatar(role: MessageRole): string {
 
 .message-avatar {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--el-fill-color, #f5f7fa);
 }
 
 .avatar-image {
@@ -162,27 +224,30 @@ function getDefaultAvatar(role: MessageRole): string {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #667eea;
-  color: white;
-  font-size: 16px;
+  background: var(--el-color-info-light-8, #e8eaf6);
+  color: var(--el-color-info, #6366f1);
+  font-size: 14px;
   font-weight: 600;
 }
 
 .is-user .avatar-text {
-  background: #667eea;
+  background: var(--el-color-primary-light-8, #dbeafe);
+  color: var(--el-color-primary, #2563eb);
 }
 
 .is-assistant .avatar-text {
-  background: #764ba2;
+  background: var(--el-color-info-light-8, #e8eaf6);
+  color: var(--el-color-info, #6366f1);
 }
 
 .is-system .avatar-text {
-  background: #67c23a;
+  background: var(--el-color-success-light-8, #dcfce7);
+  color: var(--el-color-success, #10b981);
 }
 
 .message-content {
   flex: 1;
-  max-width: 80%;
+  max-width: 75%;
   min-width: 0;
 }
 
@@ -204,46 +269,131 @@ function getDefaultAvatar(role: MessageRole): string {
 
 .message-author {
   font-weight: 500;
-  color: #4a4a5a;
+  color: var(--el-text-color-regular, #606266);
 }
 
 .message-time {
-  color: #8a8a9a;
+  color: var(--el-text-color-placeholder, #a0aec0);
 }
 
 .message-status {
-  color: #667eea;
-  font-style: italic;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--el-text-color-placeholder, #a0aec0);
 }
 
-.message-status.error {
-  color: #f56c6c;
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--el-color-info, #6366f1);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.message-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--el-color-danger-light-9, #fef2f2);
+  border-radius: 6px;
+}
+
+.error-text {
+  font-size: 12px;
+  color: var(--el-color-danger, #ef4444);
+}
+
+.retry-btn {
+  padding: 2px 8px;
+  font-size: 11px;
+  color: var(--el-color-danger, #ef4444);
+  background: transparent;
+  border: 1px solid var(--el-color-danger, #ef4444);
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.retry-btn:hover {
+  background: var(--el-color-danger, #ef4444);
+  color: white;
+}
+
+.message-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 6px;
+  padding: 2px;
+  background: var(--el-fill-color-light, #f5f7fa);
+  border-radius: 6px;
+}
+
+.action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  color: var(--el-text-color-secondary, #909399);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.action-btn:hover {
+  background: var(--el-fill-color, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
+}
+
+.action-btn--danger:hover {
+  background: var(--el-color-danger-light-9, #fef2f2);
+  color: var(--el-color-danger, #ef4444);
 }
 
 .message-body {
-  padding: 12px 16px;
-  border-radius: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
   line-height: 1.6;
   word-break: break-word;
 }
 
 .is-user .message-body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--el-color-primary, #2563eb);
+  color: #ffffff;
   border-bottom-right-radius: 4px;
 }
 
 .is-assistant .message-body {
-  background: white;
-  color: #1a1a2e;
-  border: 1px solid #e8e8e8;
+  background: var(--el-fill-color, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
   border-bottom-left-radius: 4px;
 }
 
 .is-system .message-body {
-  background: #f0f9eb;
-  color: #1a1a2e;
-  border: 1px solid #e1f3d8;
+  background: var(--el-color-success-light-9, #f0fdf4);
+  color: var(--el-text-color-primary, #303133);
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
   border-radius: 8px;
 }
 
@@ -251,25 +401,25 @@ function getDefaultAvatar(role: MessageRole): string {
   margin: 8px 0;
   padding: 12px;
   background: #1e1e1e;
-  border-radius: 8px;
+  border-radius: 6px;
   overflow-x: auto;
 }
 
 .message-body :deep(code) {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-family: 'JetBrains Mono', 'Fira Code', 'Monaco', monospace;
   font-size: 13px;
 }
 
 .is-user .message-body :deep(pre) {
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .is-user .message-body :deep(code) {
-  color: #d4d4d4;
+  color: #e2e8f0;
 }
 
 .message-body :deep(p) {
-  margin: 0 0 8px;
+  margin: 0 0 6px;
 }
 
 .message-body :deep(p:last-child) {
@@ -283,7 +433,7 @@ function getDefaultAvatar(role: MessageRole): string {
 }
 
 .message-body :deep(a) {
-  color: #667eea;
+  color: var(--el-color-primary, #2563eb);
   text-decoration: none;
 }
 
@@ -298,15 +448,16 @@ function getDefaultAvatar(role: MessageRole): string {
 .is-streaming .message-body::after {
   content: '';
   display: inline-block;
-  width: 8px;
-  height: 16px;
-  background: #667eea;
+  width: 6px;
+  height: 14px;
+  background: var(--el-color-info, #6366f1);
   margin-left: 4px;
   animation: blink 0.8s infinite;
+  border-radius: 2px;
 }
 
 .is-user.is-streaming .message-body::after {
-  background: white;
+  background: rgba(255, 255, 255, 0.7);
 }
 
 @keyframes blink {

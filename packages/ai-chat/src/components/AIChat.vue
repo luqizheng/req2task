@@ -56,6 +56,8 @@ const {
   stopStream,
   loadMessages,
   setConversationId,
+  deleteMessage,
+  resendMessage,
 } = useChat({
   config: mergedConfig.value,
   adapterName: props.adapterName,
@@ -109,7 +111,25 @@ function handleSend(content: string) {
 }
 
 function handleLoadMore() {
-  console.log('Load more messages');
+  // Placeholder for load more functionality
+}
+
+function handleMessageDelete(id: string) {
+  deleteMessage(id);
+}
+
+function handleMessageResend(id: string) {
+  resendMessage(id);
+}
+
+function handleRetry() {
+  const lastUserMsg = messages.value
+    .slice()
+    .reverse()
+    .find((m) => m.role === 'user' && m.status !== 'streaming');
+  if (lastUserMsg) {
+    resendMessage(lastUserMsg.id);
+  }
 }
 
 function scrollToBottom() {
@@ -132,6 +152,8 @@ defineExpose({
   getMessages,
   isStreaming,
   stopStream,
+  deleteMessage,
+  resendMessage,
   getConversationId: () => conversationId.value,
   setConversationId: (id: string | null) => setConversationId(id),
   scrollToBottom,
@@ -158,6 +180,9 @@ defineExpose({
         v-for="message in messages"
         :key="message.id"
         :message="message"
+        @delete="handleMessageDelete"
+        @resend="handleMessageResend"
+        @retry="handleRetry"
       />
     </MessageList>
 
@@ -190,17 +215,18 @@ defineExpose({
 
 .stop-btn {
   padding: 4px 12px;
-  border: none;
+  border: 1px solid var(--el-border-color, #dcdfe6);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  color: white;
+  background: var(--el-bg-color, #fff);
+  color: var(--el-text-color-regular, #606266);
   font-size: 12px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .stop-btn:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--el-fill-color-light, #f5f7fa);
+  border-color: var(--el-border-color-hover, #c0c4cc);
 }
 
 .message-list-container {

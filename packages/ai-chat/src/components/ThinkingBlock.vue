@@ -38,38 +38,40 @@ const toggle = () => {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  border: none;
-  background: #f0f0f0;
-  color: #666;
+  padding: 4px 10px;
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-fill-color-light, #f5f7fa);
+  color: var(--el-text-color-regular, #606266);
   font-size: 12px;
   border-radius: 4px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
 }
 
 .thinking-toggle:hover {
-  background: #e0e0e0;
+  background: var(--el-fill-color, #f5f7fa);
+  border-color: var(--el-border-color, #dcdfe6);
 }
 
 .thinking-icon {
   font-size: 10px;
+  color: var(--el-color-info, #6366f1);
 }
 
 .thinking-label {
   font-weight: 500;
+  color: var(--el-text-color-regular, #606266);
 }
 
 .thinking-content {
   margin-top: 8px;
-  padding: 12px;
-  background: #f8f9fa;
-  border-left: 3px solid #667eea;
-  border-radius: 0 4px 4px 0;
+  padding: 10px 12px;
+  background: var(--el-fill-color-lightest, #fafbfc);
+  border-left: 3px solid var(--el-color-info, #6366f1);
+  border-radius: 0 6px 6px 0;
   font-size: 13px;
-  color: #4a4a5a;
+  color: var(--el-text-color-regular, #606266);
   line-height: 1.6;
-  font-style: italic;
   white-space: pre-wrap;
   word-break: break-word;
 }

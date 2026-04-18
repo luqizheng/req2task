@@ -29,11 +29,11 @@ withDefaults(defineProps<Props>(), {
 .ai-chat-window {
   display: flex;
   flex-direction: column;
-  background: #fafbfc;
-  border-radius: 12px;
+  background: var(--el-fill-color-lightest, #f5f7fa);
+  border-radius: 8px;
   overflow: hidden;
-  border: 1px solid #e8e8e8;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
 }
 
 .window-header {
@@ -41,13 +41,15 @@ withDefaults(defineProps<Props>(), {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
+  background: var(--el-color-info-light-9, #f4f4f5);
+  border-bottom: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  color: var(--el-text-color-primary, #303133);
 }
 
 .window-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
+  color: var(--el-text-color-primary, #303133);
 }
 
 .window-body {

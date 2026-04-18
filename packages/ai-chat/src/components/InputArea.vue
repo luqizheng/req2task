@@ -101,8 +101,8 @@ function handleKeydown(event: KeyboardEvent) {
 <style scoped>
 .input-area {
   padding: 12px 16px;
-  border-top: 1px solid #e8e8e8;
-  background: white;
+  border-top: 1px solid var(--el-border-color-lighter, #e4e7ed);
+  background: var(--el-fill-color-lightest, #ffffff);
 }
 
 .input-wrapper {
@@ -114,7 +114,7 @@ function handleKeydown(event: KeyboardEvent) {
 .input-textarea {
   flex: 1;
   padding: 10px 14px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid var(--el-border-color, #dcdfe6);
   border-radius: 8px;
   font-size: 14px;
   line-height: 1.5;
@@ -122,46 +122,51 @@ function handleKeydown(event: KeyboardEvent) {
   outline: none;
   transition: border-color 0.2s, box-shadow 0.2s;
   font-family: inherit;
-  background: #fafbfc;
+  background: var(--el-fill-color, #f5f7fa);
+  color: var(--el-text-color-primary, #303133);
 }
 
 .input-textarea:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: var(--el-color-primary, #2563eb);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
 }
 
 .input-textarea:disabled {
-  background: #f5f7fa;
-  color: #c0c4cc;
+  background: var(--el-fill-color-light, #f5f7fa);
+  color: var(--el-text-color-placeholder, #a0aec0);
   cursor: not-allowed;
 }
 
 .input-textarea::placeholder {
-  color: #8a8a9a;
+  color: var(--el-text-color-placeholder, #a0aec0);
 }
 
 .send-button {
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   border-radius: 8px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--el-color-primary, #2563eb);
   color: white;
   cursor: pointer;
-  transition: opacity 0.2s, transform 0.2s;
+  transition: background-color 0.2s, transform 0.15s;
 }
 
 .send-button:hover:not(:disabled) {
-  opacity: 0.9;
-  transform: scale(1.05);
+  background: var(--el-color-primary-light-1, #3b82f6);
+}
+
+.send-button:active:not(:disabled) {
+  background: var(--el-color-primary-dark, #1d4ed8);
+  transform: scale(0.96);
 }
 
 .send-button:disabled {
-  background: #d0d0da;
+  background: var(--el-fill-color-dark, #c0c4cc);
   cursor: not-allowed;
 }
 
@@ -173,6 +178,6 @@ function handleKeydown(event: KeyboardEvent) {
 
 .char-count {
   font-size: 11px;
-  color: #8a8a9a;
+  color: var(--el-text-color-placeholder, #a0aec0);
 }
 </style>

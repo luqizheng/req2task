@@ -80,10 +80,11 @@ defineExpose({
   overflow-y: auto;
   padding: 16px;
   scroll-behavior: smooth;
+  background: var(--el-fill-color-lightest, #ffffff);
 }
 
 .message-list::-webkit-scrollbar {
-  width: 6px;
+  width: 5px;
 }
 
 .message-list::-webkit-scrollbar-track {
@@ -91,18 +92,18 @@ defineExpose({
 }
 
 .message-list::-webkit-scrollbar-thumb {
-  background: #d0d0da;
+  background: var(--el-border-color-lighter, #e4e7ed);
   border-radius: 3px;
 }
 
 .message-list::-webkit-scrollbar-thumb:hover {
-  background: #b0b0ba;
+  background: var(--el-border-color, #dcdfe6);
 }
 
 .loading-indicator {
   text-align: center;
   padding: 12px;
-  color: #8a8a9a;
+  color: var(--el-text-color-placeholder, #a0aec0);
   font-size: 13px;
 }
 </style>

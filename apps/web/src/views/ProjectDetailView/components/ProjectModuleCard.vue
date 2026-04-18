@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, reactive } from 'vue';
-import { Plus, List } from '@element-plus/icons-vue';
+import { Plus, List, ChatDotRound } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FeatureModuleResponseDto, CreateFeatureModuleDto, UpdateFeatureModuleDto } from '@req2task/dto';
@@ -117,6 +117,10 @@ const handleViewRequirements = (module: FeatureModuleResponseDto) => {
 const handleCreateRequirement = (module: FeatureModuleResponseDto) => {
   window.location.href = `/projects/${props.projectId}/modules/${module.id}/requirements?action=create`;
 };
+
+const handleRequirementCollect = (module: FeatureModuleResponseDto) => {
+  window.location.href = `/projects/${props.projectId}/modules/${module.id}/collect`;
+};
 </script>
 
 <template>
@@ -138,13 +142,17 @@ const handleCreateRequirement = (module: FeatureModuleResponseDto) => {
       </el-table-column>
       <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
       <el-table-column prop="sort" label="排序" width="80" />
-      <el-table-column label="操作" width="240" fixed="right">
+      <el-table-column label="操作" width="280" fixed="right">
         <template #default="{ row }">
           <el-button type="primary" link size="small" @click="handleViewRequirements(row)">
             <el-icon><List /></el-icon>
             需求
           </el-button>
-          <el-button type="success" link size="small" @click="handleCreateRequirement(row)">
+          <el-button type="success" link size="small" @click="handleRequirementCollect(row)">
+            <el-icon><ChatDotRound /></el-icon>
+            需求收集
+          </el-button>
+          <el-button type="default" link size="small" @click="handleCreateRequirement(row)">
             创建需求
           </el-button>
           <el-button type="primary" link size="small" @click="handleEdit(row)">编辑</el-button>

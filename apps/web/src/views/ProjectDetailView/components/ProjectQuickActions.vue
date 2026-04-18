@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import { MagicStick, TrendCharts, Collection, Document } from '@element-plus/icons-vue';
+import { MagicStick, TrendCharts, Collection, Document, ChatDotRound } from '@element-plus/icons-vue';
 
 interface Props {
   projectId: string;
@@ -16,6 +16,13 @@ const actions = [
     icon: MagicStick,
     type: 'primary',
     path: () => `/ai/requirement-gen?projectId=${props.projectId}`,
+  },
+  {
+    key: 'collect',
+    label: '需求收集',
+    icon: ChatDotRound,
+    type: 'success',
+    path: () => `/projects/${props.projectId}/modules`,
   },
   {
     key: 'progress',

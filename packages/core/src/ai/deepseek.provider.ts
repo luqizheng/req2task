@@ -6,6 +6,7 @@ const DEEPSEEK_BASE_URL = 'https://api.deepseek.com';
 
 export class DeepSeekProvider extends BaseLLMProvider {
   readonly providerType = LLMProviderType.DEEPSEEK;
+  readonly displayName = 'DeepSeek';
 
   constructor(config: LLMConfig) {
     super(config);

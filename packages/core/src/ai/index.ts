@@ -3,6 +3,7 @@ export * from './base-llm-provider';
 export * from './deepseek.provider';
 export * from './openai.provider';
 export * from './ollama.provider';
+export * from './llm-provider.factory';
 export * from './llm.service';
 export * from './vector-store.interface';
 export * from './chroma-vector-store';

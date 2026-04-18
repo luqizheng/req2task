@@ -287,13 +287,6 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
     return this.parseAcceptanceCriteria(response.content);
   }
 
-  async findByModule(moduleId: string): Promise<RawRequirement[]> {
-    return this.rawRequirementRepository.find({
-      where: { moduleId },
-      order: { createdAt: 'DESC' },
-    });
-  }
-
   async findAll(): Promise<RawRequirement[]> {
     return this.rawRequirementRepository.find({
       order: { createdAt: 'DESC' },

@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosError, AxiosRequestConfig } from "axios";
+import axios, { AxiosInstance, AxiosError } from "axios";
 import { Readable } from "stream";
 import { TextDecoder } from "util";
 import { LLMConfig } from "../entities/llm-config.entity";
@@ -10,7 +10,6 @@ import {
   LLMResponse,
   LLMError,
   LLMErrorCode,
-  IProviderConfig,
 } from "./llm-provider.interface";
 import { LLMProviderType } from "@req2task/dto";
 

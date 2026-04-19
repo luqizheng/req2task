@@ -13,3 +13,5 @@ export * from './task.entity';
 export * from './llm-config.entity';
 export * from './baseline.entity';
 export * from './notification.entity';
+export * from './file-data.entity';
+export * from './project-attachment.entity';

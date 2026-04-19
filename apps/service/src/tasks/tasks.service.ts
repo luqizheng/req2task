@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository} from 'typeorm';
 import { Task, Requirement, FeatureModule } from '@req2task/core';
 import { TaskStatus, TaskPriority } from '@req2task/dto';
 import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto, WorkloadStatsDto } from '@req2task/dto';

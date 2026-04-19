@@ -18,6 +18,8 @@ import {
   RawRequirementCollection,
   Conversation,
   ConversationMessage,
+  FileData,
+  ProjectAttachment,
 } from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -31,6 +33,7 @@ import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ConversationModule } from "./conversation/conversation.module";
+import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
 
 @Module({
   imports: [
@@ -57,6 +60,8 @@ import { ConversationModule } from "./conversation/conversation.module";
         RawRequirementCollection,
         Conversation,
         ConversationMessage,
+        FileData,
+        ProjectAttachment,
       ],
       synchronize: false,
     }),
@@ -72,6 +77,7 @@ import { ConversationModule } from "./conversation/conversation.module";
     DeveloperWsModule,
     SeedModule,
     ConversationModule,
+    ProjectAttachmentModule,
   ],
   controllers: [AppController],
   providers: [AppService],

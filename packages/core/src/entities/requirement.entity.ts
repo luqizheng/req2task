@@ -13,6 +13,7 @@ import { User } from './user.entity';
 import { UserStory } from './user-story.entity';
 import { RawRequirement } from './raw-requirement.entity';
 import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
+import { Conversation } from './conversation.entity';
 
 @Entity('requirements')
 export class Requirement {
@@ -79,6 +80,16 @@ export class Requirement {
 
   @OneToMany(() => UserStory, (us) => us.requirement)
   userStories!: UserStory[];
+
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId!: string | null;
+
+  @ManyToOne(() => Conversation, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'conversation_id' })
+  conversation!: Conversation | null;
+
+  @Column({ name: 'review_chain_id', type: 'uuid', nullable: true })
+  reviewChainId!: string | null;
 
   @Column({ name: 'created_by_id' })
   createdById!: string;

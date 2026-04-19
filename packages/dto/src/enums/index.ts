@@ -13,3 +13,4 @@ export * from './requirement-source.enum';
 export * from './conflict-type.enum';
 export * from './conversation-status.enum';
 export * from './message-role.enum';
+export * from './attachment-target-type.enum';

@@ -17,6 +17,8 @@ import {
   Notification,
   Conversation,
   ConversationMessage,
+  FileData,
+  ProjectAttachment,
 } from "@req2task/core";
 dotenv.config({ path: ".env" });
 
@@ -44,6 +46,8 @@ const options: DataSourceOptions = {
     Notification,
 
     ConversationMessage,
+    FileData,
+    ProjectAttachment,
   ],
   migrations: ["./src/migrations/**/*{.js,.ts}"],
   migrationsTableName: "migrations",

@@ -12,6 +12,7 @@ import {
 import { Requirement } from './requirement.entity';
 import { User } from './user.entity';
 import { TaskStatus, TaskPriority } from '@req2task/dto';
+import { Conversation } from './conversation.entity';
 
 @Entity('tasks')
 export class Task {
@@ -92,6 +93,13 @@ export class Task {
 
   @Column({ name: 'cancellation_type', type: 'varchar', length: 50, nullable: true })
   cancellationType!: 'replaced' | 'wasted' | null;
+
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId!: string | null;
+
+  @ManyToOne(() => Conversation, { onDelete: 'SET NULL', nullable: true })
+  @JoinColumn({ name: 'conversation_id' })
+  conversation!: Conversation | null;
 
   @Column({ name: 'created_by_id' })
   createdById!: string;

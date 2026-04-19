@@ -100,7 +100,6 @@ const getAvatarColor = (name: string) => {
           </div>
           <div class="member-info">
             <span class="member-name">{{ member.displayName }}</span>
-            <span class="member-email">{{ member.email }}</span>
           </div>
           <el-button
             type="danger"
@@ -147,7 +146,6 @@ const getAvatarColor = (name: string) => {
           </div>
           <div class="member-info">
             <span class="member-name">{{ user.displayName }}</span>
-            <span class="member-email">{{ user.email }}</span>
           </div>
           <el-button type="primary" size="small" @click="handleAddMember(user.id)">
             添加

@@ -6,14 +6,9 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
+import { MessageRole } from '@req2task/dto';
 import { Conversation } from './conversation.entity';
 import { RawRequirement } from './raw-requirement.entity';
-
-export enum MessageRole {
-  USER = 'user',
-  ASSISTANT = 'assistant',
-  SYSTEM = 'system',
-}
 
 @Entity('conversation_messages')
 export class ConversationMessage {

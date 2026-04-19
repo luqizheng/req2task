@@ -75,7 +75,7 @@ const handleSubmit = async () => {
   });
 };
 
-const formatDate = (date: string | undefined) => {
+const formatDate = (date: string | Date | undefined) => {
   if (!date) return '-';
   return new Date(date).toLocaleString('zh-CN', {
     year: 'numeric',

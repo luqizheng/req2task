@@ -1,8 +1,9 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Conversation, ConversationStatus } from '../entities/conversation.entity';
-import { ConversationMessage, MessageRole } from '../entities/conversation-message.entity';
+import { ConversationStatus, MessageRole } from '@req2task/dto';
+import { Conversation } from '../entities/conversation.entity';
+import { ConversationMessage } from '../entities/conversation-message.entity';
 import { RawRequirement } from '../entities/raw-requirement.entity';
 import { PromptService } from '../prompts/prompt.service';
 import { LLMService } from '../ai/llm.service';

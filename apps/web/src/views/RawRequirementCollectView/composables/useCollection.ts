@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue';
+import { ref, computed, type Ref, type ComputedRef } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
@@ -12,7 +12,19 @@ export const collectionTypeOptions = [
   { value: 'other', label: '其他' },
 ];
 
-export function useCollection() {
+export function useCollection(): {
+  projectId: ComputedRef<string>;
+  collectionId: ComputedRef<string | undefined>;
+  showCreateDialog: Ref<boolean>;
+  createForm: Ref<{ title: string; collectionType: CollectionType; meetingMinutes: string }>;
+  selectedCollectionId: ComputedRef<string>;
+  isCollectionActive: ComputedRef<boolean>;
+  handleBack: () => void;
+  loadData: () => Promise<void>;
+  handleCreate: () => Promise<void>;
+  handleDelete: (id: string, title: string) => Promise<void>;
+  handleComplete: () => Promise<void>;
+} {
   const route = useRoute();
   const router = useRouter();
   const store = useRequirementCollectStore();

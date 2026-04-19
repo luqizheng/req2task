@@ -87,6 +87,8 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
 | RequirementSource | `dto/src/enums/requirement-source.enum.ts` | 需求来源 |
 | ChangeType | `dto/src/enums/change-type.enum.ts` | 变更类型 |
 | ConflictType | `dto/src/enums/conflict-type.enum.ts` | 冲突类型 |
+| ConversationStatus | `dto/src/enums/conversation-status.enum.ts` | 会话状态 |
+| MessageRole | `dto/src/enums/message-role.enum.ts` | 消息角色 |
 
 ## 命名规范
 

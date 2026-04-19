@@ -133,7 +133,31 @@ owner: req2task团队
 | `/projects/:id/baselines/:baselineId` | GET | 获取基线详情 |
 | `/projects/:id/baselines/:baselineId/restore` | POST | 恢复到基线 |
 
-## 12. 统一响应格式
+## 12. 会话管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/conversations` | POST | 创建会话 |
+| `/conversations` | GET | 获取会话列表 |
+| `/conversations/:id` | GET | 获取会话详情 |
+| `/conversations/:id` | PATCH | 更新会话 |
+| `/conversations/:id` | DELETE | 删除会话 |
+| `/conversations/:id/messages` | POST | 发送消息 |
+| `/conversations/:id/messages` | GET | 获取会话消息 |
+
+### 12.1 ConversationStatus 枚举
+
+```typescript
+type ConversationStatus = 'active' | 'completed' | 'archived';
+```
+
+| 状态值 | 说明 |
+|--------|------|
+| `active` | 进行中 |
+| `completed` | 已完成 |
+| `archived` | 已归档 |
+
+## 13. 统一响应格式
 
 ### 成功响应
 
@@ -173,7 +197,7 @@ owner: req2task团队
 }
 ```
 
-## 13. 认证方式
+## 14. 认证方式
 
 所有 API 需要在请求头中携带 JWT Token：
 
@@ -181,7 +205,7 @@ owner: req2task团队
 Authorization: Bearer <token>
 ```
 
-## 14. 常用状态码
+## 15. 常用状态码
 
 | 状态码 | 说明 |
 |--------|------|

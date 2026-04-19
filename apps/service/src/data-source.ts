@@ -29,9 +29,6 @@ const options: DataSourceOptions = {
   password: process.env.DB_PASSWORD || "postgres",
   database: process.env.DB_NAME || "req2task",
   entities: [
-    AcceptanceCriteria,
-    Baseline,
-    Conversation,
     User,
     Project,
     FeatureModule,
@@ -45,9 +42,7 @@ const options: DataSourceOptions = {
     LLMConfig,
     Baseline,
     Notification,
-    RequirementChangeLog,
     Conversation,
-    
     ConversationMessage,
   ],
   migrations: ["./src/migrations/**/*{.js,.ts}"],

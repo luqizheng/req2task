@@ -4,11 +4,11 @@ import {
   conversationApi,
   Conversation,
   ConversationMessage,
-  ConversationStatus,
   CreateConversationDto,
   SendMessageResult,
   FollowUpQuestion,
 } from '@/api/conversation';
+import { ConversationStatus } from '@req2task/dto';
 
 export interface ConversationState {
   currentConversation: Conversation | null;
@@ -153,7 +153,7 @@ export const useConversationStore = defineStore('conversation', () => {
     try {
       currentConversation.value = await conversationApi.updateConversation(
         currentConversation.value.id,
-        { status: 'completed' }
+        { status: ConversationStatus.COMPLETED }
       );
       isComplete.value = true;
     } catch (err) {

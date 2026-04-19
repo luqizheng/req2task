@@ -8,15 +8,10 @@ import {
   OneToMany,
   JoinColumn,
 } from 'typeorm';
+import { ConversationStatus } from '@req2task/dto';
 import { RawRequirementCollection } from './raw-requirement-collection.entity';
 import { RawRequirement } from './raw-requirement.entity';
 import { ConversationMessage } from './conversation-message.entity';
-
-export enum ConversationStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  ARCHIVED = 'archived',
-}
 
 @Entity('conversations')
 export class Conversation {

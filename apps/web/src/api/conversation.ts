@@ -1,6 +1,5 @@
 import api from './axios';
-
-export type ConversationStatus = 'active' | 'completed' | 'archived';
+import { ConversationStatus } from '@req2task/dto';
 
 export type MessageRole = 'user' | 'assistant' | 'system';
 

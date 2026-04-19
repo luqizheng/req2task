@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch } from 'vue';
+import { onMounted, watch, computed } from 'vue';
 import {
   ArrowLeft,
   Refresh,
@@ -13,12 +13,26 @@ import RequirementChatPanel from './components/RequirementChatPanel.vue';
 import RawRequirementMainPanel from './components/RawRequirementMainPanel.vue';
 import RawRequirementSidebar from './components/RawRequirementSidebar.vue';
 import { useCollection, collectionTypeOptions } from './composables';
+import { useRequirementCollectStore } from '@/stores/requirementCollect';
 
-const store = useCollection();
+const requirementCollectStore = useRequirementCollectStore();
+const { projectId, collectionId, handleBack, loadData, handleCreate, handleDelete, handleComplete, showCreateDialog, createForm } = useCollection();
 
-onMounted(() => store.loadData());
-watch([store.projectId, store.collectionId], () => {
-  store.loadData();
+const collections = computed(() => requirementCollectStore.collections);
+const currentCollection = computed(() => requirementCollectStore.currentCollection);
+const isLoading = computed(() => requirementCollectStore.isLoading);
+const unclarifiedRequirements = computed(() => requirementCollectStore.unclarifiedRequirements);
+const isCollectionActive = computed(() => currentCollection.value?.status === 'active');
+const selectedCollectionId = computed({
+  get: () => requirementCollectStore.currentCollection?.id || '',
+  set: (value: string) => {
+    if (value) requirementCollectStore.selectCollection(value);
+  },
+});
+
+onMounted(() => loadData());
+watch([projectId, collectionId], () => {
+  loadData();
 });
 </script>
 
@@ -26,19 +40,19 @@ watch([store.projectId, store.collectionId], () => {
   <div class="collect-view">
     <header class="view-header">
       <div class="header-left">
-        <el-button :icon="ArrowLeft" text @click="store.handleBack">返回</el-button>
+        <el-button :icon="ArrowLeft" text @click="handleBack">返回</el-button>
         <h1 class="view-title">需求收集</h1>
       </div>
       <div class="header-actions">
         <el-select
-          v-model="store.selectedCollectionId.value"
+          v-model="selectedCollectionId"
           placeholder="选择收集"
           clearable
           class="collection-select"
         >
           <template #prefix><el-icon><FolderOpened /></el-icon></template>
           <el-option
-            v-for="c in store.collections"
+            v-for="c in collections"
             :key="c.id"
             :label="c.title"
             :value="c.id"
@@ -52,35 +66,35 @@ watch([store.projectId, store.collectionId], () => {
                 size="small"
                 class="option-delete"
                 aria-label="删除收集"
-                @click.stop="store.handleDelete(c.id, c.title)"
+                @click.stop="handleDelete(c.id, c.title)"
               />
             </div>
           </el-option>
         </el-select>
-        <el-button type="primary" :icon="Plus" @click="store.showCreateDialog.value = true">新建</el-button>
-        <el-button :icon="Refresh" @click="store.loadData" :loading="store.isLoading">刷新</el-button>
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">新建</el-button>
+        <el-button :icon="Refresh" @click="loadData" :loading="isLoading">刷新</el-button>
       </div>
     </header>
 
-    <div class="view-toolbar" v-if="store.currentCollection">
+    <div class="view-toolbar" v-if="currentCollection">
       <el-tag size="large" effect="plain">
-        {{ collectionTypeOptions.find(t => t.value === store.currentCollection?.collectionType)?.label }}
+        {{ collectionTypeOptions.find(t => t.value === currentCollection?.collectionType)?.label }}
       </el-tag>
-      <el-tag :type="store.isCollectionActive.value ? 'success' : 'info'" size="large" effect="plain">
-        {{ store.isCollectionActive.value ? '进行中' : '已完成' }}
+      <el-tag :type="isCollectionActive ? 'success' : 'info'" size="large" effect="plain">
+        {{ isCollectionActive ? '进行中' : '已完成' }}
       </el-tag>
-      <span class="info-text">{{ store.currentCollection.collectedBy?.displayName || '未知' }}</span>
+      <span class="info-text">{{ currentCollection.collectedBy?.displayName || '未知' }}</span>
       <el-button
-        v-if="store.isCollectionActive.value"
+        v-if="isCollectionActive"
         type="success"
         :icon="Check"
         size="small"
-        @click="store.handleComplete"
-        :disabled="store.unclarifiedRequirements.length > 0"
+        @click="handleComplete"
+        :disabled="unclarifiedRequirements.length > 0"
       >
         完成收集
       </el-button>
-      <el-tooltip v-if="store.isCollectionActive.value && store.unclarifiedRequirements.length > 0" content="所有需求澄清后才能完成收集">
+      <el-tooltip v-if="isCollectionActive && unclarifiedRequirements.length > 0" content="所有需求澄清后才能完成收集">
         <el-icon class="warning-icon"><Warning /></el-icon>
       </el-tooltip>
     </div>
@@ -99,25 +113,25 @@ watch([store.projectId, store.collectionId], () => {
       </aside>
     </div>
 
-    <el-dialog v-model="store.showCreateDialog.value" title="创建需求收集" width="420px" destroy-on-close>
-      <el-form :model="store.createForm.value" label-width="80">
+    <el-dialog v-model="showCreateDialog" title="创建需求收集" width="420px" destroy-on-close>
+      <el-form :model="createForm" label-width="80">
         <el-form-item label="标题" required>
-          <el-input v-model="store.createForm.value.title" placeholder="如：Q1 需求调研" />
+          <el-input v-model="createForm.title" placeholder="如：Q1 需求调研" />
         </el-form-item>
         <el-form-item label="类型" required>
-          <el-radio-group v-model="store.createForm.value.collectionType">
+          <el-radio-group v-model="createForm.collectionType">
             <el-radio v-for="opt in collectionTypeOptions" :key="opt.value" :value="opt.value">
               {{ opt.label }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="会议纪要">
-          <el-input v-model="store.createForm.value.meetingMinutes" type="textarea" :rows="3" placeholder="可选" />
+          <el-input v-model="createForm.meetingMinutes" type="textarea" :rows="3" placeholder="可选" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="store.showCreateDialog.value = false">取消</el-button>
-        <el-button type="primary" @click="store.handleCreate" :loading="store.isLoading">创建</el-button>
+        <el-button @click="showCreateDialog = false">取消</el-button>
+        <el-button type="primary" @click="handleCreate" :loading="isLoading">创建</el-button>
       </template>
     </el-dialog>
   </div>

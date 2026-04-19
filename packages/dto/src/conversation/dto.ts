@@ -1,16 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsUUID, IsInt, Min, Max } from 'class-validator';
-
-export enum ConversationStatus {
-  ACTIVE = 'active',
-  COMPLETED = 'completed',
-  ARCHIVED = 'archived',
-}
-
-export enum MessageRole {
-  USER = 'user',
-  ASSISTANT = 'assistant',
-  SYSTEM = 'system',
-}
+import { ConversationStatus, MessageRole } from '../enums';
 
 export class CreateConversationDto {
   @IsOptional()

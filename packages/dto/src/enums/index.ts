@@ -11,3 +11,5 @@ export * from './requirement-status.enum';
 export * from './priority.enum';
 export * from './requirement-source.enum';
 export * from './conflict-type.enum';
+export * from './conversation-status.enum';
+export * from './message-role.enum';

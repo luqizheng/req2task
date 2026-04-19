@@ -115,12 +115,12 @@ const router = createRouter({
     {
       path: '/projects/:projectId/collect/:collectionId',
       name: 'projectAiCollect',
-      component: () => import('@/views/RequirementCollectView.vue')
+      component: () => import('@/views/RawRequirementCollectView/RawRequirementCollectView.vue')
     },
     {
       path: '/projects/:projectId/modules/:moduleId/collect',
       name: 'requirementCollect',
-      component: () => import('@/views/RequirementCollectView.vue')
+      component: () => import('@/views/RawRequirementCollectView/RawRequirementCollectView.vue')
     },
     {
       path: '/requirements/:requirementId/user-stories',

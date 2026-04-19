@@ -10,10 +10,9 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Requirement } from './requirement.entity';
-import { RawRequirementStatus } from '@req2task/dto';
+import { RawRequirementStatus, ChatMessage } from '@req2task/dto';
 import { RawRequirementCollection } from './raw-requirement-collection.entity';
 import { Conversation } from './conversation.entity';
-import { ChatMessage } from './chat-message.entity';
 
 @Entity('raw_requirements')
 export class RawRequirement {
@@ -49,7 +48,7 @@ export class RawRequirement {
   @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
   conversationId!: string | null;
 
-  @ManyToOne(() => Conversation, (c) => c.rawRequirement, { nullable: true })
+  @ManyToOne(() => Conversation, { nullable: true })
   @JoinColumn({ name: 'conversation_id' })
   conversation!: Conversation | null;
 

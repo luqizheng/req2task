@@ -21,14 +21,14 @@ export class Conversation {
   @Column({ name: 'collection_id', type: 'uuid', nullable: true })
   collectionId!: string | null;
 
-  @ManyToOne(() => RawRequirementCollection, (c) => c.rawRequirements, { nullable: true })
+  @ManyToOne(() => RawRequirementCollection, { nullable: true })
   @JoinColumn({ name: 'collection_id' })
   collection!: RawRequirementCollection | null;
 
   @Column({ name: 'raw_requirement_id', type: 'uuid', nullable: true })
   rawRequirementId!: string | null;
 
-  @ManyToOne(() => RawRequirement, (r) => r.conversation, { nullable: true })
+  @ManyToOne(() => RawRequirement, { nullable: true })
   @JoinColumn({ name: 'raw_requirement_id' })
   rawRequirement!: RawRequirement | null;
 

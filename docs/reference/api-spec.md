@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-04-17
+last_updated: 2026-04-19
 status: active
 owner: req2task团队
 ---
@@ -123,6 +123,106 @@ owner: req2task团队
 | `/llm/config/:id` | PUT | 更新配置 |
 | `/llm/config/:id` | DELETE | 删除配置 |
 | `/llm/config/:id/set-default` | POST | 设置默认配置 |
+
+## 10.1 AI Chat 对话
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/ai-chat/conversations` | POST | 创建对话 |
+| `/ai-chat/conversations/:id` | GET | 获取对话详情 |
+| `/ai-chat/conversations/:id/messages` | GET | 获取消息列表 |
+| `/ai-chat/conversations/:id/messages` | POST | 发送消息 |
+| `/ai-chat/conversations/:id/stream` | SSE | 流式发送消息 |
+| `/ai-chat/conversations/:id` | DELETE | 清空对话 |
+| `/ai-chat/conversations/:id/continue` | POST | 继续对话 |
+| `/ai-chat/conversations/:id/continue/stream` | SSE | 流式继续对话 |
+
+### 10.2 AI Chat 请求格式
+
+#### 创建对话
+
+```http
+POST /ai-chat/conversations
+Content-Type: application/json
+
+{
+  "collectionId": "uuid",          // 可选：需求收集ID
+  "rawRequirementId": "uuid",      // 可选：原始需求ID
+  "title": "对话标题",             // 可选：对话标题
+  "systemPrompt": "你是一个..."   // 可选：自定义系统提示
+}
+```
+
+#### 发送消息
+
+```http
+POST /ai-chat/conversations/:conversationId/messages
+Content-Type: application/json
+
+{
+  "content": "用户消息内容",
+  "files": [                        // 可选：附件
+    {
+      "type": "docx",               // text | docx | pdf | audio
+      "data": "base64编码或文本",
+      "name": "文件名.docx"
+    }
+  ],
+  "configId": "uuid",               // 可选：LLM配置ID
+  "systemPrompt": "你是一个..."     // 可选：系统提示
+}
+```
+
+#### 流式响应格式
+
+```http
+SSE /ai-chat/conversations/:conversationId/stream
+Content-Type: application/json
+
+// 请求体同发送消息
+```
+
+**SSE 事件格式：**
+
+```json
+// 元数据事件
+data: {"type": "metadata", "conversationId": "xxx", "messageId": "yyy"}
+
+ // 内容事件
+data: {"type": "content", "content": "部分内容..."}
+
+ // 完成事件
+data: {"type": "metadata", "followUpQuestions": ["问题1?"], "isComplete": false}
+
+ // 错误事件
+data: {"type": "error", "error": "错误信息"}
+
+ // 结束标记
+data: [DONE]
+```
+
+### 10.3 原始需求对话（兼容旧接口）
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/collections/:id/chat` | POST | 在收集内对话 |
+| `/collections/:id/stream` | SSE | 流式对话 |
+| `/collections/raw-requirements/:id/chat` | POST | 原始需求对话 |
+| `/collections/raw-requirements/:id/stream` | SSE | 流式对话 |
+
+#### 请求格式
+
+```http
+POST /collections/raw-requirements/:rawRequirementId/chat
+Content-Type: application/json
+
+{
+  "message": "用户消息",
+  "configId": "uuid",               // 可选
+  "files": [...],                    // 可选：附件
+  "systemPrompt": "你是一个..."      // 可选
+}
+```
 
 ## 11. 基线管理
 

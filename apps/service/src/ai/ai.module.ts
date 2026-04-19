@@ -11,26 +11,32 @@ import {
   VectorStoreController,
   ConflictDetectionController,
   TaskDecompositionController,
+  AIChatController,
 } from './controllers';
 import {
   LLMConfig,
   RawRequirement,
   Task,
+  Conversation,
+  ConversationMessage,
   LLMService,
   PromptService,
   RenderService,
   ChromaVectorStore,
+  AIChatService,
+  FileParserService,
 } from '@req2task/core';
 import { Repository } from 'typeorm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task])],
+  imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task, Conversation, ConversationMessage])],
   controllers: [
     LlmConfigController,
     RequirementGenerationController,
     VectorStoreController,
     ConflictDetectionController,
     TaskDecompositionController,
+    AIChatController,
   ],
   providers: [
     AiService,
@@ -63,6 +69,32 @@ import { Repository } from 'typeorm';
         return new ChromaVectorStore();
       },
     },
+    {
+      provide: AIChatService,
+      inject: [
+        getRepositoryToken(Conversation),
+        getRepositoryToken(ConversationMessage),
+      ],
+      useFactory: (
+        conversationRepo: Repository<Conversation>,
+        messageRepo: Repository<ConversationMessage>,
+        llmService: LLMService,
+        fileParser: FileParserService,
+      ) => {
+        return new AIChatService(
+          conversationRepo,
+          messageRepo,
+          llmService,
+          fileParser,
+        );
+      },
+    },
+    {
+      provide: FileParserService,
+      useFactory: () => {
+        return new FileParserService();
+      },
+    },
   ],
   exports: [
     AiService,
@@ -73,6 +105,8 @@ import { Repository } from 'typeorm';
     PromptService,
     RenderService,
     ChromaVectorStore,
+    AIChatService,
+    FileParserService,
   ],
 })
 export class AiModule {}

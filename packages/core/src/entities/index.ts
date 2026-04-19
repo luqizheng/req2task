@@ -5,7 +5,6 @@ export * from './raw-requirement.entity';
 export * from './raw-requirement-collection.entity';
 export * from './conversation.entity';
 export * from './conversation-message.entity';
-export * from './chat-message.entity';
 export * from './requirement.entity';
 export * from './requirement-change-log.entity';
 export * from './user-story.entity';

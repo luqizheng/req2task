@@ -17,11 +17,14 @@ import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { RawRequirementCollectionService } from './raw-requirement-collection.service';
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
+import { AIChatService, SendMessageDto } from '@req2task/core';
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
   AddRawRequirementDto,
 } from '@req2task/dto';
+import { Observable, from } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 class ClarifyRawRequirementDto {
   clarifiedContent!: string;
@@ -40,12 +43,20 @@ interface AuthenticatedRequest {
   };
 }
 
+interface ChatRequest {
+  message: string;
+  configId?: string;
+  files?: Array<{ type: 'text' | 'docx' | 'pdf' | 'audio'; data: string; name?: string }>;
+  systemPrompt?: string;
+}
+
 @Controller('collections')
 @UseGuards(AuthGuard('jwt'))
 export class RawRequirementCollectionController {
   constructor(
     private readonly collectionService: RawRequirementCollectionService,
     private readonly requirementGenerationService: RequirementGenerationService,
+    private readonly aiChatService: AIChatService,
   ) {}
 
   @Post()
@@ -144,52 +155,91 @@ export class RawRequirementCollectionController {
   @Post('raw-requirements/:rawRequirementId/chat')
   async chatCollect(
     @Param('rawRequirementId') rawRequirementId: string,
-    @Body('message') message: string,
-    @Body('configId') configId?: string,
+    @Body() dto: ChatRequest,
   ): Promise<ApiResponse<unknown>> {
-    const result = await this.requirementGenerationService.chatCollect(
+    const rawRequirement = await this.collectionService.getRawRequirementById(rawRequirementId);
+    if (!rawRequirement) {
+      return { code: 1, message: 'Raw requirement not found' };
+    }
+
+    const conversation = await this.aiChatService.getOrCreateConversation({
       rawRequirementId,
-      message,
-      configId,
+      title: `Chat for requirement ${rawRequirementId}`,
+      systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
+    });
+
+    const sendDto: SendMessageDto = {
+      content: dto.message,
+      files: dto.files,
+    };
+
+    const result = await this.aiChatService.sendMessage(
+      conversation.id,
+      sendDto,
+      dto.configId,
     );
+
     return { code: 0, data: result };
   }
 
   @Sse('raw-requirements/:rawRequirementId/stream')
-  async streamChatCollect(
+  streamChatCollect(
     @Param('rawRequirementId') rawRequirementId: string,
-    @Body('message') message: string,
-    @Body('configId') configId: string | undefined,
+    @Body() dto: ChatRequest,
     @Res() res: Response,
-  ): Promise<MessageEvent> {
+  ): Observable<MessageEvent> {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
 
-    const stream = this.requirementGenerationService.streamChatCollect(
-      rawRequirementId,
-      message,
-      configId,
-    );
-
-    (async () => {
-      try {
-        for await (const chunk of stream) {
-          if (chunk.type === 'content' && chunk.content) {
-            res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
-          } else if (chunk.type === 'metadata') {
-            res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: chunk.conversationId, followUpQuestions: chunk.followUpQuestions, keyElements: chunk.keyElements })}\n\n`);
-          }
+    return from(
+      (async () => {
+        const rawRequirement = await this.collectionService.getRawRequirementById(rawRequirementId);
+        if (!rawRequirement) {
+          res.write(`data: ${JSON.stringify({ type: 'error', error: 'Raw requirement not found' })}\n\n`);
+          res.end();
+          return;
         }
-        res.write('data: [DONE]\n\n');
-      } catch (error) {
-        res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
-      } finally {
-        res.end();
-      }
-    })();
 
-    return {} as MessageEvent;
+        const conversation = await this.aiChatService.getOrCreateConversation({
+          rawRequirementId,
+          title: `Chat for requirement ${rawRequirementId}`,
+          systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
+        });
+
+        const sendDto: SendMessageDto = {
+          content: dto.message,
+          files: dto.files,
+        };
+
+        try {
+          res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: conversation.id })}\n\n`);
+
+          for await (const chunk of this.aiChatService.streamMessage(
+            conversation.id,
+            sendDto,
+            dto.configId,
+          )) {
+            if (chunk.content && !chunk.done) {
+              res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+            } else if (chunk.done && chunk.content) {
+              try {
+                const parsed = JSON.parse(chunk.content);
+                res.write(`data: ${JSON.stringify({ type: 'metadata', ...parsed })}\n\n`);
+              } catch {
+                res.write(`data: ${JSON.stringify({ type: 'done', content: chunk.content })}\n\n`);
+              }
+            }
+          }
+          res.write('data: [DONE]\n\n');
+        } catch (error) {
+          res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
+        } finally {
+          res.end();
+        }
+      })(),
+    ).pipe(map(() => ({ data: '' })));
   }
 
   @Post('raw-requirements/:rawRequirementId/clarify')
@@ -215,9 +265,8 @@ export class RawRequirementCollectionController {
   @Post(':id/chat')
   async chatWithCollection(
     @Param('id') collectionId: string,
-    @Body('message') message: string,
-    @Body('source') source: string,
-    @Body('configId') configId: string | undefined,
+    @Body() dto: ChatRequest,
+    @Body('source') source: string = 'chat',
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<unknown>> {
     const user = req.user as { id?: string; userId?: string };
@@ -225,74 +274,102 @@ export class RawRequirementCollectionController {
 
     const rawRequirement = await this.collectionService.addRawRequirement(
       collectionId,
-      message,
+      dto.message,
       source,
       userId!,
     );
 
-    const result = await this.requirementGenerationService.chatCollect(
-      rawRequirement.id,
-      message,
-      configId,
+    const conversation = await this.aiChatService.getOrCreateConversation({
+      collectionId,
+      rawRequirementId: rawRequirement.id,
+      title: `Chat for collection ${collectionId}`,
+      systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
+    });
+
+    const sendDto: SendMessageDto = {
+      content: dto.message,
+      files: dto.files,
+    };
+
+    const result = await this.aiChatService.sendMessage(
+      conversation.id,
+      sendDto,
+      dto.configId,
     );
 
     return {
       code: 0,
       data: {
         rawRequirementId: rawRequirement.id,
+        conversationId: conversation.id,
         ...result,
       },
     };
   }
 
   @Sse(':id/stream')
-  async streamChatWithCollection(
+  streamChatWithCollection(
     @Param('id') collectionId: string,
-    @Body('message') message: string,
-    @Body('source') source: string,
-    @Body('configId') configId: string | undefined,
+    @Body() dto: ChatRequest,
+    @Body('source') source: string = 'chat',
     @Request() req: AuthenticatedRequest,
     @Res() res: Response,
-  ): Promise<MessageEvent> {
+  ): Observable<MessageEvent> {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
 
-    const rawRequirement = await this.collectionService.addRawRequirement(
-      collectionId,
-      message,
-      source,
-      userId!,
-    );
+    return from(
+      (async () => {
+        const rawRequirement = await this.collectionService.addRawRequirement(
+          collectionId,
+          dto.message,
+          source,
+          userId!,
+        );
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+        const conversation = await this.aiChatService.getOrCreateConversation({
+          collectionId,
+          rawRequirementId: rawRequirement.id,
+          title: `Chat for collection ${collectionId}`,
+          systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
+        });
 
-    const stream = this.requirementGenerationService.streamChatCollect(
-      rawRequirement.id,
-      message,
-      configId,
-    );
+        const sendDto: SendMessageDto = {
+          content: dto.message,
+          files: dto.files,
+        };
 
-    (async () => {
-      try {
-        res.write(`data: ${JSON.stringify({ type: 'metadata', isNewConversation: true, conversationId: rawRequirement.id })}\n\n`);
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
 
-        for await (const chunk of stream) {
-          if (chunk.type === 'content' && chunk.content) {
-            res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
-          } else if (chunk.type === 'metadata') {
-            res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: chunk.conversationId, followUpQuestions: chunk.followUpQuestions, keyElements: chunk.keyElements })}\n\n`);
+        try {
+          res.write(`data: ${JSON.stringify({ type: 'metadata', isNewConversation: true, rawRequirementId: rawRequirement.id, conversationId: conversation.id })}\n\n`);
+
+          for await (const chunk of this.aiChatService.streamMessage(
+            conversation.id,
+            sendDto,
+            dto.configId,
+          )) {
+            if (chunk.content && !chunk.done) {
+              res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
+            } else if (chunk.done && chunk.content) {
+              try {
+                const parsed = JSON.parse(chunk.content);
+                res.write(`data: ${JSON.stringify({ type: 'metadata', ...parsed })}\n\n`);
+              } catch {
+                res.write(`data: ${JSON.stringify({ type: 'done', content: chunk.content })}\n\n`);
+              }
+            }
           }
+          res.write('data: [DONE]\n\n');
+        } catch (error) {
+          res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
+        } finally {
+          res.end();
         }
-        res.write('data: [DONE]\n\n');
-      } catch (error) {
-        res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
-      } finally {
-        res.end();
-      }
-    })();
-
-    return {} as MessageEvent;
+      })(),
+    ).pipe(map(() => ({ data: '' })));
   }
 }

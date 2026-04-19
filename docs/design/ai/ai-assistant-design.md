@@ -1,5 +1,5 @@
 ---
-last_updated: 2024-02-01
+last_updated: 2026-04-19
 status: active
 owner: req2task团队
 ---
@@ -7,6 +7,69 @@ owner: req2task团队
 # AI 辅助需求分析设计
 
 ## 1. 概述
+
+### 1.1 核心服务架构
+
+系统采用 `AIChatService` 作为统一的 AI 对话底层服务：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    业务层 Controllers                        │
+│  RawRequirementCollectionController / AIChatController     │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                 AIChatService (核心服务)                     │
+│  • 对话管理 (Conversation)                                  │
+│  • 消息持久化 (ConversationMessage)                         │
+│  • 文件解析 (FileParserService)                             │
+│  • SSE 流式响应                                            │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              LLMService (LLM 调用层)                        │
+│  • 多提供商支持 (DeepSeek/OpenAI/Ollama)                   │
+│  • 请求/响应管理                                            │
+│  • 流式生成                                                │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 1.2 AIChatService 核心接口
+
+```typescript
+// 对话上下文
+interface ChatContext {
+  collectionId?: string;      // 需求收集ID
+  rawRequirementId?: string;  // 原始需求ID
+  title?: string;             // 对话标题
+  systemPrompt?: string;      // 自定义系统提示
+}
+
+// 发送消息 DTO
+interface SendMessageDto {
+  content: string;            // 消息内容
+  files?: FileContent[];      // 附件文件
+}
+
+// 文件内容
+interface FileContent {
+  type: 'text' | 'docx' | 'pdf' | 'audio';
+  data: string;
+  name?: string;
+}
+
+// 对话结果
+interface ChatResult {
+  conversationId: string;
+  messageId: string;
+  content: string;
+  followUpQuestions?: string[];
+  isComplete?: boolean;
+  usage?: { promptTokens: number; completionTokens: number; totalTokens: number };
+}
+```
 
 ### 1.1 设计目标
 

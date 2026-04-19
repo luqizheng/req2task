@@ -1,5 +1,5 @@
 ---
-last_updated: 2024-02-01
+last_updated: 2026-04-19
 status: active
 owner: req2task团队
 ---
@@ -20,6 +20,94 @@ owner: req2task团队
 - 指标收集：追踪调用次数、延迟等指标
 - 工厂模式：统一的LLM服务获取接口
 - 配置管理：完整的 CRUD API 管理 LLM 配置
+- **AIChatService**：统一对话服务，支持文件解析和持久化
+- **FileParserService**：多格式文件解析（docx/pdf/txt/audio）
+
+## 架构分层
+
+```
+┌──────────────────────────────────────────────────────┐
+│  AIChatService (对话服务层)                           │
+│  - 对话持久化 (Conversation/ConversationMessage)     │
+│  - 文件解析 (FileParserService)                       │
+│  - SSE 流式响应                                      │
+├──────────────────────────────────────────────────────┤
+│  LLMService (LLM 调用层)                            │
+│  - 提供商选择                                        │
+│  - 请求/响应处理                                     │
+│  - 流式生成                                         │
+├──────────────────────────────────────────────────────┤
+│  Provider 层 (具体实现)                             │
+│  - DeepSeekProvider / OpenAIProvider                │
+│  - OllamaProvider / MiniMaxProvider                 │
+└──────────────────────────────────────────────────────┘
+```
+
+## AIChatService
+
+统一的对话服务，负责：
+
+1. **对话生命周期管理**
+   - 创建/获取对话（按 collectionId 或 rawRequirementId）
+   - 消息持久化到 ConversationMessage 表
+   - 对话状态追踪
+
+2. **消息处理**
+   - 支持带附件的消息（docx/pdf/txt/audio）
+   - 自动构建消息历史上下文
+   - 解析 AI 响应中的追问问题
+
+3. **流式响应**
+   - AsyncGenerator 模式
+   - SSE 事件封装
+   - Token 使用量统计
+
+### 核心方法
+
+```typescript
+// 创建对话
+createConversation(context: ChatContext): Promise<Conversation>
+
+// 获取或创建对话
+getOrCreateConversation(context: ChatContext): Promise<Conversation>
+
+// 发送消息（非流式）
+sendMessage(
+  conversationId: string,
+  dto: SendMessageDto,
+  configId?: string,
+  systemPrompt?: string
+): Promise<ChatResult>
+
+// 发送消息（流式）
+streamMessage(
+  conversationId: string,
+  dto: SendMessageDto,
+  configId?: string,
+  systemPrompt?: string
+): AsyncGenerator<StreamChunk>
+```
+
+## FileParserService
+
+文件解析服务，支持多种格式：
+
+| 格式 | 处理方式 | 说明 |
+|------|----------|------|
+| text | 直接返回 | 纯文本内容 |
+| docx | XML 解析 | 提取 `<w:t>` 标签内容 |
+| pdf | 流解析 | 提取 `stream` 中的 Tj 操作符文本 |
+| audio | 占位提示 | 需集成语音识别服务 |
+
+### 解析方法
+
+```typescript
+// 解析文件内容
+parse(file: FileContent): Promise<{ content: string; type: string }>
+
+// 从路径解析文件
+parseFromPath(filePath: string): Promise<{ content: string; type: string }>
+```
 
 ## 支持的提供商
 

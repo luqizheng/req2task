@@ -1,7 +1,7 @@
 import { CollectionType } from './create-collection.dto';
 import { RawRequirementStatus } from '../../enums/raw-requirement-status.enum';
 import { UserResponseDto } from '../../user/dto';
-import { FollowUpQuestionDto } from '../../conversation/dto';
+import { ConversationMessageDto, FollowUpQuestionDto } from '../../conversation/dto';
 
 export enum CollectionStatus {
   ACTIVE = 'active',
@@ -32,7 +32,7 @@ export class RawRequirementInCollectionDto {
   id!: string;
   content!: string;
   status!: RawRequirementStatus;
-  sessionHistory!: ChatMessage[];
+  sessionHistory!: ConversationMessageDto[];
   followUpQuestions!: string[];
   keyElements!: string[];
   questionCount!: number;
@@ -40,12 +40,6 @@ export class RawRequirementInCollectionDto {
   clarifiedAt?: string;
   createdAt!: string;
   updatedAt!: string;
-}
-
-export class ChatMessage {
-  role!: 'user' | 'assistant';
-  content!: string;
-  timestamp!: string;
 }
 
 export class AddRawRequirementDto {
@@ -59,7 +53,7 @@ export class RawRequirementResponseDto {
   content!: string;
   source!: string;
   status!: RawRequirementStatus;
-  sessionHistory!: ChatMessage[];
+  sessionHistory!: ConversationMessageDto[];
   followUpQuestions!: string[];
   keyElements!: string[];
   questionCount!: number;
@@ -84,7 +78,7 @@ export class CollectionChatRequestDto {
 }
 
 export class CollectionChatResponseDto {
-  message!: ChatMessage;
+  message!: ConversationMessageDto;
   rawRequirementId!: string;
   followUpQuestions!: FollowUpQuestionDto[];
   analysisResult?: RequirementAnalysisResult;

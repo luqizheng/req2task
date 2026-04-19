@@ -10,7 +10,6 @@ import {
   RawRequirementCollection,
   RawRequirement,
   CollectionStatus,
-  ChatMessage,
 } from "@req2task/core";
 import {
   CreateRawRequirementCollectionDto,
@@ -21,6 +20,7 @@ import {
   RawRequirementCollectionResponseDto,
   RawRequirementCollectionDetailDto,
   RawRequirementResponseDto,
+  ChatMessage,
 } from "@req2task/dto";
 
 @Injectable()

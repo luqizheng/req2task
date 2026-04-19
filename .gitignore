@@ -20,3 +20,7 @@ pnpm-debug.log*
 # playwright
 playwright-report/
 test-results/
+
+# rust
+req2task-runner/target/
+req2task-runner/Cargo.lock

@@ -17,7 +17,7 @@ export type CollectionType = 'meeting' | 'interview' | 'document' | 'other';
 
 export type CollectionStatus = 'active' | 'completed';
 
-export type RawRequirementStatus = 'pending' | 'processing' | 'clarified' | 'converted' | 'discarded';
+export type RawRequirementStatus = 'pending' | 'processing' | 'completed' | 'clarified' | 'converted' | 'discarded' | 'failed';
 
 export interface CreateCollectionDto {
   projectId: string;

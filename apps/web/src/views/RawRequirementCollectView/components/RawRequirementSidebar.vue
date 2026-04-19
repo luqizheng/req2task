@@ -9,9 +9,11 @@ const store = useRequirementCollectStore();
 const statusMap: Record<RawRequirementStatus, { label: string; type: string }> = {
   pending: { label: '待处理', type: 'info' },
   processing: { label: '分析中', type: 'warning' },
+  completed: { label: '已完成', type: 'success' },
   clarified: { label: '已澄清', type: 'success' },
   converted: { label: '已转换', type: 'success' },
   discarded: { label: '已删除', type: 'info' },
+  failed: { label: '失败', type: 'danger' },
 };
 
 const handleSelect = (id: string) => {

@@ -7,7 +7,8 @@ import {
   Document,
   ChatDotRound,
   Setting,
-  Promotion
+  Promotion,
+  ArrowRight
 } from '@element-plus/icons-vue';
 
 type ViewMode = 'admin' | 'developer' | 'tester' | 'product';

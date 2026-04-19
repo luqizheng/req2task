@@ -2,7 +2,7 @@
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
-import { Refresh } from '@element-plus/icons-vue';
+import { Refresh, Clock, Document, User } from '@element-plus/icons-vue';
 import { tasksApi } from '@/api/tasks';
 import type { TaskResponseDto } from '@req2task/dto';
 

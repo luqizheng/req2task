@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { Delete, ArrowLeft, Edit } from '@element-plus/icons-vue';
+import { Delete, ArrowLeft, Edit, Finished, Goods, Grid, Promotion } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useProjectStore } from '@/stores/project';
@@ -83,10 +83,10 @@ const completedTaskCount = ref(0);
 const projectId = computed(() => route.params.id as string);
 
 const viewModes = [
-  { key: 'admin' as ViewMode, label: '项目总览', icon: 'Grid' },
-  { key: 'developer' as ViewMode, label: '开发视图', icon: 'Code' },
-  { key: 'tester' as ViewMode, label: '测试视图', icon: 'Finished' },
-  { key: 'product' as ViewMode, label: '产品视图', icon: 'Goods' },
+  { key: 'admin' as ViewMode, label: '项目总览', icon: Grid },
+  { key: 'developer' as ViewMode, label: '开发视图', icon: Promotion },
+  { key: 'tester' as ViewMode, label: '测试视图', icon: Finished },
+  { key: 'product' as ViewMode, label: '产品视图', icon: Goods },
 ];
 
 const loadProject = async () => {

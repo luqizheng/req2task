@@ -5,6 +5,7 @@ import {
   FeatureModule,
   Requirement,
   RawRequirement,
+  RawRequirementCollection,
   LLMConfig,
   User,
 } from "@req2task/core";
@@ -15,7 +16,10 @@ import {
   RequirementStatus,
   RawRequirementStatus,
   LLMProviderType,
+  CollectionType,
+  CollectionStatus,
 } from "@req2task/dto";
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SeedService {
@@ -35,7 +39,7 @@ export class SeedService {
       const project = await this.createProject(queryRunner, user.id);
       const modules = await this.createFeatureModules(queryRunner, project.id);
       await this.createRequirements(queryRunner, modules, user.id);
-      await this.createRawRequirements(queryRunner, modules, user.id);
+      await this.createRawRequirementCollections(queryRunner, project.id, user.id);
       await this.createLLMConfig(queryRunner);
 
       await queryRunner.commitTransaction();
@@ -60,9 +64,9 @@ export class SeedService {
       user = queryRunner.manager.create(User, {
         username: "admin",
         email: "admin@example.com",
-        password: "$2b$10$rQZ5x8v5Z5x8v5Z5x8v5ZO5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v",
+        passwordHash: "$2b$10$rQZ5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v",
         displayName: "Administrator",
-        role: "ADMIN",
+        role: 'admin',
       });
       await queryRunner.manager.save(user);
       this.logger.log("Created default admin user");
@@ -232,88 +236,184 @@ export class SeedService {
     }
   }
 
-  private async createRawRequirements(
+  private async createRawRequirementCollections(
     queryRunner: any,
-    modules: Map<string, FeatureModule>,
+    projectId: string,
     userId: string
   ): Promise<void> {
-    const rawRequirementsData: Array<{
-      moduleKey: string;
-      content: string;
-      source: string;
+    const collectionsData: Array<{
+      title: string;
+      collectionType: CollectionType;
+      status: CollectionStatus;
+      collectedAt: Date;
+      rawRequirements: Array<{
+        content: string;
+        source: string;
+        status: RawRequirementStatus;
+        questionAndAnswers?: Array<{
+          question: string;
+          answer: string | null;
+        }>;
+      }>;
     }> = [
       {
-        moduleKey: "REQ-MGMT",
-        content: "我们需要一个需求管理系统，能够管理需求的完整生命周期",
-        source: "用户访谈",
+        title: "需求管理模块需求收集",
+        collectionType: CollectionType.INTERVIEW,
+        status: CollectionStatus.ACTIVE,
+        collectedAt: new Date("2024-03-15"),
+        rawRequirements: [
+          {
+            content: "我们需要一个需求管理系统，能够管理需求的完整生命周期",
+            source: "用户访谈",
+            status: RawRequirementStatus.PENDING,
+            questionAndAnswers: [
+              {
+                question: "需求的生命周期包括哪些阶段？",
+                answer: "包括创建、评审、批准、执行、变更、关闭等阶段。",
+              },
+              {
+                question: "是否需要支持需求版本历史记录？",
+                answer: "是的，每次变更都需要记录版本历史。",
+              },
+            ],
+          },
+          {
+            content: "系统应该支持需求的创建、编辑、审核、变更和归档",
+            source: "用户访谈",
+            status: RawRequirementStatus.PENDING,
+            questionAndAnswers: [
+              {
+                question: "审核流程需要几级审批？",
+                answer: "需要支持自定义审批流程，默认两级审批。",
+              },
+            ],
+          },
+          {
+            content: "需要支持需求的优先级和状态管理",
+            source: "用户访谈",
+            status: RawRequirementStatus.PROCESSING,
+          },
+        ],
       },
       {
-        moduleKey: "REQ-MGMT",
-        content: "系统应该支持需求的创建、编辑、审核、变更和归档",
-        source: "用户访谈",
+        title: "AI辅助功能需求收集",
+        collectionType: CollectionType.OTHER,
+        status: CollectionStatus.ACTIVE,
+        collectedAt: new Date("2024-03-20"),
+        rawRequirements: [
+          {
+            content: "希望系统能够通过AI辅助生成需求分析",
+            source: "产品规划",
+            status: RawRequirementStatus.PENDING,
+            questionAndAnswers: [
+              {
+                question: "AI需要分析哪些维度？",
+                answer: "需要分析需求完整性、优先级建议、可行性评估等。",
+              },
+            ],
+          },
+          {
+            content: "AI应该能够理解自然语言需求并生成结构化需求",
+            source: "产品规划",
+            status: RawRequirementStatus.PENDING,
+          },
+          {
+            content: "希望AI能够自动生成用户故事和验收标准",
+            source: "产品规划",
+            status: RawRequirementStatus.COMPLETED,
+            questionAndAnswers: [
+              {
+                question: "用户故事需要包含哪些字段？",
+                answer: "角色、功能、价值三个要素。",
+              },
+              {
+                question: "验收标准格式有要求吗？",
+                answer: "使用Given-When-Then格式。",
+              },
+            ],
+          },
+        ],
       },
       {
-        moduleKey: "REQ-MGMT",
-        content: "需要支持需求的优先级和状态管理",
-        source: "用户访谈",
-      },
-      {
-        moduleKey: "TASK-MGMT",
-        content: "系统应该能够将需求拆分成可执行的任务",
-        source: "用户访谈",
-      },
-      {
-        moduleKey: "TASK-MGMT",
-        content: "任务应该支持分配给团队成员，并追踪执行进度",
-        source: "用户访谈",
-      },
-      {
-        moduleKey: "AI-ASSIST",
-        content: "希望系统能够通过AI辅助生成需求分析",
-        source: "产品规划",
-      },
-      {
-        moduleKey: "AI-ASSIST",
-        content: "AI应该能够理解自然语言需求并生成结构化需求",
-        source: "产品规划",
-      },
-      {
-        moduleKey: "PROJ-MGMT",
-        content: "需要提供项目整体视图，包括进度和资源使用情况",
-        source: "项目管理需求",
-      },
-      {
-        moduleKey: "USER-MGMT",
-        content: "系统应该支持多用户协作和权限控制",
-        source: "安全需求",
-      },
-      {
-        moduleKey: "KNOWLEDGE",
-        content: "希望能够沉淀项目知识，支持文档的创建和检索",
-        source: "知识管理需求",
+        title: "任务管理模块需求",
+        collectionType: CollectionType.DOCUMENT,
+        status: CollectionStatus.COMPLETED,
+        collectedAt: new Date("2024-02-10"),
+        rawRequirements: [
+          {
+            content: "系统应该能够将需求拆分成可执行的任务",
+            source: "技术评审",
+            status: RawRequirementStatus.COMPLETED,
+            questionAndAnswers: [
+              {
+                question: "任务拆分粒度是什么？",
+                answer: "拆分到8小时以内可完成的任务。",
+              },
+            ],
+          },
+          {
+            content: "任务应该支持分配给团队成员，并追踪执行进度",
+            source: "技术评审",
+            status: RawRequirementStatus.COMPLETED,
+            questionAndAnswers: [
+              {
+                question: "需要支持哪些任务状态？",
+                answer: "待办、进行中、待审核、已完成四个状态。",
+              },
+            ],
+          },
+        ],
       },
     ];
 
-    for (const rawData of rawRequirementsData) {
-      const module = modules.get(rawData.moduleKey);
-      if (!module) continue;
-
-      const existing = await queryRunner.manager.findOne(RawRequirement, {
-        where: { moduleId: module.id, originalContent: rawData.content },
+    for (const collectionData of collectionsData) {
+      let existingCollection = await queryRunner.manager.findOne(RawRequirementCollection, {
+        where: { title: collectionData.title },
       });
 
-      if (!existing) {
-        const rawRequirement = queryRunner.manager.create(RawRequirement, {
-          moduleId: module.id,
-          originalContent: rawData.content,
-          source: rawData.source,
-          status: RawRequirementStatus.PENDING,
-          createdById: userId,
+      if (!existingCollection) {
+        existingCollection = queryRunner.manager.create(RawRequirementCollection, {
+          title: collectionData.title,
+          projectId,
+          collectionType: collectionData.collectionType,
+          status: collectionData.status,
+          collectedById: userId,
+          collectedAt: collectionData.collectedAt,
         });
-        await queryRunner.manager.save(rawRequirement);
-        this.logger.log(`Created raw requirement: ${rawData.content.substring(0, 30)}...`);
+        await queryRunner.manager.save(existingCollection);
+        this.logger.log(`Created collection: ${collectionData.title}`);
       } else {
-        this.logger.log(`Raw requirement already exists, skipping...`);
+        this.logger.log(`Collection ${collectionData.title} already exists, skipping...`);
+      }
+
+      for (const rawData of collectionData.rawRequirements) {
+        const existing = await queryRunner.manager.findOne(RawRequirement, {
+          where: { collectionId: existingCollection.id, originalContent: rawData.content },
+        });
+
+        if (!existing) {
+          const questionAndAnswers = rawData.questionAndAnswers?.map((qa) => ({
+            id: uuidv4(),
+            question: qa.question,
+            answer: qa.answer,
+            createdAt: new Date().toISOString(),
+            answeredAt: qa.answer ? new Date().toISOString() : null,
+          })) || null;
+
+          const rawRequirement = queryRunner.manager.create(RawRequirement, {
+            collectionId: existingCollection.id,
+            originalContent: rawData.content,
+            source: rawData.source,
+            status: rawData.status,
+            createdById: userId,
+            questionAndAnswers,
+            keyElements: [],
+          });
+          await queryRunner.manager.save(rawRequirement);
+          this.logger.log(`Created raw requirement: ${rawData.content.substring(0, 30)}...`);
+        } else {
+          this.logger.log(`Raw requirement already exists, skipping...`);
+        }
       }
     }
   }

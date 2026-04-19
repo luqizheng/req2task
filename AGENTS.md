@@ -104,6 +104,7 @@ apps/
 | 了解 API 规范 | [docs/reference/api-spec.md](docs/reference/api-spec.md) |
 | 了解实施计划 | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
 | 了解编码规范 | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) |
+| Bug修复流程 | [.agents/rules/bug-fix-rules.md](.agents/rules/bug-fix-rules.md) |
 | 了解完整文档索引 | [docs/README.md](docs/README.md) |
 | 查看用户手册 | [docs/manuals/index.md](docs/manuals/index.md) |
 

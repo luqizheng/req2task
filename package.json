@@ -2,7 +2,7 @@
   "name": "req2task",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@9.0.0",
+  "packageManager": "pnpm@10.33.0",
   "scripts": {
     "dev:web": "npx tsx scripts/dev-web.ts",
     "dev:service": "npx tsx scripts/dev-service.ts",

@@ -8,6 +8,18 @@ export const baseTsupConfig = defineConfig([
     splitting: false,
     clean: true,
     outDir: "dist",
+    external: [
+      "@nestjs/common",
+      "@nestjs/core",
+      "@nestjs/microservices",
+      "@nestjs/typeorm",
+      "@nestjs/config",
+      "@nestjs/swagger",
+      "@nestjs/platform-express",
+      "class-transformer",
+      "class-validator",
+      "typeorm",
+    ],
   },
 ]);
 

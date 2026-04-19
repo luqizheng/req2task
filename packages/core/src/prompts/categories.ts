@@ -32,6 +32,11 @@ export const PROMPT_CATEGORIES: Record<PromptCategory, PromptCategoryConfig> = {
     name: '质量评估',
     description: '用于评估需求质量并给出改进建议的提示词',
   },
+  'conversation': {
+    code: 'conversation',
+    name: '对话',
+    description: '用于 AI 智能对话的提示词',
+  },
   'custom': {
     code: 'custom',
     name: '自定义',

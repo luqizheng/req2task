@@ -137,11 +137,11 @@ export abstract class BaseLLMProvider implements LLMProvider {
       const chunkArray = chunks;
       let index = 0;
 
-      async function* generator(): AsyncGenerator<StreamChunk> {
+      const generator = async function* (): AsyncGenerator<StreamChunk> {
         while (index < chunkArray.length) {
           yield chunkArray[index++];
         }
-      }
+      };
 
       return generator();
     } catch (error) {

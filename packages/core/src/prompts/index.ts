@@ -7,3 +7,4 @@ export * from './task.prompts';
 export * from './quality.prompts';
 export * from './review.prompts';
 export * from './conflict.prompts';
+export * from './conversation.prompts';

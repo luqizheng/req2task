@@ -16,6 +16,8 @@ import {
   Notification,
   RawRequirement,
   RawRequirementCollection,
+  Conversation,
+  ConversationMessage,
 } from "@req2task/core";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
@@ -28,6 +30,7 @@ import { NotificationModule } from "./notifications/notification.module";
 import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
+import { ConversationModule } from "./conversation/conversation.module";
 
 @Module({
   imports: [
@@ -52,6 +55,8 @@ import { SeedModule } from "./commands/seed/seed.module";
         Notification,
         RawRequirement,
         RawRequirementCollection,
+        Conversation,
+        ConversationMessage,
       ],
       synchronize: false,
     }),
@@ -66,6 +71,7 @@ import { SeedModule } from "./commands/seed/seed.module";
     RawRequirementCollectionModule,
     DeveloperWsModule,
     SeedModule,
+    ConversationModule,
   ],
   controllers: [AppController],
   providers: [AppService],

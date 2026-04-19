@@ -1,7 +1,7 @@
 import { Repository } from 'typeorm';
 import { Requirement, RequirementChangeLog } from '../entities';
 import { RequirementStatus, ChangeType } from '@req2task/dto';
-import { BusinessException, NotFoundException, ValidationException } from '../exceptions/business.exception';
+import { NotFoundException, ValidationException } from '../exceptions/business.exception';
 
 const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.DRAFT]: [

@@ -1,6 +1,7 @@
 import { CollectionType } from './create-collection.dto';
 import { RawRequirementStatus } from '../../enums/raw-requirement-status.enum';
 import { UserResponseDto } from '../../user/dto';
+import { FollowUpQuestionDto } from '../../conversation/dto';
 
 export enum CollectionStatus {
   ACTIVE = 'active',
@@ -74,11 +75,6 @@ export class RequirementAnalysisResult {
   keyElements!: string[];
   followUpQuestions!: string[];
   generatedRequirementId?: string;
-}
-
-export class FollowUpQuestionDto {
-  question!: string;
-  context!: string;
 }
 
 export class CollectionChatRequestDto {

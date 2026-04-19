@@ -18,7 +18,8 @@
   "scripts": {
     "build": "tsup && tsc --emitDeclarationOnly && api-extractor run --local",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
   },
   "keywords": [],
   "license": "MIT",

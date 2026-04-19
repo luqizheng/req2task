@@ -10,6 +10,12 @@ import {
   ChatResult,
   CompleteCollectionResult,
 } from '@/api/requirementCollection';
+import {
+  conversationApi,
+  Conversation,
+  ConversationMessage,
+  CreateConversationDto,
+} from '@/api/conversation';
 
 export interface ChatMessageUI extends ChatMessage {
   id: string;
@@ -27,6 +33,9 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
   const isSending = ref(false);
   const error = ref<string | null>(null);
   const currentRawRequirementId = ref<string | null>(null);
+
+  const currentConversation = ref<Conversation | null>(null);
+  const conversationMessages = ref<ConversationMessage[]>([]);
 
   const currentRawRequirement = computed(() => {
     if (!currentRawRequirementId.value) return null;
@@ -352,12 +361,122 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     error.value = null;
   };
 
+  const createConversationForCollection = async (collectionId: string): Promise<Conversation> => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const dto: CreateConversationDto = {
+        collectionId,
+      };
+      currentConversation.value = await conversationApi.createConversation(dto);
+      conversationMessages.value = [];
+      return currentConversation.value;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '创建会话失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const createConversationForRawRequirement = async (rawRequirementId: string): Promise<Conversation> => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      const dto: CreateConversationDto = {
+        rawRequirementId,
+      };
+      currentConversation.value = await conversationApi.createConversation(dto);
+      conversationMessages.value = [];
+      return currentConversation.value;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '创建会话失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const loadConversation = async (conversationId: string): Promise<void> => {
+    isLoading.value = true;
+    error.value = null;
+    try {
+      currentConversation.value = await conversationApi.getConversation(conversationId);
+      if (currentConversation.value?.messages) {
+        conversationMessages.value = currentConversation.value.messages;
+      } else {
+        conversationMessages.value = [];
+      }
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : '加载会话失败';
+      throw err;
+    } finally {
+      isLoading.value = false;
+    }
+  };
+
+  const sendMessageViaConversation = async (
+    content: string,
+    configId?: string
+  ): Promise<void> => {
+    if (!currentConversation.value) return;
+
+    if (currentConversation.value.questionCount >= MAX_QUESTION_COUNT) {
+      error.value = `追问次数已达上限（${MAX_QUESTION_COUNT}轮）`;
+      return;
+    }
+
+    isSending.value = true;
+    error.value = null;
+
+    const userMessage: ConversationMessage = {
+      id: `temp-user-${Date.now()}`,
+      conversationId: currentConversation.value.id,
+      role: 'user',
+      content,
+      createdAt: new Date(),
+    };
+    conversationMessages.value.push(userMessage);
+
+    try {
+      const result = await conversationApi.sendMessage(
+        currentConversation.value.id,
+        { content },
+        configId
+      );
+
+      conversationMessages.value.push(result.message);
+
+      currentConversation.value = {
+        ...currentConversation.value,
+        questionCount: result.questionCount,
+        messageCount: (currentConversation.value.messageCount || 0) + 2,
+      };
+
+      const updatedRawRequirements = await requirementCollectionApi.getRawRequirements(
+        currentCollection.value!.id
+      );
+      rawRequirements.value = updatedRawRequirements;
+    } catch (err) {
+      const msgIndex = conversationMessages.value.findIndex((m) => m.id === userMessage.id);
+      if (msgIndex !== -1) {
+        conversationMessages.value.splice(msgIndex, 1);
+      }
+      error.value = err instanceof Error ? err.message : '发送消息失败';
+      throw err;
+    } finally {
+      isSending.value = false;
+    }
+  };
+
   const reset = (): void => {
     collections.value = [];
     currentCollection.value = null;
     rawRequirements.value = [];
     chatHistory.value = [];
     currentRawRequirementId.value = null;
+    currentConversation.value = null;
+    conversationMessages.value = [];
     isLoading.value = false;
     isSending.value = false;
     error.value = null;
@@ -391,5 +510,11 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     deleteRequirement,
     clearError,
     reset,
+    currentConversation,
+    conversationMessages,
+    createConversationForCollection,
+    createConversationForRawRequirement,
+    loadConversation,
+    sendMessageViaConversation,
   };
 });

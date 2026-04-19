@@ -12,12 +12,8 @@ import { User } from './user.entity';
 import { Requirement } from './requirement.entity';
 import { RawRequirementStatus } from '@req2task/dto';
 import { RawRequirementCollection } from './raw-requirement-collection.entity';
-
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
+import { Conversation } from './conversation.entity';
+import { ChatMessage } from './chat-message.entity';
 
 @Entity('raw_requirements')
 export class RawRequirement {
@@ -50,17 +46,24 @@ export class RawRequirement {
   @Column({ name: 'error_message', type: 'text', nullable: true })
   errorMessage!: string | null;
 
-  @Column({ name: 'session_history', type: 'json', nullable: true })
-  sessionHistory!: ChatMessage[] | null;
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId!: string | null;
 
-  @Column({ name: 'follow_up_questions', type: 'json', nullable: true })
-  followUpQuestions!: string[] | null;
+  @ManyToOne(() => Conversation, (c) => c.rawRequirement, { nullable: true })
+  @JoinColumn({ name: 'conversation_id' })
+  conversation!: Conversation | null;
 
   @Column({ name: 'key_elements', type: 'json', nullable: true })
   keyElements!: string[] | null;
 
   @Column({ name: 'question_count', type: 'int', default: 0 })
   questionCount!: number;
+
+  @Column({ name: 'session_history', type: 'json', nullable: true })
+  sessionHistory!: ChatMessage[] | null;
+
+  @Column({ name: 'follow_up_questions', type: 'json', nullable: true })
+  followUpQuestions!: string[] | null;
 
   @Column({ name: 'clarified_content', type: 'text', nullable: true })
   clarifiedContent!: string | null;

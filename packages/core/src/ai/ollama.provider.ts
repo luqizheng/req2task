@@ -73,7 +73,6 @@ export class OllamaProvider extends BaseLLMProvider {
     }
 
     try {
-      debugger
       const model = options?.model || this.config.modelName;
       const response = await ollama.chat({
         model,

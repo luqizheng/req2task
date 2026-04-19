@@ -48,6 +48,7 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
 
 - 在 web 或 service 中单独定义已存在于 dto 包的类型
 - 直接在 controller 中返回数据库实体（应使用 DTO 转换）
+- **在 dto 包中使用框架特定装饰器**（如 `@nestjs/swagger`），dto 包应保持框架无关性
 
 ## 枚举/常量共享规则
 

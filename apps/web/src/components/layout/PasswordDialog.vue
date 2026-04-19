@@ -1,7 +1,8 @@
 <script setup lang="ts">
+import { reactive } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 
-defineProps<{
+const props = defineProps<{
   visible: boolean;
   formRef: FormInstance | undefined;
   form: {
@@ -11,6 +12,12 @@ defineProps<{
   };
   rules: FormRules;
 }>();
+
+const localForm = reactive({
+  oldPassword: props.form.oldPassword,
+  newPassword: props.form.newPassword,
+  confirmPassword: props.form.confirmPassword,
+});
 
 const emit = defineEmits<{
   (e: 'update:visible', value: boolean): void;
@@ -32,18 +39,18 @@ const handleClose = () => {
   >
     <el-form
       ref="formRef"
-      :model="form"
+      :model="localForm"
       :rules="rules"
       label-width="80px"
     >
       <el-form-item label="当前密码" prop="oldPassword">
-        <el-input v-model="form.oldPassword" type="password" show-password />
+        <el-input v-model="localForm.oldPassword" type="password" show-password />
       </el-form-item>
       <el-form-item label="新密码" prop="newPassword">
-        <el-input v-model="form.newPassword" type="password" show-password />
+        <el-input v-model="localForm.newPassword" type="password" show-password />
       </el-form-item>
       <el-form-item label="确认密码" prop="confirmPassword">
-        <el-input v-model="form.confirmPassword" type="password" show-password />
+        <el-input v-model="localForm.confirmPassword" type="password" show-password />
       </el-form-item>
     </el-form>
     <template #footer>

@@ -15,6 +15,9 @@ import {
   LLMConfig,
   Baseline,
   Notification,
+  Conversation,
+  ChatMessage,
+  ConversationMessage,
 } from "@req2task/core";
 dotenv.config({ path: ".env" });
 
@@ -28,6 +31,7 @@ const options: DataSourceOptions = {
   entities: [
     AcceptanceCriteria,
     Baseline,
+    Conversation,
     User,
     Project,
     FeatureModule,
@@ -42,6 +46,9 @@ const options: DataSourceOptions = {
     Baseline,
     Notification,
     RequirementChangeLog,
+    Conversation,
+    
+    ConversationMessage,
   ],
   migrations: ["./src/migrations/**/*{.js,.ts}"],
   migrationsTableName: "migrations",

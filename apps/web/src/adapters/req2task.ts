@@ -139,7 +139,7 @@ export const req2taskAdapter: MessageAdapter = {
     }
   },
 
-  transformResponse: (response: unknown, _options?: AdapterOptions): unknown => {
+  transformResponse: (response: unknown): unknown => {
     try {
       const res = response as Record<string, unknown>;
 

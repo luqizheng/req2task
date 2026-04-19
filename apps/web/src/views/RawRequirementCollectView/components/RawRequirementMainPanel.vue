@@ -29,11 +29,6 @@ const formatTime = (timestamp: string) => {
   return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 };
 
-const truncateContent = (content: string, maxLength: number = 50) => {
-  if (content.length <= maxLength) return content;
-  return content.substring(0, maxLength) + '...';
-};
-
 const handleQuestionClick = (message: ChatMessage) => {
   if (message.role === 'user' && requirement.value) {
     store.selectRawRequirement(requirement.value.id);

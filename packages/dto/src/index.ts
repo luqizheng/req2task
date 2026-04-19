@@ -7,3 +7,4 @@ export * from './requirement';
 export * from './ai';
 export * from './raw-requirement-collection';
 export * from './notification';
+export * from './conversation/index';

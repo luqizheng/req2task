@@ -5,3 +5,5 @@ export { featureModulesApi } from './featureModules';
 export { requirementsApi } from './requirements';
 export { rawRequirementsApi } from './rawRequirements';
 export { aiApi } from './ai';
+export { conversationApi } from './conversation';
+export * from './conversation';

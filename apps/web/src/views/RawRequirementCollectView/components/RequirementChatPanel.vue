@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { AIChat } from '@req2task/ai-chat';
+import '@req2task/ai-chat/dist/style.css'
 import { useRequirementCollectStore, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
 

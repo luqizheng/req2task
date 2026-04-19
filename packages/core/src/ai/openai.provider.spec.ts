@@ -30,7 +30,7 @@ describe('LLM Providers', () => {
       post: jest.fn(),
       get: jest.fn(),
       defaults: {},
-    } as any);
+    } as unknown as ReturnType<typeof mockedAxios.create>);
   });
 
   describe('OpenAIProvider', () => {

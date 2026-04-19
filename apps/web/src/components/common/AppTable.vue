@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 
+interface ElTableColumn {
+  [key: string]: unknown;
+}
+
 export interface TableColumn {
   prop: string;
   label: string;
@@ -10,11 +14,11 @@ export interface TableColumn {
   align?: 'left' | 'center' | 'right';
   sortable?: boolean;
   slot?: string;
-  formatter?: (row: any, column: any, cellValue: any) => string;
+  formatter?: (row: ElTableColumn, column: ElTableColumn, cellValue: unknown) => string;
 }
 
 const props = defineProps<{
-  data: any[];
+  data: ElTableColumn[];
   columns: TableColumn[];
   loading?: boolean;
   stripe?: boolean;
@@ -26,8 +30,8 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  'row-click': [row: any, column: any, event: MouseEvent];
-  'selection-change': [selection: any[]];
+  'row-click': [row: ElTableColumn, column: ElTableColumn, event: MouseEvent];
+  'selection-change': [selection: ElTableColumn[]];
 }>();
 
 const tableData = computed(() => props.data || []);
@@ -45,8 +49,8 @@ const tableData = computed(() => props.data || []);
       :height="height"
       :max-height="maxHeight"
       class="app-table-inner"
-      @row-click="(row: any, column: any, event: MouseEvent) => emit('row-click', row, column, event)"
-      @selection-change="emit('selection-change', $event)"
+      @row-click="(row: ElTableColumn, column: ElTableColumn, event: MouseEvent) => emit('row-click', row, column, event)"
+      @selection-change="emit('selection-change', $event as unknown as ElTableColumn[])"
     >
       <el-table-column
         v-for="col in columns"

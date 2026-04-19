@@ -27,6 +27,10 @@ interface TaskNode {
   subtasks?: TaskNode[];
 }
 
+interface Requirement {
+  id: string;
+}
+
 const route = useRoute();
 const router = useRouter();
 const aiStore = useAiStore();
@@ -97,7 +101,7 @@ const handleDecompose = async () => {
   }
 };
 
-const handleViewRequirement = (req: any) => {
+const handleViewRequirement = (req: Requirement) => {
   router.push(`/requirements/${req.id}`);
 };
 

@@ -3,7 +3,7 @@ import { ref } from 'vue';
 import type { FormInstance, FormRules } from 'element-plus';
 
 defineProps<{
-  model: Record<string, any>;
+  model: Record<string, unknown>;
   rules?: FormRules;
   labelWidth?: string | number;
   labelPosition?: 'left' | 'right' | 'top';

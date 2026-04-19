@@ -4,6 +4,7 @@ export type PromptCategory =
   | 'requirement-review'
   | 'user-story-generation'
   | 'quality-assessment'
+  | 'conversation'
   | 'custom';
 
 export interface PromptParameter {

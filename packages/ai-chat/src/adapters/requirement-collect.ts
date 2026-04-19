@@ -24,11 +24,12 @@ export const requirementCollectAdapter: MessageAdapter = {
   },
 
   transformRequest: (request: unknown) => {
-    const req = request as { message?: string; sessionId?: string; conversationId?: string };
+    const req = request as { message?: string; sessionId?: string; conversationId?: string; rawRequirementId?: string };
     return {
       message: req.message || '',
+      conversationId: req.conversationId || '',
+      rawRequirementId: req.rawRequirementId || undefined,
       source: '对话收集',
-      configId: req.conversationId || undefined,
     };
   },
 

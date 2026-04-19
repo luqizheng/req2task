@@ -47,7 +47,7 @@ describe('LLM Stream Support', () => {
     mockedAxios.create.mockReturnValue({
       post: jest.fn(),
       defaults: {},
-    } as any);
+    } as unknown as ReturnType<typeof mockedAxios.create>);
   });
 
   describe('OpenAIProvider generateStream', () => {

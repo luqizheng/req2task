@@ -4,6 +4,7 @@ import { taskPrompts } from './task.prompts';
 import { qualityPrompts } from './quality.prompts';
 import { reviewPrompts } from './review.prompts';
 import { conflictPrompts } from './conflict.prompts';
+import { conversationPrompts } from './conversation.prompts';
 import {
   PromptTemplate,
   PromptCategory,
@@ -34,6 +35,7 @@ export class PromptService {
       ...qualityPrompts,
       ...reviewPrompts,
       ...conflictPrompts,
+      ...conversationPrompts,
     ];
     for (const prompt of allPrompts) {
       this.prompts.set(prompt.code, prompt);

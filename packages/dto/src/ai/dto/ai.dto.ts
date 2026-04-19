@@ -115,7 +115,7 @@ export class VectorDocumentDto {
   content!: string;
 
   @IsOptional()
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class VectorStoreRequestDto {

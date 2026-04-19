@@ -4,7 +4,6 @@ import { Repository } from 'typeorm';
 import { ConversationStatus, MessageRole } from '@req2task/dto';
 import { Conversation } from '../entities/conversation.entity';
 import { ConversationMessage } from '../entities/conversation-message.entity';
-import { RawRequirement } from '../entities/raw-requirement.entity';
 import { PromptService } from '../prompts/prompt.service';
 import { LLMService } from '../ai/llm.service';
 import { LLMMessage } from '../ai/llm-provider.interface';
@@ -20,7 +19,6 @@ export interface SendMessageResult {
   followUpQuestions: FollowUpQuestion[];
   extractedRequirements?: ExtractedRequirement[];
   isComplete: boolean;
-  questionCount: number;
 }
 
 export interface FollowUpQuestion {
@@ -47,15 +45,11 @@ export interface ConversationListOptions {
 
 @Injectable()
 export class ConversationService {
-  private readonly MAX_QUESTION_COUNT = 5;
-
   constructor(
     @InjectRepository(Conversation)
     private readonly conversationRepo: Repository<Conversation>,
     @InjectRepository(ConversationMessage)
     private readonly messageRepo: Repository<ConversationMessage>,
-    @InjectRepository(RawRequirement)
-    private readonly rawRequirementRepo: Repository<RawRequirement>,
     private readonly promptService: PromptService,
     private readonly llmService: LLMService,
   ) {}
@@ -66,7 +60,6 @@ export class ConversationService {
       rawRequirementId: dto.rawRequirementId || null,
       title: dto.title || null,
       status: ConversationStatus.ACTIVE,
-      questionCount: 0,
       messageCount: 0,
     });
     return this.conversationRepo.save(conversation);
@@ -75,7 +68,7 @@ export class ConversationService {
   async getConversation(id: string): Promise<Conversation | null> {
     return this.conversationRepo.findOne({
       where: { id },
-      relations: ['messages', 'rawRequirement', 'collection'],
+      relations: ['messages'],
     });
   }
 
@@ -83,16 +76,16 @@ export class ConversationService {
     const query = this.conversationRepo.createQueryBuilder('conversation');
 
     if (options.collectionId) {
-      query.andWhere('conversation.collectionId = :collectionId', { collectionId: options.collectionId });
+      query.andWhere('conversation.collection_id = :collectionId', { collectionId: options.collectionId });
     }
     if (options.rawRequirementId) {
-      query.andWhere('conversation.rawRequirementId = :rawRequirementId', { rawRequirementId: options.rawRequirementId });
+      query.andWhere('conversation.raw_requirement_id = :rawRequirementId', { rawRequirementId: options.rawRequirementId });
     }
     if (options.status) {
       query.andWhere('conversation.status = :status', { status: options.status });
     }
 
-    query.orderBy('conversation.createdAt', 'DESC');
+    query.orderBy('conversation.created_at', 'DESC');
 
     if (options.limit) {
       query.take(options.limit);
@@ -130,23 +123,11 @@ export class ConversationService {
 
     const messages = await this.getMessages(conversationId);
     const historyText = this.formatHistory(messages);
-    const rawRequirement = conversation.rawRequirementId
-      ? await this.rawRequirementRepo.findOne({ where: { id: conversation.rawRequirementId } })
-      : null;
-
-    const previousQuestions = messages
-      .filter((m) => m.role === MessageRole.ASSISTANT && m.metadata?.followUpQuestions)
-      .map((m) => m.metadata?.followUpQuestions as string[])
-      .flat();
 
     const followUpResult = await this.generateFollowUpQuestions(
-      rawRequirement?.originalContent || '',
       historyText,
-      previousQuestions,
       configId,
     );
-
-    const isComplete = followUpResult.isComplete || conversation.questionCount >= this.MAX_QUESTION_COUNT;
 
     const assistantContent = await this.generateAssistantResponse(messages, configId);
 
@@ -156,30 +137,14 @@ export class ConversationService {
       metadata: { followUpQuestions: followUpResult.questions.map((q) => q.question) },
     });
 
-    if (conversation.rawRequirementId) {
-      await this.rawRequirementRepo.update(conversation.rawRequirementId, {
-        questionCount: conversation.questionCount + 1,
-      });
-    }
-
     await this.conversationRepo.update(conversationId, {
-      questionCount: conversation.questionCount + 1,
       messageCount: conversation.messageCount + 2,
     });
-
-    if (isComplete && conversation.rawRequirementId) {
-      const summary = await this.generateSummary(historyText);
-      await this.conversationRepo.update(conversationId, {
-        status: ConversationStatus.COMPLETED,
-        summary,
-      });
-    }
 
     return {
       message: assistantMessage,
       followUpQuestions: followUpResult.questions,
-      isComplete,
-      questionCount: conversation.questionCount + 1,
+      isComplete: followUpResult.isComplete,
     };
   }
 
@@ -200,7 +165,6 @@ export class ConversationService {
     data: {
       role: MessageRole;
       content: string;
-      rawRequirementId?: string;
       metadata?: Record<string, unknown>;
     },
   ): Promise<ConversationMessage> {
@@ -208,7 +172,6 @@ export class ConversationService {
       conversationId,
       role: data.role,
       content: data.content,
-      rawRequirementId: data.rawRequirementId || null,
       metadata: data.metadata || null,
     });
     return this.messageRepo.save(message);
@@ -221,16 +184,14 @@ export class ConversationService {
   }
 
   private async generateFollowUpQuestions(
-    rawRequirement: string,
     collectedInfo: string,
-    previousQuestions: string[],
     configId?: string,
   ): Promise<{ questions: FollowUpQuestion[]; isComplete: boolean }> {
     try {
       const rendered = this.promptService.render('INTELLIGENT_FOLLOW_UP', {
-        rawRequirement,
+        rawRequirement: '',
         collectedInfo,
-        previousQuestions: previousQuestions.join('\n'),
+        previousQuestions: '',
       });
 
       const messages: LLMMessage[] = [

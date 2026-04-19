@@ -1,7 +1,7 @@
 import { CollectionType } from './create-collection.dto';
 import { RawRequirementStatus } from '../../enums/raw-requirement-status.enum';
 import { UserResponseDto } from '../../user/dto';
-import { ConversationMessageDto, FollowUpQuestionDto } from '../../conversation/dto';
+import { QuestionAndAnswerDto, ConversationMessageDto } from '../../conversation/dto';
 
 export enum CollectionStatus {
   ACTIVE = 'active',
@@ -18,6 +18,7 @@ export class RawRequirementCollectionResponseDto {
   collectedAt!: string;
   completedAt?: string;
   meetingMinutes?: string;
+  mainConversationId?: string;
   rawRequirementCount!: number;
   chatRoundCount!: number;
   createdAt!: string;
@@ -32,12 +33,8 @@ export class RawRequirementInCollectionDto {
   id!: string;
   content!: string;
   status!: RawRequirementStatus;
-  sessionHistory!: ConversationMessageDto[];
-  followUpQuestions!: string[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   keyElements!: string[];
-  questionCount!: number;
-  clarifiedContent?: string;
-  clarifiedAt?: string;
   createdAt!: string;
   updatedAt!: string;
 }
@@ -50,15 +47,12 @@ export class AddRawRequirementDto {
 export class RawRequirementResponseDto {
   id!: string;
   collectionId!: string;
+  conversationId?: string;
   content!: string;
   source!: string;
   status!: RawRequirementStatus;
-  sessionHistory!: ConversationMessageDto[];
-  followUpQuestions!: string[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   keyElements!: string[];
-  questionCount!: number;
-  clarifiedContent?: string;
-  clarifiedAt?: string;
   analysisResult?: RequirementAnalysisResult;
   createdAt!: string;
   updatedAt!: string;
@@ -67,7 +61,7 @@ export class RawRequirementResponseDto {
 export class RequirementAnalysisResult {
   summary!: string;
   keyElements!: string[];
-  followUpQuestions!: string[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   generatedRequirementId?: string;
 }
 
@@ -80,9 +74,8 @@ export class CollectionChatRequestDto {
 export class CollectionChatResponseDto {
   message!: ConversationMessageDto;
   rawRequirementId!: string;
-  followUpQuestions!: FollowUpQuestionDto[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   analysisResult?: RequirementAnalysisResult;
-  questionCount?: number;
 }
 
 export class ConvertToRequirementDto {

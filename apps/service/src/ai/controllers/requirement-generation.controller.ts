@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body, Param, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequirementGenerationService } from '../requirement-generation.service';
 import { AiService } from '../ai.service';
@@ -7,6 +7,8 @@ import {
   GenerateRequirementResultDto,
   PromptTemplateResponseDto,
   ChatResponseDto,
+  AnswerQuestionDto,
+  RawRequirementResponseDto,
 } from '@req2task/dto';
 
 interface ApiResponse<T> {
@@ -58,7 +60,7 @@ export class RequirementGenerationController {
   async createRawRequirement(
     @Body() createDto: CreateRawRequirementDto,
     @Request() req: AuthenticatedRequest,
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponse<RawRequirementResponseDto>> {
     const userId = req.user.id;
     const result = await this.requirementGenerationService.createRawRequirement(
       createDto.content,
@@ -68,8 +70,34 @@ export class RequirementGenerationController {
   }
 
   @Get('raw-requirements')
-  async findRawRequirements(): Promise<ApiResponse<unknown[]>> {
+  async findRawRequirements(): Promise<ApiResponse<RawRequirementResponseDto[]>> {
     const result = await this.requirementGenerationService.findAll();
+    return { code: 0, data: result };
+  }
+
+  @Post('raw-requirements/:id/questions/:questionId/answer')
+  async answerQuestion(
+    @Param('id') rawRequirementId: string,
+    @Param('questionId') questionId: string,
+    @Body() dto: AnswerQuestionDto,
+  ): Promise<ApiResponse<RawRequirementResponseDto>> {
+    const result = await this.requirementGenerationService.answerQuestion(
+      rawRequirementId,
+      questionId,
+      dto.answer,
+    );
+    return { code: 0, data: result };
+  }
+
+  @Delete('raw-requirements/:id/questions/:questionId')
+  async removeQuestion(
+    @Param('id') rawRequirementId: string,
+    @Param('questionId') questionId: string,
+  ): Promise<ApiResponse<RawRequirementResponseDto>> {
+    const result = await this.requirementGenerationService.removeQuestion(
+      rawRequirementId,
+      questionId,
+    );
     return { code: 0, data: result };
   }
 

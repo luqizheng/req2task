@@ -1,19 +1,22 @@
 import { Injectable, BadRequestException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { v4 as uuidv4 } from 'uuid';
 import {
   LLMService,
   PromptService,
   ChromaVectorStore,
   LLMMessage,
+  RawRequirement,
+  QuestionAndAnswer,
 } from '@req2task/core';
-import { RawRequirement } from '@req2task/core';
 import { RawRequirementStatus, Priority } from '@req2task/dto';
 import {
   GenerateRequirementResultDto,
   AnalyzeWithFollowUpResultDto,
   ChatCollectResultDto,
   RawRequirementResponseDto,
+  QuestionAndAnswerDto,
 } from '@req2task/dto';
 
 @Injectable()
@@ -32,18 +35,28 @@ export class RequirementGenerationService {
     return {
       id: entity.id,
       collectionId: entity.collectionId || '',
+      conversationId: entity.conversationId || undefined,
       content: entity.originalContent,
       source: entity.source || '',
       status: entity.status,
-      sessionHistory: entity.sessionHistory || [],
-      followUpQuestions: entity.followUpQuestions || [],
+      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
       keyElements: entity.keyElements || [],
-      questionCount: entity.questionCount,
-      clarifiedContent: entity.clarifiedContent || undefined,
-      clarifiedAt: entity.clarifiedAt?.toISOString(),
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
+  }
+
+  private toQuestionAndAnswerDtos(
+    questionAndAnswers: QuestionAndAnswer[] | null,
+  ): QuestionAndAnswerDto[] {
+    if (!questionAndAnswers) return [];
+    return questionAndAnswers.map((qa) => ({
+      id: qa.id,
+      question: qa.question,
+      answer: qa.answer,
+      createdAt: qa.createdAt,
+      answeredAt: qa.answeredAt,
+    }));
   }
 
   async createRawRequirement(
@@ -56,8 +69,7 @@ export class RequirementGenerationService {
       status: RawRequirementStatus.PENDING,
       createdById,
       collectionId: collectionId || null,
-      sessionHistory: [],
-      followUpQuestions: [],
+      questionAndAnswers: [],
       keyElements: [],
     });
 
@@ -78,13 +90,6 @@ export class RequirementGenerationService {
       throw new BadRequestException('Raw requirement not found');
     }
 
-    const sessionHistory = rawRequirement.sessionHistory || [];
-    sessionHistory.push({
-      role: 'user',
-      content: newMessage,
-      timestamp: new Date().toISOString(),
-    });
-
     const systemPrompt = `You are an expert requirements analyst helping to collect and clarify user requirements.
 Your role is to:
 1. Understand and summarize the user's requirement
@@ -94,22 +99,23 @@ Your role is to:
 
 Be concise and ask targeted questions to clarify requirements.`;
 
-    const conversationContext = sessionHistory
-      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-      .join('\n');
-
+    const answeredQuestions = this.getAnsweredQuestionsText(rawRequirement.questionAndAnswers);
     const analysisPrompt = `Please analyze the following requirement and provide a structured response:
 
-${conversationContext}
+Original requirement: ${rawRequirement.originalContent}
+
+${answeredQuestions}
+
+New message from user: ${newMessage}
 
 Provide your response in the following JSON format:
 {
   "summary": "A brief summary of the requirement (1-2 sentences)",
   "keyElements": ["element1", "element2", "..."],
-  "followUpQuestions": ["Question 1?", "Question 2?", "..."]
+  "newQuestions": ["New question 1?", "New question 2?"]
 }
 
-Only generate follow-up questions if the requirement needs clarification on:
+Only generate questions if the requirement needs clarification on:
 - Missing details or specifications
 - Ambiguous terms or requirements
 - User roles or stakeholders
@@ -129,18 +135,22 @@ Only generate follow-up questions if the requirement needs clarification on:
 
       const parsed = this.parseAnalysisResponse(response.content);
 
-      sessionHistory.push({
-        role: 'assistant',
-        content: response.content,
-        timestamp: new Date().toISOString(),
-      });
+      const newQAs: QuestionAndAnswer[] = (parsed.newQuestions || []).map((q) => ({
+        id: uuidv4(),
+        question: q,
+        answer: null,
+        createdAt: new Date().toISOString(),
+        answeredAt: null,
+      }));
+
+      const currentQAs = rawRequirement.questionAndAnswers || [];
+      const allQAs = [...currentQAs, ...newQAs];
 
       await this.rawRequirementRepository.update(rawRequirementId, {
-        sessionHistory,
-        followUpQuestions: parsed.followUpQuestions,
+        questionAndAnswers: allQAs,
         keyElements: parsed.keyElements,
         generatedContent: parsed.summary,
-        status: parsed.followUpQuestions.length > 0
+        status: newQAs.length > 0
           ? RawRequirementStatus.PENDING
           : RawRequirementStatus.PROCESSING,
       });
@@ -148,8 +158,7 @@ Only generate follow-up questions if the requirement needs clarification on:
       return {
         summary: parsed.summary,
         keyElements: parsed.keyElements,
-        followUpQuestions: parsed.followUpQuestions,
-        sessionHistory,
+        questionAndAnswers: this.toQuestionAndAnswerDtos(allQAs),
       };
     } catch (error) {
       this.logger.error(
@@ -167,20 +176,19 @@ Only generate follow-up questions if the requirement needs clarification on:
   ): Promise<ChatCollectResultDto> {
     const result = await this.analyzeWithFollowUp(rawRequirementId, userMessage, configId);
 
-    const lastAssistantMessage = result.sessionHistory[result.sessionHistory.length - 1];
-
     return {
-      assistantMessage: lastAssistantMessage?.content || '',
-      followUpQuestions: result.followUpQuestions,
-      isComplete: result.followUpQuestions.length === 0,
+      assistantMessage: result.summary,
+      questionAndAnswers: result.questionAndAnswers,
+      isComplete: result.questionAndAnswers.length === 0 ||
+        result.questionAndAnswers.every((qa) => qa.answer !== null),
     };
   }
 
-  async *streamChatCollect(
+  async answerQuestion(
     rawRequirementId: string,
-    userMessage: string,
-    configId?: string,
-  ): AsyncGenerator<{ type: 'content' | 'metadata' | 'done'; content?: string; conversationId?: string; followUpQuestions?: string[]; keyElements?: string[] }> {
+    questionId: string,
+    answer: string,
+  ): Promise<RawRequirementResponseDto> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
@@ -189,12 +197,68 @@ Only generate follow-up questions if the requirement needs clarification on:
       throw new BadRequestException('Raw requirement not found');
     }
 
-    const sessionHistory = rawRequirement.sessionHistory || [];
-    sessionHistory.push({
-      role: 'user',
-      content: userMessage,
-      timestamp: new Date().toISOString(),
+    const questionAndAnswers = rawRequirement.questionAndAnswers || [];
+    const questionIndex = questionAndAnswers.findIndex((qa) => qa.id === questionId);
+
+    if (questionIndex === -1) {
+      throw new BadRequestException('Question not found');
+    }
+
+    questionAndAnswers[questionIndex] = {
+      ...questionAndAnswers[questionIndex],
+      answer,
+      answeredAt: new Date().toISOString(),
+    };
+
+    await this.rawRequirementRepository.update(rawRequirementId, {
+      questionAndAnswers,
     });
+
+    const updated = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    return this.toRawRequirementResponseDto(updated!);
+  }
+
+  async removeQuestion(
+    rawRequirementId: string,
+    questionId: string,
+  ): Promise<RawRequirementResponseDto> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    if (!rawRequirement) {
+      throw new BadRequestException('Raw requirement not found');
+    }
+
+    const questionAndAnswers = (rawRequirement.questionAndAnswers || [])
+      .filter((qa) => qa.id !== questionId);
+
+    await this.rawRequirementRepository.update(rawRequirementId, {
+      questionAndAnswers,
+    });
+
+    const updated = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    return this.toRawRequirementResponseDto(updated!);
+  }
+
+  async *streamChatCollect(
+    rawRequirementId: string,
+    userMessage: string,
+    configId?: string,
+  ): AsyncGenerator<{ type: 'content' | 'metadata' | 'done'; content?: string; conversationId?: string; questionAndAnswers?: QuestionAndAnswerDto[] }> {
+    const rawRequirement = await this.rawRequirementRepository.findOne({
+      where: { id: rawRequirementId },
+    });
+
+    if (!rawRequirement) {
+      throw new BadRequestException('Raw requirement not found');
+    }
 
     const systemPrompt = `You are an expert requirements analyst helping to collect and clarify user requirements.
 Your role is to:
@@ -205,22 +269,23 @@ Your role is to:
 
 Be concise and ask targeted questions to clarify requirements.`;
 
-    const conversationContext = sessionHistory
-      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
-      .join('\n');
-
+    const answeredQuestions = this.getAnsweredQuestionsText(rawRequirement.questionAndAnswers);
     const analysisPrompt = `Please analyze the following requirement and provide a structured response:
 
-${conversationContext}
+Original requirement: ${rawRequirement.originalContent}
+
+${answeredQuestions}
+
+New message from user: ${userMessage}
 
 Provide your response in the following JSON format:
 {
   "summary": "A brief summary of the requirement (1-2 sentences)",
   "keyElements": ["element1", "element2", "..."],
-  "followUpQuestions": ["Question 1?", "Question 2?", "..."]
+  "newQuestions": ["New question 1?", "New question 2?"]
 }
 
-Only generate follow-up questions if the requirement needs clarification on:
+Only generate questions if the requirement needs clarification on:
 - Missing details or specifications
 - Ambiguous terms or requirements
 - User roles or stakeholders
@@ -234,7 +299,6 @@ Only generate follow-up questions if the requirement needs clarification on:
 
     try {
       let fullContent = '';
-      let followUpQuestions: string[] = [];
       let keyElements: string[] = [];
 
       for await (const chunk of this.llmService.generateStream(messages, configId, {
@@ -248,21 +312,24 @@ Only generate follow-up questions if the requirement needs clarification on:
       }
 
       const parsed = this.parseAnalysisResponse(fullContent);
-      followUpQuestions = parsed.followUpQuestions;
       keyElements = parsed.keyElements;
 
-      sessionHistory.push({
-        role: 'assistant',
-        content: fullContent,
-        timestamp: new Date().toISOString(),
-      });
+      const newQAs: QuestionAndAnswer[] = (parsed.newQuestions || []).map((q) => ({
+        id: uuidv4(),
+        question: q,
+        answer: null,
+        createdAt: new Date().toISOString(),
+        answeredAt: null,
+      }));
+
+      const currentQAs = rawRequirement.questionAndAnswers || [];
+      const allQAs = [...currentQAs, ...newQAs];
 
       await this.rawRequirementRepository.update(rawRequirementId, {
-        sessionHistory,
-        followUpQuestions,
+        questionAndAnswers: allQAs,
         keyElements,
         generatedContent: parsed.summary,
-        status: followUpQuestions.length > 0
+        status: newQAs.length > 0
           ? RawRequirementStatus.PENDING
           : RawRequirementStatus.PROCESSING,
       });
@@ -270,8 +337,7 @@ Only generate follow-up questions if the requirement needs clarification on:
       yield {
         type: 'metadata',
         conversationId: rawRequirementId,
-        followUpQuestions,
-        keyElements,
+        questionAndAnswers: this.toQuestionAndAnswerDtos(allQAs),
       };
     } catch (error) {
       this.logger.error(
@@ -294,13 +360,27 @@ Only generate follow-up questions if the requirement needs clarification on:
       throw new BadRequestException('Raw requirement not found');
     }
 
+    const unansweredQuestions = (rawRequirement.questionAndAnswers || [])
+      .filter((qa) => !qa.answer);
+
+    if (unansweredQuestions.length > 0) {
+      throw new BadRequestException(
+        `还有 ${unansweredQuestions.length} 个追问未回答，请先完成所有追问`,
+      );
+    }
+
     try {
       await this.rawRequirementRepository.update(rawRequirementId, {
         status: RawRequirementStatus.PROCESSING,
       });
 
+      const clarifiedContent = this.buildClarifiedContent(
+        rawRequirement.originalContent,
+        rawRequirement.questionAndAnswers,
+      );
+
       const rendered = this.promptService.render('REQUIREMENT_GENERATION', {
-        rawRequirement: rawRequirement.originalContent,
+        rawRequirement: clarifiedContent,
         conversation: '',
       });
 
@@ -409,6 +489,38 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
     return rawRequirement ? this.toRawRequirementResponseDto(rawRequirement) : null;
   }
 
+  private getAnsweredQuestionsText(questionAndAnswers: QuestionAndAnswer[] | null): string {
+    if (!questionAndAnswers || questionAndAnswers.length === 0) {
+      return '';
+    }
+
+    const answered = questionAndAnswers.filter((qa) => qa.answer);
+    if (answered.length === 0) {
+      return '';
+    }
+
+    return 'Previous Q&A:\n' + answered
+      .map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`)
+      .join('\n\n');
+  }
+
+  private buildClarifiedContent(
+    originalContent: string,
+    questionAndAnswers: QuestionAndAnswer[] | null,
+  ): string {
+    const answered = (questionAndAnswers || []).filter((qa) => qa.answer);
+
+    if (answered.length === 0) {
+      return originalContent;
+    }
+
+    const qaText = answered
+      .map((qa) => `Q: ${qa.question}\nA: ${qa.answer}`)
+      .join('\n\n');
+
+    return `${originalContent}\n\n补充说明（通过追问获得）：\n${qaText}`;
+  }
+
   private parseGeneratedContent(content: string): Omit<GenerateRequirementResultDto, 'id'> {
     const titleMatch = content.match(/Title:\s*(.+)/i);
     const descMatch = content.match(/Description:\s*([\s\S]*?)(?=Acceptance|User\s*Story|$)/i);
@@ -468,7 +580,7 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
   private parseAnalysisResponse(content: string): {
     summary: string;
     keyElements: string[];
-    followUpQuestions: string[];
+    newQuestions: string[];
   } {
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
@@ -477,20 +589,20 @@ Provide 3-5 acceptance criteria in the Given-When-Then format.`;
         return {
           summary: parsed.summary || '',
           keyElements: Array.isArray(parsed.keyElements) ? parsed.keyElements : [],
-          followUpQuestions: Array.isArray(parsed.followUpQuestions) ? parsed.followUpQuestions : [],
+          newQuestions: Array.isArray(parsed.newQuestions) ? parsed.newQuestions : [],
         };
       }
     } catch {
       this.logger.warn('Failed to parse analysis response as JSON, using fallback');
     }
 
-    const summaryMatch = content.match(/summary:?\s*(.+?)(?=\n\n|keyElements|followUpQuestions|$)/is);
+    const summaryMatch = content.match(/summary:?\s*(.+?)(?=\n\n|keyElements|newQuestions|$)/is);
     const summary = summaryMatch?.[1]?.trim() || content.substring(0, 200);
 
     return {
       summary,
       keyElements: [],
-      followUpQuestions: [],
+      newQuestions: [],
     };
   }
 }

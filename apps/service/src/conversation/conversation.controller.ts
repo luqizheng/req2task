@@ -115,10 +115,15 @@ export class ConversationController {
           metadata: result.message.metadata,
           createdAt: result.message.createdAt,
         },
-        followUpQuestions: result.followUpQuestions,
+        questionAndAnswers: result.followUpQuestions.map((q) => ({
+          id: '',
+          question: q.question,
+          answer: null,
+          createdAt: new Date().toISOString(),
+          answeredAt: null,
+        })),
         extractedRequirements: result.extractedRequirements,
         isComplete: result.isComplete,
-        questionCount: result.questionCount,
       },
     };
   }

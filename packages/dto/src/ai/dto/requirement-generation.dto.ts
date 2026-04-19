@@ -1,11 +1,6 @@
 import { IsString, IsOptional } from 'class-validator';
 import { Priority } from '../../enums';
-
-export class ChatMessageDto {
-  role!: 'user' | 'assistant';
-  content!: string;
-  timestamp!: string;
-}
+import { QuestionAndAnswerDto } from '../../conversation/dto';
 
 export class GenerateRequirementResultDto {
   id!: string;
@@ -23,13 +18,12 @@ export class GenerateRequirementResultDto {
 export class AnalyzeWithFollowUpResultDto {
   summary!: string;
   keyElements!: string[];
-  followUpQuestions!: string[];
-  sessionHistory!: ChatMessageDto[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
 }
 
 export class ChatCollectResultDto {
   assistantMessage!: string;
-  followUpQuestions!: string[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   isComplete!: boolean;
 }
 
@@ -40,4 +34,9 @@ export class CreateRawRequirementDto {
   @IsOptional()
   @IsString()
   source?: string;
+}
+
+export class AnswerQuestionDto {
+  @IsString()
+  answer!: string;
 }

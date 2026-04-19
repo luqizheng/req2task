@@ -12,7 +12,6 @@ import { Project } from './project.entity';
 import { User } from './user.entity';
 import { RawRequirement } from './raw-requirement.entity';
 import { CollectionType } from '@req2task/dto';
-import { Conversation } from './conversation.entity';
 
 export enum CollectionStatus {
   ACTIVE = 'active',
@@ -66,10 +65,6 @@ export class RawRequirementCollection {
 
   @Column({ name: 'main_conversation_id', type: 'uuid', nullable: true })
   mainConversationId!: string | null;
-
-  @ManyToOne(() => Conversation, { nullable: true })
-  @JoinColumn({ name: 'main_conversation_id' })
-  mainConversation!: Conversation | null;
 
   @OneToMany(() => RawRequirement, (r) => r.collection)
   rawRequirements!: RawRequirement[];

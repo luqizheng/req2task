@@ -8,7 +8,6 @@ import {
 } from 'typeorm';
 import { MessageRole } from '@req2task/dto';
 import { Conversation } from './conversation.entity';
-import { RawRequirement } from './raw-requirement.entity';
 
 @Entity('conversation_messages')
 export class ConversationMessage {
@@ -33,10 +32,6 @@ export class ConversationMessage {
 
   @Column({ name: 'raw_requirement_id', type: 'uuid', nullable: true })
   rawRequirementId!: string | null;
-
-  @ManyToOne(() => RawRequirement, { nullable: true })
-  @JoinColumn({ name: 'raw_requirement_id' })
-  relatedRawRequirement!: RawRequirement | null;
 
   @Column({ name: 'metadata', type: 'json', nullable: true })
   metadata!: Record<string, unknown> | null;

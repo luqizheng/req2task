@@ -26,10 +26,6 @@ import {
 import { Observable, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-class ClarifyRawRequirementDto {
-  clarifiedContent!: string;
-}
-
 interface ApiResponse<T> {
   code: number;
   data?: T;
@@ -136,14 +132,6 @@ export class RawRequirementCollectionController {
     return { code: 0, data: result };
   }
 
-  @Get('raw-requirements/:rawRequirementId/follow-up-questions')
-  async getFollowUpQuestions(
-    @Param('rawRequirementId') rawRequirementId: string,
-  ): Promise<ApiResponse<unknown>> {
-    const result = await this.collectionService.getFollowUpQuestions(rawRequirementId);
-    return { code: 0, data: result };
-  }
-
   @Get('raw-requirements/:rawRequirementId')
   async getRawRequirement(
     @Param('rawRequirementId') rawRequirementId: string,
@@ -240,18 +228,6 @@ export class RawRequirementCollectionController {
         }
       })(),
     ).pipe(map(() => ({ data: '' })));
-  }
-
-  @Post('raw-requirements/:rawRequirementId/clarify')
-  async clarifyRawRequirement(
-    @Param('rawRequirementId') rawRequirementId: string,
-    @Body() dto: ClarifyRawRequirementDto,
-  ): Promise<ApiResponse<unknown>> {
-    const result = await this.collectionService.clarifyRawRequirement(
-      rawRequirementId,
-      dto.clarifiedContent,
-    );
-    return { code: 0, data: result };
   }
 
   @Delete('raw-requirements/:rawRequirementId')

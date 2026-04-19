@@ -10,6 +10,7 @@ import {
   RawRequirementCollection,
   RawRequirement,
   CollectionStatus,
+  QuestionAndAnswer,
 } from "@req2task/core";
 import {
   CreateRawRequirementCollectionDto,
@@ -20,13 +21,12 @@ import {
   RawRequirementCollectionResponseDto,
   RawRequirementCollectionDetailDto,
   RawRequirementResponseDto,
-  ChatMessage,
+  QuestionAndAnswerDto,
 } from "@req2task/dto";
 
 @Injectable()
 export class RawRequirementCollectionService {
   private readonly logger = new Logger(RawRequirementCollectionService.name);
-  private readonly MAX_QUESTION_COUNT = 5;
 
   private toResponseDto(
     entity: RawRequirementCollection,
@@ -74,6 +74,19 @@ export class RawRequirementCollectionService {
     };
   }
 
+  private toQuestionAndAnswerDtos(
+    questionAndAnswers: QuestionAndAnswer[] | null,
+  ): QuestionAndAnswerDto[] {
+    if (!questionAndAnswers) return [];
+    return questionAndAnswers.map((qa) => ({
+      id: qa.id,
+      question: qa.question,
+      answer: qa.answer,
+      createdAt: qa.createdAt,
+      answeredAt: qa.answeredAt,
+    }));
+  }
+
   private toRawRequirementInDto(
     entity: RawRequirement,
   ): RawRequirementInCollectionDto {
@@ -81,12 +94,8 @@ export class RawRequirementCollectionService {
       id: entity.id,
       content: entity.originalContent,
       status: entity.status,
-      sessionHistory: entity.sessionHistory || [],
-      followUpQuestions: entity.followUpQuestions || [],
+      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
       keyElements: entity.keyElements || [],
-      questionCount: entity.questionCount,
-      clarifiedContent: entity.clarifiedContent || undefined,
-      clarifiedAt: entity.clarifiedAt?.toISOString(),
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
@@ -98,15 +107,12 @@ export class RawRequirementCollectionService {
     return {
       id: entity.id,
       collectionId: entity.collectionId || "",
+      conversationId: entity.conversationId || undefined,
       content: entity.originalContent,
       source: entity.source || "",
       status: entity.status,
-      sessionHistory: entity.sessionHistory || [],
-      followUpQuestions: entity.followUpQuestions || [],
+      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
       keyElements: entity.keyElements || [],
-      questionCount: entity.questionCount,
-      clarifiedContent: entity.clarifiedContent || undefined,
-      clarifiedAt: entity.clarifiedAt?.toISOString(),
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
@@ -185,13 +191,13 @@ export class RawRequirementCollectionService {
     });
 
     const chatRoundCount = rawRequirements.reduce((count, raw) => {
-      return count + (raw.sessionHistory?.length || 0) / 2;
+      return count + (raw.questionAndAnswers?.filter((qa) => qa.answer)?.length || 0);
     }, 0);
 
     return this.toDetailDto(
       collection,
       rawRequirements.length,
-      Math.floor(chatRoundCount),
+      chatRoundCount,
       rawRequirements,
     );
   }
@@ -257,12 +263,8 @@ export class RawRequirementCollectionService {
           id: r.id,
           content: r.originalContent,
           status: r.status,
-          sessionHistory: r.sessionHistory || [],
-          followUpQuestions: r.followUpQuestions || [],
+          questionAndAnswers: this.toQuestionAndAnswerDtos(r.questionAndAnswers),
           keyElements: r.keyElements || [],
-          questionCount: r.questionCount,
-          clarifiedContent: r.clarifiedContent || undefined,
-          clarifiedAt: r.clarifiedAt?.toISOString(),
           createdAt: r.createdAt.toISOString(),
           updatedAt: r.updatedAt.toISOString(),
         }));
@@ -305,10 +307,8 @@ export class RawRequirementCollectionService {
       source,
       status: RawRequirementStatus.PENDING,
       createdById: userId,
-      sessionHistory: [],
-      followUpQuestions: [],
+      questionAndAnswers: [],
       keyElements: [],
-      questionCount: 0,
     });
 
     const saved = await this.rawRequirementRepository.save(rawRequirement);
@@ -320,12 +320,8 @@ export class RawRequirementCollectionService {
     updates: {
       status?: RawRequirementStatus;
       generatedContent?: string;
-      sessionHistory?: ChatMessage[];
-      followUpQuestions?: string[];
+      questionAndAnswers?: QuestionAndAnswer[];
       keyElements?: string[];
-      questionCount?: number;
-      clarifiedContent?: string;
-      clarifiedAt?: Date;
     },
   ): Promise<RawRequirementResponseDto> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
@@ -342,18 +338,10 @@ export class RawRequirementCollectionService {
     if (updates.status !== undefined) updateData.status = updates.status;
     if (updates.generatedContent !== undefined)
       updateData.generatedContent = updates.generatedContent;
-    if (updates.sessionHistory !== undefined)
-      updateData.sessionHistory = updates.sessionHistory;
-    if (updates.followUpQuestions !== undefined)
-      updateData.followUpQuestions = updates.followUpQuestions;
+    if (updates.questionAndAnswers !== undefined)
+      updateData.questionAndAnswers = updates.questionAndAnswers;
     if (updates.keyElements !== undefined)
       updateData.keyElements = updates.keyElements;
-    if (updates.questionCount !== undefined)
-      updateData.questionCount = updates.questionCount;
-    if (updates.clarifiedContent !== undefined)
-      updateData.clarifiedContent = updates.clarifiedContent;
-    if (updates.clarifiedAt !== undefined)
-      updateData.clarifiedAt = updates.clarifiedAt;
 
     await this.rawRequirementRepository.update(rawRequirementId, updateData);
 
@@ -375,7 +363,7 @@ export class RawRequirementCollectionService {
     return rawRequirements.map((r) => this.toRawRequirementInDto(r));
   }
 
-  async getFollowUpQuestions(rawRequirementId: string): Promise<string[]> {
+  async getQuestionAndAnswers(rawRequirementId: string): Promise<QuestionAndAnswerDto[]> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
@@ -386,7 +374,7 @@ export class RawRequirementCollectionService {
       );
     }
 
-    return rawRequirement.followUpQuestions || [];
+    return this.toQuestionAndAnswerDtos(rawRequirement.questionAndAnswers);
   }
 
   async getRawRequirementById(
@@ -401,17 +389,6 @@ export class RawRequirementCollectionService {
       : null;
   }
 
-  async clarifyRawRequirement(
-    rawRequirementId: string,
-    clarifiedContent: string,
-  ): Promise<RawRequirementResponseDto> {
-    return this.updateRawRequirement(rawRequirementId, {
-      status: RawRequirementStatus.COMPLETED,
-      clarifiedContent,
-      clarifiedAt: new Date(),
-    });
-  }
-
   async deleteRawRequirement(rawRequirementId: string): Promise<void> {
     const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
@@ -424,28 +401,5 @@ export class RawRequirementCollectionService {
     }
 
     await this.rawRequirementRepository.remove(rawRequirement);
-  }
-
-  async getMaxQuestionCount(): Promise<number> {
-    return this.MAX_QUESTION_COUNT;
-  }
-
-  async incrementQuestionCount(rawRequirementId: string): Promise<number> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-    });
-
-    if (!rawRequirement) {
-      throw new NotFoundException(
-        `Raw requirement ${rawRequirementId} not found`,
-      );
-    }
-
-    const newCount = (rawRequirement.questionCount || 0) + 1;
-    await this.rawRequirementRepository.update(rawRequirementId, {
-      questionCount: newCount,
-    });
-
-    return newCount;
   }
 }

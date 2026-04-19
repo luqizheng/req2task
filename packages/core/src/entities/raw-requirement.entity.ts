@@ -10,9 +10,16 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Requirement } from './requirement.entity';
-import { RawRequirementStatus, ChatMessage } from '@req2task/dto';
+import { RawRequirementStatus } from '@req2task/dto';
 import { RawRequirementCollection } from './raw-requirement-collection.entity';
-import { Conversation } from './conversation.entity';
+
+export interface QuestionAndAnswer {
+  id: string;
+  question: string;
+  answer: string | null;
+  createdAt: string;
+  answeredAt: string | null;
+}
 
 @Entity('raw_requirements')
 export class RawRequirement {
@@ -48,27 +55,11 @@ export class RawRequirement {
   @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
   conversationId!: string | null;
 
-  @ManyToOne(() => Conversation, { nullable: true })
-  @JoinColumn({ name: 'conversation_id' })
-  conversation!: Conversation | null;
-
   @Column({ name: 'key_elements', type: 'json', nullable: true })
   keyElements!: string[] | null;
 
-  @Column({ name: 'question_count', type: 'int', default: 0 })
-  questionCount!: number;
-
-  @Column({ name: 'session_history', type: 'json', nullable: true })
-  sessionHistory!: ChatMessage[] | null;
-
-  @Column({ name: 'follow_up_questions', type: 'json', nullable: true })
-  followUpQuestions!: string[] | null;
-
-  @Column({ name: 'clarified_content', type: 'text', nullable: true })
-  clarifiedContent!: string | null;
-
-  @Column({ name: 'clarified_at', type: 'timestamp', nullable: true })
-  clarifiedAt!: Date | null;
+  @Column({ name: 'question_and_answers', type: 'json', nullable: true })
+  questionAndAnswers!: QuestionAndAnswer[] | null;
 
   @Column({ name: 'created_by_id' })
   createdById!: string;

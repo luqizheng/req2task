@@ -9,8 +9,6 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { ConversationStatus } from '@req2task/dto';
-import { RawRequirementCollection } from './raw-requirement-collection.entity';
-import { RawRequirement } from './raw-requirement.entity';
 import { ConversationMessage } from './conversation-message.entity';
 
 @Entity('conversations')
@@ -21,16 +19,8 @@ export class Conversation {
   @Column({ name: 'collection_id', type: 'uuid', nullable: true })
   collectionId!: string | null;
 
-  @ManyToOne(() => RawRequirementCollection, { nullable: true })
-  @JoinColumn({ name: 'collection_id' })
-  collection!: RawRequirementCollection | null;
-
   @Column({ name: 'raw_requirement_id', type: 'uuid', nullable: true })
   rawRequirementId!: string | null;
-
-  @ManyToOne(() => RawRequirement, { nullable: true })
-  @JoinColumn({ name: 'raw_requirement_id' })
-  rawRequirement!: RawRequirement | null;
 
   @Column({ name: 'title', type: 'varchar', length: 255, nullable: true })
   title!: string | null;
@@ -44,9 +34,6 @@ export class Conversation {
 
   @OneToMany(() => ConversationMessage, (m) => m.conversation, { cascade: true })
   messages!: ConversationMessage[];
-
-  @Column({ name: 'question_count', type: 'int', default: 0 })
-  questionCount!: number;
 
   @Column({ name: 'message_count', type: 'int', default: 0 })
   messageCount!: number;

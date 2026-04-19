@@ -65,7 +65,6 @@ export class AIChatService {
       rawRequirementId: context.rawRequirementId || null,
       title: context.title || null,
       status: ConversationStatus.ACTIVE,
-      questionCount: 0,
       messageCount: 0,
     });
     return this.conversationRepo.save(conversation);
@@ -123,7 +122,7 @@ export class AIChatService {
         content: response.content,
       });
 
-      await this.updateConversationStats(conversation);
+      await this.updateMessageCount(conversation);
 
       const parsed = this.parseAIResponse(response.content);
 
@@ -170,34 +169,34 @@ export class AIChatService {
 
     const messages = await this.buildMessages(conversationId, content, systemPrompt);
 
-    let fullContent = '';
     let messageId: string | undefined;
 
     try {
       for await (const chunk of this.llmService.generateStream(messages, configId)) {
-        fullContent += chunk.content;
-        yield {
-          ...chunk,
-          conversationId,
-          messageId,
-        };
+        if (chunk.content) {
+          yield {
+            ...chunk,
+            conversationId,
+            messageId,
+          };
+        }
       }
 
-      if (fullContent) {
-        const assistantMessage = await this.saveMessage(conversationId, {
-          role: MessageRole.ASSISTANT,
-          content: fullContent,
-        });
-        messageId = assistantMessage.id;
+      const latestMessages = await this.messageRepo.find({
+        where: { conversationId },
+        order: { createdAt: 'DESC' },
+        take: 1,
+      });
 
-        await this.updateConversationStats(conversation);
-
-        const parsed = this.parseAIResponse(fullContent);
+      if (latestMessages.length > 0) {
+        messageId = latestMessages[0].id;
+        await this.updateMessageCount(conversation);
+        const parsed = this.parseAIResponse(latestMessages[0].content);
         yield {
           content: JSON.stringify({ followUpQuestions: parsed.followUpQuestions, isComplete: parsed.isComplete }),
           done: true,
           conversationId,
-          messageId,
+          messageId: latestMessages[0].id,
         } as StreamChunk & { messageId?: string; conversationId?: string };
       }
     } catch (error) {
@@ -229,7 +228,6 @@ export class AIChatService {
   async clearConversation(conversationId: string): Promise<void> {
     await this.messageRepo.delete({ conversationId });
     await this.conversationRepo.update(conversationId, {
-      questionCount: 0,
       messageCount: 0,
     });
   }
@@ -292,23 +290,13 @@ export class AIChatService {
     return parts.join('\n');
   }
 
-  private async updateConversationStats(conversation: Conversation): Promise<void> {
-    const stats = await this.messageRepo
-      .createQueryBuilder('message')
-      .where('message.conversation_id = :conversationId', {
-        conversationId: conversation.id,
-      })
-      .select('COUNT(*)', 'total')
-      .addSelect(
-        'SUM(CASE WHEN message.role = :userRole THEN 1 ELSE 0 END)',
-        'questionCount',
-      )
-      .setParameters({ userRole: MessageRole.USER })
-      .getRawOne();
+  private async updateMessageCount(conversation: Conversation): Promise<void> {
+    const count = await this.messageRepo.count({
+      where: { conversationId: conversation.id },
+    });
 
     await this.conversationRepo.update(conversation.id, {
-      messageCount: parseInt(stats.total, 10) || 0,
-      questionCount: parseInt(stats.questionCount, 10) || 0,
+      messageCount: count,
     });
   }
 

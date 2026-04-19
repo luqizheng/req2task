@@ -44,10 +44,12 @@ export class ConversationMessageDto {
   createdAt!: Date;
 }
 
-export class FollowUpQuestionDto {
+export class QuestionAndAnswerDto {
+  id!: string;
   question!: string;
-  reason!: string;
-  targetAspect!: string;
+  answer!: string | null;
+  createdAt!: string;
+  answeredAt!: string | null;
 }
 
 export class ExtractedRequirementDto {
@@ -60,10 +62,9 @@ export class ExtractedRequirementDto {
 
 export class SendMessageResultDto {
   message!: ConversationMessageDto;
-  followUpQuestions!: FollowUpQuestionDto[];
+  questionAndAnswers!: QuestionAndAnswerDto[];
   extractedRequirements?: ExtractedRequirementDto[];
   isComplete!: boolean;
-  questionCount!: number;
 }
 
 export class ConversationDto {
@@ -72,7 +73,6 @@ export class ConversationDto {
   rawRequirementId!: string | null;
   title!: string | null;
   status!: ConversationStatus;
-  questionCount!: number;
   messageCount!: number;
   summary!: string | null;
   createdAt!: Date;

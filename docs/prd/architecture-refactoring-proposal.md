@@ -581,3 +581,45 @@ export class CommentService {
 - [ ] 是否需要支持评论的编辑历史？
 - [ ] AI 对话是否需要支持"追问模式"和"任务模式"两种类型？
 - [ ] 评论是否需要支持富文本编辑器？
+
+---
+
+## 五、实现状态
+
+### 5.1 已完成
+
+| 功能 | 状态 | 文件 |
+|------|------|------|
+| Conversation 实体改造 | ✅ 完成 | `conversation.entity.ts` |
+| Requirement 实体添加 conversationId | ✅ 完成 | `requirement.entity.ts` |
+| Task 实体添加 conversationId | ✅ 完成 | `task.entity.ts` |
+| AIConversationService | ✅ 完成 | `ai-conversation.service.ts` |
+| AIConversationController | ✅ 完成 | `ai-conversation.controller.ts` |
+| 数据库迁移文件 | ✅ 完成 | `1745080000000-AddConversationIdToEntities.ts` |
+
+### 5.2 待完成
+
+| 功能 | 优先级 | 说明 |
+|------|--------|------|
+| 业务层集成示例 | P1 | RequirementService/TaskService 集成示例 |
+| 清理旧字段 | P2 | 移除 Conversation 的 collectionId/rawRequirementId |
+| 评论子系统 | P2 | 见第二部分设计 |
+
+### 5.3 API 端点
+
+```
+POST   /ai/conversations                    - 创建会话
+GET    /ai/conversations/:id                - 获取会话信息
+GET    /ai/conversations/:id/messages      - 获取消息列表
+POST   /ai/conversations/:id/messages      - 发送消息
+SSE    /ai/conversations/:id/stream        - 流式消息
+DELETE /ai/conversations/:id                - 清空会话
+POST   /ai/conversations/:id/archive       - 归档会话
+POST   /ai/conversations/:id/link/:nextId  - 链接下一会话
+```
+
+### 5.4 运行迁移
+
+```bash
+pnpm db:migration:run
+```

@@ -1,18 +1,31 @@
-import { IsString, IsOptional, IsEnum, IsUUID, IsInt, Min, Max } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsUUID, IsInt, Min, Max, IsArray, ValidateNested, IsIn } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ConversationStatus, MessageRole } from '../enums';
 
-export class CreateConversationDto {
-  @IsOptional()
-  @IsUUID()
-  collectionId?: string;
+export class SessionFileContentDto {
+  @IsString()
+  @IsIn(['text', 'docx', 'pdf', 'audio'])
+  type!: 'text' | 'docx' | 'pdf' | 'audio';
 
-  @IsOptional()
-  @IsUUID()
-  rawRequirementId?: string;
+  @IsString()
+  data!: string;
 
   @IsOptional()
   @IsString()
+  name?: string;
+}
+
+export class CreateConversationDto {
+  @IsOptional()
+  @IsString()
   title?: string;
+
+  @IsOptional()
+  @IsString()
+  type?: string;
+
+  @IsOptional()
+  metadata?: Record<string, unknown>;
 }
 
 export class SendMessageDto {
@@ -20,8 +33,10 @@ export class SendMessageDto {
   content!: string;
 
   @IsOptional()
-  @IsUUID()
-  rawRequirementId?: string;
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SessionFileContentDto)
+  files?: SessionFileContentDto[];
 }
 
 export class UpdateConversationDto {
@@ -39,7 +54,6 @@ export class ConversationMessageDto {
   conversationId!: string;
   role!: MessageRole;
   content!: string;
-  rawRequirementId?: string | null;
   metadata?: Record<string, unknown> | null;
   createdAt!: Date;
 }
@@ -69,26 +83,19 @@ export class SendMessageResultDto {
 
 export class ConversationDto {
   id!: string;
-  collectionId!: string | null;
-  rawRequirementId!: string | null;
   title!: string | null;
   status!: ConversationStatus;
+  conversationType!: string;
   messageCount!: number;
   summary!: string | null;
+  metadata!: Record<string, unknown> | null;
+  nextConversationId!: string | null;
   createdAt!: Date;
   updatedAt!: Date;
   messages?: ConversationMessageDto[];
 }
 
 export class ConversationListQueryDto {
-  @IsOptional()
-  @IsUUID()
-  collectionId?: string;
-
-  @IsOptional()
-  @IsUUID()
-  rawRequirementId?: string;
-
   @IsOptional()
   @IsEnum(ConversationStatus)
   status?: ConversationStatus;
@@ -116,4 +123,32 @@ export class ConversationMessagesQueryDto {
   @IsInt()
   @Min(0)
   offset?: number;
+}
+
+export class SessionChatResultDto {
+  conversationId!: string;
+  messageId!: string;
+  content!: string;
+  followUpQuestions?: string[];
+  isComplete?: boolean;
+  usage?: {
+    promptTokens: number;
+    completionTokens: number;
+    totalTokens: number;
+  };
+}
+
+export class SessionInfoDto {
+  id!: string;
+  title!: string | null;
+  status!: ConversationStatus;
+  messageCount!: number;
+  createdAt!: Date;
+  updatedAt!: Date;
+}
+
+export class CreateSessionOptionsDto {
+  title?: string;
+  type?: string;
+  metadata?: Record<string, unknown>;
 }

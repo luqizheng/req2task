@@ -12,6 +12,7 @@ import {
   ConflictDetectionController,
   TaskDecompositionController,
   AIChatController,
+  AIConversationController,
 } from './controllers';
 import {
   LLMConfig,
@@ -24,6 +25,7 @@ import {
   RenderService,
   ChromaVectorStore,
   AIChatService,
+  AIConversationService,
   FileParserService,
 } from '@req2task/core';
 import { Repository } from 'typeorm';
@@ -37,6 +39,7 @@ import { Repository } from 'typeorm';
     ConflictDetectionController,
     TaskDecompositionController,
     AIChatController,
+    AIConversationController,
   ],
   providers: [
     AiService,
@@ -95,6 +98,26 @@ import { Repository } from 'typeorm';
         return new FileParserService();
       },
     },
+    {
+      provide: AIConversationService,
+      inject: [
+        getRepositoryToken(Conversation),
+        getRepositoryToken(ConversationMessage),
+      ],
+      useFactory: (
+        conversationRepo: Repository<Conversation>,
+        messageRepo: Repository<ConversationMessage>,
+        llmService: LLMService,
+        fileParser: FileParserService,
+      ) => {
+        return new AIConversationService(
+          conversationRepo,
+          messageRepo,
+          llmService,
+          fileParser,
+        );
+      },
+    },
   ],
   exports: [
     AiService,
@@ -106,6 +129,7 @@ import { Repository } from 'typeorm';
     RenderService,
     ChromaVectorStore,
     AIChatService,
+    AIConversationService,
     FileParserService,
   ],
 })

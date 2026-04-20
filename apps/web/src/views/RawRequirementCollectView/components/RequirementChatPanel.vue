@@ -4,6 +4,7 @@ import { AIChat } from '@req2task/ai-chat';
 import '@req2task/ai-chat/dist/style.css'
 import { useRequirementCollectStore, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
+import { useUserStore } from '@/stores/user';
 import { attachmentApi } from '@/api/attachment';
 
 interface UploadFile {
@@ -17,6 +18,7 @@ interface UploadFile {
 
 const store = useRequirementCollectStore();
 const aiStore = useAiStore();
+const userStore = useUserStore();
 
 const chatRef = ref<InstanceType<typeof AIChat> | null>(null);
 const uploadedFiles = ref<UploadFile[]>([]);
@@ -34,10 +36,15 @@ const questionProgress = computed(() => {
   };
 });
 
-const chatConfig = computed(() => ({
-  endpoint: '/api/collections/{collectionId}/analyze/stream'.replace('{collectionId}', store.currentCollection?.id || ''),
-  headers: activeConfigId.value ? { 'X-AI-Config-Id': activeConfigId.value } : undefined,
-}));
+const chatConfig = computed(() => {
+  const headers: Record<string, string> = {};
+  if (activeConfigId.value) headers['X-AI-Config-Id'] = activeConfigId.value;
+  if (userStore.token) headers['Authorization'] = `Bearer ${userStore.token}`;
+  return {
+    endpoint: '/api/collections/{collectionId}/analyze/stream'.replace('{collectionId}', store.currentCollection?.id || ''),
+    headers: Object.keys(headers).length ? headers : undefined,
+  };
+});
 
 async function handleFileUpload(file: File, onProgress: (percent: number) => void): Promise<string> {
   if (!store.currentCollection) {

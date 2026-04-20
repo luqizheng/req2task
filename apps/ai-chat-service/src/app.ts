@@ -26,11 +26,12 @@ export async function createApp(): Promise<Express> {
     throw new Error('No default LLM config found. Please configure an LLM provider in the main service first.');
   }
   
-  if (!defaultLLMConfig.apiKey) {
-    throw new Error('Default LLM config has no API key configured.');
+  const apiKey = defaultLLMConfig.apiKey || process.env.LLM_API_KEY;
+  if (!apiKey) {
+    throw new Error('No LLM API key configured. Please set LLM_API_KEY environment variable or configure an LLM provider in the main service.');
   }
   
-  const llmService = new LLMService(defaultLLMConfig.apiKey, defaultLLMConfig.modelName);
+  const llmService = new LLMService(apiKey, defaultLLMConfig.modelName);
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({

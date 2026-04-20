@@ -2,7 +2,6 @@
 import { ref, computed } from 'vue';
 import { AIChat } from '@req2task/ai-chat';
 import '@req2task/ai-chat/dist/style.css'
-import { ElMessage } from 'element-plus';
 import { useRequirementCollectStore, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
 import { attachmentApi } from '@/api/attachment';

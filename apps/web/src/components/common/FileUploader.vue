@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { UploadFilled, Close, Document, Video, Music, Picture } from '@element-plus/icons-vue';
+import { ref, computed, h } from 'vue';
+import { Plus, Close } from '@element-plus/icons-vue';
 import { ElMessage } from 'element-plus';
-import prettyBytes from 'pretty-bytes';
-import type { UploadFile, UploadRawFile } from 'element-plus';
+import type { UploadRawFile } from 'element-plus';
 
 interface FileItem {
   id: string;
@@ -46,11 +45,23 @@ const fileList = computed({
 
 const uploading = ref(false);
 
+const DocumentIcon = () => h('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
+  h('path', { d: 'M854 096v704h-704V192h704v704zM512 160H192v704h704V544H512V160z m96 112v64H416v-64h192z m0 160v64H416v-64h192z', fill: 'currentColor' })
+]);
+
+const ImageIcon = () => h('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
+  h('path', { d: 'M928 160H96c-18 0-32 14-32 32v640c0 18 14 32 32 32h832c18 0 32-14 32-32V192c0-18-14-32-32-32z m-40 632H132V232h756v560z', fill: 'currentColor' }),
+  h('path', { d: 'M224 408c31 0 56-25 56-56s-25-56-56-56-56 25-56 56 25 56 56 56z m0-80c13 0 24 11 24 24s-11 24-24 24-24-11-24-24 11-24 24-24z m656 80H144c-9 0-16-7-16-16v-16c0-35 29-64 64-64h656c35 0 64 29 64 64v16c0 9-7 16-16 16z', fill: 'currentColor' })
+]);
+
+const AudioIcon = () => h('svg', { viewBox: '0 0 1024 1024', width: '1em', height: '1em' }, [
+  h('path', { d: 'M512 64c-18 0-32 14-32 32v384c0 18 14 32 32 32s32-14 32-32V96c0-18-14-32-32-32z m352 256H672c-9 0-16 7-16 16s7 16 16 16h192c9 0 16-7 16-16V176c0-26-22-48-48-48H544c-9 0-16-7-16-16s7-16 16-16h320c53 0 96 43 96 96v256c0 53-43 96-96 96z', fill: 'currentColor' })
+]);
+
 const getFileIcon = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return Picture;
-  if (mimeType.startsWith('audio/')) return Music;
-  if (mimeType.startsWith('video/')) return Video;
-  return Document;
+  if (mimeType.startsWith('image/')) return ImageIcon;
+  if (mimeType.startsWith('audio/')) return AudioIcon;
+  return DocumentIcon;
 };
 
 const getFileTypeLabel = (mimeType: string) => {
@@ -60,7 +71,13 @@ const getFileTypeLabel = (mimeType: string) => {
   return '文件';
 };
 
-const formatSize = (bytes: number) => prettyBytes(bytes);
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
 
 const canAddMore = computed(() => {
   return fileList.value.length < props.maxCount;
@@ -80,7 +97,7 @@ const handleFileAdd = async (uploadFile: UploadRawFile) => {
   }
 
   const acceptedTypes = ['application/pdf', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/msword', 'audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/mp4', 'audio/x-m4a'];
-  const fileType = uploadFile.rawFile?.type || '';
+  const fileType = uploadFile.type || '';
 
   if (fileType && !acceptedTypes.includes(fileType)) {
     ElMessage.warning('仅支持 PDF、DOCX、音频文件');
@@ -96,7 +113,7 @@ const handleFileAdd = async (uploadFile: UploadRawFile) => {
     type: fileType || 'application/octet-stream',
     status: 'uploading',
     progress: 0,
-    rawFile: uploadFile.rawFile,
+    rawFile: uploadFile as unknown as File,
   };
 
   fileList.value = [...fileList.value, newFile];
@@ -112,7 +129,7 @@ const handleFileAdd = async (uploadFile: UploadRawFile) => {
       }
     };
 
-    const uploadedId = await emit('upload', uploadFile.rawFile!, onProgress);
+    const uploadedId = await emit('upload', uploadFile as unknown as File, onProgress);
 
     const index = fileList.value.findIndex(f => f.id === tempId);
     if (index !== -1) {
@@ -220,7 +237,7 @@ const handleInputChange = (event: Event) => {
         class="upload-trigger"
         @click="triggerUpload"
       >
-        <el-icon :size="24"><UploadFilled /></el-icon>
+        <el-icon :size="24"><Plus /></el-icon>
         <span>添加文件</span>
       </div>
     </div>

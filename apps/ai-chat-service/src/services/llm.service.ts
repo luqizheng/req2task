@@ -67,8 +67,8 @@ export class LLMService {
       const response = await client.chat.completions.create({
         model: config.modelName,
         messages: processedMessages as OpenAI.Chat.ChatCompletionMessageParam[],
-        temperature: config.temperature,
-        max_tokens: config.maxTokens,
+        temperature: Number(config.temperature),
+        max_tokens: Number(config.maxTokens),
       });
 
       const choice = response.choices[0];

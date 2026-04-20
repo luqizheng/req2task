@@ -14,12 +14,15 @@ const aiStore = useAiStore();
 const configId = ref<string>((route.params.id as string) || "");
 const testMessage = ref("请回复\"配置测试成功\"以确认连接正常。");
 const testing = ref(false);
-const testResult = ref<{
+
+interface TestResultType {
   success: boolean;
   content: string;
   latencyMs?: number;
   error?: string;
-} | null>(null);
+}
+
+const testResult = ref<TestResultType | null>(null);
 
 const selectedConfig = computed<LLMConfigResponse | undefined>(() => {
   return aiStore.configs.find(c => c.id === configId.value);
@@ -46,7 +49,7 @@ const handleTest = async () => {
     const response = await llmConfigApi.testConfig(configId.value, testMessage.value);
     let result = response;
     if (result && typeof result === 'object' && 'data' in result) {
-      result = (result as { data: typeof testResult.value }).data;
+      result = (result as { data: typeof response }).data;
     }
     if (result) {
       testResult.value = {

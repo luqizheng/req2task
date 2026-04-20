@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsUUID, IsInt, Min, Max, IsArray, ValidateNested, IsIn } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsInt, Min, Max, IsArray, ValidateNested, IsIn } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ConversationStatus, MessageRole } from '../enums';
 

@@ -53,7 +53,7 @@ export const attachmentApi = {
       }
     );
 
-    return response.data.data;
+    return response.data as AttachmentResponse;
   },
 
   getList: async (params: {
@@ -66,14 +66,14 @@ export const attachmentApi = {
       '/attachments',
       { params }
     );
-    return response.data.data;
+    return response.data as AttachmentListResponse;
   },
 
   getById: async (id: string): Promise<AttachmentResponse> => {
     const response = await api.get<{ code: number; data: AttachmentResponse }>(
       `/attachments/${id}`
     );
-    return response.data.data;
+    return response.data as AttachmentResponse;
   },
 
   delete: async (id: string): Promise<void> => {
@@ -85,13 +85,13 @@ export const attachmentApi = {
       '/attachments/batch',
       { ids }
     );
-    return response.data.data;
+    return response.data as AttachmentResponse[];
   },
 
   download: async (id: string): Promise<Blob> => {
     const response = await api.get(`/attachments/${id}/download`, {
       responseType: 'blob',
     });
-    return response.data;
+    return response as unknown as Blob;
   },
 };

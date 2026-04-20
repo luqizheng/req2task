@@ -16,6 +16,7 @@ req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端、N
 - **前端**: Vue 3 + Vite + Pinia + Vue Router
 - **后端**: NestJS + TypeORM + PostgreSQL
 - **语言**: TypeScript
+- **包编译**: tsup（用于 packages/ 下的共享包）
 
 ## 全局命令
 
@@ -79,6 +80,41 @@ apps/
 - 确保前后端类型一致
 - 单一来源，避免重复定义
 - 支持 API 类型自动补全
+
+## 包编译规则（tsup）
+
+`packages/` 目录下的所有共享包必须使用 tsup 进行编译：
+
+### 编译要求
+
+- 所有包必须配置 `tsup.config.ts`
+- 输出格式：ESM + CJS 双格式
+- 禁止使用 tsc 直接编译包
+- 使用 `packages/dev-config` 提供的基础配置
+
+### 配置示例
+
+```typescript
+// tsup.config.ts
+import { defineConfig } from 'tsup'
+import { baseTsupConfig } from '@req2task/dev-config/tsup'
+
+export default defineConfig([
+  {
+    ...baseTsupConfig[0],
+    entry: ['src/index.ts'],
+  },
+  {
+    ...baseTsupConfig[1],
+    entry: ['src/index.ts'],
+  },
+])
+```
+
+### 构建命令
+
+- `pnpm build:web` - 构建前端（使用 Vite）
+- `packages/` 下的包随依赖它的应用自动构建
 
 ## 代码风格
 

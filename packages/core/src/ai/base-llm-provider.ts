@@ -241,21 +241,21 @@ export abstract class BaseLLMProvider implements LLMProvider {
     };
 
     if (options?.temperature !== undefined) {
-      body.temperature = options.temperature;
+      body.temperature = Number(options.temperature);
     } else if (this.config.temperature !== undefined) {
-      body.temperature = this.config.temperature;
+      body.temperature = Number(this.config.temperature);
     }
 
     if (options?.maxTokens !== undefined) {
-      body.max_tokens = options.maxTokens;
+      body.max_tokens = Number(options.maxTokens);
     } else if (this.config.maxTokens) {
-      body.max_tokens = this.config.maxTokens;
+      body.max_tokens = Number(this.config.maxTokens);
     }
 
     if (options?.topP !== undefined) {
-      body.top_p = options.topP;
+      body.top_p = Number(options.topP);
     } else if (this.config.topP !== undefined) {
-      body.top_p = this.config.topP;
+      body.top_p = Number(this.config.topP);
     }
 
     if (options?.stop) {

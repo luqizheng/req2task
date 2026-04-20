@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Edit, Delete, VideoPlay } from "@element-plus/icons-vue";
-import type { LLMConfigResponse } from "@/api/ai";
+import type { LLMConfigResponse } from "@/api/llm-config";
 import { getProviderName, getProviderTagType, maskApiKey } from "../composables/useProviderUtils";
 
 defineProps<{

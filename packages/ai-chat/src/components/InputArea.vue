@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue';
-import { UploadFilled, Close, Document, Picture, Music } from '@element-plus/icons-vue';
+import { computed } from "vue";
+import {
+  UploadFilled,
+  Close,
+  Document,
+  Picture,
+  Microphone as Music,
+} from "@element-plus/icons-vue";
 
 interface UploadFile {
   id: string;
   name: string;
   size: number;
   type: string;
-  status: 'uploading' | 'success' | 'error';
+  status: "uploading" | "success" | "error";
   progress?: number;
   url?: string;
 }
@@ -23,8 +29,8 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  modelValue: '',
-  placeholder: '输入消息，AI 将实时响应...',
+  modelValue: "",
+  placeholder: "输入消息，AI 将实时响应...",
   disabled: false,
   maxLength: 4000,
   enableFileUpload: false,
@@ -33,15 +39,19 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string): void;
-  (e: 'send', content: string): void;
-  (e: 'file-upload', file: File, onProgress: (percent: number) => void): Promise<string>;
-  (e: 'file-remove', fileId: string): void;
+  (e: "update:modelValue", value: string): void;
+  (e: "send", content: string): void;
+  (
+    e: "file-upload",
+    file: File,
+    onProgress: (percent: number) => void,
+  ): Promise<string>;
+  (e: "file-remove", fileId: string): void;
 }>();
 
 const inputValue = computed({
   get: () => props.modelValue,
-  set: (val: string) => emit('update:modelValue', val),
+  set: (val: string) => emit("update:modelValue", val),
 });
 
 const canSend = computed(() => {
@@ -52,20 +62,20 @@ const hasFiles = computed(() => props.uploadedFiles.length > 0);
 
 function handleSend() {
   if (!canSend.value) return;
-  emit('send', inputValue.value.trim());
-  inputValue.value = '';
+  emit("send", inputValue.value.trim());
+  inputValue.value = "";
 }
 
 function handleKeydown(event: KeyboardEvent) {
-  if (event.key === 'Enter' && !event.shiftKey) {
+  if (event.key === "Enter" && !event.shiftKey) {
     event.preventDefault();
     handleSend();
   }
 }
 
 function getFileIcon(type: string) {
-  if (type.startsWith('image/')) return Picture;
-  if (type.startsWith('audio/')) return Music;
+  if (type.startsWith("image/")) return Picture;
+  if (type.startsWith("audio/")) return Music;
   return Document;
 }
 
@@ -88,19 +98,19 @@ async function handleFileSelect(event: Event) {
     }
 
     try {
-      await emit('file-upload', file, (percent) => {
+      await emit("file-upload", file, (percent) => {
         console.log(`Upload progress: ${percent}%`);
       });
     } catch (error) {
-      console.error('File upload failed:', error);
+      console.error("File upload failed:", error);
     }
   }
 
-  target.value = '';
+  target.value = "";
 }
 
 function handleRemoveFile(file: UploadFile) {
-  emit('file-remove', file.id);
+  emit("file-remove", file.id);
 }
 </script>
 
@@ -124,18 +134,18 @@ function handleRemoveFile(file: UploadFile) {
           :stroke-width="2"
           class="file-progress"
         />
-        <el-icon
-          v-else
-          class="remove-icon"
-          @click="handleRemoveFile(file)"
-        >
+        <el-icon v-else class="remove-icon" @click="handleRemoveFile(file)">
           <Close />
         </el-icon>
       </div>
     </div>
 
     <div class="input-wrapper">
-      <label v-if="enableFileUpload" class="upload-btn" :class="{ disabled: disabled }">
+      <label
+        v-if="enableFileUpload"
+        class="upload-btn"
+        :class="{ disabled: disabled }"
+      >
         <input
           type="file"
           accept=".pdf,.docx,.doc,.mp3,.wav,.m4a,.mp4"
@@ -155,11 +165,7 @@ function handleRemoveFile(file: UploadFile) {
         rows="1"
         @keydown="handleKeydown"
       />
-      <button
-        class="send-button"
-        :disabled="!canSend"
-        @click="handleSend"
-      >
+      <button class="send-button" :disabled="!canSend" @click="handleSend">
         <svg
           v-if="!disabled"
           width="20"
@@ -314,7 +320,9 @@ function handleRemoveFile(file: UploadFile) {
   line-height: 1.5;
   resize: none;
   outline: none;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
   font-family: inherit;
   background: var(--el-fill-color, #f5f7fa);
   color: var(--el-text-color-primary, #303133);
@@ -347,7 +355,9 @@ function handleRemoveFile(file: UploadFile) {
   background: var(--el-color-primary, #2563eb);
   color: white;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.15s;
+  transition:
+    background-color 0.2s,
+    transform 0.15s;
 }
 
 .send-button:hover:not(:disabled) {

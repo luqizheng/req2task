@@ -3,7 +3,7 @@ import { ref, computed } from "vue";
 import { useRouter } from "vue-router";
 import { Plus, Setting } from "@element-plus/icons-vue";
 import { useAiStore } from "@/stores/ai";
-import type { LLMConfigResponse } from "@/api/ai";
+import type { LLMConfigResponse } from "@/api/llm-config";
 import { useAiConfig } from "./composables/useAiConfig";
 import { useAiConfigForm } from "./composables/useAiConfigForm";
 import ConfigCard from "./components/ConfigCard.vue";

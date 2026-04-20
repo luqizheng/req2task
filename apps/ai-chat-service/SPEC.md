@@ -45,7 +45,18 @@
 | 流式消息 | POST | `/api/ai/conversations/:id/messages/stream` | SSE 流式响应 |
 | 获取消息 | GET | `/api/ai/conversations/:id/messages` | 分页获取消息 |
 
-### 3.3 SSE 流式响应协议
+### 3.3 LLM 配置管理
+
+| API | 方法 | 路径 | 说明 |
+|-----|------|------|------|
+| 创建配置 | POST | `/api/ai/llm-configs` | 创建 LLM 配置 |
+| 列表配置 | GET | `/api/ai/llm-configs` | 获取所有配置 |
+| 获取配置 | GET | `/api/ai/llm-configs/:id` | 获取单个配置 |
+| 更新配置 | PUT | `/api/ai/llm-configs/:id` | 更新配置 |
+| 删除配置 | DELETE | `/api/ai/llm-configs/:id` | 删除配置 |
+| 测试配置 | POST | `/api/ai/llm-configs/:id/test` | 测试 LLM 连接 |
+
+### 3.4 SSE 流式响应协议
 
 ```typescript
 // 事件类型
@@ -90,6 +101,26 @@ interface ConversationMessage {
   content: string;          // 消息内容
   metadata: Record<string, unknown> | null; // 消息元数据
   createdAt: Date;
+}
+```
+
+### 4.3 LLMConfig 实体
+
+```typescript
+interface LLMConfig {
+  id: string;                    // UUID 主键
+  name: string;                  // 配置名称
+  provider: 'openai' | 'deepseek' | 'ollama'; // LLM 提供商
+  apiKey: string;                // API 密钥
+  baseUrl?: string | null;      // 自定义 API 地址
+  modelName: string;             // 模型名称
+  maxTokens: number;            // 最大 token 数
+  temperature: number;            // 温度参数
+  topP: number;                 // Top-P 参数
+  isActive: boolean;            // 是否启用
+  isDefault: boolean;            // 是否默认配置
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 

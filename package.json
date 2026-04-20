@@ -24,6 +24,10 @@
     "db:migration:run": "ts-node scripts/migration-run.ts",
     "db:migration:revert": "ts-node scripts/migration-revert.ts",
     "db:migration:show": "ts-node scripts/migration-show.ts",
+    "db:ai-chat:migration:generate": "pnpm --filter @req2task/ai-chat-service migration:generate",
+    "db:ai-chat:migration:run": "pnpm --filter @req2task/ai-chat-service migration:run",
+    "db:ai-chat:migration:revert": "pnpm --filter @req2task/ai-chat-service migration:revert",
+    "db:ai-chat:migration:show": "pnpm --filter @req2task/ai-chat-service migration:show",
     "db:reset": "ts-node scripts/db-reset.ts",
     "db:seed": "pnpm -F @req2task/service run seed"
   },

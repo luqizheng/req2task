@@ -5,16 +5,22 @@ import OpenAI from 'openai';
 import type { ConversionResult } from '../types.js';
 
 export class AudioService {
-  private client: OpenAI | null = null;
+  private whisperClient: OpenAI | null = null;
   private apiKey: string;
-  private model: string;
+  private whisperModel: string;
+  private aiChatServiceUrl: string;
 
-  constructor(apiKey: string, model: string = 'whisper-1') {
+  constructor(
+    apiKey: string,
+    whisperModel: string = 'whisper-1',
+    aiChatServiceUrl: string = 'http://localhost:4001'
+  ) {
     this.apiKey = apiKey;
-    this.model = model;
+    this.whisperModel = whisperModel;
+    this.aiChatServiceUrl = aiChatServiceUrl;
 
     if (apiKey) {
-      this.client = new OpenAI({ apiKey });
+      this.whisperClient = new OpenAI({ apiKey });
     }
   }
 
@@ -25,7 +31,7 @@ export class AudioService {
   ): Promise<ConversionResult> {
     const startTime = Date.now();
 
-    if (!this.client) {
+    if (!this.whisperClient) {
       return {
         success: false,
         error: 'OpenAI API key not configured. Audio transcription requires OPENAI_API_KEY.',
@@ -40,17 +46,27 @@ export class AudioService {
     try {
       await writeFile(tempFile, buffer);
 
-      const fileStream = Bun.file(tempFile);
-
-      const transcription = await this.client.audio.transcriptions.create({
+      const transcription = await this.whisperClient.audio.transcriptions.create({
         file: new File([buffer], originalName, { type: mimeType }),
-        model: this.model,
+        model: this.whisperModel,
         response_format: 'text',
       });
 
+      const transcribedText = transcription.trim();
+
+      if (!transcribedText) {
+        return {
+          success: false,
+          error: 'Audio transcription produced empty result',
+          duration: Date.now() - startTime,
+        };
+      }
+
+      const processedText = await this.processWithAIService(transcribedText);
+
       return {
         success: true,
-        text: transcription.trim(),
+        text: processedText,
         duration: Date.now() - startTime,
       };
     } catch (error) {
@@ -65,6 +81,31 @@ export class AudioService {
       } catch {
         // ignore cleanup errors
       }
+    }
+  }
+
+  private async processWithAIService(text: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.aiChatServiceUrl}/api/ai/text/process`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text, task: 'transcription' }),
+      });
+
+      if (!response.ok) {
+        console.warn(`AI service returned ${response.status}, using raw transcription`);
+        return text;
+      }
+
+      const data = await response.json() as { code: number; data?: { result: string } };
+      if (data.code === 0 && data.data?.result) {
+        return data.data.result;
+      }
+
+      return text;
+    } catch (error) {
+      console.warn(`Failed to call AI service: ${error instanceof Error ? error.message : 'Unknown error'}, using raw transcription`);
+      return text;
     }
   }
 

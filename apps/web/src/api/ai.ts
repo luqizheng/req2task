@@ -1,26 +1,8 @@
 import type {
-  CreateLLMConfigDto,
-  UpdateLLMConfigDto,
   ChatRequestDto,
   CreateRawRequirementDto,
 } from '@req2task/dto';
 import api from './axios';
-
-export interface LLMConfigResponse {
-  id: string;
-  name: string;
-  provider: string;
-  modelName: string;
-  baseUrl?: string | null;
-  maxTokens: number;
-  temperature: number;
-  topP: number;
-  isActive: boolean;
-  isDefault: boolean;
-  createdAt: string;
-  updatedAt: string;
-  apiKey?: string;
-}
 
 export interface ChatResponse {
   content: string;
@@ -50,27 +32,23 @@ export interface RawRequirementResponse {
   updatedAt: string;
 }
 
+export interface ConversationResponse {
+  id: string;
+  title?: string;
+  collectionId?: string;
+  rawRequirementId?: string;
+  messages: Array<{
+    id: string;
+    role: string;
+    content: string;
+    createdAt: string;
+  }>;
+  metadata: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export const aiApi = {
-  getLLMConfigs: () => {
-    return api.get<LLMConfigResponse[]>('/ai/llm-configs');
-  },
-
-  getLLMConfigById: (id: string) => {
-    return api.get<LLMConfigResponse>(`/ai/llm-configs/${id}`);
-  },
-
-  createLLMConfig: (data: CreateLLMConfigDto) => {
-    return api.post<LLMConfigResponse>('/ai/llm-configs', data);
-  },
-
-  updateLLMConfig: (id: string, data: UpdateLLMConfigDto) => {
-    return api.put<LLMConfigResponse>(`/ai/llm-configs/${id}`, data);
-  },
-
-  deleteLLMConfig: (id: string) => {
-    return api.delete(`/ai/llm-configs/${id}`);
-  },
-
   chat: (data: ChatRequestDto) => {
     return api.post<ChatResponse>('/ai/chat', data);
   },
@@ -122,14 +100,35 @@ export const aiApi = {
       { configId }
     );
   },
+};
 
-  testLLMConfig: (configId: string, testMessage?: string) => {
-    return api.post<{
-      success: boolean;
-      content: string;
-      configId: string;
-      latencyMs?: number;
-      error?: string;
-    }>(`/ai/llm-configs/${configId}/test`, { testMessage });
+export const conversationApi = {
+  createConversation: (data: {
+    collectionId?: string;
+    rawRequirementId?: string;
+    title?: string;
+    systemPrompt?: string;
+  }) => {
+    return api.post<{ code: number; data: { id: string } }>('/api/ai-chat/ai/conversations', data);
+  },
+
+  getConversation: (id: string) => {
+    return api.get<ConversationResponse>(`/api/ai-chat/ai/conversations/${id}`);
+  },
+
+  sendMessage: (conversationId: string, data: {
+    content: string;
+    files?: Array<{ type: string; data: string; name?: string }>;
+    configId?: string;
+  }) => {
+    return api.post(`/api/ai-chat/ai/conversations/${conversationId}/messages`, data);
+  },
+
+  getStreamUrl: (conversationId: string) => {
+    return `/api/ai-chat/ai/conversations/${conversationId}/messages/stream`;
+  },
+
+  getMessages: (conversationId: string, limit = 100, offset = 0) => {
+    return api.get(`/api/ai-chat/ai/conversations/${conversationId}/messages?limit=${limit}&offset=${offset}`);
   },
 };

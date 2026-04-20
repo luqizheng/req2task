@@ -11,7 +11,8 @@ export function createApp(): Express {
 
   const openAiApiKey = process.env.OPENAI_API_KEY || '';
   const whisperModel = process.env.WHISPER_MODEL || 'whisper-1';
-  const conversionService = new ConversionService(openAiApiKey, whisperModel);
+  const aiChatServiceUrl = process.env.AI_CHAT_SERVICE_URL || 'http://localhost:4001';
+  const conversionService = new ConversionService(openAiApiKey, whisperModel, aiChatServiceUrl);
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });

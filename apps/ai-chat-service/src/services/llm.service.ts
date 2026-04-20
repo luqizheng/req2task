@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { Message, FileAttachment } from '../types.js';
+import type { Message, FileAttachment, LLMConfigMetadata } from '../types.js';
 
 export interface LLMResponse {
   content: string;
@@ -49,6 +49,62 @@ export class LLMService {
       content: choice.message.content || '',
       finishReason: choice.finish_reason || null,
     };
+  }
+
+  async completeWithConfig(
+    messages: Message[],
+    config: LLMConfigMetadata,
+    files?: FileAttachment[]
+  ): Promise<LLMResponse> {
+    const processedMessages = this.processFilesInMessages(messages, files);
+
+    if (config.provider === 'openai' || config.provider === 'deepseek') {
+      const client = new OpenAI({
+        apiKey: this.apiKey || config.baseUrl ? 'placeholder' : this.apiKey,
+        baseURL: config.baseUrl,
+      });
+
+      const response = await client.chat.completions.create({
+        model: config.modelName,
+        messages: processedMessages as OpenAI.Chat.ChatCompletionMessageParam[],
+        temperature: config.temperature,
+        max_tokens: config.maxTokens,
+      });
+
+      const choice = response.choices[0];
+      return {
+        content: choice.message.content || '',
+        finishReason: choice.finish_reason || null,
+      };
+    }
+
+    if (config.provider === 'ollama') {
+      const baseUrl = config.baseUrl || 'http://localhost:11434';
+      const response = await fetch(`${baseUrl}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: config.modelName,
+          messages: processedMessages.map(m => ({
+            role: m.role,
+            content: m.content,
+          })),
+          stream: false,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Ollama API error: ${response.statusText}`);
+      }
+
+      const data = await response.json() as { message: { content: string } };
+      return {
+        content: data.message?.content || '',
+        finishReason: 'stop',
+      };
+    }
+
+    throw new Error(`Unsupported provider: ${config.provider}`);
   }
 
   async *streamComplete(

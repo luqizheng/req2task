@@ -1,7 +1,10 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { createConversationRoutes } from './routes/conversation.routes.js';
+import { createLLMConfigRoutes } from './routes/llm-config.routes.js';
+import { createTextRoutes } from './routes/text.routes.js';
 import { ConversationService } from './services/conversation.service.js';
+import { LLMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
 import { initializeDatabase, dataSource } from './database/index.js';
 import { config } from './config/index.js';
@@ -17,6 +20,7 @@ export async function createApp(): Promise<Express> {
   logger.info('Database initialized');
 
   const conversationService = new ConversationService(dataSource);
+  const llmConfigService = new LLMConfigService(dataSource);
   const llmService = new LLMService(config.llm.apiKey, config.llm.defaultModel);
 
   app.get('/health', (_req: Request, res: Response) => {
@@ -28,7 +32,9 @@ export async function createApp(): Promise<Express> {
     });
   });
 
-  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
+  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService, llmConfigService));
+  app.use('/api/ai/llm-configs', createLLMConfigRoutes(llmConfigService, llmService));
+  app.use('/api/ai/text', createTextRoutes(llmService));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     logger.error({ error: err }, 'Unhandled error');

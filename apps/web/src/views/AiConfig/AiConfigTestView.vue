@@ -4,8 +4,8 @@ import { useRoute, useRouter } from "vue-router";
 import { ElMessage, ElCard, ElButton, ElInput, ElSelect, ElOption, ElTag } from "element-plus";
 import { ArrowLeft, VideoPlay } from "@element-plus/icons-vue";
 import { useAiStore } from "@/stores/ai";
-import { aiApi } from "@/api";
-import type { LLMConfigResponse } from "@/api/ai";
+import { llmConfigApi } from "@/api/llm-config";
+import type { LLMConfigResponse } from "@/api/llm-config";
 
 const route = useRoute();
 const router = useRouter();
@@ -43,18 +43,24 @@ const handleTest = async () => {
   testResult.value = null;
 
   try {
-    const response = await aiApi.testLLMConfig(configId.value, testMessage.value);
-    testResult.value = {
-      success: response.success,
-      content: response.content,
-      latencyMs: response.latencyMs,
-      error: response.error,
-    };
+    const response = await llmConfigApi.testConfig(configId.value, testMessage.value);
+    let result = response;
+    if (result && typeof result === 'object' && 'data' in result) {
+      result = (result as { data: typeof testResult.value }).data;
+    }
+    if (result) {
+      testResult.value = {
+        success: result.success ?? false,
+        content: result.content ?? '',
+        latencyMs: result.latencyMs,
+        error: result.error,
+      };
 
-    if (response.success) {
-      ElMessage.success("测试成功");
-    } else {
-      ElMessage.error(response.error || "测试失败");
+      if (result.success) {
+        ElMessage.success("测试成功");
+      } else {
+        ElMessage.error(result.error || "测试失败");
+      }
     }
   } catch (error) {
     testResult.value = {

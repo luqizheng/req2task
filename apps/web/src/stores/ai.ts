@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { LLMConfigResponse } from '@/api/ai';
-import { aiApi } from '@/api';
+import { llmConfigApi } from '@/api/llm-config';
+import type { LLMConfigResponse } from '@/api/llm-config';
 import type { CreateLLMConfigDto, UpdateLLMConfigDto } from '@req2task/dto';
 
 export const useAiStore = defineStore('ai', () => {
@@ -14,7 +14,7 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await aiApi.getLLMConfigs();
+      const response = await llmConfigApi.getConfigs();
       let data = response;
       if (data && typeof data === 'object' && 'data' in data) {
         data = (data as { data: LLMConfigResponse[] }).data;
@@ -40,7 +40,11 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const newConfig = await aiApi.createLLMConfig(data);
+      const response = await llmConfigApi.createConfig(data);
+      let newConfig = response;
+      if (newConfig && typeof newConfig === 'object' && 'data' in newConfig) {
+        newConfig = (newConfig as { data: LLMConfigResponse }).data;
+      }
       configs.value.push(newConfig);
       return newConfig;
     } catch (err) {
@@ -55,7 +59,11 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const updatedConfig = await aiApi.updateLLMConfig(id, data);
+      const response = await llmConfigApi.updateConfig(id, data);
+      let updatedConfig = response;
+      if (updatedConfig && typeof updatedConfig === 'object' && 'data' in updatedConfig) {
+        updatedConfig = (updatedConfig as { data: LLMConfigResponse }).data;
+      }
       const index = configs.value.findIndex(c => c.id === id);
       if (index !== -1) {
         configs.value[index] = updatedConfig;
@@ -76,7 +84,7 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      await aiApi.deleteLLMConfig(id);
+      await llmConfigApi.deleteConfig(id);
       configs.value = configs.value.filter(c => c.id !== id);
       if (currentConfig.value?.id === id) {
         currentConfig.value = configs.value.find(c => c.isDefault) || null;
@@ -101,10 +109,7 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      await fetch(`/api/ai/llm-configs/${id}/set-default`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
+      await llmConfigApi.updateConfig(id, { isDefault: true } as UpdateLLMConfigDto);
       configs.value = configs.value.map(c => ({
         ...c,
         isDefault: c.id === id,

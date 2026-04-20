@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm';
 import 'dotenv/config';
 import { Conversation } from './entities/conversation.entity.js';
 import { ConversationMessage } from './entities/conversation-message.entity.js';
+import { LLMConfig } from './entities/llm-config.entity.js';
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -11,8 +12,8 @@ const dataSource = new DataSource({
   username: process.env['DATABASE_USER'] || 'postgres',
   password: process.env['DATABASE_PASSWORD'] || 'postgres',
   database: process.env['DATABASE_NAME'] || 'ai_chat',
-  entities: [Conversation, ConversationMessage],
-  migrations: ['src/database/migrations/*.ts'],
+  entities: [Conversation, ConversationMessage,LLMConfig],
+  migrations: ['./*.ts'],
   synchronize: false,
   logging: true,
 });

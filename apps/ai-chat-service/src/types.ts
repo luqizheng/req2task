@@ -1,3 +1,9 @@
+export enum LLMProviderType {
+  DEEPSEEK = 'deepseek',
+  OPENAI = 'openai',
+  OLLAMA = 'ollama',
+}
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant' | 'system';
@@ -54,10 +60,55 @@ export interface CreateConversationRequest {
 }
 
 export interface LLMConfig {
-  provider: 'openai' | 'ollama';
-  model: string;
+  id: string;
+  name: string;
+  provider: LLMProviderType;
+  apiKey?: string;
+  baseUrl?: string | null;
+  modelName: string;
+  maxTokens: number;
+  temperature: number;
+  topP: number;
+  isActive: boolean;
+  isDefault: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface CreateLLMConfigRequest {
+  name: string;
+  provider: LLMProviderType;
   apiKey?: string;
   baseUrl?: string;
+  modelName: string;
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+export interface UpdateLLMConfigRequest {
+  name?: string;
+  provider?: LLMProviderType;
+  apiKey?: string;
+  baseUrl?: string;
+  modelName?: string;
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  isActive?: boolean;
+  isDefault?: boolean;
+}
+
+export interface LLMConfigMetadata {
+  provider: LLMProviderType;
+  modelName: string;
+  baseUrl?: string;
+  apiKey?: string;
+  maxTokens: number;
+  temperature: number;
+  topP: number;
 }
 
 export interface ConversationMetadata {

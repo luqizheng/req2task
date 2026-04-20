@@ -14,10 +14,14 @@ export class ConversionService {
   private docxService: DocxService;
   private audioService: AudioService;
 
-  constructor(openAiApiKey: string, whisperModel: string = 'whisper-1') {
+  constructor(
+    openAiApiKey: string,
+    whisperModel: string = 'whisper-1',
+    aiChatServiceUrl: string = 'http://localhost:4001'
+  ) {
     this.pdfService = new PdfService();
     this.docxService = new DocxService();
-    this.audioService = new AudioService(openAiApiKey, whisperModel);
+    this.audioService = new AudioService(openAiApiKey, whisperModel, aiChatServiceUrl);
   }
 
   async convert(

@@ -5,5 +5,6 @@ export { featureModulesApi } from './featureModules';
 export { requirementsApi } from './requirements';
 export { rawRequirementsApi } from './rawRequirements';
 export { aiApi } from './ai';
-export { conversationApi } from './conversation';
-export * from './conversation';
+export { llmConfigApi } from './llm-config';
+export { conversationApi } from './ai';
+export { conversationApi as chatConversationApi } from './ai';

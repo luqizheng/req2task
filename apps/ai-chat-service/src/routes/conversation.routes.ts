@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { ConversationService } from '../services/conversation.service.js';
 import { LLMService } from '../services/llm.service.js';
+import { LLMConfigService } from '../services/llm-config.service.js';
 import { logger } from '../utils/logger.js';
 import type { CreateConversationRequest } from '../types.js';
 
@@ -31,7 +32,8 @@ const messageSchema = z.object({
 
 export function createConversationRoutes(
   conversationService: ConversationService,
-  llmService: LLMService
+  llmService: LLMService,
+  llmConfigService: LLMConfigService
 ): Router {
   const router = Router();
 

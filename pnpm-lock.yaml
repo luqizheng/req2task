@@ -44,6 +44,9 @@ importers:
       express:
         specifier: ^4.18.2
         version: 4.22.1
+      mammoth:
+        specifier: ^1.12.0
+        version: 1.12.0
       ollama:
         specifier: ^0.6.3
         version: 0.6.3
@@ -130,6 +133,9 @@ importers:
       '@types/node':
         specifier: ^20.10.0
         version: 20.19.39
+      '@types/pdf-parse':
+        specifier: ^1.1.5
+        version: 1.1.5
       '@types/uuid':
         specifier: ^9.0.7
         version: 9.0.8
@@ -2536,6 +2542,9 @@ packages:
 
   '@types/passport@1.0.17':
     resolution: {integrity: sha512-aciLyx+wDwT2t2/kJGJR2AEeBz0nJU4WuRX04Wu9Dqc5lSUtwu0WERPHYsLhF9PtseiAMPBGNUOtFjxZ56prsg==}
+
+  '@types/pdf-parse@1.1.5':
+    resolution: {integrity: sha512-kBfrSXsloMnUJOKi25s3+hRmkycHfLK6A09eRGqF/N8BkQoPUmaCr+q8Cli5FnfohEz/rsv82zAiPz/LXtOGhA==}
 
   '@types/pg@8.20.0':
     resolution: {integrity: sha512-bEPFOaMAHTEP1EzpvHTbmwR8UsFyHSKsRisLIHVMXnpNefSbGA1bD6CVy+qKjGSqmZqNqBDV2azOBo8TgkcVow==}
@@ -9392,6 +9401,10 @@ snapshots:
   '@types/passport@1.0.17':
     dependencies:
       '@types/express': 4.17.25
+
+  '@types/pdf-parse@1.1.5':
+    dependencies:
+      '@types/node': 20.19.39
 
   '@types/pg@8.20.0':
     dependencies:

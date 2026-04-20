@@ -149,7 +149,7 @@ watch([projectId, collectionId], () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 24px;
+  padding: 16px 24px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
 }
@@ -157,29 +157,50 @@ watch([projectId, collectionId], () => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .view-title {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
   margin: 0;
   color: var(--el-text-color-primary);
+  letter-spacing: -0.02em;
 }
 
 .header-actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 12px;
 }
 
 .view-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 12px 24px;
+  gap: 16px;
+  padding: 14px 24px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
   flex-wrap: wrap;
+}
+
+.view-toolbar > * {
+  flex-shrink: 0;
+}
+
+.toolbar-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-right: 16px;
+  border-right: 1px solid var(--el-border-color-lighter);
+  margin-right: 4px;
+}
+
+.toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
 .collection-select {
@@ -190,7 +211,7 @@ watch([projectId, collectionId], () => {
 .collection-option {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
 }
 
@@ -204,6 +225,7 @@ watch([projectId, collectionId], () => {
 .option-count {
   color: var(--el-text-color-secondary);
   font-size: 12px;
+  flex-shrink: 0;
 }
 
 .option-delete {
@@ -218,6 +240,7 @@ watch([projectId, collectionId], () => {
 .info-text {
   font-size: 13px;
   color: var(--el-text-color-secondary);
+  white-space: nowrap;
 }
 
 .warning-icon {
@@ -229,22 +252,23 @@ watch([projectId, collectionId], () => {
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 1px;
+  gap: 0;
   background: var(--el-border-color-lighter);
 }
 
 .chat-panel {
-  width: 30%;
-  min-width: 280px;
+  flex: 0 0 28%;
+  min-width: 300px;
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-right: 1px solid var(--el-border-color-lighter);
 }
 
 .main-panel {
-  width: 40%;
-  min-width: 280px;
+  flex: 1;
+  min-width: 320px;
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
@@ -252,19 +276,23 @@ watch([projectId, collectionId], () => {
 }
 
 .summary-panel {
-  width: 30%;
+  flex: 0 0 28%;
   min-width: 280px;
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  border-left: 1px solid var(--el-border-color-lighter);
 }
 
 @media (max-width: 1200px) {
   .chat-panel,
-  .main-panel,
   .summary-panel {
-    min-width: 240px;
+    flex: 0 0 30%;
+  }
+
+  .main-panel {
+    min-width: 280px;
   }
 }
 
@@ -273,28 +301,27 @@ watch([projectId, collectionId], () => {
     flex-wrap: wrap;
   }
 
-  .chat-panel {
-    width: 50%;
-    order: 1;
-  }
-
+  .chat-panel,
   .main-panel {
-    width: 50%;
-    order: 2;
+    flex: 1 1 50%;
+    min-width: 260px;
+    border-right: none;
   }
 
   .summary-panel {
-    width: 100%;
-    order: 3;
-    max-height: 300px;
+    flex: 1 1 100%;
+    min-width: 100%;
+    max-height: 280px;
+    border-left: none;
+    border-top: 1px solid var(--el-border-color-lighter);
   }
 }
 
 @media (max-width: 768px) {
   .view-header {
-    padding: 10px 16px;
+    padding: 14px 16px;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 12px;
   }
 
   .header-actions {
@@ -304,21 +331,31 @@ watch([projectId, collectionId], () => {
   }
 
   .collection-select {
-    width: 140px;
+    width: 160px;
   }
 
   .view-toolbar {
-    padding: 10px 16px;
+    padding: 12px 16px;
+    gap: 12px;
+  }
+
+  .toolbar-info {
+    padding-right: 12px;
+    gap: 10px;
+  }
+
+  .toolbar-actions {
     gap: 8px;
   }
 
   .chat-panel,
   .main-panel {
-    width: 100%;
+    flex: 1 1 100%;
+    min-width: 100%;
   }
 
   .summary-panel {
-    max-height: 250px;
+    max-height: 240px;
   }
 }
 </style>

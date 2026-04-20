@@ -10,6 +10,10 @@ export default defineConfig({
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx', 'src/**/*.test.ts', 'src/**/*.test.tsx'],
     server: {
       proxy: {
+        '/api/ai-chat': {
+          target: 'http://localhost:4001',
+          changeOrigin: true
+        },
         '/api': {
           target: 'http://localhost:4000',
           changeOrigin: true

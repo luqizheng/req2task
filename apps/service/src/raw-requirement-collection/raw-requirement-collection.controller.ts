@@ -10,21 +10,19 @@ import {
   UseGuards,
   Request,
   Res,
-  Sse,
-  MessageEvent,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { RawRequirementCollectionService } from './raw-requirement-collection.service';
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
-import { AIChatService, SendMessageDto } from '@req2task/core';
+import { AIChatClientService } from '../ai/ai-chat-client.service';
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
   AddRawRequirementDto,
 } from '@req2task/dto';
-import { Observable, from } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
 
 interface ApiResponse<T> {
   code: number;
@@ -52,7 +50,7 @@ export class RawRequirementCollectionController {
   constructor(
     private readonly collectionService: RawRequirementCollectionService,
     private readonly requirementGenerationService: RequirementGenerationService,
-    private readonly aiChatService: AIChatService,
+    private readonly aiChatClient: AIChatClientService,
   ) {}
 
   @Post()
@@ -150,39 +148,29 @@ export class RawRequirementCollectionController {
       return { code: 1, message: 'Raw requirement not found' };
     }
 
-    const conversation = await this.aiChatService.getOrCreateConversation({
+    const conversation = await this.aiChatClient.getOrCreateConversation({
       rawRequirementId,
       title: `Chat for requirement ${rawRequirementId}`,
       systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
     });
 
-    const sendDto: SendMessageDto = {
+    const result = await this.aiChatClient.sendMessage(conversation.id, {
       content: dto.message,
       files: dto.files,
-    };
-
-    const result = await this.aiChatService.sendMessage(
-      conversation.id,
-      sendDto,
-      dto.configId,
-    );
+      configId: dto.configId,
+    });
 
     return { code: 0, data: result };
   }
 
-  @Sse('raw-requirements/:rawRequirementId/stream')
+  @Post('raw-requirements/:rawRequirementId/stream')
   streamChatCollect(
     @Param('rawRequirementId') rawRequirementId: string,
     @Body() dto: ChatRequest,
     @Res() res: Response,
-  ): Observable<MessageEvent> {
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.setHeader('X-Accel-Buffering', 'no');
-
-    return from(
-      (async () => {
+  ) {
+    return of(null).pipe(
+      map(async () => {
         const rawRequirement = await this.collectionService.getRawRequirementById(rawRequirementId);
         if (!rawRequirement) {
           res.write(`data: ${JSON.stringify({ type: 'error', error: 'Raw requirement not found' })}\n\n`);
@@ -190,44 +178,57 @@ export class RawRequirementCollectionController {
           return;
         }
 
-        const conversation = await this.aiChatService.getOrCreateConversation({
+        const conversation = await this.aiChatClient.getOrCreateConversation({
           rawRequirementId,
           title: `Chat for requirement ${rawRequirementId}`,
           systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
         });
 
-        const sendDto: SendMessageDto = {
+        const streamUrl = this.aiChatClient.getStreamUrl(conversation.id, {
           content: dto.message,
           files: dto.files,
-        };
+          configId: dto.configId,
+        });
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
 
         try {
-          res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: conversation.id })}\n\n`);
+          const http = await import('http');
+          const url = new URL(streamUrl);
+          const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
 
-          for await (const chunk of this.aiChatService.streamMessage(
-            conversation.id,
-            sendDto,
-            dto.configId,
-          )) {
-            if (chunk.content && !chunk.done) {
-              res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
-            } else if (chunk.done && chunk.content) {
-              try {
-                const parsed = JSON.parse(chunk.content);
-                res.write(`data: ${JSON.stringify({ type: 'metadata', ...parsed })}\n\n`);
-              } catch {
-                res.write(`data: ${JSON.stringify({ type: 'done', content: chunk.content })}\n\n`);
-              }
-            }
-          }
-          res.write('data: [DONE]\n\n');
+          const proxyReq = http.request(options, (proxyRes) => {
+            proxyRes.pipe(res, { end: true });
+          });
+
+          proxyReq.on('error', (error) => {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+            res.end();
+          });
+
+          proxyReq.end();
         } catch (error) {
           res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
-        } finally {
           res.end();
         }
-      })(),
-    ).pipe(map(() => ({ data: '' })));
+      }),
+      catchError((error) => {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+        res.end();
+        return of(null);
+      }),
+    );
   }
 
   @Delete('raw-requirements/:rawRequirementId')
@@ -255,65 +256,61 @@ export class RawRequirementCollectionController {
       userId!,
     );
 
-    const conversation = await this.aiChatService.getOrCreateConversation({
+    const conversation = await this.aiChatClient.getOrCreateConversation({
       collectionId,
       rawRequirementId: rawRequirement.id,
       title: `Chat for collection ${collectionId}`,
       systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
     });
 
-    const sendDto: SendMessageDto = {
+    const result = await this.aiChatClient.sendMessage(conversation.id, {
       content: dto.message,
       files: dto.files,
-    };
-
-    const result = await this.aiChatService.sendMessage(
-      conversation.id,
-      sendDto,
-      dto.configId,
-    );
+      configId: dto.configId,
+    });
 
     return {
       code: 0,
       data: {
         rawRequirementId: rawRequirement.id,
         conversationId: conversation.id,
-        ...result,
+        ...(result as object),
       },
     };
   }
 
-  @Sse(':id/stream')
+  @Post(':id/stream')
   streamChatWithCollection(
     @Param('id') collectionId: string,
-    @Body() dto: ChatRequest,
-    @Body('source') source: string = 'chat',
+    @Query() query: ChatRequest,
+    @Query('source') source: string = 'chat',
     @Request() req: AuthenticatedRequest,
     @Res() res: Response,
-  ): Observable<MessageEvent> {
-    const user = req.user as { id?: string; userId?: string };
-    const userId = user.id || user.userId;
+  ) {
+    return of(null).pipe(
+      map(async () => {
+        const user = req.user as { id?: string; userId?: string };
+        const userId = user.id || user.userId;
 
-    return from(
-      (async () => {
         const rawRequirement = await this.collectionService.addRawRequirement(
           collectionId,
-          dto.message,
+          query.message,
           source,
           userId!,
         );
 
-        const conversation = await this.aiChatService.getOrCreateConversation({
+        const conversation = await this.aiChatClient.getOrCreateConversation({
           collectionId,
           rawRequirementId: rawRequirement.id,
           title: `Chat for collection ${collectionId}`,
-          systemPrompt: dto.systemPrompt || 'You are a helpful requirements analyst.',
+          systemPrompt: query.systemPrompt || 'You are a helpful requirements analyst.',
         });
 
-        const sendDto: SendMessageDto = {
-          content: dto.message,
-          files: dto.files,
-        };
+        const streamUrl = this.aiChatClient.getStreamUrl(conversation.id, {
+          content: query.message,
+          files: query.files,
+          configId: query.configId,
+        });
 
         res.setHeader('Content-Type', 'text/event-stream');
         res.setHeader('Cache-Control', 'no-cache');
@@ -323,29 +320,38 @@ export class RawRequirementCollectionController {
         try {
           res.write(`data: ${JSON.stringify({ type: 'metadata', isNewConversation: true, rawRequirementId: rawRequirement.id, conversationId: conversation.id })}\n\n`);
 
-          for await (const chunk of this.aiChatService.streamMessage(
-            conversation.id,
-            sendDto,
-            dto.configId,
-          )) {
-            if (chunk.content && !chunk.done) {
-              res.write(`data: ${JSON.stringify({ type: 'content', content: chunk.content })}\n\n`);
-            } else if (chunk.done && chunk.content) {
-              try {
-                const parsed = JSON.parse(chunk.content);
-                res.write(`data: ${JSON.stringify({ type: 'metadata', ...parsed })}\n\n`);
-              } catch {
-                res.write(`data: ${JSON.stringify({ type: 'done', content: chunk.content })}\n\n`);
-              }
-            }
-          }
-          res.write('data: [DONE]\n\n');
+          const http = await import('http');
+          const url = new URL(streamUrl);
+          const options = {
+            hostname: url.hostname,
+            port: url.port,
+            path: url.pathname + url.search,
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          };
+
+          const proxyReq = http.request(options, (proxyRes) => {
+            proxyRes.pipe(res, { end: true });
+          });
+
+          proxyReq.on('error', (error) => {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+            res.end();
+          });
+
+          proxyReq.end();
         } catch (error) {
           res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
-        } finally {
           res.end();
         }
-      })(),
-    ).pipe(map(() => ({ data: '' })));
+      }),
+      catchError((error) => {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+        res.end();
+        return of(null);
+      }),
+    );
   }
 }

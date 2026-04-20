@@ -1,18 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { getRepositoryToken } from '@nestjs/typeorm';
+import { HttpModule } from '@nestjs/axios';
 import { RawRequirementCollection } from '@req2task/core';
 import { RawRequirement } from '@req2task/core';
-import { Conversation } from '@req2task/core';
-import { ConversationMessage } from '@req2task/core';
 import { RawRequirementCollectionService } from './raw-requirement-collection.service';
 import { RawRequirementCollectionController } from './raw-requirement-collection.controller';
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
-import { LLMService, PromptService, ChromaVectorStore, AIChatService, FileParserService } from '@req2task/core';
-import { Repository } from 'typeorm';
+import { LLMService, PromptService, ChromaVectorStore, FileParserService } from '@req2task/core';
+import { AIChatClientService } from '../ai/ai-chat-client.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RawRequirementCollection, RawRequirement, Conversation, ConversationMessage])],
+  imports: [
+    TypeOrmModule.forFeature([RawRequirementCollection, RawRequirement]),
+    HttpModule,
+  ],
   controllers: [RawRequirementCollectionController],
   providers: [
     RawRequirementCollectionService,
@@ -20,25 +21,9 @@ import { Repository } from 'typeorm';
     LLMService,
     PromptService,
     ChromaVectorStore,
-    {
-      provide: AIChatService,
-      inject: [
-        getRepositoryToken(Conversation),
-        getRepositoryToken(ConversationMessage),
-      ],
-      useFactory: (
-        conversationRepo: Repository<Conversation>,
-        messageRepo: Repository<ConversationMessage>,
-      ) => {
-        return new AIChatService(
-          conversationRepo,
-          messageRepo,
-          new LLMService(null as any),
-          new FileParserService(),
-        );
-      },
-    },
+    FileParserService,
+    AIChatClientService,
   ],
-  exports: [RawRequirementCollectionService, AIChatService],
+  exports: [RawRequirementCollectionService, AIChatClientService],
 })
 export class RawRequirementCollectionModule {}

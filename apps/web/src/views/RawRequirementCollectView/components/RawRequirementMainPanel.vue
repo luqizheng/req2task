@@ -139,9 +139,9 @@ const getMessageIcon = (message: ChatMessage) => {
 .raw-requirement-main-panel {
   display: flex;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  background: white;
-  border-left: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
 }
 
 .empty-state {
@@ -150,8 +150,8 @@ const getMessageIcon = (message: ChatMessage) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  color: #909399;
-  padding: 40px 20px;
+  color: var(--el-text-color-secondary);
+  padding: 48px 20px;
   text-align: center;
 }
 
@@ -161,8 +161,9 @@ const getMessageIcon = (message: ChatMessage) => {
 }
 
 .empty-state h3 {
-  margin: 0 0 8px;
-  color: #606266;
+  margin: 0 0 10px;
+  font-size: 16px;
+  color: var(--el-text-color-regular);
 }
 
 .empty-state p {
@@ -173,21 +174,21 @@ const getMessageIcon = (message: ChatMessage) => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  padding: 14px 16px;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .panel-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .requirement-detail {
   padding: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .detail-section {
@@ -204,29 +205,29 @@ const getMessageIcon = (message: ChatMessage) => {
   gap: 6px;
   font-size: 12px;
   font-weight: 600;
-  color: #606266;
-  margin-bottom: 8px;
+  color: var(--el-text-color-regular);
+  margin-bottom: 10px;
 }
 
 .detail-content {
   font-size: 13px;
   line-height: 1.6;
-  color: #303133;
+  color: var(--el-text-color-primary);
   white-space: pre-wrap;
   word-break: break-word;
-  padding: 12px;
-  background: #f5f7fa;
-  border-radius: 6px;
+  padding: 14px;
+  background: var(--el-fill-color-light);
+  border-radius: 8px;
 }
 
 .detail-content.clarified {
-  background: #f0f9eb;
-  border: 1px solid #e1f3d8;
+  background: var(--el-color-success-light-9);
+  border: 1px solid var(--el-color-success-light-7);
 }
 
 .detail-text {
   font-size: 13px;
-  color: #606266;
+  color: var(--el-text-color-regular);
 }
 
 .history-section {
@@ -241,8 +242,8 @@ const getMessageIcon = (message: ChatMessage) => {
   align-items: center;
   justify-content: space-between;
   padding: 12px 16px;
-  background: #fafafa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-fill-color-lighter);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .section-header .section-title {
@@ -251,13 +252,13 @@ const getMessageIcon = (message: ChatMessage) => {
 
 .round-count {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .empty-history {
-  padding: 20px;
+  padding: 24px;
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   font-size: 13px;
 }
 
@@ -269,7 +270,7 @@ const getMessageIcon = (message: ChatMessage) => {
 
 .history-item {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   margin-bottom: 16px;
 }
 
@@ -281,7 +282,7 @@ const getMessageIcon = (message: ChatMessage) => {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: #f0f2f5;
+  background: var(--el-fill-color);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -290,7 +291,7 @@ const getMessageIcon = (message: ChatMessage) => {
 }
 
 .message-assistant .item-avatar {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9);
 }
 
 .item-content {
@@ -302,36 +303,36 @@ const getMessageIcon = (message: ChatMessage) => {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 
 .message-role {
   font-size: 11px;
   font-weight: 500;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .message-time {
   font-size: 11px;
-  color: #c0c4cc;
+  color: var(--el-text-color-placeholder);
 }
 
 .message-text {
   font-size: 13px;
   line-height: 1.5;
-  color: #303133;
-  padding: 10px 12px;
+  color: var(--el-text-color-primary);
+  padding: 10px 14px;
   border-radius: 8px;
   word-break: break-word;
 }
 
 .message-user .message-text {
-  background: #ecf5ff;
+  background: var(--el-color-primary-light-9);
   border-bottom-left-radius: 2px;
 }
 
 .message-assistant .message-text {
-  background: #f4f4f5;
+  background: var(--el-fill-color);
   border-bottom-right-radius: 2px;
 }
 
@@ -341,17 +342,17 @@ const getMessageIcon = (message: ChatMessage) => {
 }
 
 .message-text.clickable:hover {
-  background: #d9ecff;
+  background: var(--el-color-primary-light-8);
 }
 
 .follow-up-section {
   padding: 12px 16px;
-  background: #fffbf0;
-  border-top: 1px solid #ffd591;
+  background: var(--el-color-warning-light-9);
+  border-top: 1px solid var(--el-color-warning-light-5);
 }
 
 .follow-up-section .section-title {
-  color: #d48806;
+  color: var(--el-color-warning);
 }
 
 .follow-up-list {

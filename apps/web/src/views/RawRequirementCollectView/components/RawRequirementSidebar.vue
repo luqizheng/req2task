@@ -139,45 +139,46 @@ const isClarified = (status: RawRequirementStatus) => {
 .raw-requirement-sidebar {
   display: flex;
   flex-direction: column;
-  width: 30%;
+  width: 100%;
   height: 100%;
-  background: white;
-  border-left: 1px solid #e4e7ed;
+  background: var(--el-bg-color);
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 16px;
-  background: #f5f7fa;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--el-fill-color-light);
+  border-bottom: 1px solid var(--el-border-color-lighter);
 }
 
 .sidebar-header h3 {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
-  color: #303133;
+  color: var(--el-text-color-primary);
 }
 
 .count-badge {
-  padding: 2px 8px;
-  background: #409eff;
+  padding: 2px 10px;
+  background: var(--el-color-primary);
   color: white;
-  border-radius: 10px;
+  border-radius: 12px;
   font-size: 12px;
+  font-weight: 500;
 }
 
 .sidebar-content {
   flex: 1;
   overflow-y: auto;
+  padding: 8px 0;
 }
 
 .empty-list {
-  padding: 40px 20px;
+  padding: 48px 20px;
   text-align: center;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .empty-list p {
@@ -185,19 +186,20 @@ const isClarified = (status: RawRequirementStatus) => {
 }
 
 .requirement-item {
-  padding: 12px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
   cursor: pointer;
   transition: background 0.2s;
 }
 
 .requirement-item:hover {
-  background: #fafafa;
+  background: var(--el-fill-color-light);
 }
 
 .requirement-item.active {
-  background: #ecf5ff;
-  border-left: 3px solid #409eff;
+  background: var(--el-color-primary-light-9);
+  border-left: 3px solid var(--el-color-primary);
+  padding-left: 13px;
 }
 
 .item-header {
@@ -209,19 +211,19 @@ const isClarified = (status: RawRequirementStatus) => {
 
 .item-time {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
 }
 
 .item-content {
   font-size: 13px;
-  color: #303133;
+  color: var(--el-text-color-primary);
   line-height: 1.5;
   margin-bottom: 4px;
 }
 
 .item-source {
   font-size: 12px;
-  color: #909399;
+  color: var(--el-text-color-secondary);
   margin-bottom: 8px;
 }
 

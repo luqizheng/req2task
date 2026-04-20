@@ -11,35 +11,27 @@ import {
   VectorStoreController,
   ConflictDetectionController,
   TaskDecompositionController,
-  AIChatController,
-  AIConversationController,
 } from './controllers';
 import {
   LLMConfig,
   RawRequirement,
   Task,
-  Conversation,
-  ConversationMessage,
   LLMService,
   PromptService,
   RenderService,
   ChromaVectorStore,
-  AIChatService,
-  AIConversationService,
   FileParserService,
 } from '@req2task/core';
 import { Repository } from 'typeorm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task, Conversation, ConversationMessage])],
+  imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task])],
   controllers: [
     LlmConfigController,
     RequirementGenerationController,
     VectorStoreController,
     ConflictDetectionController,
     TaskDecompositionController,
-    AIChatController,
-    AIConversationController,
   ],
   providers: [
     AiService,
@@ -73,49 +65,9 @@ import { Repository } from 'typeorm';
       },
     },
     {
-      provide: AIChatService,
-      inject: [
-        getRepositoryToken(Conversation),
-        getRepositoryToken(ConversationMessage),
-      ],
-      useFactory: (
-        conversationRepo: Repository<Conversation>,
-        messageRepo: Repository<ConversationMessage>,
-        llmService: LLMService,
-        fileParser: FileParserService,
-      ) => {
-        return new AIChatService(
-          conversationRepo,
-          messageRepo,
-          llmService,
-          fileParser,
-        );
-      },
-    },
-    {
       provide: FileParserService,
       useFactory: () => {
         return new FileParserService();
-      },
-    },
-    {
-      provide: AIConversationService,
-      inject: [
-        getRepositoryToken(Conversation),
-        getRepositoryToken(ConversationMessage),
-      ],
-      useFactory: (
-        conversationRepo: Repository<Conversation>,
-        messageRepo: Repository<ConversationMessage>,
-        llmService: LLMService,
-        fileParser: FileParserService,
-      ) => {
-        return new AIConversationService(
-          conversationRepo,
-          messageRepo,
-          llmService,
-          fileParser,
-        );
       },
     },
   ],
@@ -128,8 +80,6 @@ import { Repository } from 'typeorm';
     PromptService,
     RenderService,
     ChromaVectorStore,
-    AIChatService,
-    AIConversationService,
     FileParserService,
   ],
 })

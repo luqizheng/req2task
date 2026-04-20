@@ -1,6 +1,7 @@
-import { Module } from "@nestjs/common";
+import { Module, OnModuleInit } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { HttpModule } from "@nestjs/axios";
+import * as nacos from "nacos";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
 import {
@@ -35,6 +36,15 @@ import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ConversationModule } from "./conversation/conversation.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
+
+const nacosConfig = {
+  serverAddr: `${process.env.NACOS_HOST || "localhost"}:${process.env.NACOS_PORT || "8848"}`,
+  namespace: process.env.NACOS_NAMESPACE || "",
+  username: process.env.NACOS_USERNAME || "nacos",
+  password: process.env.NACOS_PASSWORD || "nacos",
+};
+
+export const nacosClient = new nacos.NacosConfigClient(nacosConfig);
 
 @Module({
   imports: [
@@ -87,4 +97,13 @@ import { ProjectAttachmentModule } from "./project-attachment/project-attachment
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements OnModuleInit {
+  async onModuleInit() {
+    try {
+      await nacosClient.ready();
+      console.log("Nacos config client connected successfully");
+    } catch (error) {
+      console.warn("Nacos config client connection failed:", error);
+    }
+  }
+}

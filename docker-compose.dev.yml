@@ -143,10 +143,8 @@ services:
       - ai-sowf-dev-network
   # Gateway 服务
   gateway:
-    build:
-      context: .
-      dockerfile: apps/gateway/Dockerfile
-    container_name: ai-sowf-gateway
+    image: zhcoder-docker-registry.com:8000/coder/req2task-gateway:1.0
+    container_name: gateway
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
     environment:
@@ -164,7 +162,7 @@ services:
       - CIRCUIT_BREAKER_RESET_TIMEOUT=30000
       - THROTTLE_TTL=60000
       - THROTTLE_LIMIT=100
-      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:5173}
+      - CORS_ORIGIN=*
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_PASSWORD=${REDIS_PASSWORD}
@@ -177,7 +175,15 @@ services:
     networks:
       - ai-sowf-dev-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/health/live"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/api/health/live",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

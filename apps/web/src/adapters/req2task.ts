@@ -113,15 +113,23 @@ export const req2taskAdapter: MessageAdapter = {
       const req = request as Record<string, unknown>;
 
       let transformedRequest: Record<string, unknown> = {
-        message: req.message || req.content || '',
+        content: req.content || req.message || '',
       };
-
-      if (req.sessionId) {
-        transformedRequest.sessionId = req.sessionId;
-      }
 
       if (req.conversationId) {
         transformedRequest.conversationId = req.conversationId;
+      }
+
+      if (req.files) {
+        transformedRequest.files = req.files;
+      }
+
+      if (req.configId) {
+        transformedRequest.configId = req.configId;
+      }
+
+      if (req.systemPrompt) {
+        transformedRequest.systemPrompt = req.systemPrompt;
       }
 
       if (options?.mapping) {
@@ -143,6 +151,10 @@ export const req2taskAdapter: MessageAdapter = {
     try {
       const res = response as Record<string, unknown>;
 
+      if ('type' in res) {
+        return res;
+      }
+
       if (res.code !== 0) {
         return {
           type: 'error',
@@ -163,6 +175,7 @@ export const req2taskAdapter: MessageAdapter = {
         return {
           type: 'content',
           content: data.content,
+          configId: data.configId,
         };
       }
 

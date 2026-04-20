@@ -590,35 +590,53 @@ export class CommentService {
 
 | 功能 | 状态 | 文件 |
 |------|------|------|
-| Conversation 实体改造 | ✅ 完成 | `conversation.entity.ts` |
+| Conversation 实体改造（移除 collectionId/rawRequirementId） | ✅ 完成 | `conversation.entity.ts` |
 | Requirement 实体添加 conversationId | ✅ 完成 | `requirement.entity.ts` |
 | Task 实体添加 conversationId | ✅ 完成 | `task.entity.ts` |
 | AIConversationService | ✅ 完成 | `ai-conversation.service.ts` |
 | AIConversationController | ✅ 完成 | `ai-conversation.controller.ts` |
-| 数据库迁移文件 | ✅ 完成 | `1745080000000-AddConversationIdToEntities.ts` |
+| DTO 更新 | ✅ 完成 | `dto/conversation/dto.ts` |
+| 数据库迁移文件 | ✅ 完成 | `1745080000000-RefactorConversationEntity.ts` |
 
 ### 5.2 待完成
 
 | 功能 | 优先级 | 说明 |
 |------|--------|------|
 | 业务层集成示例 | P1 | RequirementService/TaskService 集成示例 |
-| 清理旧字段 | P2 | 移除 Conversation 的 collectionId/rawRequirementId |
 | 评论子系统 | P2 | 见第二部分设计 |
 
-### 5.3 API 端点
+### 5.3 Conversation 实体最终结构
 
-```
-POST   /ai/conversations                    - 创建会话
-GET    /ai/conversations/:id                - 获取会话信息
-GET    /ai/conversations/:id/messages      - 获取消息列表
-POST   /ai/conversations/:id/messages      - 发送消息
-SSE    /ai/conversations/:id/stream        - 流式消息
-DELETE /ai/conversations/:id                - 清空会话
-POST   /ai/conversations/:id/archive       - 归档会话
-POST   /ai/conversations/:id/link/:nextId  - 链接下一会话
+```typescript
+@Entity("conversations")
+export class Conversation {
+  id!: string;
+  nextConversationId!: string | null;  // 链表指针
+  title!: string | null;
+  status!: ConversationStatus;
+  conversationType!: string;           // 会话类型
+  messageCount!: number;
+  summary!: string | null;
+  metadata!: Record<string, unknown> | null;  // 业务元数据
+  createdAt!: Date;
+  updatedAt!: Date;
+}
 ```
 
-### 5.4 运行迁移
+### 5.4 API 端点
+
+| 接口 | 方法 | 功能 |
+|------|------|------|
+| `/ai/conversations` | POST | 创建会话 |
+| `/ai/conversations/:id` | GET | 获取会话信息 |
+| `/ai/conversations/:id/messages` | GET | 获取消息列表 |
+| `/ai/conversations/:id/messages` | POST | 发送消息 |
+| `/ai/conversations/:id/stream` | SSE | 流式消息 |
+| `/ai/conversations/:id` | DELETE | 清空会话 |
+| `/ai/conversations/:id/archive` | POST | 归档会话 |
+| `/ai/conversations/:id/link/:nextId` | POST | 链接下一会话 |
+
+### 5.5 运行迁移
 
 ```bash
 pnpm db:migration:run

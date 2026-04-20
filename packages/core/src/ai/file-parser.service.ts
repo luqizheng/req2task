@@ -1,5 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { FileContent } from './ai-chat.service';
+
+interface FileContent {
+  type: 'text' | 'docx' | 'pdf' | 'audio';
+  data: string;
+  name?: string;
+}
 
 @Injectable()
 export class FileParserService {

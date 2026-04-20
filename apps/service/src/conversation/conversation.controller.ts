@@ -12,7 +12,7 @@ import {
   Headers,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { ConversationService } from '@req2task/core';
+import { ConversationService, Conversation, ConversationMessage } from '@req2task/core';
 import {
   CreateConversationDto,
   SendMessageDto,
@@ -37,6 +37,34 @@ interface AuthenticatedRequest {
   };
 }
 
+function toConversationDto(c: Conversation): ConversationDto {
+  return {
+    id: c.id,
+    title: c.title,
+    status: c.status,
+    conversationType: c.conversationType,
+    messageCount: c.messageCount,
+    summary: c.summary,
+    metadata: c.metadata,
+    nextConversationId: c.nextConversationId,
+    createdAt: c.createdAt,
+    updatedAt: c.updatedAt,
+    messages: c.messages?.map(toMessageDto),
+  };
+}
+
+function toMessageDto(m: ConversationMessage): ConversationMessageDto {
+  return {
+    id: m.id,
+    conversationId: m.conversationId,
+    role: m.role,
+    content: m.content,
+    rawRequirementId: m.rawRequirementId,
+    metadata: m.metadata,
+    createdAt: m.createdAt,
+  };
+}
+
 @Controller('conversations')
 @UseGuards(AuthGuard('jwt'))
 export class ConversationController {
@@ -47,7 +75,7 @@ export class ConversationController {
     @Body() dto: CreateConversationDto,
   ): Promise<ApiResponse<ConversationDto>> {
     const result = await this.conversationService.createConversation(dto);
-    return { code: 0, data: result };
+    return { code: 0, data: toConversationDto(result) };
   }
 
   @Get()
@@ -61,7 +89,7 @@ export class ConversationController {
       limit: query.limit,
       offset: query.offset,
     });
-    return { code: 0, data: result };
+    return { code: 0, data: result.map(toConversationDto) };
   }
 
   @Get(':id')
@@ -72,7 +100,7 @@ export class ConversationController {
     if (!result) {
       return { code: 1, message: '会话不存在' };
     }
-    return { code: 0, data: result };
+    return { code: 0, data: toConversationDto(result) };
   }
 
   @Patch(':id')
@@ -81,7 +109,7 @@ export class ConversationController {
     @Body() dto: UpdateConversationDto,
   ): Promise<ApiResponse<ConversationDto>> {
     const result = await this.conversationService.updateConversation(id, dto);
-    return { code: 0, data: result };
+    return { code: 0, data: toConversationDto(result) };
   }
 
   @Delete(':id')

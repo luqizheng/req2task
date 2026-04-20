@@ -148,7 +148,7 @@ export class FileConversionService {
       await fs.promises.writeFile(tempFilePath, buffer);
 
       const formData = new FormData();
-      const blob = new Blob([buffer], { type: mimeType });
+      const blob = new Blob([buffer as BlobPart], { type: mimeType });
       formData.append('file', blob, originalName);
       formData.append('model', this.whisperModel);
       formData.append('response_format', 'text');

@@ -54,6 +54,7 @@ export class ConversationMessageDto {
   conversationId!: string;
   role!: MessageRole;
   content!: string;
+  rawRequirementId?: string | null;
   metadata?: Record<string, unknown> | null;
   createdAt!: Date;
 }
@@ -96,6 +97,14 @@ export class ConversationDto {
 }
 
 export class ConversationListQueryDto {
+  @IsOptional()
+  @IsString()
+  collectionId?: string;
+
+  @IsOptional()
+  @IsString()
+  rawRequirementId?: string;
+
   @IsOptional()
   @IsEnum(ConversationStatus)
   status?: ConversationStatus;

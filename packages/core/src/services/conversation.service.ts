@@ -55,12 +55,19 @@ export class ConversationService {
   ) {}
 
   async createConversation(dto: CreateConversationDto): Promise<Conversation> {
+    const metadata: Record<string, unknown> = {};
+    if (dto.collectionId) {
+      metadata.collectionId = dto.collectionId;
+    }
+    if (dto.rawRequirementId) {
+      metadata.rawRequirementId = dto.rawRequirementId;
+    }
+
     const conversation = this.conversationRepo.create({
-      collectionId: dto.collectionId || null,
-      rawRequirementId: dto.rawRequirementId || null,
       title: dto.title || null,
       status: ConversationStatus.ACTIVE,
       messageCount: 0,
+      metadata: Object.keys(metadata).length > 0 ? metadata : null,
     });
     return this.conversationRepo.save(conversation);
   }
@@ -76,10 +83,10 @@ export class ConversationService {
     const query = this.conversationRepo.createQueryBuilder('conversation');
 
     if (options.collectionId) {
-      query.andWhere('conversation.collection_id = :collectionId', { collectionId: options.collectionId });
+      query.andWhere("conversation.metadata->>'collectionId' = :collectionId", { collectionId: options.collectionId });
     }
     if (options.rawRequirementId) {
-      query.andWhere('conversation.raw_requirement_id = :rawRequirementId', { rawRequirementId: options.rawRequirementId });
+      query.andWhere("conversation.metadata->>'rawRequirementId' = :rawRequirementId", { rawRequirementId: options.rawRequirementId });
     }
     if (options.status) {
       query.andWhere('conversation.status = :status', { status: options.status });

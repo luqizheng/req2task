@@ -1,0 +1,9 @@
+{
+  "name": "@req2task/gateway",
+  "version": "1.0.0",
+  "main": "gateway.js",
+  "dependencies": {
+    "http-proxy": "1.18.1",
+    "liten-gateway": "1.3.0"
+  }
+}

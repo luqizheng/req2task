@@ -16,7 +16,7 @@ services:
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -35,7 +35,7 @@ services:
       - redis_dev_data:/data
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
     healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -81,7 +81,15 @@ services:
       - RUSTFS_CONSOLE_ENABLE=true
       - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/"]
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:9000/",
+        ]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -116,6 +124,43 @@ services:
     networks:
       - ai-sowf-dev-network
 
+  # Nacos 配置中心服务
+  r-nacos:
+    image: zhcoder-docker-registry.com:8000/official/qingpan/rnacos:stable
+    container_name: ai-sowf-nacos
+    ports:
+      - "${NACOS_PORT:-8848}:8848"
+      - "9848:9848"
+      - "10848:10848"
+    volumes:
+      - nacos_data:/io:rw
+    environment:
+      - RNACOS_GMT_OFFSET_HOURS=8
+      - RNACOS_INIT_ADMIN_USERNAME=${NACOS_ADMIN_USERNAME:-admin}
+      - RNACOS_INIT_ADMIN_PASSWORD=${NACOS_ADMIN_PASSWORD:-nacos}
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+  # Gateway 服务
+  gateway:
+    image: zhcoder-docker-registry.com:8000/coder/req2task-gateway:1.0
+    container_name: ai-sowf-gateway
+    ports:
+      - "${GATEWAY_PORT:-3000}:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - NACOS_HOST=r-nacos
+      - NACOS_PORT=8848
+      - NACOS_TIMEOUT=3000
+      - CACHE_TTL=5000
+      - PROXY_TIMEOUT=10000
+    depends_on:
+      - redis
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+
 volumes:
   postgres_dev_data:
     name: ai-sowf-postgres-dev-data
@@ -129,6 +174,8 @@ volumes:
     name: ai-sowf-rustfs-dev-logs
   chromadb_data:
     name: ai-sowf-chromadb-data
+  nacos_data:
+    name: ai-sowf-nacos-data
 
 networks:
   ai-sowf-dev-network:

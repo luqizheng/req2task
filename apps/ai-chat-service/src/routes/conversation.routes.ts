@@ -3,9 +3,7 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { ConversationService } from '../services/conversation.service.js';
 import { LLMService } from '../services/llm.service.js';
-import { LLMConfigService } from '../services/llm-config.service.js';
 import { logger } from '../utils/logger.js';
-import type { CreateConversationRequest } from '../types.js';
 import {
   CreateConversationDto,
   SendMessageDto,
@@ -33,8 +31,7 @@ async function validateDto<T extends object>(dtoClass: new () => T, body: unknow
 
 export function createConversationRoutes(
   conversationService: ConversationService,
-  llmService: LLMService,
-  llmConfigService: LLMConfigService
+  llmService: LLMService
 ): Router {
   const router = Router();
 

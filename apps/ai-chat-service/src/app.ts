@@ -1,11 +1,10 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import { createConversationRoutes } from './routes/conversation.routes.js';
-import { createLLMConfigRoutes } from './routes/llm-config.routes.js';
 import { createTextRoutes } from './routes/text.routes.js';
 import { ConversationService } from './services/conversation.service.js';
-import { LLMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
+import { ServiceApiService } from './services/service-api.service.js';
 import { initializeDatabase, dataSource } from './database/index.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
@@ -20,15 +19,18 @@ export async function createApp(): Promise<Express> {
   logger.info('Database initialized');
 
   const conversationService = new ConversationService(dataSource);
-  const llmConfigService = new LLMConfigService(dataSource);
-  const defaultLLMConfig = await llmConfigService.getDefault();
+  const serviceApiService = new ServiceApiService();
+  
+  const defaultLLMConfig = await serviceApiService.getDefaultLLMConfig();
   if (!defaultLLMConfig) {
-    throw new Error('No default LLM config found. Please configure an LLM provider first.');
+    throw new Error('No default LLM config found. Please configure an LLM provider in the main service first.');
   }
-  const llmService = new LLMService(
-    defaultLLMConfig.apiKey,
-    defaultLLMConfig.modelName
-  );
+  
+  if (!defaultLLMConfig.apiKey) {
+    throw new Error('Default LLM config has no API key configured.');
+  }
+  
+  const llmService = new LLMService(defaultLLMConfig.apiKey, defaultLLMConfig.modelName);
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({
@@ -39,8 +41,7 @@ export async function createApp(): Promise<Express> {
     });
   });
 
-  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService, llmConfigService));
-  app.use('/api/ai/llm-configs', createLLMConfigRoutes(llmConfigService, llmService));
+  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
   app.use('/api/ai/text', createTextRoutes(llmService));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

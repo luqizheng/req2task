@@ -16,6 +16,7 @@ export interface AppConfig {
 export interface Config {
   app: AppConfig;
   database: DatabaseConfig;
+  serviceApiUrl: string;
 }
 
 function getEnv(key: string, defaultValue?: string): string {
@@ -43,4 +44,5 @@ export const config: Config = {
     password: getEnv('DATABASE_PASSWORD', 'postgres'),
     database: getEnv('DATABASE_NAME', 'ai_chat'),
   },
+  serviceApiUrl: getEnv('SERVICE_API_URL', 'http://localhost:4000'),
 };

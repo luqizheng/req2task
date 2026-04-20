@@ -59,48 +59,6 @@ export interface CreateConversationRequest {
   configId?: string;
 }
 
-export interface LLMConfig {
-  id: string;
-  name: string;
-  provider: LLMProviderType;
-  apiKey?: string;
-  baseUrl?: string | null;
-  modelName: string;
-  maxTokens: number;
-  temperature: number;
-  topP: number;
-  isActive: boolean;
-  isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-export interface CreateLLMConfigRequest {
-  name: string;
-  provider: LLMProviderType;
-  apiKey?: string;
-  baseUrl?: string;
-  modelName: string;
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  isActive?: boolean;
-  isDefault?: boolean;
-}
-
-export interface UpdateLLMConfigRequest {
-  name?: string;
-  provider?: LLMProviderType;
-  apiKey?: string;
-  baseUrl?: string;
-  modelName?: string;
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  isActive?: boolean;
-  isDefault?: boolean;
-}
-
 export interface LLMConfigMetadata {
   provider: LLMProviderType;
   modelName: string;

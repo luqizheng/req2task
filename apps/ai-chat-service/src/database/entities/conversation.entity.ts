@@ -6,7 +6,7 @@ import {
   UpdateDateColumn,
   OneToMany,
 } from 'typeorm';
-import { ConversationMessage } from './conversation-message.entity.js';
+import type { ConversationMessage } from './conversation-message.entity.js';
 
 export enum ConversationStatus {
   ACTIVE = 'active',
@@ -50,7 +50,7 @@ export class Conversation {
   @Column({ name: 'system_prompt', type: 'text', default: '' })
   systemPrompt!: string;
 
-  @OneToMany(() => ConversationMessage, (m) => m.conversation, {
+  @OneToMany('ConversationMessage', 'conversation', {
     cascade: true,
   })
   messages!: ConversationMessage[];

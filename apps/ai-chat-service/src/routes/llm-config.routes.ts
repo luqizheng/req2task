@@ -1,8 +1,14 @@
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 import { LLMConfigService } from '../services/llm-config.service.js';
 import { LLMService } from '../services/llm.service.js';
-import { LLMProviderType } from '../types.js';
+import {
+  CreateLLMConfigDto,
+  UpdateLLMConfigDto,
+  LLMConfigResponseDto,
+  TestLLMConfigDto,
+} from '@req2task/dto';
 import { logger } from '../utils/logger.js';
 
 interface ApiResponse<T> {
@@ -11,31 +17,14 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-const createSchema = z.object({
-  name: z.string().min(1),
-  provider: z.nativeEnum(LLMProviderType),
-  apiKey: z.string().optional(),
-  baseUrl: z.string().optional(),
-  modelName: z.string().min(1),
-  maxTokens: z.number().optional(),
-  temperature: z.number().optional(),
-  topP: z.number().optional(),
-  isActive: z.boolean().optional(),
-  isDefault: z.boolean().optional(),
-});
-
-const updateSchema = z.object({
-  name: z.string().min(1).optional(),
-  provider: z.nativeEnum(LLMProviderType).optional(),
-  apiKey: z.string().optional(),
-  baseUrl: z.string().optional(),
-  modelName: z.string().min(1).optional(),
-  maxTokens: z.number().optional(),
-  temperature: z.number().optional(),
-  topP: z.number().optional(),
-  isActive: z.boolean().optional(),
-  isDefault: z.boolean().optional(),
-});
+async function validateDto<T extends object>(dtoClass: new () => T, body: unknown): Promise<T | null> {
+  const dto = plainToInstance(dtoClass, body);
+  const errors = await validate(dto as object);
+  if (errors.length > 0) {
+    return null;
+  }
+  return dto;
+}
 
 export function createLLMConfigRoutes(
   llmConfigService: LLMConfigService,
@@ -45,12 +34,12 @@ export function createLLMConfigRoutes(
 
   router.post('/', async (req: Request, res: Response) => {
     try {
-      const validation = createSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ code: 1, message: validation.error.message } as ApiResponse<null>);
+      const dto = await validateDto(CreateLLMConfigDto, req.body);
+      if (!dto) {
+        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
       }
 
-      const config = await llmConfigService.create(validation.data);
+      const config = await llmConfigService.create(dto);
       logger.info({ configId: config.id }, 'LLM Config created');
       return res.status(201).json({ code: 0, data: config } as ApiResponse<unknown>);
     } catch (error) {
@@ -84,12 +73,12 @@ export function createLLMConfigRoutes(
 
   router.put('/:id', async (req: Request, res: Response) => {
     try {
-      const validation = updateSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ code: 1, message: validation.error.message } as ApiResponse<null>);
+      const dto = await validateDto(UpdateLLMConfigDto, req.body);
+      if (!dto) {
+        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
       }
 
-      const config = await llmConfigService.update(req.params['id']!, validation.data);
+      const config = await llmConfigService.update(req.params['id']!, dto);
       if (!config) {
         return res.status(404).json({ code: 1, message: 'LLM Config not found' } as ApiResponse<null>);
       }

@@ -8,13 +8,6 @@ export interface DatabaseConfig {
   database: string;
 }
 
-export interface LLMConfig {
-  apiKey: string;
-  defaultModel: string;
-  baseUrl?: string;
-  provider: 'openai' | 'ollama';
-}
-
 export interface AppConfig {
   port: number;
   nodeEnv: string;
@@ -23,7 +16,6 @@ export interface AppConfig {
 export interface Config {
   app: AppConfig;
   database: DatabaseConfig;
-  llm: LLMConfig;
 }
 
 function getEnv(key: string, defaultValue?: string): string {
@@ -50,11 +42,5 @@ export const config: Config = {
     username: getEnv('DATABASE_USER', 'postgres'),
     password: getEnv('DATABASE_PASSWORD', 'postgres'),
     database: getEnv('DATABASE_NAME', 'ai_chat'),
-  },
-  llm: {
-    apiKey: getEnv('OPENAI_API_KEY', ''),
-    defaultModel: getEnv('DEFAULT_MODEL', 'gpt-4o-mini'),
-    baseUrl: process.env['OLLAMA_BASE_URL'] || undefined,
-    provider: (getEnv('DEFAULT_PROVIDER', 'openai') as 'openai' | 'ollama'),
   },
 };

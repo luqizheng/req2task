@@ -6,7 +6,7 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Conversation } from './conversation.entity.js';
+import type { Conversation } from './conversation.entity.js';
 
 @Entity('conversation_messages')
 export class ConversationMessage {
@@ -16,7 +16,7 @@ export class ConversationMessage {
   @Column({ name: 'conversation_id', type: 'uuid' })
   conversationId!: string;
 
-  @ManyToOne(() => Conversation, (c) => c.messages, { onDelete: 'CASCADE' })
+  @ManyToOne('Conversation', 'messages', { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'conversation_id' })
   conversation!: Conversation;
 

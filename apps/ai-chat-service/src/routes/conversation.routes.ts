@@ -1,10 +1,15 @@
 import { Router, Request, Response } from 'express';
-import { z } from 'zod';
+import { validate } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 import { ConversationService } from '../services/conversation.service.js';
 import { LLMService } from '../services/llm.service.js';
 import { LLMConfigService } from '../services/llm-config.service.js';
 import { logger } from '../utils/logger.js';
 import type { CreateConversationRequest } from '../types.js';
+import {
+  CreateConversationDto,
+  SendMessageDto,
+} from '@req2task/dto';
 
 interface ApiResponse<T> {
   code: number;
@@ -12,23 +17,14 @@ interface ApiResponse<T> {
   message?: string;
 }
 
-const createSchema = z.object({
-  collectionId: z.string().optional(),
-  rawRequirementId: z.string().optional(),
-  title: z.string().optional(),
-  systemPrompt: z.string().optional(),
-  configId: z.string().optional(),
-});
-
-const messageSchema = z.object({
-  content: z.string().min(1),
-  files: z.array(z.object({
-    type: z.enum(['text', 'docx', 'pdf', 'audio']),
-    data: z.string(),
-    name: z.string().optional(),
-  })).optional(),
-  configId: z.string().optional(),
-});
+async function validateDto<T extends object>(dtoClass: new () => T, body: unknown): Promise<T | null> {
+  const dto = plainToInstance(dtoClass, body);
+  const errors = await validate(dto as object);
+  if (errors.length > 0) {
+    return null;
+  }
+  return dto;
+}
 
 export function createConversationRoutes(
   conversationService: ConversationService,
@@ -39,12 +35,12 @@ export function createConversationRoutes(
 
   router.post('/', async (req: Request, res: Response) => {
     try {
-      const validation = createSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ code: 1, message: validation.error.message } as ApiResponse<null>);
+      const dto = await validateDto(CreateConversationDto, req.body);
+      if (!dto) {
+        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
       }
 
-      const conversation = await conversationService.create(validation.data);
+      const conversation = await conversationService.create(dto);
       logger.info({ conversationId: conversation.id }, 'Conversation created');
       return res.status(201).json({ code: 0, data: { id: conversation.id } } as ApiResponse<{ id: string }>);
     } catch (error) {
@@ -131,9 +127,9 @@ export function createConversationRoutes(
 
   router.post('/:id/messages', async (req: Request, res: Response) => {
     try {
-      const validation = messageSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ code: 1, message: validation.error.message } as ApiResponse<null>);
+      const dto = await validateDto(SendMessageDto, req.body);
+      if (!dto) {
+        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
       }
 
       const conversation = await conversationService.getById(req.params['id']!);
@@ -141,7 +137,7 @@ export function createConversationRoutes(
         return res.status(404).json({ code: 1, message: 'Conversation not found' } as ApiResponse<null>);
       }
 
-      const { content, files } = validation.data;
+      const { content, files } = dto;
 
       await conversationService.addMessage(req.params['id']!, {
         role: 'user',
@@ -192,9 +188,9 @@ export function createConversationRoutes(
 
   router.post('/:id/messages/stream', async (req: Request, res: Response) => {
     try {
-      const validation = messageSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json({ code: 1, message: validation.error.message } as ApiResponse<null>);
+      const dto = await validateDto(SendMessageDto, req.body);
+      if (!dto) {
+        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
       }
 
       const conversation = await conversationService.getById(req.params['id']!);
@@ -202,7 +198,7 @@ export function createConversationRoutes(
         return res.status(404).json({ code: 1, message: 'Conversation not found' } as ApiResponse<null>);
       }
 
-      const { content, files } = validation.data;
+      const { content, files } = dto;
 
       await conversationService.addMessage(req.params['id']!, {
         role: 'user',

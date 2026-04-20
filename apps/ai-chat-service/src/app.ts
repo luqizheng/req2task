@@ -21,13 +21,20 @@ export async function createApp(): Promise<Express> {
 
   const conversationService = new ConversationService(dataSource);
   const llmConfigService = new LLMConfigService(dataSource);
-  const llmService = new LLMService(config.llm.apiKey, config.llm.defaultModel);
+  const defaultLLMConfig = await llmConfigService.getDefault();
+  if (!defaultLLMConfig) {
+    throw new Error('No default LLM config found. Please configure an LLM provider first.');
+  }
+  const llmService = new LLMService(
+    defaultLLMConfig.apiKey,
+    defaultLLMConfig.modelName
+  );
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
-      openaiConfigured: !!config.llm.apiKey,
+      llmConfigured: !!defaultLLMConfig,
       databaseConnected: dataSource.isInitialized,
     });
   });

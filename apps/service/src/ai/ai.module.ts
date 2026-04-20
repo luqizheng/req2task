@@ -79,7 +79,7 @@ import { Repository } from 'typeorm';
     },
     {
       provide: AIChatService,
-      inject: [HttpModule, FileParserService, PromptService],
+      inject: [HttpService, FileParserService, PromptService],
       useFactory: (httpService: HttpService, fileParserService: FileParserService, promptService: PromptService) => {
         return new AIChatService(httpService, fileParserService, promptService);
       },

@@ -26,7 +26,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
   });
 
-  const port = configService.get('PORT', 3000);
+  const port = configService.get('PORT', 8080);
   await app.listen(port);
   
   logger.log(`API Gateway 已启动在端口 ${port}`);

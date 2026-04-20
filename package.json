@@ -6,6 +6,8 @@
   "scripts": {
     "dev:web": "npx tsx scripts/dev-web.ts",
     "dev:service": "npx tsx scripts/dev-service.ts",
+    "dev:ai-chat-service": "pnpm -F @req2task/ai-chat-service dev",
+    "dev:file-conversion": "pnpm -F @req2task/file-conversion dev",
     "dev:infra": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env up -d",
     "dev:infra:stop": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env down",
     "check:env": "npx ts-node scripts/check-env.ts",
@@ -22,7 +24,8 @@
     "db:migration:run": "ts-node scripts/migration-run.ts",
     "db:migration:revert": "ts-node scripts/migration-revert.ts",
     "db:migration:show": "ts-node scripts/migration-show.ts",
-    "db:reset": "ts-node scripts/db-reset.ts"
+    "db:reset": "ts-node scripts/db-reset.ts",
+    "db:seed": "pnpm -F @req2task/service run seed"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.0.0",

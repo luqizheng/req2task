@@ -1092,10 +1092,13 @@ GET /api/raw-collections/:collectionId/raw-requirements
 
 ## 11. LLM 配置管理
 
+> **服务**: ai-chat-service  
+> **端点前缀**: `/api/ai/llm-configs`
+
 ### 11.1 创建配置
 
 ```http
-POST /api/llm/configs
+POST /api/ai/llm-configs
 ```
 
 **请求**
@@ -1104,9 +1107,9 @@ POST /api/llm/configs
 {
   "name": "DeepSeek 生产配置",
   "provider": "deepseek",
-  "modelId": "deepseek-chat",
+  "modelName": "deepseek-chat",
   "apiKey": "sk-xxx",
-  "apiEndpoint": "https://api.deepseek.com/v1",
+  "baseUrl": "https://api.deepseek.com/v1",
   "temperature": 0.7,
   "maxTokens": 2000,
   "timeout": 30000,
@@ -1118,39 +1121,39 @@ POST /api/llm/configs
 ### 11.2 配置列表
 
 ```http
-GET /api/llm/configs
+GET /api/ai/llm-configs
 ```
-
-**查询参数**
-| 参数 | 类型 | 说明 |
-|------|------|------|
-| provider | string | 提供商过滤 |
-| activeOnly | boolean | 只返回启用配置 |
-| page | number | 页码 |
-| limit | number | 每页数量 |
 
 ### 11.3 配置详情
 
 ```http
-GET /api/llm/configs/:id
+GET /api/ai/llm-configs/:id
 ```
 
 ### 11.4 更新配置
 
 ```http
-PUT /api/llm/configs/:id
+PUT /api/ai/llm-configs/:id
 ```
 
 ### 11.5 删除配置
 
 ```http
-DELETE /api/llm/configs/:id
+DELETE /api/ai/llm-configs/:id
 ```
 
-### 11.6 设置默认配置
+### 11.6 测试配置连接
 
 ```http
-POST /api/llm/configs/:id/set-default
+POST /api/ai/llm-configs/:id/test
+```
+
+**请求**
+
+```json
+{
+  "testMessage": "你好，请回复测试成功"
+}
 ```
 
 ### 11.7 LLM 调用

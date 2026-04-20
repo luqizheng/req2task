@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-04-19
+last_updated: 2026-04-20
 status: active
 owner: req2task团队
 ---
@@ -9,6 +9,8 @@ owner: req2task团队
 ## 概述
 
 本模块提供统一的LLM（大语言模型）服务封装，支持多种提供商，并提供完整的配置管理功能。
+
+**重要更新**：LLM 配置管理 API 已迁移至 `ai-chat-service`，统一通过 `/api/ai/llm-configs` 端点访问。
 
 ## 特性
 
@@ -188,18 +190,21 @@ GET /api/llm/health
 
 ### 配置管理 API
 
+> **服务**: ai-chat-service  
+> **端点前缀**: `/api/ai/llm-configs`
+
 #### 1. 创建配置
 
 ```http
-POST /api/llm/config
+POST /api/ai/llm-configs
 Content-Type: application/json
 
 {
   "name": "DeepSeek 配置",
   "provider": "deepseek",
-  "modelId": "deepseek-chat",
+  "modelName": "deepseek-chat",
   "apiKey": "sk-xxx",
-  "apiEndpoint": "https://api.deepseek.com/v1",
+  "baseUrl": "https://api.deepseek.com/v1",
   "isDefault": true
 }
 ```
@@ -207,19 +212,19 @@ Content-Type: application/json
 #### 2. 获取所有配置
 
 ```http
-GET /api/llm/config?provider=deepseek&activeOnly=true&page=1&limit=10
+GET /api/ai/llm-configs
 ```
 
-#### 3. 获取默认配置
+#### 3. 获取单个配置
 
 ```http
-GET /api/llm/config/default
+GET /api/ai/llm-configs/:id
 ```
 
 #### 4. 更新配置
 
 ```http
-PUT /api/llm/config/:id
+PUT /api/ai/llm-configs/:id
 Content-Type: application/json
 
 {
@@ -230,13 +235,18 @@ Content-Type: application/json
 #### 5. 删除配置
 
 ```http
-DELETE /api/llm/config/:id
+DELETE /api/ai/llm-configs/:id
 ```
 
-#### 6. 设置默认配置
+#### 6. 测试配置连接
 
 ```http
-POST /api/llm/config/:id/set-default
+POST /api/ai/llm-configs/:id/test
+Content-Type: application/json
+
+{
+  "testMessage": "你好，请回复测试成功"
+}
 ```
 
 ## 环境变量配置

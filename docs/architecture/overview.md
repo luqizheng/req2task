@@ -129,14 +129,4 @@ req2task/
 | ProjectMember | 项目参与者 | projectId, userId, role |
 | RequirementChangeLog | 变更追溯 | requirementId, changeType, oldValue, newValue |
 
-## 7. 全局命令
 
-```bash
-pnpm dev:web        # 启动前端开发服务器
-pnpm dev:service    # 启动后端开发服务器
-pnpm dev:infra      # 启动开发基础设施服务
-pnpm dev:infra:stop # 停止开发基础设施服务
-pnpm build          # 构建所有应用
-pnpm lint           # 检查所有代码
-pnpm test           # 运行所有测试
-```

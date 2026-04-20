@@ -9,6 +9,11 @@ import type { CreateConversationRequest } from '../types.js';
 import {
   CreateConversationDto,
   SendMessageDto,
+  ConversationListResponseDto,
+  CreateConversationResponseDto,
+  ConversationDto,
+  SendMessageResponseDto,
+  MessageListResponseDto,
 } from '@req2task/dto';
 
 interface ApiResponse<T> {
@@ -42,7 +47,7 @@ export function createConversationRoutes(
 
       const conversation = await conversationService.create(dto);
       logger.info({ conversationId: conversation.id }, 'Conversation created');
-      return res.status(201).json({ code: 0, data: { id: conversation.id } } as ApiResponse<{ id: string }>);
+      return res.status(201).json({ code: 0, data: { id: conversation.id } } as ApiResponse<CreateConversationResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Create conversation error');
       return res.status(500).json({ code: 1, message: 'Failed to create conversation' } as ApiResponse<null>);
@@ -53,8 +58,8 @@ export function createConversationRoutes(
     try {
       const limit = parseInt(req.query['limit'] as string) || 100;
       const offset = parseInt(req.query['offset'] as string) || 0;
-      const conversations = await conversationService.list(limit, offset);
-      return res.json({ code: 0, data: conversations } as ApiResponse<unknown>);
+      const result = await conversationService.list(limit, offset);
+      return res.json({ code: 0, data: result } as ApiResponse<ConversationListResponseDto>);
     } catch (error) {
       logger.error({ error }, 'List conversations error');
       return res.status(500).json({ code: 1, message: 'Failed to list conversations' } as ApiResponse<null>);
@@ -67,7 +72,7 @@ export function createConversationRoutes(
       if (!conversation) {
         return res.status(404).json({ code: 1, message: 'Conversation not found' } as ApiResponse<null>);
       }
-      return res.json({ code: 0, data: conversation } as ApiResponse<unknown>);
+      return res.json({ code: 0, data: conversation } as ApiResponse<ConversationDto>);
     } catch (error) {
       logger.error({ error }, 'Get conversation error');
       return res.status(500).json({ code: 1, message: 'Failed to get conversation' } as ApiResponse<null>);
@@ -78,8 +83,8 @@ export function createConversationRoutes(
     try {
       const limit = parseInt(req.query['limit'] as string) || 100;
       const offset = parseInt(req.query['offset'] as string) || 0;
-      const messages = await conversationService.getMessages(req.params['id']!, limit, offset);
-      return res.json({ code: 0, data: messages } as ApiResponse<unknown>);
+      const result = await conversationService.getMessages(req.params['id']!, limit, offset);
+      return res.json({ code: 0, data: result } as ApiResponse<MessageListResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Get messages error');
       return res.status(500).json({ code: 1, message: 'Failed to get messages' } as ApiResponse<null>);
@@ -173,13 +178,14 @@ export function createConversationRoutes(
         data: {
           message: {
             id: assistantMessage.id,
+            conversationId: req.params['id']!,
             role: 'assistant',
             content: response.content,
             createdAt: assistantMessage.createdAt,
           },
           metadata: { followUpQuestions, keyElements },
-        },
-      } as ApiResponse<unknown>);
+        } as SendMessageResponseDto,
+      } as ApiResponse<SendMessageResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Send message error');
       return res.status(500).json({ code: 1, message: 'Failed to send message' } as ApiResponse<null>);

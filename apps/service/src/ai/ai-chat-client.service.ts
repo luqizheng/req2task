@@ -1,6 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { firstValueFrom } from 'rxjs';
+import {
+  SendMessageDto as SendMessageRequestDto,
+  CreateConversationDto as CreateConversationRequestDto,
+  CreateConversationResponseDto,
+  ConversationDto,
+  SendMessageResponseDto,
+  ConversationListResponseDto,
+  MessageRole,
+} from '@req2task/dto';
 
 export interface SendMessageDto {
   content: string;
@@ -54,21 +63,21 @@ export class AIChatClientService {
     return response.data.data!;
   }
 
-  async getConversation(id: string): Promise<unknown> {
+  async getConversation(id: string): Promise<ConversationDto> {
     const response = await firstValueFrom(
-      this.httpService.get<ApiResponse<unknown>>(
+      this.httpService.get<ApiResponse<ConversationDto>>(
         `${this.baseUrl}/api/ai/conversations/${id}`,
       ),
     );
     if (response.data.code !== 0) {
       throw new Error(response.data.message || 'Failed to get conversation');
     }
-    return response.data.data;
+    return response.data.data!;
   }
 
-  async sendMessage(conversationId: string, dto: SendMessageDto): Promise<unknown> {
+  async sendMessage(conversationId: string, dto: SendMessageDto): Promise<SendMessageResponseDto> {
     const response = await firstValueFrom(
-      this.httpService.post<ApiResponse<unknown>>(
+      this.httpService.post<ApiResponse<SendMessageResponseDto>>(
         `${this.baseUrl}/api/ai/conversations/${conversationId}/messages`,
         dto,
       ),
@@ -76,19 +85,19 @@ export class AIChatClientService {
     if (response.data.code !== 0) {
       throw new Error(response.data.message || 'Failed to send message');
     }
-    return response.data.data;
+    return response.data.data!;
   }
 
   async getOrCreateConversation(dto: CreateConversationDto): Promise<{ id: string }> {
     try {
       if (dto.collectionId) {
-        const conversations = await firstValueFrom(
-          this.httpService.get<ApiResponse<unknown[]>>(
+        const response = await firstValueFrom(
+          this.httpService.get<ApiResponse<ConversationListResponseDto>>(
             `${this.baseUrl}/api/ai/conversations?collectionId=${dto.collectionId}`,
           ),
         );
-        if (conversations.data.code === 0 && conversations.data.data?.length) {
-          return { id: (conversations.data.data[0] as { id: string }).id };
+        if (response.data.code === 0 && response.data.data?.conversations.length) {
+          return { id: response.data.data.conversations[0].id };
         }
       }
     } catch {

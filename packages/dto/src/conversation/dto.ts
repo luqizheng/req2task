@@ -152,3 +152,25 @@ export class CreateSessionOptionsDto {
   type?: string;
   metadata?: Record<string, unknown>;
 }
+
+export class ConversationListResponseDto {
+  conversations!: SessionInfoDto[];
+  total!: number;
+}
+
+export class CreateConversationResponseDto {
+  id!: string;
+}
+
+export class SendMessageResponseDto {
+  message!: ConversationMessageDto;
+  metadata!: {
+    followUpQuestions?: string[];
+    keyElements?: string[];
+  };
+}
+
+export class MessageListResponseDto {
+  messages!: ConversationMessageDto[];
+  total!: number;
+}

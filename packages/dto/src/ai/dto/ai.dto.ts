@@ -157,10 +157,15 @@ export class TestLLMConfigDto {
 
 export class TestLLMResponseDto {
   success!: boolean;
-  content!: string;
+  content?: string;
   configId!: string;
   latencyMs?: number;
   error?: string;
+}
+
+export class LLMConfigListResponseDto {
+  configs!: LLMConfigResponseDto[];
+  total!: number;
 }
 
 export class PromptTemplateResponseDto {

@@ -2,6 +2,8 @@ import { Repository, DataSource } from 'typeorm';
 import { Conversation, ConversationStatus } from '../database/entities/conversation.entity.js';
 import { ConversationMessage } from '../database/entities/conversation-message.entity.js';
 import type { CreateConversationRequest, ConversationMetadata } from '../types.js';
+import type { ConversationListResponseDto, MessageListResponseDto } from '@req2task/dto';
+import { MessageRole } from '@req2task/dto';
 
 const DEFAULT_SYSTEM_PROMPT = `你是一个专业的需求分析师，帮助用户澄清和完善需求。
 请遵循以下原则：
@@ -161,25 +163,49 @@ export class ConversationService {
     return (result.affected ?? 0) > 0;
   }
 
-  async list(limit = 100, offset = 0): Promise<Conversation[]> {
-    return this.conversationRepo.find({
+  async list(limit = 100, offset = 0): Promise<ConversationListResponseDto> {
+    const [conversations, total] = await this.conversationRepo.findAndCount({
       where: { status: ConversationStatus.ACTIVE },
       order: { updatedAt: 'DESC' },
       take: limit,
       skip: offset,
     });
+
+    return {
+      conversations: conversations.map((c) => ({
+        id: c.id,
+        title: c.title,
+        status: c.status,
+        messageCount: c.messageCount,
+        createdAt: c.createdAt,
+        updatedAt: c.updatedAt,
+      })),
+      total,
+    };
   }
 
   async getMessages(
     conversationId: string,
     limit = 100,
     offset = 0
-  ): Promise<ConversationMessage[]> {
-    return this.messageRepo.find({
+  ): Promise<MessageListResponseDto> {
+    const [messages, total] = await this.messageRepo.findAndCount({
       where: { conversationId },
       order: { createdAt: 'ASC' },
       take: limit,
       skip: offset,
     });
+
+    return {
+      messages: messages.map((m) => ({
+        id: m.id,
+        conversationId: m.conversationId,
+        role: m.role as MessageRole,
+        content: m.content,
+        metadata: m.metadata,
+        createdAt: m.createdAt,
+      })),
+      total,
+    };
   }
 }

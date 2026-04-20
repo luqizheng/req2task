@@ -2,6 +2,7 @@ import { Repository, DataSource } from 'typeorm';
 import { LLMConfig } from '../database/entities/llm-config.entity.js';
 import { LLMProviderType } from '../types.js';
 import type { CreateLLMConfigRequest, UpdateLLMConfigRequest, LLMConfigMetadata } from '../types.js';
+import type { LLMConfigListResponseDto, LLMConfigResponseDto } from '@req2task/dto';
 
 export class LLMConfigService {
   private repo: Repository<LLMConfig>;
@@ -31,10 +32,27 @@ export class LLMConfigService {
     return this.repo.save(config);
   }
 
-  async findAll(): Promise<LLMConfig[]> {
-    return this.repo.find({
+  async findAll(): Promise<LLMConfigListResponseDto> {
+    const configs = await this.repo.find({
       order: { createdAt: 'DESC' },
     });
+
+    const responseConfigs: LLMConfigResponseDto[] = configs.map((c) => ({
+      id: c.id,
+      name: c.name,
+      provider: c.provider,
+      modelName: c.modelName,
+      baseUrl: c.baseUrl,
+      maxTokens: c.maxTokens,
+      temperature: c.temperature,
+      topP: c.topP,
+      isActive: c.isActive,
+      isDefault: c.isDefault,
+      createdAt: c.createdAt,
+      updatedAt: c.updatedAt,
+    }));
+
+    return { configs: responseConfigs, total: configs.length };
   }
 
   async findById(id: string): Promise<LLMConfig | null> {

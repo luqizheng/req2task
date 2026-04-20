@@ -7,7 +7,9 @@ import {
   CreateLLMConfigDto,
   UpdateLLMConfigDto,
   LLMConfigResponseDto,
+  LLMConfigListResponseDto,
   TestLLMConfigDto,
+  TestLLMResponseDto,
 } from '@req2task/dto';
 import { logger } from '../utils/logger.js';
 
@@ -41,7 +43,7 @@ export function createLLMConfigRoutes(
 
       const config = await llmConfigService.create(dto);
       logger.info({ configId: config.id }, 'LLM Config created');
-      return res.status(201).json({ code: 0, data: config } as ApiResponse<unknown>);
+      return res.status(201).json({ code: 0, data: config } as ApiResponse<LLMConfigResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Create LLM Config error');
       return res.status(500).json({ code: 1, message: 'Failed to create LLM Config' } as ApiResponse<null>);
@@ -50,8 +52,8 @@ export function createLLMConfigRoutes(
 
   router.get('/', async (_req: Request, res: Response) => {
     try {
-      const configs = await llmConfigService.findAll();
-      return res.json({ code: 0, data: configs } as ApiResponse<unknown>);
+      const result = await llmConfigService.findAll();
+      return res.json({ code: 0, data: result } as ApiResponse<LLMConfigListResponseDto>);
     } catch (error) {
       logger.error({ error }, 'List LLM Configs error');
       return res.status(500).json({ code: 1, message: 'Failed to list LLM Configs' } as ApiResponse<null>);
@@ -64,7 +66,7 @@ export function createLLMConfigRoutes(
       if (!config) {
         return res.status(404).json({ code: 1, message: 'LLM Config not found' } as ApiResponse<null>);
       }
-      return res.json({ code: 0, data: config } as ApiResponse<unknown>);
+      return res.json({ code: 0, data: config } as ApiResponse<LLMConfigResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Get LLM Config error');
       return res.status(500).json({ code: 1, message: 'Failed to get LLM Config' } as ApiResponse<null>);
@@ -83,7 +85,7 @@ export function createLLMConfigRoutes(
         return res.status(404).json({ code: 1, message: 'LLM Config not found' } as ApiResponse<null>);
       }
       logger.info({ configId: config.id }, 'LLM Config updated');
-      return res.json({ code: 0, data: config } as ApiResponse<unknown>);
+      return res.json({ code: 0, data: config } as ApiResponse<LLMConfigResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Update LLM Config error');
       return res.status(500).json({ code: 1, message: 'Failed to update LLM Config' } as ApiResponse<null>);
@@ -136,8 +138,8 @@ export function createLLMConfigRoutes(
           content: response.content,
           configId: config.id,
           latencyMs,
-        },
-      } as ApiResponse<unknown>);
+        } as TestLLMResponseDto,
+      } as ApiResponse<TestLLMResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Test LLM Config error');
       return res.json({
@@ -146,8 +148,8 @@ export function createLLMConfigRoutes(
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error',
           configId: req.params['id'],
-        },
-      } as ApiResponse<unknown>);
+        } as TestLLMResponseDto,
+      } as ApiResponse<TestLLMResponseDto>);
     }
   });
 

@@ -49,6 +49,9 @@
     "@req2task/dto": "workspace:*",
     "@swc/core": "^1.15.26",
     "axios": "^1.6.0",
+    "mammoth": "^1.6.0",
+    "openai": "^4.20.1",
+    "pdf-parse": "^1.1.1",
     "typeorm": "^0.3.19"
   },
   "devDependencies": {

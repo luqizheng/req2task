@@ -7,6 +7,4 @@ export * from './llm-provider.factory';
 export * from './llm.service';
 export * from './vector-store.interface';
 export * from './chroma-vector-store';
-export * from './ai-chat.service';
-export * from './ai-conversation.service';
 export * from './file-parser.service';

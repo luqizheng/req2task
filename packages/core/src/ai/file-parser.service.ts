@@ -1,6 +1,4 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import * as fs from 'fs/promises';
-import * as path from 'path';
 import { FileContent } from './ai-chat.service';
 
 @Injectable()
@@ -29,105 +27,68 @@ export class FileParserService {
   async parseFromPath(
     filePath: string,
   ): Promise<{ content: string; type: string }> {
-    const ext = path.extname(filePath).toLowerCase();
-    const content = await fs.readFile(filePath, 'utf-8');
-
-    switch (ext) {
-      case '.txt':
-      case '.md':
-        return { content, type: 'text' };
-
-      case '.docx':
-        return this.parseDocx({ type: 'docx', data: content });
-
-      case '.pdf':
-        return this.parsePdf({ type: 'pdf', data: content });
-
-      case '.mp3':
-      case '.wav':
-      case '.m4a':
-      case '.ogg':
-        return this.parseAudio({ type: 'audio', data: content, name: filePath });
-
-      default:
-        return { content, type: 'text' };
-    }
+    return { content: `[File: ${filePath}]`, type: 'text' };
   }
 
-  private parseDocx(file: FileContent): { content: string; type: string } {
+  private async parseDocx(file: FileContent): Promise<{ content: string; type: string }> {
     try {
-      const content = this.extractTextFromDocx(file.data);
-      return { content, type: 'docx' };
+      const mammoth = await import('mammoth');
+      const buffer = Buffer.from(file.data, 'base64');
+      const result = await mammoth.extractRawText({ buffer });
+      return { content: result.value.trim(), type: 'docx' };
     } catch (error) {
       this.logger.warn(`Failed to parse DOCX: ${error}`);
       return {
-        content: `[DOCX 内容 - 需要转录]\n${file.data.substring(0, 1000)}`,
+        content: `[DOCX 内容 - 解析失败]\n${file.data.substring(0, 1000)}`,
         type: 'docx',
       };
     }
   }
 
-  private parsePdf(file: FileContent): { content: string; type: string } {
+  private async parsePdf(file: FileContent): Promise<{ content: string; type: string }> {
     try {
-      const content = this.extractTextFromPdf(file.data);
-      return { content, type: 'pdf' };
+      const pdfParse = await import('pdf-parse');
+      const buffer = Buffer.from(file.data, 'base64');
+      const data = await pdfParse.default(buffer);
+      return { content: data.text.trim(), type: 'pdf' };
     } catch (error) {
       this.logger.warn(`Failed to parse PDF: ${error}`);
       return {
-        content: `[PDF 内容 - 需要转录]\n${file.data.substring(0, 1000)}`,
+        content: `[PDF 内容 - 解析失败]\n${file.data.substring(0, 1000)}`,
         type: 'pdf',
       };
     }
   }
 
-  private parseAudio(file: FileContent): { content: string; type: string } {
-    return {
-      content: `[音频文件: ${file.name || 'unknown'}]\n需要使用语音识别转录为文本`,
-      type: 'audio',
-    };
-  }
+  private async parseAudio(file: FileContent): Promise<{ content: string; type: string }> {
+    const openAiApiKey = process.env.OPENAI_API_KEY;
 
-  private extractTextFromDocx(data: string): string {
-    const docxRegex = /<w:t[^>]*>([^<]*)<\/w:t>/g;
-    const matches: string[] = [];
-    let match;
-
-    while ((match = docxRegex.exec(data)) !== null) {
-      if (match[1] && match[1].trim()) {
-        matches.push(match[1].trim());
-      }
+    if (!openAiApiKey) {
+      return {
+        content: `[音频文件: ${file.name || 'unknown'}]\n(需要配置 OPENAI_API_KEY 使用语音识别转录)`,
+        type: 'audio',
+      };
     }
 
-    return matches.join(' ').replace(/\s+/g, ' ').trim();
-  }
+    try {
+      const OpenAI = (await import('openai')).default;
+      const client = new OpenAI({ apiKey: openAiApiKey });
+      const buffer = Buffer.from(file.data, 'base64');
+      const model = process.env.WHISPER_MODEL || 'whisper-1';
 
-  private extractTextFromPdf(data: string): string {
-    const textStreams: string[] = [];
-    const streamRegex = /stream\s*([\s\S]*?)\s*endstream/g;
-    let match;
+      const transcription = await client.audio.transcriptions.create({
+        file: new File([buffer], file.name || 'audio.mp3', { type: 'audio/mpeg' }),
+        model,
+        response_format: 'text',
+      });
 
-    while ((match = streamRegex.exec(data)) !== null) {
-      const streamContent = match[1];
-      const textContent = this.extractTextFromPdfStream(streamContent);
-      if (textContent) {
-        textStreams.push(textContent);
-      }
+      return { content: transcription.trim(), type: 'audio' };
+    } catch (error) {
+      this.logger.warn(`Failed to transcribe audio: ${error}`);
+      return {
+        content: `[音频文件: ${file.name || 'unknown'}]\n(语音识别失败: ${error instanceof Error ? error.message : 'Unknown error'})`,
+        type: 'audio',
+      };
     }
-
-    return textStreams.join('\n').trim() || data.substring(0, 2000);
-  }
-
-  private extractTextFromPdfStream(stream: string): string {
-    const tjRegex = /\(([^)]+)\)\s*Tj/g;
-    const matches: string[] = [];
-    let match;
-
-    while ((match = tjRegex.exec(stream)) !== null) {
-      if (match[1]) {
-        matches.push(match[1]);
-      }
-    }
-
-    return matches.join(' ');
   }
 }

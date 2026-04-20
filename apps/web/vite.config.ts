@@ -15,6 +15,11 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:4000',
         changeOrigin: true
+      },
+      '/api/chat': {
+        target: 'http://localhost:4001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/chat/, '/api/ai/conversations')
       }
     }
   },

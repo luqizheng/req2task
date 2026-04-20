@@ -11,7 +11,8 @@ module.exports = {
   parser: '@typescript-eslint/parser',
   parserOptions: {
     ecmaVersion: 'latest',
-    sourceType: 'module'
+    sourceType: 'module',
+    project: './packages/ai-chat/tsconfig.json'
   },
   plugins: ['@typescript-eslint', 'import'],
   rules: {

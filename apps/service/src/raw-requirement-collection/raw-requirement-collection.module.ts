@@ -8,6 +8,7 @@ import { RawRequirementCollectionController } from './raw-requirement-collection
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
 import { LLMService, PromptService, ChromaVectorStore, FileParserService } from '@req2task/core';
 import { AIChatClientService } from '../ai/ai-chat-client.service';
+import { AIChatService } from '../ai/ai-chat.service';
 
 @Module({
   imports: [
@@ -23,7 +24,8 @@ import { AIChatClientService } from '../ai/ai-chat-client.service';
     ChromaVectorStore,
     FileParserService,
     AIChatClientService,
+    AIChatService,
   ],
-  exports: [RawRequirementCollectionService, AIChatClientService],
+  exports: [RawRequirementCollectionService, AIChatClientService, AIChatService],
 })
 export class RawRequirementCollectionModule {}

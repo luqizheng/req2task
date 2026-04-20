@@ -1,16 +1,19 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { HttpModule, HttpService } from '@nestjs/axios';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { AiService } from './ai.service';
 import { RequirementGenerationService } from './requirement-generation.service';
 import { ConflictDetectionService } from './conflict-detection.service';
 import { TaskDecompositionService } from './task-decomposition.service';
+import { AIChatService } from './ai-chat.service';
 import {
   LlmConfigController,
   RequirementGenerationController,
   VectorStoreController,
   ConflictDetectionController,
   TaskDecompositionController,
+  AIChatController,
 } from './controllers';
 import {
   LLMConfig,
@@ -25,13 +28,17 @@ import {
 import { Repository } from 'typeorm';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task])],
+  imports: [
+    TypeOrmModule.forFeature([LLMConfig, RawRequirement, Task]),
+    HttpModule,
+  ],
   controllers: [
     LlmConfigController,
     RequirementGenerationController,
     VectorStoreController,
     ConflictDetectionController,
     TaskDecompositionController,
+    AIChatController,
   ],
   providers: [
     AiService,
@@ -70,6 +77,13 @@ import { Repository } from 'typeorm';
         return new FileParserService();
       },
     },
+    {
+      provide: AIChatService,
+      inject: [HttpModule, FileParserService, PromptService],
+      useFactory: (httpService: HttpService, fileParserService: FileParserService, promptService: PromptService) => {
+        return new AIChatService(httpService, fileParserService, promptService);
+      },
+    },
   ],
   exports: [
     AiService,
@@ -81,6 +95,7 @@ import { Repository } from 'typeorm';
     RenderService,
     ChromaVectorStore,
     FileParserService,
+    AIChatService,
   ],
 })
 export class AiModule {}

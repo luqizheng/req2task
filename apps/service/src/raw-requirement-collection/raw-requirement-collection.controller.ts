@@ -16,6 +16,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { RawRequirementCollectionService } from './raw-requirement-collection.service';
 import { RequirementGenerationService } from '../ai/requirement-generation.service';
 import { AIChatClientService } from '../ai/ai-chat-client.service';
+import { AIChatService } from '../ai/ai-chat.service';
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
@@ -44,6 +45,13 @@ interface ChatRequest {
   systemPrompt?: string;
 }
 
+interface RequirementAnalyzeBody {
+  rawRequirement: string;
+  projectContext?: string;
+  previousQuestions?: Array<{ question: string; answer: string }>;
+  configId?: string;
+}
+
 @Controller('collections')
 @UseGuards(AuthGuard('jwt'))
 export class RawRequirementCollectionController {
@@ -51,6 +59,7 @@ export class RawRequirementCollectionController {
     private readonly collectionService: RawRequirementCollectionService,
     private readonly requirementGenerationService: RequirementGenerationService,
     private readonly aiChatClient: AIChatClientService,
+    private readonly aiChatService: AIChatService,
   ) {}
 
   @Post()
@@ -342,6 +351,118 @@ export class RawRequirementCollectionController {
           });
 
           proxyReq.end();
+        } catch (error) {
+          res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
+          res.end();
+        }
+      }),
+      catchError((error) => {
+        res.write(`data: ${JSON.stringify({ type: 'error', error: error.message })}\n\n`);
+        res.end();
+        return of(null);
+      }),
+    );
+  }
+
+  @Post(':id/analyze')
+  async analyzeRequirement(
+    @Param('id') collectionId: string,
+    @Body() body: RequirementAnalyzeBody,
+  ): Promise<ApiResponse<{ systemPrompt: string; userPrompt: string }>> {
+    const prompts = await this.aiChatService.chatWithRequirementPromptStream({
+      rawRequirement: body.rawRequirement,
+      projectContext: body.projectContext,
+      previousQuestions: body.previousQuestions,
+      configId: body.configId,
+    });
+    return { code: 0, data: prompts };
+  }
+
+  @Post(':id/analyze/stream')
+  analyzeRequirementStream(
+    @Param('id') collectionId: string,
+    @Body() body: RequirementAnalyzeBody,
+    @Res() res: Response,
+  ) {
+    return of(null).pipe(
+      map(async () => {
+        const prompts = await this.aiChatService.chatWithRequirementPromptStream({
+          rawRequirement: body.rawRequirement,
+          projectContext: body.projectContext,
+          previousQuestions: body.previousQuestions,
+          configId: body.configId,
+        });
+
+        res.setHeader('Content-Type', 'text/event-stream');
+        res.setHeader('Cache-Control', 'no-cache');
+        res.setHeader('Connection', 'keep-alive');
+        res.setHeader('X-Accel-Buffering', 'no');
+
+        res.write(`data: ${JSON.stringify({ type: 'metadata', collectionId, prompts })}\n\n`);
+
+        try {
+          const context = {
+            collectionId,
+            title: `Collection ${collectionId} analysis`,
+            systemPrompt: prompts.systemPrompt,
+          };
+
+          const conversation = await this.aiChatService.getOrCreateConversation(context);
+
+          res.write(`data: ${JSON.stringify({ type: 'metadata', conversationId: conversation.id, isNewConversation: true })}\n\n`);
+
+          const response = await fetch(
+            `${process.env['AI_CHAT_SERVICE_URL'] || 'http://localhost:4001'}/api/ai/conversations/${conversation.id}/messages/stream`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                content: prompts.userPrompt,
+                configId: body.configId,
+              }),
+            },
+          );
+
+          if (!response.ok) {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: `Request failed: ${response.status}` })}\n\n`);
+            res.end();
+            return;
+          }
+
+          const reader = response.body?.getReader();
+          if (!reader) {
+            res.write(`data: ${JSON.stringify({ type: 'error', error: 'No response body' })}\n\n`);
+            res.end();
+            return;
+          }
+
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          try {
+            while (true) {
+              const { done, value } = await reader.read();
+              if (done) break;
+
+              buffer += decoder.decode(value, { stream: true });
+              const lines = buffer.split('\n');
+              buffer = lines.pop() || '';
+
+              for (const line of lines) {
+                if (line.startsWith('data: ')) {
+                  const data = line.slice(6);
+                  if (data !== '[DONE]') {
+                    res.write(`${line}\n`);
+                  }
+                }
+              }
+            }
+          } finally {
+            reader.releaseLock();
+          }
+
+          res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+          res.end();
         } catch (error) {
           res.write(`data: ${JSON.stringify({ type: 'error', error: error instanceof Error ? error.message : 'Unknown error' })}\n\n`);
           res.end();

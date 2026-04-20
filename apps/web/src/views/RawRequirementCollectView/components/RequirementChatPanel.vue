@@ -35,7 +35,7 @@ const questionProgress = computed(() => {
 });
 
 const chatConfig = computed(() => ({
-  baseURL: '/api/ai',
+  endpoint: '/api/collections/{collectionId}/analyze/stream'.replace('{collectionId}', store.currentCollection?.id || ''),
   headers: activeConfigId.value ? { 'X-AI-Config-Id': activeConfigId.value } : undefined,
 }));
 

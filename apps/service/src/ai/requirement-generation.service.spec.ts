@@ -30,6 +30,7 @@ describe("RequirementGenerationService", () => {
     const mockLLMService = {
       generate: jest.fn(),
       chatWithConfig: jest.fn(),
+      generateStream: jest.fn(),
     };
 
     const mockPromptService = {
@@ -80,11 +81,12 @@ describe("RequirementGenerationService", () => {
     it("should create a raw requirement", async () => {
       const mockRawRequirement = {
         id: "1",
-
         originalContent: "Build a login feature",
         status: RawRequirementStatus.PENDING,
         createdById: "user-1",
-      } as RawRequirement;
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as RawRequirement;
 
       rawRequirementRepository.create.mockReturnValue(mockRawRequirement);
       rawRequirementRepository.save.mockResolvedValue(mockRawRequirement);
@@ -173,7 +175,7 @@ As a user, I want to reset password, so that I can recover my account`,
 
   describe("generateAcceptanceCriteria", () => {
     it("should generate acceptance criteria", async () => {
-      llmService.chatWithConfig.mockResolvedValue({
+      llmService.generate.mockResolvedValue({
         content: `Given I am on the login page
 When I enter valid credentials
 Then I should be logged in
@@ -181,7 +183,6 @@ Then I should be logged in
 Given I am on the login page
 When I enter invalid credentials
 Then I should see an error message`,
-        configId: "default",
       });
 
       const result = await service.generateAcceptanceCriteria(
@@ -198,9 +199,11 @@ Then I should see an error message`,
     it("should return raw requirement by id", async () => {
       const mockRequirement = {
         id: "1",
-
         originalContent: "Test",
-      } as RawRequirement;
+        status: RawRequirementStatus.PENDING,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as unknown as RawRequirement;
 
       rawRequirementRepository.findOne.mockResolvedValue(mockRequirement);
 

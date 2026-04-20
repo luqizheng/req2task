@@ -10,7 +10,9 @@ module.exports = {
     '@vue/eslint-config-typescript'
   ],
   parserOptions: {
-    ecmaVersion: 'latest'
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: './apps/web/tsconfig.json'
   },
   plugins: ['import'],
   rules: {

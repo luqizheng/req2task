@@ -13,7 +13,7 @@ export class LLMConfig {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column()
+  @Column({ type: 'varchar' })
   name!: string;
 
   @Column({
@@ -23,13 +23,13 @@ export class LLMConfig {
   })
   provider!: LLMProviderTypeLiteral;
 
-  @Column()
+  @Column({ type: 'varchar' })
   apiKey!: string;
 
   @Column({ type: 'varchar', nullable: true })
   baseUrl!: string | null;
 
-  @Column({ name: 'model_name' })
+  @Column({ name: 'model_name', type: 'varchar' })
   modelName!: string;
 
   @Column({ name: 'max_tokens', type: 'int', default: 4096 })
@@ -41,10 +41,10 @@ export class LLMConfig {
   @Column({ name: 'top_p', type: 'decimal', precision: 3, scale: 2, default: 1.0 })
   topP!: number;
 
-  @Column({ name: 'is_active', default: true })
+  @Column({ name: 'is_active', type: 'boolean', default: true })
   isActive!: boolean;
 
-  @Column({ name: 'is_default', default: false })
+  @Column({ name: 'is_default', type: 'boolean', default: false })
   isDefault!: boolean;
 
   @CreateDateColumn({ name: 'created_at' })

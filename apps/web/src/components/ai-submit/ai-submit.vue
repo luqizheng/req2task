@@ -1,0 +1,393 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { Microphone, Upload, Paperclip, Close, Promotion } from '@element-plus/icons-vue';
+import { useAiSubmit } from '@/composables/useAiSubmit';
+
+interface Props {
+  url: string;
+  uploadFile?: boolean;
+  audit?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  uploadFile: false,
+  audit: false,
+});
+
+const emit = defineEmits<{
+  (e: 'success', data: unknown): void;
+  (e: 'error', error: Error): void;
+}>();
+
+const {
+  message,
+  audioFile,
+  uploadedFiles,
+  isSubmitting,
+  isRecording,
+  canSubmit,
+  startRecording,
+  stopRecording,
+  handleAudioFileSelect,
+  handleAttachmentSelect,
+  removeUploadedFile,
+  clearAudio,
+  reset,
+  submit,
+} = useAiSubmit({
+  url: props.url,
+  uploadFile: props.uploadFile,
+  audit: props.audit,
+  onSuccess: (data) => emit('success', data),
+  onError: (error) => emit('error', error),
+});
+
+const audioInputRef = ref<HTMLInputElement | null>(null);
+const attachmentInputRef = ref<HTMLInputElement | null>(null);
+
+const formatSize = (bytes: number) => {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+};
+
+const handleRecordClick = () => {
+  if (isRecording.value) {
+    stopRecording();
+  } else {
+    startRecording();
+  }
+};
+
+const triggerAudioSelect = () => {
+  audioInputRef.value?.click();
+};
+
+const triggerAttachmentSelect = () => {
+  attachmentInputRef.value?.click();
+};
+
+const handleCancel = () => {
+  reset();
+};
+</script>
+
+<template>
+  <div class="ai-submit">
+    <div class="input-section">
+      <el-input
+        v-model="message"
+        type="textarea"
+        :rows="3"
+        placeholder="描述您的需求或问题，AI 将为您分析和处理..."
+        resize="none"
+        :disabled="isSubmitting"
+      />
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <el-button
+          :type="isRecording ? 'danger' : 'default'"
+          :icon="isRecording ? Close : Microphone"
+          size="small"
+          :disabled="isSubmitting || !!audioFile"
+          @click="handleRecordClick"
+        >
+          {{ isRecording ? '停止' : '录音' }}
+        </el-button>
+
+        <el-button
+          text
+          size="small"
+          :disabled="isSubmitting || !!audioFile || isRecording"
+          @click="triggerAudioSelect"
+        >
+          <el-icon class="tool-icon"><Upload /></el-icon>
+          上传音频
+        </el-button>
+
+        <el-button
+          v-if="uploadFile"
+          text
+          size="small"
+          :disabled="isSubmitting"
+          @click="triggerAttachmentSelect"
+        >
+          <el-icon class="tool-icon"><Paperclip /></el-icon>
+          上传附件
+        </el-button>
+      </div>
+    </div>
+
+    <div v-if="audioFile" class="audio-preview">
+      <div class="file-item">
+        <div class="file-icon">
+          <el-icon :size="20"><Microphone /></el-icon>
+        </div>
+        <div class="file-info">
+          <div class="file-name">{{ audioFile.name }}</div>
+          <div class="file-meta">
+            <span class="file-size">{{ formatSize(audioFile.size) }}</span>
+            <span class="file-type">音频</span>
+          </div>
+        </div>
+        <el-icon class="remove-icon" @click="clearAudio"><Close /></el-icon>
+      </div>
+    </div>
+
+    <div v-if="uploadedFiles.length > 0" class="attachment-list">
+      <div
+        v-for="file in uploadedFiles"
+        :key="file.id"
+        :class="['file-item', file.status]"
+      >
+        <div class="file-icon">
+          <el-icon :size="20"><Paperclip /></el-icon>
+        </div>
+        <div class="file-info">
+          <div class="file-name">{{ file.name }}</div>
+          <div class="file-meta">
+            <span class="file-size">{{ formatSize(file.size) }}</span>
+            <span class="file-type">附件</span>
+          </div>
+          <el-progress
+            v-if="file.status === 'uploading'"
+            :percentage="file.progress"
+            :show-text="false"
+            :stroke-width="2"
+          />
+        </div>
+        <el-icon
+          v-if="file.status !== 'uploading'"
+          class="remove-icon"
+          @click="removeUploadedFile(file.id)"
+        >
+          <Close />
+        </el-icon>
+        <el-icon v-else class="loading-icon"><Upload /></el-icon>
+      </div>
+    </div>
+
+    <div class="actions">
+      <el-button size="default" @click="handleCancel" :disabled="isSubmitting">
+        取消
+      </el-button>
+      <el-button
+        type="primary"
+        :icon="Promotion"
+        :disabled="!canSubmit"
+        :loading="isSubmitting"
+        @click="submit"
+      >
+        提交
+      </el-button>
+    </div>
+
+    <input
+      ref="audioInputRef"
+      type="file"
+      accept="audio/*"
+      class="hidden-input"
+      @change="handleAudioFileSelect"
+    />
+    <input
+      ref="attachmentInputRef"
+      type="file"
+      multiple
+      accept=".pdf,.docx,.doc,.xlsx,.xls,.txt"
+      class="hidden-input"
+      @change="handleAttachmentSelect"
+    />
+  </div>
+</template>
+
+<style scoped>
+.ai-submit {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5ff 100%);
+  border-radius: 12px;
+  border: 1px solid #e8e5ff;
+  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
+}
+
+.input-section :deep(.el-textarea__inner) {
+  border: none;
+  padding: 0;
+  font-size: 14px;
+  background: transparent;
+}
+
+.input-section :deep(.el-textarea__inner:focus) {
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid rgba(99, 102, 241, 0.12);
+  border-bottom: 1px solid rgba(99, 102, 241, 0.12);
+}
+
+.toolbar-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tool-icon {
+  margin-right: 4px;
+  color: #6366f1;
+}
+
+.audio-preview,
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 10px;
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  transition: all 0.2s ease;
+}
+
+.file-item:hover {
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
+}
+
+.file-item.success {
+  border-color: #10b981;
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+}
+
+.file-item.error {
+  border-color: #ef4444;
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+}
+
+.file-item.uploading {
+  border-color: #6366f1;
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
+}
+
+.file-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  border-radius: 10px;
+  color: white;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.file-item.success .file-icon {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.file-item.error .file-icon {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.file-type {
+  padding: 2px 8px;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.file-item.success .file-type {
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+}
+
+.file-item.error .file-type {
+  background: rgba(239, 68, 68, 0.1);
+  color: #dc2626;
+}
+
+.remove-icon {
+  flex-shrink: 0;
+  cursor: pointer;
+  color: #94a3b8;
+  font-size: 16px;
+  transition: all 0.2s;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.remove-icon:hover {
+  color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.loading-icon {
+  flex-shrink: 0;
+  color: #6366f1;
+  font-size: 16px;
+  animation: rotate 1s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 8px;
+}
+
+.hidden-input {
+  display: none;
+}
+</style>

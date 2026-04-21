@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NacosService } from '../nacos/nacos.service';
 import { Logger } from '../common/utils/logger';
-import { HealthStatus, ServiceHealthStatus, InstanceHealthStatus, SystemMetrics } from '../common/types';
+import { HealthStatus, ServiceHealthStatus, InstanceHealthStatus } from '../common/types';
 import { MetricsService } from '../metrics/metrics.service';
 
 @Injectable()

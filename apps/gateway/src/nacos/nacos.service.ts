@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import axios from 'axios';
+import os from 'os';
 import { Logger } from '../common/utils/logger';
 import { ServiceInstance } from '../common/types';
 import { NacosInstance } from './nacos.interfaces';
@@ -435,7 +436,7 @@ export class NacosService implements OnModuleInit, OnModuleDestroy {
   }
 
   private getLocalIP(): string {
-    const interfaces = require('os').networkInterfaces();
+    const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {
       for (const iface of interfaces[name]) {
         if (iface.family === 'IPv4' && !iface.internal) {

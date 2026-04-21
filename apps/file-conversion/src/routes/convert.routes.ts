@@ -2,8 +2,6 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { ConversionService } from '../services/conversion.service.js';
 import {
-  SyncConvertRequest,
-  AsyncConvertRequest,
   SUPPORTED_MIME_TYPES,
 } from '../types.js';
 

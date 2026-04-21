@@ -3,8 +3,6 @@ import { ConfigService } from '@nestjs/config';
 import { Logger } from '../common/utils/logger';
 import { CircuitBreakerState } from '../common/types';
 
-type CircuitState = 'CLOSED' | 'OPEN' | 'HALF_OPEN';
-
 @Injectable()
 export class CircuitBreakerService implements OnModuleInit {
   private readonly logger = new Logger('CircuitBreaker');

@@ -1,6 +1,3 @@
-import { writeFile, unlink } from 'fs/promises';
-import { join } from 'path';
-import * as os from 'os';
 import type { ConversionResult } from '../types.js';
 
 export class PdfService {

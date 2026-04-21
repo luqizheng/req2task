@@ -146,10 +146,10 @@ export const defaultAdapter: MessageAdapter = {
       return response;
     }
   },
-  onDelete: async (message: AIChatMessage): Promise<void> => {
+  onDelete: async (_message: AIChatMessage): Promise<void> => {
     console.warn('defaultAdapter.onDelete: not implemented, message removed locally only');
   },
-  onSearch: async (page: number, pageSize: number): Promise<AIChatMessage[]> => {
+  onSearch: async (_page: number, _pageSize: number): Promise<AIChatMessage[]> => {
     console.warn('defaultAdapter.onSearch: not implemented, returning empty array');
     return [];
   },

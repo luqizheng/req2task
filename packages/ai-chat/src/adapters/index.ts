@@ -1,10 +1,8 @@
 import type { MessageAdapter, AdapterRegistry, AdapterOptions, DataMapping } from '../types/adapter';
-export { requirementCollectAdapter } from './requirement-collect';
 import type { AIChatMessage, MessageRole } from '../types';
 import { generateId } from '../utils/id-generator';
 import { handleAdapterError, validateAdapterInput, ValidationError } from '../utils/error-handler';
 import { validateRequiredFields } from '../utils/data-mapper';
-
 
 const adapters = new Map<string, MessageAdapter>();
 
@@ -148,6 +146,13 @@ export const defaultAdapter: MessageAdapter = {
       return response;
     }
   },
+  onDelete: async (message: AIChatMessage): Promise<void> => {
+    console.warn('defaultAdapter.onDelete: not implemented, message removed locally only');
+  },
+  onSearch: async (page: number, pageSize: number): Promise<AIChatMessage[]> => {
+    console.warn('defaultAdapter.onSearch: not implemented, returning empty array');
+    return [];
+  },
 };
 
 adapters.set(defaultAdapter.name, defaultAdapter);
@@ -211,6 +216,24 @@ export function transformResponse(name: string, response: unknown, options?: Ada
   return adapter.transformResponse(response, options);
 }
 
+export async function onDelete(name: string, message: AIChatMessage, options?: AdapterOptions): Promise<void> {
+  const adapter = adapters.get(name);
+  if (!adapter || !adapter.onDelete) {
+    console.warn(`Adapter "${name}" not found or does not have onDelete method. Skipping.`);
+    return;
+  }
+  return adapter.onDelete(message, options);
+}
+
+export async function onSearch(name: string, page: number, pageSize: number, options?: AdapterOptions): Promise<AIChatMessage[]> {
+  const adapter = adapters.get(name);
+  if (!adapter || !adapter.onSearch) {
+    console.warn(`Adapter "${name}" not found or does not have onSearch method. Returning empty array.`);
+    return [];
+  }
+  return adapter.onSearch(page, pageSize, options);
+}
+
 export const adapterRegistry: AdapterRegistry = {
   register: registerAdapter,
   unregister: unregisterAdapter,
@@ -220,4 +243,6 @@ export const adapterRegistry: AdapterRegistry = {
   fromStandard,
   transformRequest,
   transformResponse,
+  onDelete,
+  onSearch,
 };

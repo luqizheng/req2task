@@ -16,6 +16,8 @@ export interface MessageAdapter {
   fromStandard: (standardMessage: AIChatMessage, options?: AdapterOptions) => unknown;
   transformRequest?: (request: unknown, options?: AdapterOptions) => unknown;
   transformResponse?: (response: unknown, options?: AdapterOptions) => unknown;
+  onDelete?: (message: AIChatMessage, options?: AdapterOptions) => Promise<void>;
+  onSearch?: (page: number, pageSize: number, options?: AdapterOptions) => Promise<AIChatMessage[]>;
 }
 
 export interface AdapterRegistry {
@@ -27,4 +29,6 @@ export interface AdapterRegistry {
   fromStandard: (name: string, standardMessage: AIChatMessage, options?: AdapterOptions) => unknown;
   transformRequest: (name: string, request: unknown, options?: AdapterOptions) => unknown;
   transformResponse: (name: string, response: unknown, options?: AdapterOptions) => unknown;
+  onDelete: (name: string, message: AIChatMessage, options?: AdapterOptions) => Promise<void>;
+  onSearch: (name: string, page: number, pageSize: number, options?: AdapterOptions) => Promise<AIChatMessage[]>;
 }

@@ -7,6 +7,7 @@ export const baseTsupConfig = defineConfig([
     dts: true,
     splitting: false,
     clean: true,
+    sourcemap: true,
     outDir: "dist",
     external: [
       "@nestjs/common",

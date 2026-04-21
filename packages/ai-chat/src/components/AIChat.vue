@@ -27,11 +27,10 @@ const props = withDefaults(defineProps<Props>(), {
 const emit = defineEmits<{
   (e: 'message-sent', message: AIChatMessage): void;
   (e: 'message-received', message: AIChatMessage): void;
-  (e: 'done', message: AIChatMessage, conversationId: string): void;
+  (e: 'done', message: AIChatMessage): void;
   (e: 'stream-start'): void;
   (e: 'stream-end'): void;
   (e: 'error', error: Error): void;
-  (e: 'conversation-created', conversationId: string): void;
 }>();
 
 const inputMessage = ref('');
@@ -48,15 +47,15 @@ const mergedConfig = computed(() => ({
 const {
   messages,
   isStreaming,
-  conversationId,
   updateConfig,
   clearMessages,
   getMessages,
   sendMessage,
   stopStream,
   loadMessages,
-  setConversationId,
   deleteMessage,
+  remoteDeleteMessage,
+  searchMessages,
   resendMessage,
 } = useChat({
   config: mergedConfig.value,
@@ -76,9 +75,6 @@ const {
   onError: (error) => {
     emit('error', error);
   },
-  onConversationCreated: (id) => {
-    emit('conversation-created', id);
-  },
 });
 
 watch(
@@ -92,9 +88,6 @@ watch(
       },
     };
     updateConfig(config);
-    if (config.sessionId) {
-      setConversationId(config.sessionId);
-    }
     if (config.initialMessages?.length) {
       loadMessages(config.initialMessages);
     }
@@ -111,11 +104,10 @@ function handleSend(content: string) {
 }
 
 function handleLoadMore() {
-  // Placeholder for load more functionality
 }
 
 function handleMessageDelete(id: string) {
-  deleteMessage(id);
+  remoteDeleteMessage(id);
 }
 
 function handleMessageResend(id: string) {
@@ -154,8 +146,8 @@ defineExpose({
   stopStream,
   deleteMessage,
   resendMessage,
-  getConversationId: () => conversationId.value,
-  setConversationId: (id: string | null) => setConversationId(id),
+  remoteDeleteMessage,
+  searchMessages,
   scrollToBottom,
 });
 </script>

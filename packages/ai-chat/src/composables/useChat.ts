@@ -1,7 +1,8 @@
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import type { AIChatMessage, AIChatConfig, MessageRole } from '../types';
 import { generateId } from '../utils/id-generator';
 import { useStream } from './useStream';
+import { adapterRegistry } from '../adapters';
 
 const DEFAULT_ROLE_NAMES: Record<MessageRole, string> = {
   user: '用户',
@@ -17,30 +18,19 @@ export interface UseChatOptions {
   onStreamStart?: () => void;
   onStreamEnd?: () => void;
   onError?: (error: Error) => void;
-  onConversationCreated?: (conversationId: string) => void;
 }
 
 export function useChat(options: UseChatOptions = {}) {
   const messages = ref<AIChatMessage[]>([]);
   const config = ref<AIChatConfig>(options.config || {});
   const adapterName = ref<string>(options.adapterName || 'default');
-  const conversationId = ref<string | null>(config.value.sessionId || null);
   const isStreaming = ref(false);
   const streamingContent = ref('');
 
   const { startStream, abort: abortStream } = useStream();
 
-  const currentConversationId = computed(() => conversationId.value);
-
   function updateConfig(newConfig: AIChatConfig): void {
     config.value = { ...config.value, ...newConfig };
-    if (newConfig.sessionId !== undefined) {
-      conversationId.value = newConfig.sessionId || null;
-    }
-  }
-
-  function setConversationId(id: string | null): void {
-    conversationId.value = id;
   }
 
   function getRoleName(role: MessageRole): string {
@@ -98,6 +88,28 @@ export function useChat(options: UseChatOptions = {}) {
     }
   }
 
+  async function remoteDeleteMessage(id: string): Promise<void> {
+    const msg = messages.value.find((m) => m.id === id);
+    if (!msg) return;
+
+    try {
+      await adapterRegistry.onDelete(adapterName.value, msg);
+      deleteMessage(id);
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
+    }
+  }
+
+  async function searchMessages(page: number, pageSize: number): Promise<AIChatMessage[]> {
+    try {
+      const result = await adapterRegistry.onSearch(adapterName.value, page, pageSize);
+      return result;
+    } catch (error) {
+      options.onError?.(error instanceof Error ? error : new Error(String(error)));
+      return [];
+    }
+  }
+
   function resendMessage(id: string): Promise<void> | undefined {
     const msg = messages.value.find((m) => m.id === id);
     if (!msg || msg.role !== 'user' || isStreaming.value) {
@@ -146,14 +158,11 @@ export function useChat(options: UseChatOptions = {}) {
     options.onStreamStart?.();
 
     const endpoint = config.value.endpoint || '/api/chat';
-    let currentConvId = conversationId.value || undefined;
 
     await startStream({
       endpoint,
       message: content.trim(),
       headers: config.value.headers,
-      sessionId: config.value.sessionId,
-      conversationId: currentConvId || undefined,
       adapterName: adapterName.value,
       onChunk: (chunk) => {
         if (chunk.type === 'content' && chunk.content) {
@@ -162,13 +171,6 @@ export function useChat(options: UseChatOptions = {}) {
             content: streamingContent.value,
             status: 'streaming',
           });
-        }
-        if (chunk.type === 'metadata' && chunk.conversationId) {
-          if (chunk.isNewConversation || !currentConvId) {
-            currentConvId = chunk.conversationId;
-            conversationId.value = chunk.conversationId;
-            options.onConversationCreated?.(chunk.conversationId);
-          }
         }
       },
       onComplete: () => {
@@ -181,7 +183,6 @@ export function useChat(options: UseChatOptions = {}) {
         const completedMessage = messages.value.find((m) => m.id === aiMsgId);
         if (completedMessage) {
           options.onMessageReceived?.(completedMessage);
-          options.onConversationCreated?.(currentConvId || '');
           options.onStreamEnd?.();
         }
 
@@ -233,15 +234,15 @@ export function useChat(options: UseChatOptions = {}) {
   return {
     messages,
     config,
-    conversationId: currentConversationId,
     isStreaming,
     streamingContent,
     updateConfig,
-    setConversationId,
     createMessage,
     addMessage,
     updateMessage,
     deleteMessage,
+    remoteDeleteMessage,
+    searchMessages,
     resendMessage,
     clearMessages,
     getMessages,

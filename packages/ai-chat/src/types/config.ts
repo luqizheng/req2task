@@ -2,7 +2,6 @@ import type { AIChatMessage } from './message';
 
 export interface AIChatConfig {
   endpoint?: string;
-  sessionId?: string;
   headers?: Record<string, string>;
   initialMessages?: AIChatMessage[];
   userRoleName?: string;
@@ -14,17 +13,13 @@ export interface AIChatConfig {
 
 export interface SendMessageOptions {
   message: string;
-  conversationId?: string;
   onChunk?: (chunk: StreamChunk) => void;
-  onComplete?: (message: AIChatMessage, conversationId: string) => void;
+  onComplete?: (message: AIChatMessage) => void;
   onError?: (error: Error) => void;
 }
 
 export interface StreamChunk {
-  type: 'content' | 'done' | 'error' | 'metadata';
+  type: 'content' | 'done' | 'error';
   content?: string;
-  conversationId?: string;
-  isNewConversation?: boolean;
-  thinkingProcess?: string;
   error?: string;
 }

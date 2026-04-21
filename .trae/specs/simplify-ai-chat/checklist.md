@@ -1,0 +1,18 @@
+# Checklist
+- [x] AIChatConfig 不包含 sessionId 字段
+- [x] SendMessageOptions 不包含 conversationId 参数
+- [x] StreamChunk 不包含 conversationId 和 isNewConversation 字段
+- [x] useStream 不处理 conversationId
+- [x] useChat 不包含 conversationId 状态
+- [x] useChat 不包含 onConversationCreated 回调
+- [x] AIChat 组件不触发 conversation-created 事件
+- [x] AIChat 组件 defineExpose 不包含 conversationId 方法
+- [x] MessageAdapter 接口包含 onDelete 方法
+- [x] MessageAdapter 接口包含 onSearch 方法
+- [x] defaultAdapter 实现 onDelete 方法
+- [x] defaultAdapter 实现 onSearch 方法
+- [x] useChat 集成 adapter.onDelete
+- [x] useChat 集成 adapter.onSearch
+- [x] adapters/index.ts 不包含 requirementCollectAdapter
+- [x] index.ts 不包含 requirementCollectAdapter
+- [x] types/events.ts 不包含 conversation-created 事件

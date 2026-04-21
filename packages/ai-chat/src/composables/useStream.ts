@@ -6,8 +6,6 @@ export interface StreamOptions {
   endpoint: string;
   message: string;
   headers?: Record<string, string>;
-  sessionId?: string;
-  conversationId?: string;
   adapterName?: string;
   onChunk?: (chunk: StreamChunk) => void;
   onComplete?: () => void;
@@ -26,19 +24,12 @@ export function useStream() {
     abortController.value = new AbortController();
     isStreaming.value = true;
 
-    const { endpoint, message, headers = {}, sessionId, conversationId, adapterName = 'default', onChunk, onComplete, onError } = options;
+    const { endpoint, message, headers = {}, adapterName = 'default', onChunk, onComplete, onError } = options;
 
     try {
       let body: Record<string, unknown> = {
         message: message || '',
       };
-
-      if (sessionId) {
-        body.sessionId = sessionId;
-      }
-      if (conversationId) {
-        body.conversationId = conversationId;
-      }
 
       body = adapterRegistry.transformRequest(adapterName, body) as Record<string, unknown>;
 
@@ -94,15 +85,6 @@ export function useStream() {
             let parsed = JSON.parse(dataStr);
 
             parsed = adapterRegistry.transformResponse(adapterName, parsed) as Record<string, unknown>;
-
-            if (parsed.type === 'metadata' || parsed.conversationId) {
-              onChunk?.({
-                type: 'metadata',
-                conversationId: parsed.conversationId,
-                isNewConversation: parsed.isNewConversation,
-              });
-              continue;
-            }
 
             if (parsed.type === 'content' && parsed.content) {
               onChunk?.({

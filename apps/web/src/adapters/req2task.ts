@@ -1,6 +1,10 @@
-import type { MessageAdapter, AdapterOptions, DataMapping } from '@req2task/ai-chat';
-import type { AIChatMessage, MessageRole } from '@req2task/ai-chat';
-import { generateId } from '@req2task/ai-chat';
+import type {
+  MessageAdapter,
+  AdapterOptions,
+  DataMapping,
+} from "@req2task/ai-chat";
+import type { AIChatMessage, MessageRole } from "@req2task/ai-chat";
+import { generateId } from "@req2task/ai-chat";
 
 interface Req2TaskChatResponse {
   code: number;
@@ -11,11 +15,14 @@ interface Req2TaskChatResponse {
   message?: string;
 }
 
-function applyMapping(data: Record<string, unknown>, mapping: DataMapping): Record<string, unknown> {
+function applyMapping(
+  data: Record<string, unknown>,
+  mapping: DataMapping,
+): Record<string, unknown> {
   const result: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(mapping)) {
-    if (typeof value === 'string') {
+    if (typeof value === "string") {
       if (data[value] !== undefined) {
         result[key] = data[value];
       }
@@ -32,7 +39,7 @@ function applyMapping(data: Record<string, unknown>, mapping: DataMapping): Reco
 
 function applyDefaultValues(
   data: Record<string, unknown>,
-  defaultValues: Record<string, unknown>
+  defaultValues: Record<string, unknown>,
 ): Record<string, unknown> {
   return {
     ...defaultValues,
@@ -41,9 +48,12 @@ function applyDefaultValues(
 }
 
 export const req2taskAdapter: MessageAdapter = {
-  name: 'req2task',
+  name: "req2task",
 
-  toStandard: (externalMessage: unknown, options?: AdapterOptions): AIChatMessage => {
+  toStandard: (
+    externalMessage: unknown,
+    options?: AdapterOptions,
+  ): AIChatMessage => {
     try {
       let msg = externalMessage as Record<string, unknown>;
 
@@ -55,32 +65,38 @@ export const req2taskAdapter: MessageAdapter = {
         msg = applyDefaultValues(msg, options.defaultValues);
       }
 
-      const role = (msg.role as MessageRole) || 'user';
-      const content = (msg.content as string) || '';
+      const role = (msg.role as MessageRole) || "user";
+      const content = (msg.content as string) || "";
 
       return {
         id: (msg.id as string) || generateId(),
         role,
         content,
-        createdAt: msg.createdAt ? new Date(msg.createdAt as string | Date) : new Date(),
-        status: (msg.status as AIChatMessage['status']) || 'done',
+        createdAt: msg.createdAt
+          ? new Date(msg.createdAt as string | Date)
+          : new Date(),
+        status: (msg.status as AIChatMessage["status"]) || "done",
         roleName: msg.roleName as string | undefined,
         avatar: msg.avatar as string | undefined,
-        metadata: msg.metadata as AIChatMessage['metadata'],
+        metadata: msg.metadata as AIChatMessage["metadata"],
       };
     } catch (error) {
-      console.error('Error converting to standard message:', error);
+      console.error("Error converting to standard message:", error);
       return {
         id: generateId(),
-        role: 'user',
-        content: '',
+        role: "user",
+        content: "",
         createdAt: new Date(),
-        status: 'error',
+        status: "error",
       };
     }
   },
 
-  fromStandard: (standardMessage: AIChatMessage, options?: AdapterOptions): unknown => {
+  fromStandard: (
+    standardMessage: AIChatMessage,
+    options?: AdapterOptions,
+  ): unknown => {
+    debugger;
     try {
       let result: Record<string, unknown> = {
         id: standardMessage.id,
@@ -103,17 +119,18 @@ export const req2taskAdapter: MessageAdapter = {
 
       return result;
     } catch (error) {
-      console.error('Error converting from standard message:', error);
+      console.error("Error converting from standard message:", error);
       return {};
     }
   },
 
   transformRequest: (request: unknown, options?: AdapterOptions): unknown => {
+    debugger;
     try {
       const req = request as Record<string, unknown>;
 
       let transformedRequest: Record<string, unknown> = {
-        content: req.content || req.message || '',
+        content: req.content || req.message || "",
       };
 
       if (req.conversationId) {
@@ -137,12 +154,15 @@ export const req2taskAdapter: MessageAdapter = {
       }
 
       if (options?.defaultValues) {
-        transformedRequest = applyDefaultValues(transformedRequest, options.defaultValues);
+        transformedRequest = applyDefaultValues(
+          transformedRequest,
+          options.defaultValues,
+        );
       }
-
+      console.log("request", request, "to", transformedRequest);
       return transformedRequest;
     } catch (error) {
-      console.error('Error transforming request:', error);
+      console.error("Error transforming request:", error);
       return request;
     }
   },
@@ -151,40 +171,40 @@ export const req2taskAdapter: MessageAdapter = {
     try {
       const res = response as Record<string, unknown>;
 
-      if ('type' in res) {
+      if ("type" in res) {
         return res;
       }
 
       if (res.code !== 0) {
         return {
-          type: 'error',
-          error: res.message || 'Unknown error',
+          type: "error",
+          error: res.message || "Unknown error",
         };
       }
 
-      const data = res.data as Req2TaskChatResponse['data'];
+      const data = res.data as Req2TaskChatResponse["data"];
 
       if (!data) {
         return {
-          type: 'content',
-          content: '',
+          type: "content",
+          content: "",
         };
       }
 
       if (data.content) {
         return {
-          type: 'content',
+          type: "content",
           content: data.content,
           configId: data.configId,
         };
       }
 
       return {
-        type: 'content',
-        content: '',
+        type: "content",
+        content: "",
       };
     } catch (error) {
-      console.error('Error transforming response:', error);
+      console.error("Error transforming response:", error);
       return response;
     }
   },

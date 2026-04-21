@@ -1,5 +1,5 @@
 import * as net from 'net';
-import { spawn } from 'child_process';
+import { spawn, exec } from 'child_process';
 import * as path from 'path';
 import * as http from 'http';
 import { fileURLToPath } from 'url';
@@ -18,7 +18,6 @@ interface HealthResponse {
 
 function checkPort(port: number): Promise<boolean> {
   return new Promise((resolve) => {
-    const { exec } = require('child_process');
     const isWindows = process.platform === 'win32';
     const cmd = isWindows
       ? `netstat -ano | findstr ":${port} " | findstr LISTENING`
@@ -65,7 +64,6 @@ function checkHealthEndpoint(): Promise<boolean> {
 
 function getProcessOnPort(port: number): Promise<string | null> {
   return new Promise((resolve) => {
-    const { exec } = require('child_process');
     const isWindows = process.platform === 'win32';
     let cmd: string;
 

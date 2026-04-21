@@ -6,7 +6,6 @@ import {
   Requirement,
   RawRequirement,
   RawRequirementCollection,
-  LLMConfig,
   User,
 } from "@req2task/core";
 import {
@@ -15,7 +14,6 @@ import {
   RequirementSource,
   RequirementStatus,
   RawRequirementStatus,
-  LLMProviderType,
   CollectionType,
   CollectionStatus,
 } from "@req2task/dto";
@@ -40,7 +38,6 @@ export class SeedService {
       const modules = await this.createFeatureModules(queryRunner, project.id);
       await this.createRequirements(queryRunner, modules, user.id);
       await this.createRawRequirementCollections(queryRunner, project.id, user.id);
-      await this.createLLMConfig(queryRunner);
 
       await queryRunner.commitTransaction();
       this.logger.log("Database seed completed successfully!");
@@ -415,36 +412,6 @@ export class SeedService {
           this.logger.log(`Raw requirement already exists, skipping...`);
         }
       }
-    }
-  }
-
-  private async createLLMConfig(queryRunner: any): Promise<void> {
-    let config = await queryRunner.manager.findOne(LLMConfig, {
-      where: { modelName: "qwen6:8b", provider: LLMProviderType.OLLAMA },
-    });
-
-    if (!config) {
-      config = queryRunner.manager.create(LLMConfig, {
-        name: "Ollama Default",
-        provider: LLMProviderType.OLLAMA,
-        apiKey: "",
-        baseUrl: "http://localhost:11434",
-        modelName: "qwen6:8b",
-        maxTokens: 4096,
-        temperature: 0.7,
-        topP: 1.0,
-        isActive: true,
-        isDefault: true,
-      });
-      await queryRunner.manager.save(config);
-      this.logger.log("Created ollama LLM config (qwen6:8b)");
-    } else {
-      this.logger.log("ollama LLM config already exists, updating...");
-      config.name = "Ollama Default";
-      config.baseUrl = "http://localhost:11434";
-      config.isActive = true;
-      config.isDefault = true;
-      await queryRunner.manager.save(config);
     }
   }
 }

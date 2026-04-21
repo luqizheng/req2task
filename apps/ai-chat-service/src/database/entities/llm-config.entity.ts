@@ -1,3 +1,4 @@
+import { LLMProviderType } from '@req2task/dto';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -6,7 +7,6 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 
-export type LLMProviderTypeLiteral = 'deepseek' | 'openai' | 'ollama';
 
 @Entity('llm_configs')
 export class LLMConfig {
@@ -21,7 +21,7 @@ export class LLMConfig {
     enum: ['deepseek', 'openai', 'ollama'] as const,
     default: 'deepseek',
   })
-  provider!: LLMProviderTypeLiteral;
+  provider!: LLMProviderType;
 
   @Column({ type: 'varchar' })
   apiKey!: string;

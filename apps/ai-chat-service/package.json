@@ -14,7 +14,8 @@
     "migration:generate": "npm run typeorm -- migration:generate -d src/database/data-source.ts",
     "migration:run": "npm run typeorm -- migration:run -d src/database/data-source.ts",
     "migration:revert": "npm run typeorm -- migration:revert -d src/database/data-source.ts",
-    "migration:show": "npm run typeorm -- migration:show -d src/database/data-source.ts"
+    "migration:show": "npm run typeorm -- migration:show -d src/database/data-source.ts",
+    "migration:drop": "pnpm build && pnpm typeorm schema:drop -d ./dist/database/data-source.js"
   },
   "dependencies": {
     "@req2task/dto": "workspace:*",

@@ -3,6 +3,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn, ChildProcessWithoutNullStreams } from 'child_process';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 import chalk from 'chalk';
 import { TestCredentials, TestSuiteResult, TestResult } from './types';
 import { generateAiConfigTestPrompt } from './prompts/ai-config-test';

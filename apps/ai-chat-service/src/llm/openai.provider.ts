@@ -1,6 +1,6 @@
-import { LLMConfig } from '../entities/llm-config.entity';
-import { BaseLLMProvider } from './base-llm-provider';
+import { BaseLLMProvider } from './base-llm-provider.js';
 import { LLMProviderType } from '@req2task/dto';
+import { LLMConfig } from '../database/entities/llm-config.entity.js';
 
 const OPENAI_BASE_URL = 'https://api.openai.com/v1';
 

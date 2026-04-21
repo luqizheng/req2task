@@ -2,35 +2,33 @@
 
 LLM 配置服务提供 AI 大模型的配置管理能力，支持多模型、多提供商配置。
 
-**注意**：LLM 配置管理 API 仅在主服务 (service) 提供，ai-chat-service 通过 HTTP 调用获取配置。
+**注意**：LLM 配置管理 API 仅在 ai-chat-service 提供，service 应用通过 HTTP 调用获取配置。
 
 ## 服务地址
 
 | 服务 | 端口 | 说明 |
 |------|------|------|
-| service | 4000 | LLM 配置管理 API |
-| ai-chat-service | 4001 | AI 对话服务（调用 service 获取配置） |
+| ai-chat-service | 4001 | LLM 配置管理 API + AI 对话服务 |
+
+---
 
 ## 端点总览
 
 | 接口 | 方法 | 功能描述 |
 |------|------|----------|
-| `/ai/llm-configs` | GET | 获取所有配置 |
-| `/ai/llm-configs` | POST | 创建配置 |
-| `/ai/llm-configs/:id` | GET | 获取单个配置 |
-| `/ai/llm-configs/:id` | PUT | 更新配置 |
-| `/ai/llm-configs/:id` | DELETE | 删除配置 |
-| `/ai/llm-configs/:id/test` | POST | 测试配置连接 |
+| `/api/llm-configs` | GET | 获取所有配置 |
+| `/api/llm-configs` | POST | 创建配置 |
+| `/api/llm-configs/:id` | GET | 获取单个配置 |
+| `/api/llm-configs/:id` | PUT | 更新配置 |
+| `/api/llm-configs/:id` | DELETE | 删除配置 |
+| `/api/llm-configs/:id/test` | POST | 测试配置连接 |
 
 ---
 
-## 配置管理
-
-### 获取所有配置
+## 获取所有配置
 
 ```http
-GET /ai/llm-configs
-Authorization: Bearer <jwt-token>
+GET /api/llm-configs
 ```
 
 **响应：**
@@ -38,30 +36,34 @@ Authorization: Bearer <jwt-token>
 ```json
 {
   "code": 0,
-  "data": [
-    {
-      "id": "uuid",
-      "name": "OpenAI GPT-4",
-      "provider": "openai",
-      "modelName": "gpt-4",
-      "baseUrl": "https://api.openai.com/v1",
-      "maxTokens": 4096,
-      "temperature": 0.7,
-      "topP": 1.0,
-      "isActive": true,
-      "isDefault": true,
-      "createdAt": "2026-04-20T10:00:00Z",
-      "updatedAt": "2026-04-20T10:00:00Z"
-    }
-  ]
+  "data": {
+    "configs": [
+      {
+        "id": "uuid",
+        "name": "OpenAI GPT-4",
+        "provider": "openai",
+        "modelName": "gpt-4",
+        "baseUrl": "https://api.openai.com/v1",
+        "maxTokens": 4096,
+        "temperature": 0.7,
+        "topP": 1.0,
+        "isActive": true,
+        "isDefault": true,
+        "createdAt": "2026-04-20T10:00:00Z",
+        "updatedAt": "2026-04-20T10:00:00Z"
+      }
+    ],
+    "total": 1
+  }
 }
 ```
 
-### 创建配置
+---
+
+## 创建配置
 
 ```http
-POST /ai/llm-configs
-Authorization: Bearer <jwt-token>
+POST /api/llm-configs
 Content-Type: application/json
 
 {
@@ -73,7 +75,6 @@ Content-Type: application/json
   "maxTokens": 4096,
   "temperature": 0.7,
   "topP": 1.0,
-  "isActive": true,
   "isDefault": true
 }
 ```
@@ -88,17 +89,19 @@ Content-Type: application/json
     "name": "OpenAI GPT-4",
     "provider": "openai",
     "modelName": "gpt-4",
+    "apiKey": "[ENCRYPTED]",
     "isDefault": true,
     "createdAt": "2026-04-20T10:00:00Z"
   }
 }
 ```
 
-### 获取单个配置
+---
+
+## 获取单个配置
 
 ```http
-GET /ai/llm-configs/:id
-Authorization: Bearer <jwt-token>
+GET /api/llm-configs/:id
 ```
 
 **响应：**
@@ -111,7 +114,7 @@ Authorization: Bearer <jwt-token>
     "name": "OpenAI GPT-4",
     "provider": "openai",
     "modelName": "gpt-4",
-    "apiKey": "sk-***",
+    "apiKey": "[ENCRYPTED]",
     "baseUrl": "https://api.openai.com/v1",
     "maxTokens": 4096,
     "temperature": 0.7,
@@ -124,11 +127,12 @@ Authorization: Bearer <jwt-token>
 }
 ```
 
-### 更新配置
+---
+
+## 更新配置
 
 ```http
-PUT /ai/llm-configs/:id
-Authorization: Bearer <jwt-token>
+PUT /api/llm-configs/:id
 Content-Type: application/json
 
 {
@@ -138,32 +142,49 @@ Content-Type: application/json
 }
 ```
 
-### 删除配置
-
-```http
-DELETE /ai/llm-configs/:id
-Authorization: Bearer <jwt-token>
-```
-
 **响应：**
 
 ```json
 {
   "code": 0,
-  "message": "删除成功"
+  "data": {
+    "id": "uuid",
+    "name": "更新后的名称",
+    "provider": "openai",
+    "modelName": "gpt-4",
+    "apiKey": "[ENCRYPTED]",
+    "maxTokens": 3000,
+    "temperature": 0.5,
+    "updatedAt": "2026-04-20T11:00:00Z"
+  }
 }
 ```
 
-### 测试配置连接
+---
+
+## 删除配置
 
 ```http
-POST /ai/llm-configs/:id/test
-Authorization: Bearer <jwt-token>
-Content-Type: application/json
+DELETE /api/llm-configs/:id
+```
 
+**响应：** `204 No Content`
+
+**失败响应：**
+
+```json
 {
-  "testMessage": "请回复'配置测试成功'"
+  "code": 1,
+  "message": "LLM config not found"
 }
+```
+
+---
+
+## 测试配置连接
+
+```http
+POST /api/llm-configs/:id/test
 ```
 
 **响应：**
@@ -173,9 +194,7 @@ Content-Type: application/json
   "code": 0,
   "data": {
     "success": true,
-    "content": "配置测试成功",
-    "configId": "uuid",
-    "latencyMs": 1500
+    "message": "Deepseek connection successful"
   }
 }
 ```
@@ -184,42 +203,11 @@ Content-Type: application/json
 
 ```json
 {
-  "code": 0,
+  "code": 1,
   "data": {
     "success": false,
-    "content": "",
-    "configId": "uuid",
-    "error": "API key invalid"
+    "message": "Connection failed: Invalid API key"
   }
-}
-```
-
----
-
-## ai-chat-service 配置获取
-
-ai-chat-service 在启动时通过 HTTP 调用 service 获取默认 LLM 配置：
-
-```http
-GET http://localhost:4000/ai/llm-configs
-```
-
-内部通过 `ServiceApiService` 实现：
-
-```typescript
-// ai-chat-service/src/services/service-api.service.ts
-async getDefaultLLMConfig(): Promise<LLMConfigResponseDto | null> {
-  const response = await fetch(`${this.baseUrl}/ai/llm-configs`);
-  const result = await response.json();
-  
-  if (result.code !== 0 || !result.data?.configs) {
-    return null;
-  }
-
-  const defaultConfig = result.data.configs.find(
-    c => c.isDefault && c.isActive
-  );
-  return defaultConfig || null;
 }
 ```
 
@@ -243,10 +231,10 @@ enum LLMProviderType {
 | `deepseek` | DeepSeek |
 | `ollama` | Ollama 本地模型 |
 
-### LLMConfigResponseDto
+### LlmConfigResponseDto
 
 ```typescript
-interface LLMConfigResponseDto {
+interface LlmConfigResponseDto {
   id: string;
   name: string;
   provider: LLMProviderType;
@@ -257,18 +245,58 @@ interface LLMConfigResponseDto {
   topP: number;
   isActive: boolean;
   isDefault: boolean;
-  apiKey?: string;        // 仅在创建/更新时返回，查询时为 "********"
   createdAt: Date;
   updatedAt: Date;
 }
 ```
 
-### LLMConfigListResponseDto
+### LlmConfigDetailResponseDto
 
 ```typescript
-interface LLMConfigListResponseDto {
-  configs: LLMConfigResponseDto[];
+interface LlmConfigDetailResponseDto extends LlmConfigResponseDto {
+  apiKey: string | null;  // "[ENCRYPTED]" 或 null
+}
+```
+
+### LlmConfigListResponseDto
+
+```typescript
+interface LlmConfigListResponseDto {
+  configs: LlmConfigResponseDto[];
   total: number;
+}
+```
+
+### CreateLlmConfigDto
+
+```typescript
+interface CreateLlmConfigDto {
+  name: string;
+  provider: LLMProviderType;
+  modelName?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  isDefault?: boolean;
+}
+```
+
+### UpdateLlmConfigDto
+
+```typescript
+interface UpdateLlmConfigDto {
+  name?: string;
+  provider?: LLMProviderType;
+  modelName?: string;
+  apiKey?: string;
+  baseUrl?: string;
+  maxTokens?: number;
+  temperature?: number;
+  topP?: number;
+  isActive?: boolean;
+  isDefault?: boolean;
 }
 ```
 
@@ -325,4 +353,24 @@ interface LLMConfigListResponseDto {
   "isActive": true,
   "isDefault": false
 }
+```
+
+---
+
+## 安全说明
+
+### 加密存储
+
+LLM 配置 API 使用 AES-256-CBC 加密 API Key：
+
+- 加密密钥由环境变量 `LLM_CONFIG_ENCRYPTION_KEY` 提供
+- 响应中 API Key 显示为 `[ENCRYPTED]`
+- 测试连接时自动解密进行验证
+
+### 环境变量
+
+ai-chat-service 需要配置：
+
+```env
+LLM_CONFIG_ENCRYPTION_KEY=your-32-character-secret-key
 ```

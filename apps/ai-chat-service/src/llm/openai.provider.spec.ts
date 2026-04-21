@@ -1,8 +1,9 @@
+import axios from 'axios';
+import { Readable } from 'stream';
 import { OpenAIProvider } from './openai.provider';
 import { DeepSeekProvider } from './deepseek.provider';
-import { LLMConfig } from '../entities/llm-config.entity';
 import { LLMProviderType } from '@req2task/dto';
-import axios from 'axios';
+import { LLMConfig } from '../database/entities/llm-config.entity';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -67,7 +68,7 @@ describe('LLM Providers', () => {
       const config = createMockConfig(LLMProviderType.OPENAI);
       const provider = new OpenAIProvider(config);
       const mockClient = mockedAxios.create().post as jest.Mock;
-      
+
       mockClient.mockResolvedValue({
         data: {
           choices: [{ message: { content: 'Test response' } }],

@@ -1,9 +1,9 @@
-import { LLMConfig } from "../entities/llm-config.entity";
 import { LLMProviderType } from "@req2task/dto";
-import { LLMProvider } from "./llm-provider.interface";
-import { OpenAIProvider } from "./openai.provider";
-import { DeepSeekProvider } from "./deepseek.provider";
-import { OllamaProvider } from "./ollama.provider";
+import type { LLMProvider } from "./llm-provider.interface.js";
+import { LLMConfig } from "../database/entities/llm-config.entity.js";
+import { OpenAIProvider } from "./openai.provider.js";
+import { DeepSeekProvider } from "./deepseek.provider.js";
+import { OllamaProvider } from "./ollama.provider.js";
 
 export class LLMProviderFactory {
   static create(config: LLMConfig): LLMProvider {

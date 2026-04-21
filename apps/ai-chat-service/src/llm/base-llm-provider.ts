@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from "axios";
 import { Readable } from "stream";
 import { TextDecoder } from "util";
-import { LLMConfig } from "../entities/llm-config.entity";
+import { LLMConfig } from "../database/entities/llm-config.entity.js";
 import {
   LLMMessage,
   LLMOptions,
@@ -10,7 +10,7 @@ import {
   LLMResponse,
   LLMError,
   LLMErrorCode,
-} from "./llm-provider.interface";
+} from "./llm-provider.interface.js";
 import { LLMProviderType } from "@req2task/dto";
 
 const DEFAULT_TIMEOUT_MS = 30000;
@@ -112,8 +112,6 @@ export abstract class BaseLLMProvider implements LLMProvider {
     let finishReason: string | undefined;
 
     try {
-    
-      console.warn(`[${this.providerType}] ge111111111111111111111111111111111111111nerateStream request: ${JSON.stringify(requestBody)} to ${this.config.baseUrl}${this.getChatEndpoint()}`);  
       const response = await this.client.post(
         this.getChatEndpoint(),
         requestBody,

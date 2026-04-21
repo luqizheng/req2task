@@ -8,6 +8,7 @@ export * from './ai';
 export * from './raw-requirement-collection';
 export * from './notification';
 export * from './conversation/index';
+export * from './llm-config';
 export * from './attachment';
 
 export {

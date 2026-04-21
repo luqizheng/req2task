@@ -2,8 +2,8 @@ import axios from 'axios';
 import { Readable } from 'stream';
 import { OpenAIProvider } from './openai.provider';
 import { DeepSeekProvider } from './deepseek.provider';
-import { LLMConfig } from '../entities/llm-config.entity';
 import { LLMProviderType } from '@req2task/dto';
+import { LLMConfig } from '../database/entities/llm-config.entity';
 
 jest.mock('axios');
 const mockedAxios = axios as jest.Mocked<typeof axios>;

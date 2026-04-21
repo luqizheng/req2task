@@ -1,7 +1,7 @@
 import ollama, { ChatResponse } from "ollama";
-import { LLMConfig } from "../entities/llm-config.entity";
-import { BaseLLMProvider } from "./base-llm-provider";
+import { BaseLLMProvider } from "./base-llm-provider.js";
 import { LLMProviderType } from "@req2task/dto";
+import { LLMConfig } from "../database/entities/llm-config.entity.js";
 import {
   LLMMessage,
   LLMOptions,
@@ -9,7 +9,7 @@ import {
   StreamChunk,
   LLMError,
   LLMErrorCode,
-} from "./llm-provider.interface";
+} from "./llm-provider.interface.js";
 
 const OLLAMA_HOST = "http://localhost:11434";
 

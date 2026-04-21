@@ -4,7 +4,9 @@ import * as os from 'os';
 import * as nacos from 'nacos';
 import { createConversationRoutes } from './routes/conversation.routes.js';
 import { createTextRoutes } from './routes/text.routes.js';
+import { createLlMConfigRoutes } from './routes/llm-config.routes.js';
 import { ConversationService } from './services/conversation.service.js';
+import { LlMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
 import { ServiceApiService } from './services/service-api.service.js';
 import { initializeDatabase, dataSource } from './database/index.js';
@@ -15,6 +17,7 @@ const getIP = (): string => {
   const nets = os.networkInterfaces();
   let serverIp = '';
   for (const name of Object.keys(nets)) {
+    if (!nets[name]) continue;
     for (const net of nets[name]) {
       if (net.family === 'IPv4' && !net.internal) {
         serverIp = net.address;
@@ -77,6 +80,7 @@ export async function createApp(): Promise<Express> {
   }
   
   const llmService = new LLMService(apiKey, defaultLLMConfig.modelName);
+  const llmConfigService = new LlMConfigService(dataSource);
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({
@@ -89,6 +93,7 @@ export async function createApp(): Promise<Express> {
 
   app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
   app.use('/api/ai/text', createTextRoutes(llmService));
+  app.use('/api/llm-configs', createLlMConfigRoutes(llmConfigService));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     logger.error({ error: err }, 'Unhandled error');

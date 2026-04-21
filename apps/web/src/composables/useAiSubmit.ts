@@ -15,6 +15,8 @@ export interface UseAiSubmitOptions {
   url: string;
   uploadFile?: boolean;
   audit?: boolean;
+  extraData?: Record<string, string | number | boolean | undefined>;
+  messageKey?: string;
   onSuccess?: (data: unknown) => void;
   onError?: (error: Error) => void;
 }
@@ -153,7 +155,16 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       const formData = new FormData();
 
       if (message.value.trim()) {
-        formData.append('message', message.value.trim());
+        const key = options.messageKey || 'message';
+        formData.append(key, message.value.trim());
+      }
+
+      if (options.extraData) {
+        Object.entries(options.extraData).forEach(([key, value]) => {
+          if (value !== undefined) {
+            formData.append(key, String(value));
+          }
+        });
       }
 
       if (audioFile.value) {

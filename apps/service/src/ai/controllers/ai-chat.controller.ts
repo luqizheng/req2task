@@ -11,8 +11,8 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { Response } from "express";
-import { of } from "rxjs";
-import { map, catchError } from "rxjs/operators";
+import { of, EMPTY, Observable } from "rxjs";
+import { mergeMap, catchError } from "rxjs/operators";
 import { AIChatService } from "../ai-chat.service";
 
 interface ApiResponse<T> {
@@ -106,84 +106,89 @@ export class AIChatController {
     const files = query.files ? JSON.parse(query.files) : undefined;
 
     return of(null).pipe(
-      map(async () => {
-        const streamUrl = this.aiChatService.getStreamUrl(conversationId, {
-          content: query.content,
-          files,
-          configId: query.configId,
-        });
-
-        res.setHeader("Content-Type", "text/event-stream");
-        res.setHeader("Cache-Control", "no-cache");
-        res.setHeader("Connection", "keep-alive");
-        res.setHeader("X-Accel-Buffering", "no");
-
-        try {
-          const response = await fetch(streamUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ files, configId: query.configId }),
+      mergeMap(() => {
+        return new Observable((observer) => {
+          const streamUrl = this.aiChatService.getStreamUrl(conversationId, {
+            content: query.content,
+            files,
+            configId: query.configId,
           });
 
-          if (!response.ok) {
-            res.write(
-              `data: ${JSON.stringify({ type: "error", error: `Request failed: ${response.status}` })}\n\n`,
-            );
+          res.setHeader("Content-Type", "text/event-stream");
+          res.setHeader("Cache-Control", "no-cache");
+          res.setHeader("Connection", "keep-alive");
+          res.setHeader("X-Accel-Buffering", "no");
+
+          const sendError = (error: unknown) => {
+            const message = error instanceof Error ? error.message : "Unknown error";
+            res.write(`data: ${JSON.stringify({ type: "error", error: message })}\n\n`);
             res.end();
-            return;
-          }
+            observer.error(error);
+          };
 
-          const reader = response.body?.getReader();
-          if (!reader) {
-            res.write(
-              `data: ${JSON.stringify({ type: "error", error: "No response body" })}\n\n`,
-            );
-            res.end();
-            return;
-          }
+          const run = async () => {
+            try {
+              const response = await fetch(streamUrl, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ files, configId: query.configId }),
+              });
 
-          const decoder = new TextDecoder();
-          let buffer = "";
+              if (!response.ok) {
+                sendError(new Error(`Request failed: ${response.status}`));
+                return;
+              }
 
-          try {
-            for (;;) {
-              const { done, value } = await reader.read();
-              if (done) break;
+              const reader = response.body?.getReader();
+              if (!reader) {
+                sendError(new Error("No response body"));
+                return;
+              }
 
-              buffer += decoder.decode(value, { stream: true });
-              const lines = buffer.split("\n");
-              buffer = lines.pop() || "";
+              const decoder = new TextDecoder();
+              let buffer = "";
 
-              for (const line of lines) {
-                if (line.startsWith("data: ")) {
-                  const data = line.slice(6);
-                  if (data !== "[DONE]") {
-                    res.write(`${line}\n`);
+              try {
+                for (;;) {
+                  const { done, value } = await reader.read();
+                  if (done) break;
+
+                  buffer += decoder.decode(value, { stream: true });
+                  const lines = buffer.split("\n");
+                  buffer = lines.pop() || "";
+
+                  for (const line of lines) {
+                    if (line.startsWith("data: ")) {
+                      const data = line.slice(6);
+                      if (data !== "[DONE]") {
+                        res.write(`${line}\n`);
+                      }
+                    }
                   }
                 }
+              } finally {
+                reader.releaseLock();
               }
-            }
-          } finally {
-            reader.releaseLock();
-          }
 
-          res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
-          res.end();
-        } catch (error) {
-          res.write(
-            `data: ${JSON.stringify({ type: "error", error: error instanceof Error ? error.message : "Unknown error" })}\n\n`,
-          );
-          res.end();
-        }
+              res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+              res.end();
+              observer.complete();
+            } catch (error) {
+              sendError(error);
+            }
+          };
+
+          run();
+        });
       }),
       catchError((error) => {
         res.write(
-          `data: ${JSON.stringify({ type: "error", error: error.message })}\n\n`,
+          `data: ${JSON.stringify({ type: "error", error: error instanceof Error ? error.message : "Unknown error" })}\n\n`,
         );
         res.end();
-        return of(null);
+        return EMPTY;
       }),
     );
   }

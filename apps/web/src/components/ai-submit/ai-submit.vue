@@ -7,11 +7,15 @@ interface Props {
   url: string;
   uploadFile?: boolean;
   audit?: boolean;
+  extraData?: Record<string, string | number | boolean | undefined>;
+  messageKey?: string;
+  placeholder?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   uploadFile: false,
   audit: false,
+  placeholder: '描述您的需求或问题，AI 将为您分析和处理...',
 });
 
 const emit = defineEmits<{
@@ -38,6 +42,8 @@ const {
   url: props.url,
   uploadFile: props.uploadFile,
   audit: props.audit,
+  extraData: props.extraData,
+  messageKey: props.messageKey,
   onSuccess: (data) => emit('success', data),
   onError: (error) => emit('error', error),
 });
@@ -81,7 +87,7 @@ const handleCancel = () => {
         v-model="message"
         type="textarea"
         :rows="3"
-        placeholder="描述您的需求或问题，AI 将为您分析和处理..."
+        :placeholder="placeholder"
         resize="none"
         :disabled="isSubmitting"
       />

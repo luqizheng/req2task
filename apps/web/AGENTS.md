@@ -59,6 +59,7 @@ apps/web/src/
 │       ├── AppPagination.vue# 分页组件
 │       ├── AppTable.vue     # 表格组件
 │       ├── AppTag.vue       # 标签组件
+│       ├── StatCard.vue     # 统计卡片组件
 │       └── index.ts         # 组件导出
 ├── views/           # 页面组件
 │   └── HomeView.vue
@@ -87,6 +88,7 @@ apps/web/src/
 | `AppPagination` | 分页导航 |
 | `AppTable` | 表格组件 |
 | `AppTag` | 标签组件 |
+| `StatCard` | 统计卡片，支持水平/垂直布局、图标、趋势指示器 |
 
 使用方式：
 ```typescript

@@ -36,15 +36,36 @@ import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ConversationModule } from "./conversation/conversation.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
+import * as os from "os";
 
+const getIP = (): string => {
+  const nets = os.networkInterfaces();
+  let serverIp = "";
+
+  for (const name of Object.keys(nets)) {
+    for (const net of nets[name]) {
+      // 跳过内部地址（如 127.0.0.1）和非 IPv4 地址
+      if (net.family == "IPv4" && !net.internal) {
+        serverIp = net.address;
+        break;
+      }
+    }
+    if (serverIp) break;
+  }
+  return serverIp;
+};
 const nacosConfig = {
-  serverAddr: `${process.env.NACOS_HOST || "localhost"}:${process.env.NACOS_PORT || "8848"}`,
-  namespace: process.env.NACOS_NAMESPACE || "",
+  serverList: [
+    `${process.env.NACOS_HOST || "localhost"}:${process.env.NACOS_PORT || "8848"}`,
+  ],
+  namespace: process.env.NACOS_NAMESPACE || "public",
   username: process.env.NACOS_USERNAME || "nacos",
   password: process.env.NACOS_PASSWORD || "nacos",
+  logger: console,
 };
+console.log("nacosConfig", nacosConfig);
 
-export const nacosClient = new nacos.NacosConfigClient(nacosConfig);
+const nacosClient = new nacos.NacosNamingClient(nacosConfig );
 
 @Module({
   imports: [
@@ -101,9 +122,20 @@ export class AppModule implements OnModuleInit {
   async onModuleInit() {
     try {
       await nacosClient.ready();
-      console.log("Nacos config client connected successfully");
+      const serviceName = "req2task.service";
+
+      // registry instance
+      await nacosClient.registerInstance(serviceName, {
+        ip: getIP(),
+        port: 3000,
+        instanceId: getIP(),
+        weight: 1,
+        healthy: false,
+        enabled: true,
+      });
+      console.log("Nacos naming client connected successfully");
     } catch (error) {
-      console.warn("Nacos config client connection failed:", error);
+      console.warn("Nacos naming client connection failed:", error);
     }
   }
 }

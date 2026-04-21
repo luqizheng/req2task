@@ -96,7 +96,7 @@ export const req2taskAdapter: MessageAdapter = {
     standardMessage: AIChatMessage,
     options?: AdapterOptions,
   ): unknown => {
-    debugger;
+
     try {
       let result: Record<string, unknown> = {
         id: standardMessage.id,
@@ -125,7 +125,7 @@ export const req2taskAdapter: MessageAdapter = {
   },
 
   transformRequest: (request: unknown, options?: AdapterOptions): unknown => {
-    debugger;
+
     try {
       const req = request as Record<string, unknown>;
 

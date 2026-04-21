@@ -3,7 +3,7 @@ import { validate } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { LlMConfigService } from '../services/llm-config.service.js';
 import { logger } from '../utils/logger.js';
-import type {
+import {
   CreateLlmConfigDto,
   UpdateLlmConfigDto,
   LlmConfigListResponseDto,

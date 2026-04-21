@@ -9,3 +9,4 @@ export { default as AppPagination } from './AppPagination.vue';
 export { default as AppModal } from './AppModal.vue';
 export { default as AppTable } from './AppTable.vue';
 export { default as AppForm } from './AppForm.vue';
+export { default as StatCard } from './StatCard.vue';

@@ -7,4 +7,3 @@ allowBuilds:
   bcrypt: true
   esbuild: true
   vue-demi: true
-public-hoist-pattern[]: '*element-plus*'

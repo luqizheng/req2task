@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { RawRequirementCollection } from "@req2task/core";
+import { HttpModule } from "@nestjs/axios";
+import { RawRequirementCollection, RawRequirement } from "@req2task/core";
 import { RawRequirementCollectionService } from "./raw-requirement-collection.service";
 import { RawRequirementCollectionController } from "./raw-requirement-collection.controller";
 import { RequirementGenerationService } from "../ai/requirement-generation.service";
@@ -11,7 +12,8 @@ import { RawRequirementModule } from "../raw-requirement/raw-requirement.module"
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([RawRequirementCollection]),
+    TypeOrmModule.forFeature([RawRequirementCollection, RawRequirement]),
+    HttpModule,
     RawRequirementModule,
   ],
   controllers: [RawRequirementCollectionController],

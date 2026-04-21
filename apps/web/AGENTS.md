@@ -95,13 +95,30 @@ apps/web/src/
 import { AppButton, AppCard, AppTable } from '@/components/common';
 ```
 
+## SSE 通信规范
+
+**强制要求**：所有 SSE (Server-Sent Events) 通信必须严格遵守 [SSE 通信协议](../../docs/reference/sse-protocol.md)。
+
+### 核心规则
+
+1. **事件类型**：必须使用 `metadata`、`content`、`message`、`done`、`error` 五种标准事件类型
+2. **metadata 事件**：流开始时必须接收，包含会话上下文信息
+3. **content 事件**：仅接收增量内容片段并追加到 UI
+4. **结束标记**：成功结束接收 `data: [DONE]\n\n`，错误结束接收 `data: {"type": "error", "message": "<error>"}\n\n`
+5. **AI 响应解析**：必须解包并重发为统一格式
+
+### 关键文件
+
+- `src/composables/useAiSubmit.ts` - SSE 流式提交和解析逻辑
+
 ## 开发规范
 
 1. 使用 `<script setup lang="ts">` 语法
 2. 状态管理使用 Pinia
 3. 路由配置位于 `router/index.ts`
-4. 运行 lint 和 type-check 后再提交
-5. UI 设计规则参见 [DESIGN-RULES.md](./DESIGN-RULES.md)
+4. 遵循 SSE 协议定义的事件格式和错误码
+5. 运行 lint 和 type-check 后再提交
+6. UI 设计规则参见 [DESIGN-RULES.md](./DESIGN-RULES.md)
 
 ## API 调用规范
 

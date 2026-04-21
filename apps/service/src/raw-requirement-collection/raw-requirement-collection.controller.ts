@@ -178,7 +178,13 @@ export class RawRequirementCollectionController {
               });
 
               res.write(
-                `data: ${JSON.stringify({ type: "metadata", collectionId, prompts, requirementFiles, projectAttachments })}\n\n`,
+                `data: ${JSON.stringify({
+                  type: "analyze_start",
+                  collectionId,
+                  prompts,
+                  requirementFiles,
+                  projectAttachments,
+                })}\n\n`,
               );
 
               const context = {
@@ -191,7 +197,11 @@ export class RawRequirementCollectionController {
                 await this.aiChatService.getOrCreateConversation(context);
 
               res.write(
-                `data: ${JSON.stringify({ type: "metadata", conversationId: conversation.id, isNewConversation: true })}\n\n`,
+                `data: ${JSON.stringify({
+                  type: "conversation_start",
+                  conversationId: conversation.id,
+                  isNewConversation: true,
+                })}\n\n`,
               );
 
               const response = await fetch(
@@ -220,6 +230,7 @@ export class RawRequirementCollectionController {
 
               const decoder = new TextDecoder();
               let buffer = "";
+              let isFirstEvent = true;
 
               try {
                 for (;;) {
@@ -233,7 +244,15 @@ export class RawRequirementCollectionController {
                   for (const line of lines) {
                     if (line.startsWith("data: ")) {
                       const data = line.slice(6);
-                      if (data !== "[DONE]") {
+                      if (data === "[DONE]") continue;
+
+                      if (isFirstEvent) {
+                        isFirstEvent = false;
+                        continue;
+                      }
+
+                      const event = JSON.parse(data);
+                      if (event.type === "content" || event.type === "message" || event.type === "error") {
                         res.write(`${line}\n`);
                       }
                     }

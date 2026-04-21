@@ -238,9 +238,14 @@ export function createConversationRoutes(
             });
 
             res.write(`data: ${JSON.stringify({
-              type: 'metadata',
-              messageId: assistantMessage.id,
-              isComplete: true,
+              type: 'message',
+              message: {
+                id: assistantMessage.id,
+                conversationId: req.params['id']!,
+                role: 'assistant',
+                content: fullContent,
+                createdAt: assistantMessage.createdAt,
+              },
             })}\n\n`);
           }
         }

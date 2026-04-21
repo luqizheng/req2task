@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
 import { Microphone, Upload, Paperclip, Close, Promotion } from '@element-plus/icons-vue';
-import { useAiSubmit } from '@/composables/useAiSubmit';
+import { useAiSubmit, type AnalyzeStartEvent, type ConversationStartEvent, type MessageEvent, type DoneEvent, type ErrorEvent } from '@/composables/useAiSubmit';
 
 interface Props {
   url: string;
@@ -10,17 +10,25 @@ interface Props {
   extraData?: Record<string, string | number | boolean | undefined>;
   messageKey?: string;
   placeholder?: string;
+  useStream?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   uploadFile: false,
   audit: false,
   placeholder: '描述您的需求或问题，AI 将为您分析和处理...',
+  useStream: false,
 });
 
 const emit = defineEmits<{
   (e: 'success', data: unknown): void;
   (e: 'error', error: Error): void;
+  (e: 'analyzeStart', event: AnalyzeStartEvent): void;
+  (e: 'conversationStart', event: ConversationStartEvent): void;
+  (e: 'content', content: string): void;
+  (e: 'message', event: MessageEvent): void;
+  (e: 'done', event: DoneEvent): void;
+  (e: 'streamError', error: ErrorEvent): void;
 }>();
 
 const {
@@ -38,6 +46,7 @@ const {
   clearAudio,
   reset,
   submit,
+  submitStream,
 } = useAiSubmit({
   url: props.url,
   uploadFile: props.uploadFile,
@@ -77,6 +86,24 @@ const triggerAttachmentSelect = () => {
 
 const handleCancel = () => {
   reset();
+};
+
+const handleSubmit = () => {
+  if (props.useStream) {
+    submitStream({
+      onAnalyzeStart: (event) => emit('analyzeStart', event),
+      onConversationStart: (event) => emit('conversationStart', event),
+      onContent: (content) => emit('content', content),
+      onMessage: (event) => emit('message', event),
+      onDone: (event) => {
+        emit('done', event);
+        reset();
+      },
+      onError: (error) => emit('streamError', error),
+    });
+  } else {
+    submit();
+  }
 };
 </script>
 
@@ -186,7 +213,7 @@ const handleCancel = () => {
         :icon="Promotion"
         :disabled="!canSubmit"
         :loading="isSubmitting"
-        @click="submit"
+        @click="handleSubmit"
       >
         提交
       </el-button>

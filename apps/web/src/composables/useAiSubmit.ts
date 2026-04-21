@@ -11,6 +11,49 @@ export interface UploadedFile {
   progress: number;
 }
 
+export interface AnalyzeStartEvent {
+  type: 'analyze_start';
+  collectionId: string;
+  prompts?: { systemPrompt: string; userPrompt: string };
+  requirementFiles?: Array<{ type: string; data: string; name?: string }>;
+  projectAttachments?: Array<{ type: string; data: string; name?: string }>;
+}
+
+export interface ConversationStartEvent {
+  type: 'conversation_start';
+  conversationId: string;
+  isNewConversation?: boolean;
+}
+
+export interface ContentEvent {
+  type: 'content';
+  content: string;
+}
+
+export interface MessageEvent {
+  type: 'message';
+  message: {
+    id: string;
+    conversationId: string;
+    role: string;
+    content: string;
+    createdAt: string;
+  };
+}
+
+export interface DoneEvent {
+  type: 'done';
+  followUpQuestions?: string[];
+  keyElements?: string[];
+}
+
+export interface ErrorEvent {
+  type: 'error';
+  message: string;
+}
+
+export type SSEEvent = AnalyzeStartEvent | ConversationStartEvent | ContentEvent | MessageEvent | DoneEvent | ErrorEvent;
+
 export interface UseAiSubmitOptions {
   url: string;
   uploadFile?: boolean;
@@ -19,6 +62,15 @@ export interface UseAiSubmitOptions {
   messageKey?: string;
   onSuccess?: (data: unknown) => void;
   onError?: (error: Error) => void;
+}
+
+export interface StreamCallbacks {
+  onAnalyzeStart?: (event: AnalyzeStartEvent) => void;
+  onConversationStart?: (event: ConversationStartEvent) => void;
+  onContent?: (content: string) => void;
+  onMessage?: (event: MessageEvent) => void;
+  onDone?: (event: DoneEvent) => void;
+  onError?: (error: ErrorEvent) => void;
 }
 
 export function useAiSubmit(options: UseAiSubmitOptions) {
@@ -146,6 +198,122 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     isSubmitting.value = false;
   };
 
+  const parseSSEEvent = (data: string): SSEEvent | null => {
+    try {
+      return JSON.parse(data) as SSEEvent;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleSSEEvent = (event: SSEEvent, callbacks: StreamCallbacks) => {
+    switch (event.type) {
+      case 'analyze_start':
+        callbacks.onAnalyzeStart?.(event);
+        break;
+      case 'conversation_start':
+        callbacks.onConversationStart?.(event);
+        break;
+      case 'content':
+        callbacks.onContent?.(event.content);
+        break;
+      case 'message':
+        callbacks.onMessage?.(event);
+        break;
+      case 'done':
+        callbacks.onDone?.(event);
+        break;
+      case 'error':
+        callbacks.onError?.(event);
+        break;
+    }
+  };
+
+  const submitStream = async (callbacks: StreamCallbacks) => {
+    if (!canSubmit.value) return;
+
+    isSubmitting.value = true;
+
+    try {
+      const body: Record<string, unknown> = {};
+
+      if (message.value.trim()) {
+        const key = options.messageKey || 'content';
+        body[key] = message.value.trim();
+      }
+
+      if (options.extraData) {
+        Object.assign(body, options.extraData);
+      }
+
+      const successfulUploads = uploadedFiles.value
+        .filter(f => f.status === 'success' && !f.id.startsWith('temp_'))
+        .map(f => f.id);
+
+      if (successfulUploads.length > 0) {
+        body.attachments = JSON.stringify(successfulUploads);
+      }
+
+      const token = localStorage.getItem('accessToken');
+
+      const response = await fetch(options.url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        throw new Error(`请求失败: ${response.status}`);
+      }
+
+      const reader = response.body?.getReader();
+      if (!reader) {
+        throw new Error('无法读取响应流');
+      }
+
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const data = line.slice(6);
+              if (data === '[DONE]') {
+                callbacks.onDone?.({ type: 'done' });
+                return;
+              }
+
+              const event = parseSSEEvent(data);
+              if (event) {
+                handleSSEEvent(event, callbacks);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+    } catch (error) {
+      const err = error instanceof Error ? error : new Error('提交失败，请稍后重试');
+      ElMessage.error(err.message);
+      callbacks.onError?.({ type: 'error', message: err.message });
+    } finally {
+      isSubmitting.value = false;
+    }
+  };
+
   const submit = async () => {
     if (!canSubmit.value) return;
 
@@ -220,5 +388,6 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     clearAudio,
     reset,
     submit,
+    submitStream,
   };
 }

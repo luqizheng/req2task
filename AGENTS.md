@@ -68,10 +68,17 @@ apps/
 
 各子包有独立的 AGENTS.md 文件，包含该包的特定规则和指南：
 
-- [apps/web/AGENTS.md](apps/web/AGENTS.md) - Vue 3 前端开发规范
-- [apps/service/AGENTS.md](apps/service/AGENTS.md) - NestJS 后端开发规范
-- [apps/ai-chat-service/AGENTS.md](apps/ai-chat-service/AGENTS.md) - AI 聊天服务开发规范
+- [apps/web/AGENTS.md](apps/web/AGENTS.md) - Vue 3 前端开发规范（含 SSE 通信规范）
+- [apps/service/AGENTS.md](apps/service/AGENTS.md) - NestJS 后端开发规范（含 SSE 通信规范）
+- [apps/ai-chat-service/AGENTS.md](apps/ai-chat-service/AGENTS.md) - AI 聊天服务开发规范（含 SSE 通信规范）
 - [apps/file-conversion/AGENTS.md](apps/file-conversion/AGENTS.md) - 文件转换服务开发规范
+
+## SSE 通信规范
+
+所有涉及 SSE (Server-Sent Events) 通信的子包必须遵循 [SSE 通信协议](docs/reference/sse-protocol.md)：
+- Web 前端：负责 SSE 事件解析和 UI 更新
+- Service 后端：负责需求分析场景的 SSE 流处理
+- AI Chat Service：负责对话场景的 SSE 流处理
 
 ## DTO 包规则
 

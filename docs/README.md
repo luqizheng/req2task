@@ -11,6 +11,7 @@ owner: req2task团队
 | 你想做什么 | 去哪里看 |
 |-----------|---------|
 | 了解系统架构 | [docs/architecture/overview.md](architecture/overview.md) |
+| 了解网关路由配置 | [docs/gateway-routes-config.md](gateway-routes-config.md) |
 | 了解模块边界和依赖规则 | [docs/design/module-design.md](design/module-design.md) |
 | 了解编码规范 | [.agents/rules/dev-rules.md](../.agents/rules/dev-rules.md) |
 | 了解 API 规范 | [docs/reference/api-spec.md](reference/api-spec.md) |

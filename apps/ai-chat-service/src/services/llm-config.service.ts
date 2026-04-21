@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import { Repository, DataSource } from 'typeorm';
 import { LLMConfig } from '../database/index.js';
+import { LLMProviderFactory } from '../llm/factory.js';
 import type {
   CreateLlmConfigDto,
   UpdateLlmConfigDto,
@@ -128,71 +129,28 @@ export class LlMConfigService {
     }
 
     try {
-      if (!config.apiKey) {
+      if (!config.apiKey && config.provider !== 'ollama') {
         return { success: false, message: 'API Key is not configured' };
       }
 
-      const decryptedKey = decryptKey(config.apiKey);
+      const configForProvider = {
+        ...config,
+        apiKey: config.apiKey ? decryptKey(config.apiKey) : config.apiKey,
+      };
 
-      if (config.provider === 'deepseek') {
-        return await this.testDeepseekConnection(config.baseUrl, decryptedKey);
-      } else if (config.provider === 'openai') {
-        return await this.testOpenaiConnection(config.baseUrl, decryptedKey);
-      } else if (config.provider === 'ollama') {
-        return await this.testOllamaConnection(config.baseUrl);
+      const provider = LLMProviderFactory.create(configForProvider as LLMConfig);
+      const available = await provider.isAvailable();
+
+      if (available) {
+        return { success: true, message: `${provider.displayName} connection successful` };
       }
-
-      return { success: false, message: 'Unsupported provider' };
+      return { success: false, message: `${provider.displayName} connection failed` };
     } catch (error) {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Connection test failed',
       };
     }
-  }
-
-  private async testDeepseekConnection(baseUrl: string | null, apiKey: string): Promise<{ success: boolean; message: string }> {
-    const url = baseUrl || 'https://api.deepseek.com/v1/models';
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      return { success: true, message: 'Deepseek connection successful' };
-    }
-    return { success: false, message: `Deepseek API error: ${response.status}` };
-  }
-
-  private async testOpenaiConnection(baseUrl: string | null, apiKey: string): Promise<{ success: boolean; message: string }> {
-    const url = baseUrl || 'https://api.openai.com/v1/models';
-    const response = await fetch(url, {
-      method: 'GET',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (response.ok) {
-      return { success: true, message: 'OpenAI connection successful' };
-    }
-    return { success: false, message: `OpenAI API error: ${response.status}` };
-  }
-
-  private async testOllamaConnection(baseUrl: string | null): Promise<{ success: boolean; message: string }> {
-    const url = baseUrl ? `${baseUrl}/api/tags` : 'http://localhost:11434/api/tags';
-    const response = await fetch(url, {
-      method: 'GET',
-    });
-
-    if (response.ok) {
-      return { success: true, message: 'Ollama connection successful' };
-    }
-    return { success: false, message: `Ollama API error: ${response.status}` };
   }
 
   private async clearDefaultFlag(): Promise<void> {

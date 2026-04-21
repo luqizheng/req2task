@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Readable } from 'stream';
-import { OpenAIProvider } from './openai.provider';
-import { DeepSeekProvider } from './deepseek.provider';
+import { OpenAIProvider } from './providers/openai.provider';
+import { DeepSeekProvider } from './providers/deepseek.provider';
 import { LLMProviderType } from '@req2task/dto';
 import { LLMConfig } from '../database/entities/llm-config.entity';
 

@@ -13,6 +13,7 @@ export class LlmConfigResponseDto {
   isActive!: boolean;
   createdAt!: Date;
   updatedAt!: Date;
+  apiKey?: string | null;
 }
 
 export class LlmConfigDetailResponseDto extends LlmConfigResponseDto {

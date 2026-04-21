@@ -67,8 +67,10 @@ export async function createApp(): Promise<Express> {
   await registerToNacos();
 
   const conversationService = new ConversationService(dataSource);
-  const serviceApiService = new ServiceApiService();
-  
+  const serviceApiService = new ServiceApiService(dataSource);
+
+  await serviceApiService.syncFromRemote();
+
   const defaultLLMConfig = await serviceApiService.getDefaultLLMConfig();
   if (!defaultLLMConfig) {
     throw new Error('No default LLM config found. Please configure an LLM provider in the main service first.');

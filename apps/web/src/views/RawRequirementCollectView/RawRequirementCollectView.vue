@@ -201,7 +201,7 @@ watch([projectId, collectionId], () => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 16px 24px;
+  padding: 20px 24px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
 }
@@ -209,62 +209,79 @@ watch([projectId, collectionId], () => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
 }
 
 .view-title {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 600;
   margin: 0;
   color: var(--el-text-color-primary);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.01em;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.header-actions > * {
+  margin-left: 4px;
+}
+
+.header-actions > *:first-child {
+  margin-left: 0;
 }
 
 .view-toolbar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 24px;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 24px;
   background: var(--el-bg-color);
   border-bottom: 1px solid var(--el-border-color-light);
   flex-wrap: wrap;
-}
-
-.view-toolbar > * {
-  flex-shrink: 0;
 }
 
 .toolbar-info {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding-right: 16px;
-  border-right: 1px solid var(--el-border-color-lighter);
-  margin-right: 4px;
+}
+
+.toolbar-info .el-tag + .el-tag {
+  margin-left: 4px;
+}
+
+.toolbar-info .info-text {
+  padding-left: 12px;
+  border-left: 1px solid var(--el-border-color-lighter);
+  margin-left: 4px;
 }
 
 .toolbar-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+}
+
+.toolbar-actions .warning-icon {
+  margin-left: 8px;
 }
 
 .collection-select {
-  width: 200px;
+  width: 220px;
   max-width: 100%;
 }
 
 .collection-option {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   width: 100%;
+  padding: 4px 0;
 }
 
 .option-title {
@@ -272,17 +289,22 @@ watch([projectId, collectionId], () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-size: 14px;
 }
 
 .option-count {
   color: var(--el-text-color-secondary);
   font-size: 12px;
   flex-shrink: 0;
+  padding: 2px 6px;
+  background: var(--el-fill-color-light);
+  border-radius: 4px;
 }
 
 .option-delete {
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
 }
 
 .collection-option:hover .option-delete {
@@ -298,26 +320,18 @@ watch([projectId, collectionId], () => {
 .warning-icon {
   color: var(--el-color-warning);
   font-size: 16px;
+  vertical-align: middle;
 }
 
 .view-body {
   display: flex;
   flex: 1;
   overflow: hidden;
-  gap: 0;
+  gap: 1px;
   background: var(--el-border-color-lighter);
 }
 
-.main-panel {
-  flex: 1;
-  min-width: 400px;
-  background: var(--el-bg-color);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.summary-panel {
+.chat-panel {
   flex: 0 0 320px;
   min-width: 280px;
   max-width: 400px;
@@ -325,16 +339,39 @@ watch([projectId, collectionId], () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  border-left: 1px solid var(--el-border-color-lighter);
+}
+
+.main-panel {
+  flex: 1;
+  min-width: 360px;
+  background: var(--el-bg-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.summary-panel {
+  flex: 0 0 360px;
+  min-width: 300px;
+  max-width: 420px;
+  background: var(--el-bg-color);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @media (max-width: 1200px) {
-  .summary-panel {
+  .chat-panel {
     flex: 0 0 280px;
+    min-width: 240px;
+  }
+
+  .summary-panel {
+    flex: 0 0 300px;
   }
 
   .main-panel {
-    min-width: 280px;
+    min-width: 320px;
   }
 }
 
@@ -343,25 +380,37 @@ watch([projectId, collectionId], () => {
     flex-wrap: wrap;
   }
 
+  .chat-panel {
+    flex: 1 1 100%;
+    min-width: 100%;
+    max-height: 260px;
+    border-bottom: 1px solid var(--el-border-color-lighter);
+    border-right: none;
+  }
+
   .main-panel {
     flex: 1 1 60%;
-    min-width: 260px;
+    min-width: 240px;
   }
 
   .summary-panel {
     flex: 1 1 40%;
-    min-width: 240px;
+    min-width: 220px;
     max-height: 280px;
-    border-left: none;
-    border-top: 1px solid var(--el-border-color-lighter);
   }
 }
 
 @media (max-width: 768px) {
   .view-header {
-    padding: 14px 16px;
-    flex-wrap: wrap;
+    padding: 16px 16px;
+  }
+
+  .header-left {
     gap: 12px;
+  }
+
+  .view-title {
+    font-size: 16px;
   }
 
   .header-actions {
@@ -371,31 +420,32 @@ watch([projectId, collectionId], () => {
   }
 
   .collection-select {
-    width: 160px;
+    width: 180px;
   }
 
   .view-toolbar {
-    padding: 12px 16px;
-    gap: 12px;
+    padding: 10px 16px;
   }
 
   .toolbar-info {
-    padding-right: 12px;
-    gap: 10px;
-  }
-
-  .toolbar-actions {
     gap: 8px;
   }
 
+  .toolbar-info .info-text {
+    padding-left: 8px;
+  }
+
+  .chat-panel,
   .main-panel,
   .summary-panel {
     flex: 1 1 100%;
     min-width: 100%;
+    max-width: 100%;
   }
 
+  .chat-panel,
   .summary-panel {
-    max-height: 240px;
+    max-height: 200px;
   }
 }
 </style>

@@ -1,0 +1,18 @@
+# Checklist
+- [x] RequirementChatPanel 不包含 AIChat 组件
+- [x] RequirementChatPanel 包含多行文本输入框
+- [x] RequirementChatPanel 包含需求文件上传按钮
+- [x] RequirementChatPanel 包含项目附件上传按钮
+- [x] 提交需求功能正常
+- [x] requirementCollectStore 不包含 chatHistory
+- [x] requirementCollectStore 不包含 sendMessage
+- [x] requirementCollectStore 不包含 continueChat
+- [x] requirementCollectStore 不包含 chatWithCollection 调用
+- [x] requirementCollection.ts 不包含 chatWithCollection 方法
+- [x] requirementCollection.ts 不包含 analyzeRequirement（非 stream）方法
+- [x] requirementCollection.ts streamAnalyzeRequirement 支持三类内容
+- [x] 后端 controller 不包含 chatWithCollection 方法
+- [x] 后端 controller 不包含 streamChatWithCollection 方法
+- [x] 后端 controller 不包含 analyzeRequirement（非 stream）方法
+- [x] 后端 analyzeRequirementStream 支持三类内容
+- [x] RawRequirementCollectView 移除不再需要的 import

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, watch, computed } from 'vue';
+import { onMounted, watch, computed } from "vue";
 import {
   ArrowLeft,
   Refresh,
@@ -8,23 +8,39 @@ import {
   FolderOpened,
   Check,
   Warning,
-} from '@element-plus/icons-vue';
-import RequirementChatPanel from './components/RequirementChatPanel.vue';
-import RawRequirementMainPanel from './components/RawRequirementMainPanel.vue';
-import RawRequirementSidebar from './components/RawRequirementSidebar.vue';
-import { useCollection, collectionTypeOptions } from './composables';
-import { useRequirementCollectStore } from '@/stores/requirementCollect';
+} from "@element-plus/icons-vue";
+import RawRequirementMainPanel from "./components/RawRequirementMainPanel.vue";
+import RawRequirementSidebar from "./components/RawRequirementSidebar.vue";
+import { useCollection, collectionTypeOptions } from "./composables";
+import { useRequirementCollectStore } from "@/stores/requirementCollect";
+import { CollectionStatus } from "@/api/requirementCollection";
 
 const requirementCollectStore = useRequirementCollectStore();
-const { projectId, collectionId, handleBack, loadData, handleCreate, handleDelete, handleComplete, showCreateDialog, createForm } = useCollection();
+const {
+  projectId,
+  collectionId,
+  handleBack,
+  loadData,
+  handleCreate,
+  handleDelete,
+  handleComplete,
+  showCreateDialog,
+  createForm,
+} = useCollection();
 
 const collections = computed(() => requirementCollectStore.collections);
-const currentCollection = computed(() => requirementCollectStore.currentCollection);
+const currentCollection = computed(
+  () => requirementCollectStore.currentCollection,
+);
 const isLoading = computed(() => requirementCollectStore.isLoading);
-const unclarifiedRequirements = computed(() => requirementCollectStore.unclarifiedRequirements);
-const isCollectionActive = computed(() => currentCollection.value?.status === 'active');
+const unclarifiedRequirements = computed(
+  () => requirementCollectStore.unclarifiedRequirements,
+);
+const isCollectionActive = computed(
+  () => currentCollection.value?.status === CollectionStatus.ACTIVE,
+);
 const selectedCollectionId = computed({
-  get: () => requirementCollectStore.currentCollection?.id || '',
+  get: () => requirementCollectStore.currentCollection?.id || "",
   set: (value: string) => {
     if (value) requirementCollectStore.selectCollection(value);
   },
@@ -50,7 +66,9 @@ watch([projectId, collectionId], () => {
           clearable
           class="collection-select"
         >
-          <template #prefix><el-icon><FolderOpened /></el-icon></template>
+          <template #prefix
+            ><el-icon><FolderOpened /></el-icon
+          ></template>
           <el-option
             v-for="c in collections"
             :key="c.id"
@@ -71,19 +89,33 @@ watch([projectId, collectionId], () => {
             </div>
           </el-option>
         </el-select>
-        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true">新建</el-button>
-        <el-button :icon="Refresh" @click="loadData" :loading="isLoading">刷新</el-button>
+        <el-button type="primary" :icon="Plus" @click="showCreateDialog = true"
+          >新建</el-button
+        >
+        <el-button :icon="Refresh" @click="loadData" :loading="isLoading"
+          >刷新</el-button
+        >
       </div>
     </header>
 
     <div class="view-toolbar" v-if="currentCollection">
       <el-tag size="large" effect="plain">
-        {{ collectionTypeOptions.find(t => t.value === currentCollection?.collectionType)?.label }}
+        {{
+          collectionTypeOptions.find(
+            (t) => t.value === currentCollection?.collectionType,
+          )?.label
+        }}
       </el-tag>
-      <el-tag :type="isCollectionActive ? 'success' : 'info'" size="large" effect="plain">
-        {{ isCollectionActive ? '进行中' : '已完成' }}
+      <el-tag
+        :type="isCollectionActive ? 'success' : 'info'"
+        size="large"
+        effect="plain"
+      >
+        {{ isCollectionActive ? "进行中" : "已完成" }}
       </el-tag>
-      <span class="info-text">{{ currentCollection.collectedBy?.displayName || '未知' }}</span>
+      <span class="info-text">{{
+        currentCollection.collectedBy?.displayName || "未知"
+      }}</span>
       <el-button
         v-if="isCollectionActive"
         type="success"
@@ -94,7 +126,10 @@ watch([projectId, collectionId], () => {
       >
         完成收集
       </el-button>
-      <el-tooltip v-if="isCollectionActive && unclarifiedRequirements.length > 0" content="所有需求澄清后才能完成收集">
+      <el-tooltip
+        v-if="isCollectionActive && unclarifiedRequirements.length > 0"
+        content="所有需求澄清后才能完成收集"
+      >
         <el-icon class="warning-icon"><Warning /></el-icon>
       </el-tooltip>
     </div>
@@ -113,25 +148,41 @@ watch([projectId, collectionId], () => {
       </aside>
     </div>
 
-    <el-dialog v-model="showCreateDialog" title="创建需求收集" width="420px" destroy-on-close>
+    <el-dialog
+      v-model="showCreateDialog"
+      title="创建需求收集"
+      width="420px"
+      destroy-on-close
+    >
       <el-form :model="createForm" label-width="80">
         <el-form-item label="标题" required>
           <el-input v-model="createForm.title" placeholder="如：Q1 需求调研" />
         </el-form-item>
         <el-form-item label="类型" required>
           <el-radio-group v-model="createForm.collectionType">
-            <el-radio v-for="opt in collectionTypeOptions" :key="opt.value" :value="opt.value">
+            <el-radio
+              v-for="opt in collectionTypeOptions"
+              :key="opt.value"
+              :value="opt.value"
+            >
               {{ opt.label }}
             </el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="会议纪要">
-          <el-input v-model="createForm.meetingMinutes" type="textarea" :rows="3" placeholder="可选" />
+          <el-input
+            v-model="createForm.meetingMinutes"
+            type="textarea"
+            :rows="3"
+            placeholder="可选"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="showCreateDialog = false">取消</el-button>
-        <el-button type="primary" @click="handleCreate" :loading="isLoading">创建</el-button>
+        <el-button type="primary" @click="handleCreate" :loading="isLoading"
+          >创建</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -256,19 +307,9 @@ watch([projectId, collectionId], () => {
   background: var(--el-border-color-lighter);
 }
 
-.chat-panel {
-  flex: 0 0 28%;
-  min-width: 300px;
-  background: var(--el-bg-color);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  border-right: 1px solid var(--el-border-color-lighter);
-}
-
 .main-panel {
   flex: 1;
-  min-width: 320px;
+  min-width: 400px;
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
@@ -276,8 +317,9 @@ watch([projectId, collectionId], () => {
 }
 
 .summary-panel {
-  flex: 0 0 28%;
+  flex: 0 0 320px;
   min-width: 280px;
+  max-width: 400px;
   background: var(--el-bg-color);
   display: flex;
   flex-direction: column;
@@ -286,9 +328,8 @@ watch([projectId, collectionId], () => {
 }
 
 @media (max-width: 1200px) {
-  .chat-panel,
   .summary-panel {
-    flex: 0 0 30%;
+    flex: 0 0 280px;
   }
 
   .main-panel {
@@ -301,16 +342,14 @@ watch([projectId, collectionId], () => {
     flex-wrap: wrap;
   }
 
-  .chat-panel,
   .main-panel {
-    flex: 1 1 50%;
+    flex: 1 1 60%;
     min-width: 260px;
-    border-right: none;
   }
 
   .summary-panel {
-    flex: 1 1 100%;
-    min-width: 100%;
+    flex: 1 1 40%;
+    min-width: 240px;
     max-height: 280px;
     border-left: none;
     border-top: 1px solid var(--el-border-color-lighter);
@@ -348,8 +387,8 @@ watch([projectId, collectionId], () => {
     gap: 8px;
   }
 
-  .chat-panel,
-  .main-panel {
+  .main-panel,
+  .summary-panel {
     flex: 1 1 100%;
     min-width: 100%;
   }

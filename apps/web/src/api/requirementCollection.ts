@@ -1,23 +1,39 @@
 import api from './axios';
 
-export interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-  timestamp: string;
-}
-
 export interface UserSummary {
   id: string;
   username: string;
   displayName: string;
   email: string;
+  role?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export type CollectionType = 'meeting' | 'interview' | 'document' | 'other';
 
-export type CollectionStatus = 'active' | 'completed';
+export const CollectionStatus = {
+  ACTIVE: 'ACTIVE',
+  COMPLETED: 'COMPLETED',
+} as const;
+export type CollectionStatus = (typeof CollectionStatus)[keyof typeof CollectionStatus];
 
-export type RawRequirementStatus = 'pending' | 'processing' | 'completed' | 'clarified' | 'converted' | 'discarded' | 'failed';
+export const RawRequirementStatus = {
+  PENDING: 'PENDING',
+  PROCESSING: 'PROCESSING',
+  COMPLETED: 'COMPLETED',
+  CLARIFIED: 'CLARIFIED',
+  CONVERTED: 'CONVERTED',
+  DISCARDED: 'DISCARDED',
+  FAILED: 'FAILED',
+} as const;
+export type RawRequirementStatus = (typeof RawRequirementStatus)[keyof typeof RawRequirementStatus];
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
 
 export interface CreateCollectionDto {
   projectId: string;
@@ -34,6 +50,21 @@ export interface UpdateCollectionDto {
   meetingMinutes?: string;
 }
 
+export interface RawRequirementInCollection {
+  id: string;
+  content: string;
+  source?: string;
+  status: string;
+  sessionHistory: Array<{ role: 'user' | 'assistant'; content: string; timestamp: string }>;
+  followUpQuestions: string[];
+  keyElements: string[];
+  questionCount: number;
+  clarifiedContent?: string;
+  clarifiedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface RawRequirementCollectionResponse {
   id: string;
   projectId: string;
@@ -46,21 +77,6 @@ export interface RawRequirementCollectionResponse {
   meetingMinutes?: string;
   rawRequirementCount: number;
   chatRoundCount: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface RawRequirementInCollection {
-  id: string;
-  content: string;
-  source?: string;
-  status: RawRequirementStatus;
-  sessionHistory: ChatMessage[];
-  followUpQuestions: string[];
-  keyElements: string[];
-  questionCount: number;
-  clarifiedContent?: string;
-  clarifiedAt?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -121,7 +137,7 @@ export const requirementCollectionApi = {
   addRawRequirement: (
     collectionId: string,
     dto: AddRawRequirementDto
-  ): Promise<RawRequirementInCollection> => {
+  ): Promise<any> => {
     return api.post(`/collections/${collectionId}/raw-requirements`, dto);
   },
 
@@ -129,12 +145,23 @@ export const requirementCollectionApi = {
     return api.get(`/collections/${collectionId}/raw-requirements`);
   },
 
-  getRawRequirement: (rawRequirementId: string): Promise<RawRequirementInCollection> => {
-    return api.get(`/collections/raw-requirements/${rawRequirementId}`);
-  },
-
-  getFollowUpQuestions: (rawRequirementId: string): Promise<string[]> => {
-    return api.get(`/collections/raw-requirements/${rawRequirementId}/follow-up-questions`);
+  streamAnalyzeRequirement: (
+    collectionId: string,
+    body: {
+      rawRequirementText: string;
+      requirementFiles?: Array<{ type: string; data: string; name?: string }>;
+      projectAttachments?: Array<{ type: string; data: string; name?: string }>;
+      configId?: string;
+    }
+  ): Promise<Response> => {
+    return fetch(
+      `${import.meta.env.VITE_API_BASE_URL}/api/collections/${collectionId}/analyze/stream`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      }
+    );
   },
 
   chatCollect: (
@@ -142,16 +169,7 @@ export const requirementCollectionApi = {
     message: string,
     configId?: string
   ): Promise<ChatResult> => {
-    return api.post(`/collections/raw-requirements/${rawRequirementId}/chat`, { message, configId });
-  },
-
-  chatWithCollection: (
-    collectionId: string,
-    message: string,
-    source: string,
-    configId?: string
-  ): Promise<{ rawRequirementId: string } & ChatResult> => {
-    return api.post(`/collections/${collectionId}/chat`, { message, source, configId });
+    return api.post(`/raw-requirements/${rawRequirementId}/chat`, { message, configId });
   },
 
   clarifyRawRequirement: (
@@ -162,6 +180,6 @@ export const requirementCollectionApi = {
   },
 
   deleteRawRequirement: (rawRequirementId: string): Promise<void> => {
-    return api.delete(`/collections/raw-requirements/${rawRequirementId}`);
+    return api.delete(`/raw-requirements/${rawRequirementId}`);
   },
 };

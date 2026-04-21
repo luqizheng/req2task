@@ -1,122 +1,48 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
-import { FolderOpened } from "@element-plus/icons-vue";
-import { AIChat } from "@req2task/ai-chat";
-import "@req2task/ai-chat/dist/style.css";
-import {
-  useRequirementCollectStore,
-  MAX_QUESTION_COUNT,
-} from "@/stores/requirementCollect";
-import { useAiStore } from "@/stores/ai";
-import { useUserStore } from "@/stores/user";
-import { attachmentApi } from "@/api/attachment";
-import { req2taskAdapter } from "@/adapters/req2task";
-import { registerAdapter } from "@req2task/ai-chat";
+import { ref } from "vue";
+import { FolderOpened, Upload, Paperclip } from "@element-plus/icons-vue";
+import { useRequirementCollectStore } from "@/stores/requirementCollect";
+import { ElMessage } from "element-plus";
 
-interface UploadFile {
-  id: string;
-  name: string;
-  size: number;
-  type: string;
-  status: "uploading" | "success" | "error";
-  progress?: number;
-}
-
-registerAdapter(req2taskAdapter);
 const store = useRequirementCollectStore();
-const aiStore = useAiStore();
-const userStore = useUserStore();
 
-const uploadedFiles = ref<UploadFile[]>([]);
+const requirementContent = ref("");
+const isSubmitting = ref(false);
 
-const activeConfigId = computed(() => aiStore.getActiveConfigId());
+const hasValidCollection = ref(!!store.currentCollection?.id);
 
-const isIndependentSession = computed(() => !!store.currentRawRequirementId);
-
-const questionProgress = computed(() => {
-  if (!isIndependentSession.value) return null;
-  return {
-    current: store.currentQuestionCount,
-    max: MAX_QUESTION_COUNT,
-    percentage: Math.min(
-      (store.currentQuestionCount / MAX_QUESTION_COUNT) * 100,
-      100,
-    ),
-  };
-});
-
-const hasValidCollection = computed(() => !!store.currentCollection?.id);
-
-const chatConfig = computed(() => {
-  if (!hasValidCollection.value) return { endpoint: "" };
-  const headers: Record<string, string> = {};
-  if (activeConfigId.value) headers["X-AI-Config-Id"] = activeConfigId.value;
-  if (userStore.token) headers["Authorization"] = `Bearer ${userStore.token}`;
-  return {
-    endpoint: `/api/collections/${store.currentCollection!.id}/analyze/stream`,
-    headers: Object.keys(headers).length ? headers : undefined,
-  };
-});
-
-async function handleFileUpload(
-  file: File,
-  onProgress: (percent: number) => void,
-): Promise<string> {
-  if (!store.currentCollection) {
-    throw new Error("请先选择或创建需求收集");
+async function handleSubmit() {
+  const content = requirementContent.value.trim();
+  if (!content) {
+    ElMessage.warning("请输入需求内容");
+    return;
   }
 
-  const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  if (!store.currentCollection) {
+    ElMessage.warning("请先选择或创建需求收集");
+    return;
+  }
 
-  const newFile: UploadFile = {
-    id: tempId,
-    name: file.name,
-    size: file.size,
-    type: file.type,
-    status: "uploading",
-    progress: 0,
-  };
-
-  uploadedFiles.value = [...uploadedFiles.value, newFile];
-
+  isSubmitting.value = true;
   try {
-    const result = await attachmentApi.upload({
-      file,
-      targetType: "collection",
-      targetId: store.currentCollection.id,
-      displayName: file.name,
-    });
-
-    const index = uploadedFiles.value.findIndex((f) => f.id === tempId);
-    if (index !== -1) {
-      uploadedFiles.value[index] = {
-        ...uploadedFiles.value[index],
-        id: result.id,
-        status: "success",
-        progress: 100,
-      };
+    const result = await store.addRequirement(content, "手动添加");
+    if (result) {
+      requirementContent.value = "";
+      ElMessage.success("需求添加成功");
     }
-
-    onProgress(100);
-    return result.id;
-  } catch (error) {
-    const index = uploadedFiles.value.findIndex((f) => f.id === tempId);
-    if (index !== -1) {
-      uploadedFiles.value[index] = {
-        ...uploadedFiles.value[index],
-        status: "error",
-      };
-    }
-    throw error;
+  } catch {
+    ElMessage.error("添加需求失败");
+  } finally {
+    isSubmitting.value = false;
   }
 }
 
-function handleFileRemove(fileId: string) {
-  uploadedFiles.value = uploadedFiles.value.filter((f) => f.id !== fileId);
+function handleRequirementFileUpload() {
+  ElMessage.info("需求文件上传功能开发中");
+}
 
-  if (!fileId.startsWith("temp_")) {
-    attachmentApi.delete(fileId).catch(() => {});
-  }
+function handleAttachmentUpload() {
+  ElMessage.info("项目附件上传功能开发中");
 }
 </script>
 
@@ -124,42 +50,54 @@ function handleFileRemove(fileId: string) {
   <div class="requirement-chat-panel">
     <div class="panel-header">
       <div class="header-title">
-        <span class="title-icon">💬</span>
-        <span>AI 对话</span>
-      </div>
-      <div v-if="questionProgress" class="header-progress">
-        <span class="progress-label">追问进度</span>
-        <el-progress
-          :percentage="questionProgress.percentage"
-          :show-text="false"
-          :stroke-width="3"
-          :color="
-            questionProgress.current >= MAX_QUESTION_COUNT
-              ? '#67c23a'
-              : '#409eff'
-          "
-        />
-        <span class="progress-count"
-          >{{ questionProgress.current }}/{{ questionProgress.max }}</span
-        >
+        <span class="title-icon">📝</span>
+        <span>需求输入</span>
       </div>
     </div>
 
     <template v-if="hasValidCollection">
-      <AIChat
-        ref="chatRef"
-        :config="chatConfig"
-        adapter-name="req2task"
-        title="AI 需求分析"
-        placeholder="输入需求内容或上传文件..."
-        :max-height="'100%'"
-        :show-window-header="false"
-        :enable-file-upload="true"
-        :uploaded-files="uploadedFiles"
-        @file-upload="handleFileUpload"
-        @file-remove="handleFileRemove"
-      />
+      <div class="panel-content">
+        <div class="textarea-section">
+          <el-input
+            v-model="requirementContent"
+            type="textarea"
+            placeholder="请输入原始需求内容..."
+            :rows="8"
+            resize="vertical"
+          />
+        </div>
+
+        <div class="upload-section">
+          <el-button
+            type="primary"
+            plain
+            :icon="Upload"
+            @click="handleRequirementFileUpload"
+          >
+            需求文件上传
+          </el-button>
+          <el-button
+            type="info"
+            plain
+            :icon="Paperclip"
+            @click="handleAttachmentUpload"
+          >
+            项目附件上传
+          </el-button>
+        </div>
+
+        <div class="submit-section">
+          <el-button
+            type="primary"
+            :loading="isSubmitting"
+            @click="handleSubmit"
+          >
+            提交需求
+          </el-button>
+        </div>
+      </div>
     </template>
+
     <div v-else class="no-collection-hint">
       <el-icon class="hint-icon"><FolderOpened /></el-icon>
       <p>请先选择或创建需求收集</p>
@@ -189,33 +127,37 @@ function handleFileRemove(fileId: string) {
   font-size: 16px;
   font-weight: 600;
   color: var(--el-text-color-primary);
-  margin-bottom: 14px;
 }
 
 .title-icon {
   font-size: 20px;
 }
 
-.header-progress {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.progress-label {
-  font-size: 12px;
-  color: var(--el-text-color-secondary);
-  white-space: nowrap;
-}
-
-.progress-count {
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-  white-space: nowrap;
-}
-
-.header-progress :deep(.el-progress) {
+.panel-content {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  gap: 16px;
+}
+
+.textarea-section {
+  flex: 1;
+  min-height: 200px;
+}
+
+.textarea-section :deep(.el-textarea__inner) {
+  height: 100%;
+}
+
+.upload-section {
+  display: flex;
+  gap: 12px;
+}
+
+.submit-section {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .no-collection-hint {

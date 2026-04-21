@@ -1,11 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
-export interface FileConversionResult {
+interface ConversionResult {
   success: boolean;
   text?: string;
   error?: string;
-  duration: number;
+  duration?: number;
+}
+
+interface ConversionResponse {
+  success: boolean;
+  text?: string;
+  error?: string;
+  duration?: number;
 }
 
 @Injectable()
@@ -14,90 +22,52 @@ export class FileConversionClientService {
   private readonly baseUrl: string;
 
   constructor(private readonly httpService: HttpService) {
-    this.baseUrl = process.env.FILE_CONVERSION_SERVICE_URL || 'http://localhost:4002';
+    this.baseUrl = process.env['FILE_CONVERSION_SERVICE_URL'] || 'http://localhost:4002';
   }
 
-  async convertSync(file: Buffer, mimeType: string, originalName: string): Promise<FileConversionResult> {
+  async transcribeAudio(
+    audioData: string,
+    mimeType: string,
+    originalName: string = 'audio.mp3',
+  ): Promise<ConversionResult> {
     try {
-      const base64 = file.toString('base64');
+      this.logger.log(`Transcribing audio: ${originalName}, mimeType: ${mimeType}`);
 
-      const response = await this.httpService.axiosRef.post<FileConversionResult>(
-        `${this.baseUrl}/convert/sync`,
-        {
-          file: base64,
-          mimeType,
-          originalName,
-        }
+      const response = await firstValueFrom(
+        this.httpService.post<ConversionResponse>(
+          `${this.baseUrl}/convert/sync`,
+          {
+            file: audioData,
+            mimeType,
+            originalName,
+          },
+          {
+            timeout: 120000,
+          },
+        ),
       );
 
-      return response.data;
+      if (response.data.success) {
+        this.logger.log(`Audio transcription completed: ${response.data.duration}ms`);
+        return {
+          success: true,
+          text: response.data.text,
+          duration: response.data.duration,
+        };
+      } else {
+        this.logger.error(`Audio transcription failed: ${response.data.error}`);
+        return {
+          success: false,
+          error: response.data.error || 'Unknown error',
+        };
+      }
     } catch (error) {
-      this.logger.error(`File conversion failed: ${error}`);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.error(`Audio transcription error: ${errorMessage}`);
       return {
         success: false,
-        error: error instanceof Error ? error.message : 'Conversion failed',
-        duration: 0,
+        error: `Audio transcription failed: ${errorMessage}`,
       };
     }
-  }
-
-  async submitAsyncJob(
-    file: Buffer,
-    mimeType: string,
-    originalName: string,
-    callbackUrl?: string
-  ): Promise<{ jobId: string; status: string }> {
-    const base64 = file.toString('base64');
-
-    const response = await this.httpService.axiosRef.post(
-      `${this.baseUrl}/convert/async`,
-      {
-        file: base64,
-        mimeType,
-        originalName,
-        callbackUrl,
-      }
-    );
-
-    return response.data;
-  }
-
-  async getJobStatus(jobId: string): Promise<{
-    jobId: string;
-    status: string;
-    result?: { text: string; duration: number };
-    error?: string;
-  }> {
-    const response = await this.httpService.axiosRef.get(
-      `${this.baseUrl}/convert/jobs/${jobId}`
-    );
-    return response.data;
-  }
-
-  async convertFileIfNeeded(file: Buffer, mimeType: string, originalName: string): Promise<string | null> {
-    const supportedTypes = [
-      'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
-      'audio/mpeg',
-      'audio/mp3',
-      'audio/wav',
-      'audio/x-wav',
-      'audio/mp4',
-      'audio/x-m4a',
-    ];
-
-    if (!supportedTypes.includes(mimeType)) {
-      return null;
-    }
-
-    const result = await this.convertSync(file, mimeType, originalName);
-
-    if (!result.success || !result.text) {
-      this.logger.warn(`Failed to convert file ${originalName}: ${result.error}`);
-      return null;
-    }
-
-    return result.text;
   }
 }

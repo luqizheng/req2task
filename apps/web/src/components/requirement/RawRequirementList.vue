@@ -3,19 +3,19 @@ import { ref } from 'vue';
 import { Delete, Check } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
-import type { RawRequirementStatus } from '@/api/requirementCollection';
+import { RawRequirementStatus } from '@/api/requirementCollection';
 
 const store = useRequirementCollectStore();
 const expandedId = ref<string | null>(null);
 
-const statusMap: Record<RawRequirementStatus, { label: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
-  pending: { label: '待处理', type: 'info' },
-  processing: { label: '分析中', type: 'warning' },
-  completed: { label: '已完成', type: 'success' },
-  clarified: { label: '已澄清', type: 'success' },
-  converted: { label: '已转换', type: 'success' },
-  discarded: { label: '已删除', type: 'info' },
-  failed: { label: '失败', type: 'danger' },
+const statusMap: Record<string, { label: string; type: '' | 'success' | 'warning' | 'info' | 'danger' }> = {
+  [RawRequirementStatus.PENDING]: { label: '待处理', type: 'info' },
+  [RawRequirementStatus.PROCESSING]: { label: '分析中', type: 'warning' },
+  [RawRequirementStatus.COMPLETED]: { label: '已完成', type: 'success' },
+  [RawRequirementStatus.CLARIFIED]: { label: '已澄清', type: 'success' },
+  [RawRequirementStatus.CONVERTED]: { label: '已转换', type: 'success' },
+  [RawRequirementStatus.DISCARDED]: { label: '已删除', type: 'info' },
+  [RawRequirementStatus.FAILED]: { label: '失败', type: 'danger' },
 };
 
 const toggleExpand = (id: string) => {
@@ -76,8 +76,8 @@ const formatTime = (dateString: string) => {
   return date.toLocaleDateString('zh-CN');
 };
 
-const isClarified = (status: RawRequirementStatus) => {
-  return status === 'clarified' || status === 'converted' || status === 'discarded';
+const isClarified = (status: string) => {
+  return status === RawRequirementStatus.CLARIFIED || status === RawRequirementStatus.CONVERTED || status === RawRequirementStatus.DISCARDED;
 };
 </script>
 

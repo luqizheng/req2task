@@ -3,6 +3,7 @@ import { useRoute, useRouter } from 'vue-router';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import { useAiStore } from '@/stores/ai';
+import { CollectionStatus } from '@/api/requirementCollection';
 import type { CollectionType, CreateCollectionDto } from '@/api/requirementCollection';
 
 export const collectionTypeOptions = [
@@ -47,7 +48,7 @@ export function useCollection(): {
     },
   });
 
-  const isCollectionActive = computed(() => store.currentCollection?.status === 'active');
+  const isCollectionActive = computed(() => store.currentCollection?.status === CollectionStatus.ACTIVE);
 
   const handleBack = () => router.push(`/projects/${projectId.value}`);
 

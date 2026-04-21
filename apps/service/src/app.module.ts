@@ -32,6 +32,7 @@ import { TasksModule } from "./tasks/tasks.module";
 import { AiModule } from "./ai/ai.module";
 import { NotificationModule } from "./notifications/notification.module";
 import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
+import { RawRequirementModule } from "./raw-requirement/raw-requirement.module";
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ConversationModule } from "./conversation/conversation.module";

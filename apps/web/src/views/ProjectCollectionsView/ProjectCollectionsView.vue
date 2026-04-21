@@ -5,6 +5,7 @@ import { Plus, Delete, ChatDotRound, ArrowLeft, Refresh, MagicStick } from '@ele
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
 import { useProjectStore } from '@/stores/project';
+import { CollectionStatus } from '@/api/requirementCollection';
 import type { CreateCollectionDto, CollectionType } from '@/api/requirementCollection';
 import CollectionCreateDialog from './components/CollectionCreateDialog.vue';
 
@@ -35,7 +36,7 @@ const getTypeLabel = (type: CollectionType) => {
 };
 
 const getStatusType = (status: string) => {
-  return status === 'active' ? 'success' : 'info';
+  return status === CollectionStatus.ACTIVE ? 'success' : 'info';
 };
 
 const loadCollections = async () => {
@@ -139,7 +140,7 @@ onMounted(async () => {
               <div class="collection-header">
                 <span class="collection-title">{{ collection.title }}</span>
                 <el-tag :type="getStatusType(collection.status)" size="small">
-                  {{ collection.status === 'active' ? '进行中' : '已完成' }}
+                  {{ collection.status === CollectionStatus.ACTIVE ? '进行中' : '已完成' }}
                 </el-tag>
                 <el-tag size="small">{{ getTypeLabel(collection.collectionType) }}</el-tag>
               </div>

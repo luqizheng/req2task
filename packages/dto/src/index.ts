@@ -10,6 +10,7 @@ export * from './notification';
 export * from './conversation/index';
 export * from './llm-config';
 export * from './attachment';
+export * from './raw-requirement';
 
 export {
   UploadAttachmentDto,

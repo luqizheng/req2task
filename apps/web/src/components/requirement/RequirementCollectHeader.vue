@@ -3,6 +3,7 @@ import { ref, computed } from 'vue';
 import { Plus, Delete, FolderOpened, Check, Warning } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { useRequirementCollectStore } from '@/stores/requirementCollect';
+import { CollectionStatus } from '@/api/requirementCollection';
 import type { CollectionType, CreateCollectionDto } from '@/api/requirementCollection';
 
 const props = defineProps<{
@@ -39,7 +40,7 @@ const selectedCollectionId = computed({
 });
 
 const isCollectionActive = computed(() => {
-  return store.currentCollection?.status === 'active';
+  return store.currentCollection?.status === CollectionStatus.ACTIVE;
 });
 
 const handleCreate = async () => {

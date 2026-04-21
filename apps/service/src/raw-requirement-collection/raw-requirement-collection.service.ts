@@ -1,28 +1,23 @@
 import {
   Injectable,
   NotFoundException,
-  BadRequestException,
   Logger,
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import {
   RawRequirementCollection,
-  RawRequirement,
   CollectionStatus,
-  QuestionAndAnswer,
 } from "@req2task/core";
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
-  RawRequirementStatus,
   CompleteCollectionResultDto,
-  RawRequirementInCollectionDto,
   RawRequirementCollectionResponseDto,
   RawRequirementCollectionDetailDto,
-  RawRequirementResponseDto,
-  QuestionAndAnswerDto,
+  RawRequirementStatus,
 } from "@req2task/dto";
+import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
 
 @Injectable()
 export class RawRequirementCollectionService {
@@ -64,65 +59,18 @@ export class RawRequirementCollectionService {
     entity: RawRequirementCollection,
     rawRequirementCount: number,
     chatRoundCount: number,
-    rawRequirements: RawRequirement[],
+    rawRequirements: any[] = [],
   ): RawRequirementCollectionDetailDto {
     return {
       ...this.toResponseDto(entity, rawRequirementCount, chatRoundCount),
-      rawRequirements: rawRequirements.map((r) =>
-        this.toRawRequirementInDto(r),
-      ),
-    };
-  }
-
-  private toQuestionAndAnswerDtos(
-    questionAndAnswers: QuestionAndAnswer[] | null,
-  ): QuestionAndAnswerDto[] {
-    if (!questionAndAnswers) return [];
-    return questionAndAnswers.map((qa) => ({
-      id: qa.id,
-      question: qa.question,
-      answer: qa.answer,
-      createdAt: qa.createdAt,
-      answeredAt: qa.answeredAt,
-    }));
-  }
-
-  private toRawRequirementInDto(
-    entity: RawRequirement,
-  ): RawRequirementInCollectionDto {
-    return {
-      id: entity.id,
-      content: entity.originalContent,
-      status: entity.status,
-      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
-      keyElements: entity.keyElements || [],
-      createdAt: entity.createdAt.toISOString(),
-      updatedAt: entity.updatedAt.toISOString(),
-    };
-  }
-
-  private toRawRequirementResponseDto(
-    entity: RawRequirement,
-  ): RawRequirementResponseDto {
-    return {
-      id: entity.id,
-      collectionId: entity.collectionId || "",
-      conversationId: entity.conversationId || undefined,
-      content: entity.originalContent,
-      source: entity.source || "",
-      status: entity.status,
-      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
-      keyElements: entity.keyElements || [],
-      createdAt: entity.createdAt.toISOString(),
-      updatedAt: entity.updatedAt.toISOString(),
+      rawRequirements,
     };
   }
 
   constructor(
     @InjectRepository(RawRequirementCollection)
     private collectionRepository: Repository<RawRequirementCollection>,
-    @InjectRepository(RawRequirement)
-    private rawRequirementRepository: Repository<RawRequirement>,
+    private readonly rawRequirementService: RawRequirementService,
   ) {}
 
   async create(
@@ -186,20 +134,16 @@ export class RawRequirementCollectionService {
       throw new NotFoundException(`Collection ${id} not found`);
     }
 
-    const rawRequirements = await this.rawRequirementRepository.find({
-      where: { collectionId: id },
-    });
+    const rawRequirements =
+      await this.rawRequirementService.getRawRequirements(id);
 
     const chatRoundCount = rawRequirements.reduce((count, raw) => {
-      return count + (raw.questionAndAnswers?.filter((qa) => qa.answer)?.length || 0);
+      return (
+        count + (raw.questionAndAnswers?.filter((qa) => qa.answer)?.length || 0)
+      );
     }, 0);
 
-    return this.toDetailDto(
-      collection,
-      rawRequirements.length,
-      chatRoundCount,
-      rawRequirements,
-    );
+    return this.toDetailDto(collection, rawRequirements.length, chatRoundCount, rawRequirements);
   }
 
   async update(
@@ -247,30 +191,18 @@ export class RawRequirementCollectionService {
       };
     }
 
-    const rawRequirements = await this.rawRequirementRepository.find({
-      where: { collectionId: id },
-    });
+    const rawRequirements =
+      await this.rawRequirementService.getRawRequirements(id);
 
     const unprocessedRequirements = rawRequirements.filter(
       (r) =>
-        r.status === RawRequirementStatus.PENDING ||
-        r.status === RawRequirementStatus.PROCESSING,
+        r.status === RawRequirementStatus.PENDING || r.status === RawRequirementStatus.PROCESSING,
     );
 
     if (unprocessedRequirements.length > 0) {
-      const unclarifiedRequirements: RawRequirementInCollectionDto[] =
-        unprocessedRequirements.map((r) => ({
-          id: r.id,
-          content: r.originalContent,
-          status: r.status,
-          questionAndAnswers: this.toQuestionAndAnswerDtos(r.questionAndAnswers),
-          keyElements: r.keyElements || [],
-          createdAt: r.createdAt.toISOString(),
-          updatedAt: r.updatedAt.toISOString(),
-        }));
       return {
         success: false,
-        unclarifiedRequirements,
+        unclarifiedRequirements: unprocessedRequirements,
         message: `还有 ${unprocessedRequirements.length} 个需求未处理，请先处理或删除`,
       };
     }
@@ -288,118 +220,30 @@ export class RawRequirementCollectionService {
     content: string,
     source: string,
     userId: string,
-  ): Promise<RawRequirementResponseDto> {
-    const collection = await this.collectionRepository.findOne({
-      where: { id: collectionId },
-    });
-
-    if (!collection) {
-      throw new NotFoundException(`Collection ${collectionId} not found`);
+  ) {
+    const isCompleted = await this.rawRequirementService.checkCollectionCompleted(
+      collectionId,
+    );
+    if (isCompleted) {
+      throw new Error("收集已完成，无法添加新需求");
     }
-
-    if (collection.status === CollectionStatus.COMPLETED) {
-      throw new BadRequestException("收集已完成，无法添加新需求");
-    }
-
-    const rawRequirement = this.rawRequirementRepository.create({
-      collectionId: collection.id,
-      originalContent: content,
+    return this.rawRequirementService.addRawRequirement(
+      collectionId,
+      content,
       source,
-      status: RawRequirementStatus.PENDING,
-      createdById: userId,
-      questionAndAnswers: [],
-      keyElements: [],
-    });
-
-    const saved = await this.rawRequirementRepository.save(rawRequirement);
-    return this.toRawRequirementResponseDto(saved);
+      userId,
+    );
   }
 
-  async updateRawRequirement(
-    rawRequirementId: string,
-    updates: {
-      status?: RawRequirementStatus;
-      generatedContent?: string;
-      questionAndAnswers?: QuestionAndAnswer[];
-      keyElements?: string[];
-    },
-  ): Promise<RawRequirementResponseDto> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-    });
-
-    if (!rawRequirement) {
-      throw new NotFoundException(
-        `Raw requirement ${rawRequirementId} not found`,
-      );
-    }
-
-    const updateData: Partial<RawRequirement> = {};
-    if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.generatedContent !== undefined)
-      updateData.generatedContent = updates.generatedContent;
-    if (updates.questionAndAnswers !== undefined)
-      updateData.questionAndAnswers = updates.questionAndAnswers;
-    if (updates.keyElements !== undefined)
-      updateData.keyElements = updates.keyElements;
-
-    await this.rawRequirementRepository.update(rawRequirementId, updateData);
-
-    const updated = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-      relations: ["createdBy"],
-    });
-    return this.toRawRequirementResponseDto(updated!);
+  async getRawRequirements(collectionId: string) {
+    return this.rawRequirementService.getRawRequirements(collectionId);
   }
 
-  async getRawRequirements(
-    collectionId: string,
-  ): Promise<RawRequirementInCollectionDto[]> {
-    const rawRequirements = await this.rawRequirementRepository.find({
-      where: { collectionId },
-      relations: ["createdBy"],
-      order: { createdAt: "DESC" },
-    });
-    return rawRequirements.map((r) => this.toRawRequirementInDto(r));
+  async getRawRequirementById(rawRequirementId: string) {
+    return this.rawRequirementService.getRawRequirementById(rawRequirementId);
   }
 
-  async getQuestionAndAnswers(rawRequirementId: string): Promise<QuestionAndAnswerDto[]> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-    });
-
-    if (!rawRequirement) {
-      throw new NotFoundException(
-        `Raw requirement ${rawRequirementId} not found`,
-      );
-    }
-
-    return this.toQuestionAndAnswerDtos(rawRequirement.questionAndAnswers);
-  }
-
-  async getRawRequirementById(
-    rawRequirementId: string,
-  ): Promise<RawRequirementResponseDto | null> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-      relations: ["createdBy"],
-    });
-    return rawRequirement
-      ? this.toRawRequirementResponseDto(rawRequirement)
-      : null;
-  }
-
-  async deleteRawRequirement(rawRequirementId: string): Promise<void> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
-      where: { id: rawRequirementId },
-    });
-
-    if (!rawRequirement) {
-      throw new NotFoundException(
-        `Raw requirement ${rawRequirementId} not found`,
-      );
-    }
-
-    await this.rawRequirementRepository.remove(rawRequirement);
+  async deleteRawRequirement(rawRequirementId: string) {
+    return this.rawRequirementService.deleteRawRequirement(rawRequirementId);
   }
 }

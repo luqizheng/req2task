@@ -4,6 +4,7 @@ export { projectsApi } from './projects';
 export { featureModulesApi } from './featureModules';
 export { requirementsApi } from './requirements';
 export { rawRequirementsApi } from './rawRequirements';
+export { requirementCollectionApi } from './requirementCollection';
 export { aiApi } from './ai';
 export { llmConfigApi } from './llm-config';
 export { conversationApi } from './ai';

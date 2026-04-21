@@ -97,8 +97,8 @@ const isClarified = (status: string) => {
         @click="handleSelect(requirement.id)"
       >
         <div class="item-header">
-          <el-tag :type="statusMap[requirement.status].type" size="small">
-            {{ statusMap[requirement.status].label }}
+          <el-tag :type="statusMap[requirement.status]?.type || 'info'" size="small">
+            {{ statusMap[requirement.status]?.label || '未知' }}
           </el-tag>
           <span class="item-time">{{ formatTime(requirement.createdAt) }}</span>
         </div>

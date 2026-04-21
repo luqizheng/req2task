@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { ChatDotRound } from '@element-plus/icons-vue';
-import { useRequirementCollectStore, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
+import { useRequirementCollectStore } from '@/stores/requirementCollect';
+import { MAX_QUESTION_COUNT } from '@/stores/conversation';
 import type { ChatMessage } from '@/api/requirementCollection';
 
 const store = useRequirementCollectStore();

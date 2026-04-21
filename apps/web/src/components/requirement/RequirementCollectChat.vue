@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, watch } from 'vue';
 import { Promotion, Loading } from '@element-plus/icons-vue';
-import { useRequirementCollectStore, ChatMessageUI, MAX_QUESTION_COUNT } from '@/stores/requirementCollect';
+import { useRequirementCollectStore, ChatMessageUI } from '@/stores/requirementCollect';
+import { MAX_QUESTION_COUNT } from '@/stores/conversation';
 import { useAiStore } from '@/stores/ai';
 
 const props = defineProps<{

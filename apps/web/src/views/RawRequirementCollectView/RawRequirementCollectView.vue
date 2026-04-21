@@ -11,6 +11,7 @@ import {
 } from "@element-plus/icons-vue";
 import RawRequirementMainPanel from "./components/RawRequirementMainPanel.vue";
 import RawRequirementSidebar from "./components/RawRequirementSidebar.vue";
+import RequirementChatPanel from "./components/RequirementChatPanel.vue";
 import { useCollection, collectionTypeOptions } from "./composables";
 import { useRequirementCollectStore } from "@/stores/requirementCollect";
 import { CollectionStatus } from "@/api/requirementCollection";

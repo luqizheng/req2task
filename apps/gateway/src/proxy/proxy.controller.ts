@@ -1,6 +1,5 @@
-import { Controller, All, Req, Headers, Query, Body, Res, HttpCode } from '@nestjs/common';
+import { Controller, All, Req, Res, HttpCode } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { ProxyService } from './proxy.service';
 import { Logger } from '../common/utils/logger';
 
 @Controller('*')

@@ -12,11 +12,15 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: './apps/web/tsconfig.json'
+    project: 'tsconfig.json'
   },
   plugins: ['import'],
   rules: {
-    '@typescript-eslint/no-explicit-any': 'warn'
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['warn', {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }]
   },
   settings: {
     'import/resolver': {
@@ -28,5 +32,6 @@ module.exports = {
         extensions: ['.ts', '.tsx', '.vue']
       }
     }
-  }
+  },
+  ignorePatterns: ['e2e/**', 'vite.config.*', 'vitest.config.*', 'dist/**', 'node_modules/**']
 }

@@ -5,7 +5,6 @@ import { Logger } from '../common/utils/logger';
 import { RouterService } from '../router/router.service';
 import { LoadBalancerService } from '../loadbalancer/loadbalancer.service';
 import { CircuitBreakerService } from '../circuit-breaker/circuit-breaker.service';
-import { RouteRule } from '../router/router.types';
 import { TracingService } from '../tracing/tracing.service';
 
 @Injectable()
@@ -92,10 +91,10 @@ export class ProxyService {
   }
 
   private handleGatewayRequest(
-    method: string,
+    _method: string,
     path: string,
-    headers: Record<string, string>,
-  ): any {
+    _headers: Record<string, string>,
+  ): unknown {
     if (path.startsWith('/api/health')) {
       return {
         status: 200,

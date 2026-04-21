@@ -38,7 +38,7 @@ export class ProxyService {
     const route = routeMatch.rule;
 
     if (route.serviceName === 'gateway') {
-      return this.handleGatewayRequest(method, path, headers);
+      return this.handleGatewayRequest(method, path, headers) as any;
     }
 
     if (this.circuitBreakerService.isOpen(route.serviceName)) {

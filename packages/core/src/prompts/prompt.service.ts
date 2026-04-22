@@ -1,3 +1,4 @@
+import { Logger } from "@nestjs/common";
 import { RenderService } from "./render.service";
 import { requirementPrompts } from "./requirement.prompts";
 import { taskPrompts } from "./task.prompts";
@@ -20,10 +21,10 @@ export interface RenderedPrompt {
 
 export class PromptService {
   private prompts: Map<string, PromptTemplate>;
-  private renderService: RenderService;
+  private renderService: RenderService = new RenderService();
+  private readonly logger = new Logger(PromptService.name);
 
-  constructor(renderService: RenderService) {
-    this.renderService = renderService;
+  constructor() {
     this.prompts = new Map();
     this.loadPrompts();
   }
@@ -65,6 +66,7 @@ export class PromptService {
   render(code: string, params: Record<string, unknown>): RenderedPrompt {
     const prompt = this.getByCode(code);
     if (!prompt) {
+      this.logger.error({ code }, `Prompt not found`);
       throw new Error(`Prompt not found: ${code}`);
     }
 
@@ -75,12 +77,13 @@ export class PromptService {
       }
     });
     if (missingParams.length > 0) {
+      this.logger.error({ code, missingParams }, `Missing required parameters`);
       throw new Error(
         `Missing required parameters: ${missingParams.join(", ")}`,
       );
     }
 
-    return {
+    const rendered = {
       systemPrompt: prompt.systemPrompt,
       userPrompt: this.renderService.renderHandlebars(
         prompt.userPromptTemplate,
@@ -89,6 +92,12 @@ export class PromptService {
       temperature: prompt.temperature ?? 0.7,
       maxTokens: prompt.maxTokens ?? 2000,
     };
+
+    this.logger.debug(
+      { code, paramCount: Object.keys(params).length },
+      `Prompt rendered`,
+    );
+    return rendered;
   }
 
   renderWithOptions(

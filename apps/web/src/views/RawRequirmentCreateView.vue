@@ -171,7 +171,7 @@ const getStatusLabel = (status: RawRequirementStatus) => {
 const translRequestData = (
   data: AiSubmitRequestDto,
 ): GenerateRawRequirementDto => {
-  debugger;
+
   return {
     conversationText: data.message,
 

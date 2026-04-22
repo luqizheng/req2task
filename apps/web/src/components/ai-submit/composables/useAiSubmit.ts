@@ -245,7 +245,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
 
   const submitStream = async (callbacks: StreamCallbacks) => {
     if (!canSubmit.value) return;
-    debugger;
+
     isSubmitting.value = true;
 
     try {
@@ -258,7 +258,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       };
 
       const token = localStorage.getItem("accessToken");
-      debugger;
+ 
       const response = await fetch(options.url, {
         method: "POST",
         headers: {
@@ -333,13 +333,13 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
           .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
           .map((f) => f.id),
       };
-      debugger;
+
       const response = await axios.post(
         options.url,
         !options.transRequest ? formData : options.transRequest(formData),
       );
 
-      debugger
+
       console.log(response)
       
    

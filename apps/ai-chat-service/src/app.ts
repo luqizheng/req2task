@@ -10,9 +10,7 @@ import { ConversationService } from './services/conversation.service.js';
 import { LlMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
 import { ServiceApiService } from './services/service-api.service.js';
-import { MockProvider } from './llm/providers/mock.provider.js';
 import { initializeDatabase, dataSource } from './database/index.js';
-import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
 
 const getIP = (): string => {
@@ -74,15 +72,9 @@ export async function createApp(): Promise<Express> {
   await serviceApiService.syncFromRemote();
 
   const defaultLLMConfig = await serviceApiService.getDefaultLLMConfig();
-  
-  let llmService: LLMService;
-  if (!defaultLLMConfig || !defaultLLMConfig.apiKey) {
-    logger.warn('No LLM config found in database, using Mock Provider');
-    llmService = new LLMService(new MockProvider());
-  } else {
-    llmService = new LLMService(defaultLLMConfig.apiKey, defaultLLMConfig.modelName || 'gpt-4o-mini');
-  }
-  
+
+  const llmService = new LLMService(defaultLLMConfig?.modelName || 'gpt-4o-mini');
+
   const llmConfigService = new LlMConfigService(dataSource);
   const useMockProvider = !defaultLLMConfig || !defaultLLMConfig.apiKey;
 

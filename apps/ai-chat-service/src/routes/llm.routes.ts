@@ -78,24 +78,12 @@ export function createLlmRoutes(llmService: LLMService): Router {
           }
         }
 
-        const followUpQuestions = llmService.extractFollowUpQuestions(fullContent);
-        const keyElements = llmService.extractKeyElements(fullContent);
-
         res.write(
-          `data: ${JSON.stringify({
-            type: 'done',
-            followUpQuestions,
-            keyElements,
-          })}\n\n`,
+          `data: ${JSON.stringify({ type: 'done' })}\n\n`,
         );
 
         logger.info(
-          {
-            conversationId,
-            contentLength: fullContent.length,
-            followUpQuestionsCount: followUpQuestions.length,
-            keyElementsCount: keyElements.length,
-          },
+          { conversationId, contentLength: fullContent.length },
           'LLM generation completed',
         );
       } catch (llmError) {
@@ -152,14 +140,8 @@ export function createLlmRoutes(llmService: LLMService): Router {
 
       const response = await llmService.complete(messages);
 
-      const followUpQuestions = llmService.extractFollowUpQuestions(response.content);
-      const keyElements = llmService.extractKeyElements(response.content);
-
       logger.info(
-        {
-          conversationId,
-          contentLength: response.content.length,
-        },
+        { conversationId, contentLength: response.content.length },
         'LLM generation completed (non-stream)',
       );
 
@@ -168,8 +150,6 @@ export function createLlmRoutes(llmService: LLMService): Router {
         data: {
           content: response.content,
           conversationId: conversationId || '',
-          followUpQuestions,
-          keyElements,
         },
       });
     } catch (error) {

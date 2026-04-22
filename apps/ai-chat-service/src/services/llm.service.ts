@@ -1,6 +1,6 @@
-import OpenAI from 'openai';
+import LLM from '@themaximalist/llm.js';
 import type { Message, FileAttachment, LLMConfigMetadata } from '../types.js';
-import type { LLMProvider } from '../llm/providers/types.js';
+import type { Options } from '@themaximalist/llm.js';
 
 export interface LLMResponse {
   content: string;
@@ -13,23 +13,10 @@ export interface StreamChunk {
 }
 
 export class LLMService {
-  private openAiClient: OpenAI | null = null;
-  private apiKey: string;
   private defaultModel: string;
-  private provider: LLMProvider | null = null;
 
-  constructor(apiKeyOrProvider: string | LLMProvider, defaultModel: string = 'gpt-4o-mini') {
-    if (typeof apiKeyOrProvider === 'string') {
-      this.apiKey = apiKeyOrProvider;
-      this.defaultModel = defaultModel;
-      if (apiKeyOrProvider) {
-        this.openAiClient = new OpenAI({ apiKey: apiKeyOrProvider });
-      }
-    } else {
-      this.provider = apiKeyOrProvider;
-      this.apiKey = '';
-      this.defaultModel = defaultModel;
-    }
+  constructor(defaultModel: string = 'gpt-4o-mini') {
+    this.defaultModel = defaultModel;
   }
 
   async complete(
@@ -37,33 +24,29 @@ export class LLMService {
     model?: string,
     files?: FileAttachment[]
   ): Promise<LLMResponse> {
-    if (this.provider) {
-      const processedMessages = this.processMessagesForProvider(messages);
-      const response = await this.provider.generate(processedMessages);
+    const processedMessages = this.processMessages(messages, files);
+    const options: Options = {
+      model: model || this.defaultModel,
+      extended: true,
+    };
+
+    const response = await LLM(processedMessages, options);
+
+    if (typeof response === 'string') {
       return {
-        content: response.content,
-        finishReason: (response.finishReason as LLMResponse['finishReason']) || null,
+        content: response,
+        finishReason: null,
       };
     }
 
-    if (!this.openAiClient) {
-      throw new Error('OpenAI client not initialized. Please set OPENAI_API_KEY.');
-    }
-
-    const processedMessages = this.processFilesInMessages(messages, files);
-
-    const response = await this.openAiClient.chat.completions.create({
-      model: model || this.defaultModel,
-      messages: processedMessages as OpenAI.Chat.ChatCompletionMessageParam[],
-      temperature: 0.7,
-      max_tokens: 4000,
-    });
-
-    const choice = response.choices[0];
+    const typedResponse = response as {
+      content: string;
+      finishReason?: string;
+    };
 
     return {
-      content: choice.message.content || '',
-      finishReason: choice.finish_reason || null,
+      content: typedResponse.content,
+      finishReason: (typedResponse.finishReason as LLMResponse['finishReason']) || null,
     };
   }
 
@@ -72,55 +55,35 @@ export class LLMService {
     config: LLMConfigMetadata,
     files?: FileAttachment[]
   ): Promise<LLMResponse> {
-    const processedMessages = this.processFilesInMessages(messages, files);
+    const processedMessages = this.processMessages(messages, files);
+    const options: Options = {
+      model: config.modelName,
+      service: config.provider,
+      apiKey: config.apiKey,
+      baseUrl: config.baseUrl,
+      temperature: Number(config.temperature),
+      max_tokens: Number(config.maxTokens),
+      extended: true,
+    };
 
-    if (config.provider === 'openai' || config.provider === 'deepseek') {
-      const client = new OpenAI({
-        apiKey: this.apiKey || config.baseUrl ? 'placeholder' : this.apiKey,
-        baseURL: config.baseUrl,
-      });
+    const response = await LLM(processedMessages, options);
 
-      const response = await client.chat.completions.create({
-        model: config.modelName,
-        messages: processedMessages as OpenAI.Chat.ChatCompletionMessageParam[],
-        temperature: Number(config.temperature),
-        max_tokens: Number(config.maxTokens),
-      });
-
-      const choice = response.choices[0];
+    if (typeof response === 'string') {
       return {
-        content: choice.message.content || '',
-        finishReason: choice.finish_reason || null,
+        content: response,
+        finishReason: null,
       };
     }
 
-    if (config.provider === 'ollama') {
-      const baseUrl = config.baseUrl || 'http://localhost:11434';
-      const response = await fetch(`${baseUrl}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: config.modelName,
-          messages: processedMessages.map(m => ({
-            role: m.role,
-            content: m.content,
-          })),
-          stream: false,
-        }),
-      });
+    const typedResponse = response as {
+      content: string;
+      finishReason?: string;
+    };
 
-      if (!response.ok) {
-        throw new Error(`Ollama API error: ${response.statusText}`);
-      }
-
-      const data = await response.json() as { message: { content: string } };
-      return {
-        content: data.message?.content || '',
-        finishReason: 'stop',
-      };
-    }
-
-    throw new Error(`Unsupported provider: ${config.provider}`);
+    return {
+      content: typedResponse.content,
+      finishReason: (typedResponse.finishReason as LLMResponse['finishReason']) || null,
+    };
   }
 
   async *streamComplete(
@@ -128,49 +91,73 @@ export class LLMService {
     model?: string,
     files?: FileAttachment[]
   ): AsyncGenerator<StreamChunk> {
-    if (this.provider) {
-      const processedMessages = this.processMessagesForProvider(messages);
-      const stream = await this.provider.generateStream(processedMessages);
-      for await (const chunk of stream) {
-        yield {
-          content: chunk.content,
-          done: chunk.done,
-        };
-      }
-      return;
-    }
-
-    if (!this.openAiClient) {
-      throw new Error('OpenAI client not initialized. Please set OPENAI_API_KEY.');
-    }
-
-    const processedMessages = this.processFilesInMessages(messages, files);
-
-    const stream = await this.openAiClient.chat.completions.create({
+    const processedMessages = this.processMessages(messages, files);
+    const options: Options = {
       model: model || this.defaultModel,
-      messages: processedMessages as OpenAI.Chat.ChatCompletionMessageParam[],
-      temperature: 0.7,
-      max_tokens: 4000,
       stream: true,
-    });
+    };
 
-    for await (const chunk of stream) {
-      const content = chunk.choices[0]?.delta?.content || '';
-      const done = chunk.choices[0]?.finish_reason != null;
+    const response = await LLM(processedMessages, options) as unknown as {
+      stream: AsyncGenerator<string>;
+    };
 
+    for await (const chunk of response.stream) {
       yield {
-        content,
-        done,
+        content: chunk,
+        done: false,
       };
     }
+
+    yield {
+      content: '',
+      done: true,
+    };
   }
 
-  private processFilesInMessages(
+  async *streamCompleteWithConfig(
+    messages: Message[],
+    config: LLMConfigMetadata,
+    files?: FileAttachment[]
+  ): AsyncGenerator<StreamChunk> {
+    const processedMessages = this.processMessages(messages, files);
+    const options: Options = {
+      model: config.modelName,
+      service: config.provider,
+      apiKey: config.apiKey,
+      baseUrl: config.baseUrl,
+      temperature: Number(config.temperature),
+      max_tokens: Number(config.maxTokens),
+      stream: true,
+    };
+
+    const response = await LLM(processedMessages, options) as unknown as {
+      stream: AsyncGenerator<string>;
+    };
+
+    for await (const chunk of response.stream) {
+      yield {
+        content: chunk,
+        done: false,
+      };
+    }
+
+    yield {
+      content: '',
+      done: true,
+    };
+  }
+
+  private processMessages(
     messages: Message[],
     files?: FileAttachment[]
-  ): Message[] {
+  ): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+    const baseMessages = messages.map(m => ({
+      role: m.role as 'system' | 'user' | 'assistant',
+      content: m.content,
+    }));
+
     if (!files || files.length === 0) {
-      return messages;
+      return baseMessages;
     }
 
     const fileContents = files
@@ -183,35 +170,26 @@ export class LLMService {
       })
       .join('\n\n');
 
-    const systemMessageIndex = messages.findIndex(m => m.role === 'system');
+    const systemMessageIndex = baseMessages.findIndex(m => m.role === 'system');
     const systemMessage = systemMessageIndex >= 0
-      ? messages[systemMessageIndex]
+      ? baseMessages[systemMessageIndex]
       : null;
 
     const otherMessages = systemMessageIndex >= 0
-      ? messages.filter((_, i) => i !== systemMessageIndex)
-      : messages;
+      ? baseMessages.filter((_, i) => i !== systemMessageIndex)
+      : baseMessages;
 
-    const enrichedSystemMessage: Message = systemMessage
+    const enrichedSystemMessage: { role: 'system' | 'user' | 'assistant'; content: string } = systemMessage
       ? {
           ...systemMessage,
           content: `${systemMessage.content}\n\n[附加文件内容]\n${fileContents}`,
         }
       : {
-          id: '',
           role: 'system',
           content: `[附加文件内容]\n${fileContents}`,
-          createdAt: new Date(),
         };
 
     return [enrichedSystemMessage, ...otherMessages];
-  }
-
-  private processMessagesForProvider(messages: Message[]): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
-    return messages.map(m => ({
-      role: m.role as 'system' | 'user' | 'assistant',
-      content: m.content,
-    }));
   }
 
   extractFollowUpQuestions(content: string): string[] {

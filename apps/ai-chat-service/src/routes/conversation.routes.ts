@@ -66,6 +66,128 @@ export function createConversationRoutes(
     }
   });
 
+  router.post("/start", async (req: Request, res: Response) => {
+    try {
+      const body = req.body as {
+        title?: string;
+        systemPrompt?: string;
+        content?: string;
+        files?: unknown[];
+      };
+
+      const conversation = await conversationService.create({
+        title: body.title,
+        systemPrompt: body.systemPrompt,
+      });
+
+      if (!body.content) {
+        return res.status(201).json({
+          code: 0,
+          data: { id: conversation.id },
+        } as ApiResponse<CreateConversationResponseDto>);
+      }
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+      res.setHeader("X-Accel-Buffering", "no");
+
+      await conversationService.addMessage(conversation.id, {
+        role: "user",
+        content: body.content,
+        metadata: null,
+      });
+
+      const messages = [
+        {
+          role: "system" as const,
+          content: conversation.systemPrompt,
+          id: "",
+          createdAt: new Date(),
+        },
+        {
+          role: "user" as const,
+          content: body.content,
+          id: "",
+          createdAt: new Date(),
+        },
+      ];
+
+      res.write(
+        `data: ${JSON.stringify({
+          type: "conversation_start",
+          conversationId: conversation.id,
+          isNewConversation: true,
+        })}\n\n`,
+      );
+
+      let fullContent = "";
+
+      try {
+        for await (const chunk of llmService.streamComplete(
+          messages,
+          undefined,
+          body.files as Parameters<typeof llmService.streamComplete>[2],
+        )) {
+          if (chunk.content) {
+            fullContent += chunk.content;
+            res.write(
+              `data: ${JSON.stringify({ type: "content", content: chunk.content })}\n\n`,
+            );
+          }
+
+          if (chunk.done) {
+            const assistantMessage = await conversationService.addMessage(
+              conversation.id,
+              {
+                role: "assistant",
+                content: fullContent,
+                metadata: null,
+              },
+            );
+
+            res.write(
+              `data: ${JSON.stringify({
+                type: "message",
+                message: {
+                  id: assistantMessage.id,
+                  conversationId: conversation.id,
+                  role: "assistant",
+                  content: fullContent,
+                  createdAt: assistantMessage.createdAt,
+                },
+              })}\n\n`,
+            );
+          }
+        }
+
+        res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
+      } catch (llmError) {
+        logger.error({ error: llmError }, "LLM stream error");
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: llmError instanceof Error ? llmError.message : "LLM error",
+          })}\n\n`,
+        );
+      }
+
+      res.write("data: [DONE]\n\n");
+      res.end();
+    } catch (error) {
+      logger.error({ error }, "Start conversation error");
+      if (!res.headersSent) {
+        return res
+          .status(500)
+          .json({
+            code: 1,
+            message: "Failed to start conversation",
+          } as ApiResponse<null>);
+      }
+      res.end();
+    }
+  });
+
   router.get("/", async (req: Request, res: Response) => {
     try {
       const limit = parseInt(req.query["limit"] as string) || 100;
@@ -310,7 +432,11 @@ export function createConversationRoutes(
       let fullContent = "";
 
       res.write(
-        `data: ${JSON.stringify({ type: "metadata", conversationId: conversation.id })}\n\n`,
+        `data: ${JSON.stringify({
+          type: "conversation_start",
+          conversationId: conversation.id,
+          isNewConversation: false,
+        })}\n\n`,
       );
 
       try {
@@ -359,7 +485,7 @@ export function createConversationRoutes(
         res.write(
           `data: ${JSON.stringify({
             type: "error",
-            error: llmError instanceof Error ? llmError.message : "LLM error",
+            message: llmError instanceof Error ? llmError.message : "LLM error",
           })}\n\n`,
         );
       }

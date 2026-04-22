@@ -1,7 +1,8 @@
 import crypto from 'crypto';
 import { Repository, DataSource } from 'typeorm';
 import { LLMConfig } from '../database/index.js';
-import { LLMProviderFactory } from '../llm/factory.js';
+import LLM from '@themaximalist/llm.js';
+import type { Options } from '@themaximalist/llm.js';
 import type {
   CreateLlmConfigDto,
   UpdateLlmConfigDto,
@@ -133,18 +134,17 @@ export class LlMConfigService {
         return { success: false, message: 'API Key is not configured' };
       }
 
-      const configForProvider = {
-        ...config,
-        apiKey: config.apiKey ? decryptKey(config.apiKey) : config.apiKey,
+      const options: Options = {
+        model: config.modelName,
+        service: config.provider,
+        apiKey: config.apiKey ? decryptKey(config.apiKey) : undefined,
+        baseUrl: config.baseUrl || undefined,
+        max_tokens: 10,
       };
 
-      const provider = LLMProviderFactory.create(configForProvider as LLMConfig);
-      const available = await provider.isAvailable();
+      await LLM('Hello', options);
 
-      if (available) {
-        return { success: true, message: `${provider.displayName} connection successful` };
-      }
-      return { success: false, message: `${provider.displayName} connection failed` };
+      return { success: true, message: `${config.provider} connection successful` };
     } catch (error) {
       return {
         success: false,

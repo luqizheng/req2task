@@ -12,7 +12,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: 'latest',
     sourceType: 'module',
-    project: 'apps/web/tsconfig.json'
+    project: './tsconfig.json'
   },
   plugins: ['import'],
   rules: {

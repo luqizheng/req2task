@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
 import {
   Microphone,
   Upload,
@@ -15,6 +16,7 @@ import {
   type DoneEvent,
   type ErrorEvent,
 } from "./composables/useAiSubmit";
+import { useRustFS } from "@/composables/useRustFS";
 import { AiSubmitRequestDto } from "@req2task/dto";
 
 interface Props {
@@ -24,6 +26,8 @@ interface Props {
   placeholder?: string;
   useStream?: boolean;
   transRequest?: (data: AiSubmitRequestDto) => unknown;
+  targetType?: "collection" | "raw_requirement" | "project";
+  targetId?: string;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -31,6 +35,7 @@ const props = withDefaults(defineProps<Props>(), {
   audit: false,
   placeholder: "描述您的需求或问题，AI 将为您分析和处理...",
   useStream: false,
+  targetType: "project",
 });
 
 const emit = defineEmits<{
@@ -42,6 +47,7 @@ const emit = defineEmits<{
   (e: "message", event: MessageEvent): void;
   (e: "done", event: DoneEvent): void;
   (e: "streamError", error: ErrorEvent): void;
+  (e: "uploadSuccess", attachmentIds: string[]): void;
 }>();
 
 const {
@@ -54,7 +60,6 @@ const {
   startRecording,
   stopRecording,
   handleAudioFileSelect,
-  handleAttachmentSelect,
   removeUploadedFile,
   clearAudio,
   reset,
@@ -69,6 +74,8 @@ const {
   transRequest: (data: AiSubmitRequestDto) => props.transRequest?.(data),
 });
 
+const { upload: rustfsUpload, uploadingFiles, removeFile, clearFiles } = useRustFS();
+
 const audioInputRef = ref<HTMLInputElement | null>(null);
 const attachmentInputRef = ref<HTMLInputElement | null>(null);
 
@@ -79,6 +86,14 @@ const formatSize = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 };
+
+const rustfsFiles = computed(() => {
+  return Array.from(uploadingFiles.value.values());
+});
+
+const allUploadedFiles = computed(() => {
+  return [...uploadedFiles.value, ...rustfsFiles.value];
+});
 
 const handleRecordClick = () => {
   if (isRecording.value) {
@@ -96,8 +111,24 @@ const triggerAttachmentSelect = () => {
   attachmentInputRef.value?.click();
 };
 
+const handleFileSelect = async (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const files = Array.from(target.files || []);
+
+  for (const file of files) {
+    try {
+      await rustfsUpload(file, props.targetType, props.targetId);
+    } catch (error) {
+      ElMessage.error(`${file.name} 上传失败`);
+    }
+  }
+
+  target.value = "";
+};
+
 const handleCancel = () => {
   reset();
+  clearFiles();
 };
 
 const handleSubmit = () => {
@@ -109,7 +140,14 @@ const handleSubmit = () => {
       onMessage: (event) => emit("message", event),
       onDone: (event) => {
         emit("done", event);
+        const rustfsIds = rustfsFiles.value
+          .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
+          .map((f) => f.id);
+        if (rustfsIds.length > 0) {
+          emit("uploadSuccess", rustfsIds);
+        }
         reset();
+        clearFiles();
       },
       onError: (error) => emit("streamError", error),
     });
@@ -169,8 +207,8 @@ const handleSubmit = () => {
       </div>
     </div>
 
-    <div v-if="uploadedFiles.length > 0" class="attachment-list">
-      <div v-for="file in uploadedFiles" :key="file.id" :class="['file-item', file.status]">
+    <div v-if="allUploadedFiles.length > 0" class="attachment-list">
+      <div v-for="file in allUploadedFiles" :key="file.id" :class="['file-item', file.status]">
         <div class="file-icon">
           <el-icon :size="20">
             <Paperclip />
@@ -185,7 +223,8 @@ const handleSubmit = () => {
           <el-progress v-if="file.status === 'uploading'" :percentage="file.progress" :show-text="false"
             :stroke-width="2" />
         </div>
-        <el-icon v-if="file.status !== 'uploading'" class="remove-icon" @click="removeUploadedFile(file.id)">
+        <el-icon v-if="file.status !== 'uploading'" class="remove-icon"
+          @click="file.id.startsWith('temp_') ? removeFile(file.id) : removeUploadedFile(file.id)">
           <Close />
         </el-icon>
         <el-icon v-else class="loading-icon">
@@ -205,7 +244,7 @@ const handleSubmit = () => {
 
     <input ref="audioInputRef" type="file" accept="audio/*" class="hidden-input" @change="handleAudioFileSelect" />
     <input ref="attachmentInputRef" type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.txt" class="hidden-input"
-      @change="handleAttachmentSelect" />
+      @change="handleFileSelect" />
   </div>
 </template>
 

@@ -7,15 +7,18 @@ import { AiService } from './ai.service';
 import { LLmClientService } from './llm-client.service';
 import { AiGenerationService } from './ai-generation.service';
 import { AiGenerationController } from './ai-generation.controller';
+import { AiRawRequirementController } from './ai-raw-requirement.controller';
 import { ConversationClient } from './conversation.client';
+import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement]),
     HttpModule,
     PromptModule,
+    RawRequirementModule,
   ],
-  controllers: [AiGenerationController],
+  controllers: [AiGenerationController, AiRawRequirementController],
   providers: [
     ChromaVectorStore,
     AiService,

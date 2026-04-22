@@ -3,6 +3,7 @@ import {
   Get,
   Delete,
   Param,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";

@@ -12,6 +12,7 @@ interface StatItem {
   value: number | string;
   icon: any;
   color: string;
+  clickable?: boolean;
 }
 
 interface Props {
@@ -28,6 +29,10 @@ const props = withDefaults(defineProps<Props>(), {
   completedTaskCount: 0,
   viewMode: "admin",
 });
+
+const emit = defineEmits<{
+  requirementsClick: [];
+}>();
 
 const completionRate = computed(() => {
   if (props.taskCount === 0) return 0;
@@ -46,6 +51,7 @@ const stats = computed(() => {
       value: props.requirementCount,
       icon: Document,
       color: "#2563eb",
+      clickable: true,
     },
     {
       key: "tasks",
@@ -93,6 +99,12 @@ const stats = computed(() => {
 
   return filteredStats;
 });
+
+const handleStatClick = (key: string) => {
+  if (key === "requirements") {
+    emit("requirementsClick");
+  }
+};
 </script>
 
 <template>
@@ -104,6 +116,8 @@ const stats = computed(() => {
         :value="stat.value"
         :icon="stat.icon"
         :color="stat.color"
+        :clickable="stat.clickable"
+        @click="handleStatClick(stat.key)"
       />
     </el-col>
   </el-row>

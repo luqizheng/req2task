@@ -1,18 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { Delete, ArrowLeft, Edit, Finished, Goods, Grid, Promotion } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import type { FormInstance, FormRules } from 'element-plus';
 import { useProjectStore } from '@/stores/project';
 import { ProjectStatus } from '@req2task/dto';
-import type { UpdateProjectDto } from '@req2task/dto';
+import type { UpdateProjectDto, FeatureModuleResponseDto } from '@req2task/dto';
 import ProjectStatsCard from './components/ProjectStatsCard.vue';
 import ProjectQuickActions from './components/ProjectQuickActions.vue';
 import ProjectMemberCard from './components/ProjectMemberCard.vue';
 import ProjectTaskBoard from './components/ProjectTaskBoard.vue';
 import ModuleTree from '@/components/common/ModuleTree.vue';
-import type { FeatureModuleResponseDto } from '@req2task/dto';
+import RequirementList from './components/RequirementList.vue';
 
 type ViewMode = 'admin' | 'developer' | 'tester' | 'product';
 
@@ -25,7 +25,7 @@ const viewMode = ref<ViewMode>('admin');
 
 const dialogVisible = ref(false);
 const formRef = ref<FormInstance>();
-const formData = reactive({
+const formData = ref({
   name: '',
   description: '',
   status: ProjectStatus.ACTIVE,
@@ -52,28 +52,6 @@ const getStatusStyle = (status: string) => {
 
 const getStatusLabel = (status: string) => {
   return statusOptions.find(s => s.value === status)?.label || status;
-};
-
-const handleEditProject = () => {
-  if (!projectStore.currentProject) return;
-  formData.name = projectStore.currentProject.name;
-  formData.description = projectStore.currentProject.description || '';
-  formData.status = projectStore.currentProject.status || ProjectStatus.ACTIVE;
-  dialogVisible.value = true;
-};
-
-const handleSubmitEdit = async () => {
-  if (!formRef.value) return;
-  await formRef.value.validate((valid) => {
-    if (valid) {
-      handleUpdateProject({
-        name: formData.name,
-        description: formData.description,
-        status: formData.status,
-      });
-      dialogVisible.value = false;
-    }
-  });
 };
 
 const requirementCount = ref(0);
@@ -106,6 +84,28 @@ const loadStats = async () => {
   } catch {
     requirementCount.value = 0;
   }
+};
+
+const handleEditProject = () => {
+  if (!projectStore.currentProject) return;
+  formData.value.name = projectStore.currentProject.name;
+  formData.value.description = projectStore.currentProject.description || '';
+  formData.value.status = projectStore.currentProject.status || ProjectStatus.ACTIVE;
+  dialogVisible.value = true;
+};
+
+const handleSubmitEdit = async () => {
+  if (!formRef.value) return;
+  await formRef.value.validate((valid) => {
+    if (valid) {
+      handleUpdateProject({
+        name: formData.value.name,
+        description: formData.value.description,
+        status: formData.value.status,
+      });
+      dialogVisible.value = false;
+    }
+  });
 };
 
 const handleDeleteProject = async () => {
@@ -157,6 +157,10 @@ const handleRemoveMember = async (userId: string) => {
 
 const handleModuleClick = (module: FeatureModuleResponseDto) => {
   router.push(`/projects/${projectId.value}/modules/${module.id}/requirements`);
+};
+
+const handleRequirementsClick = () => {
+  viewMode.value = 'product';
 };
 
 onMounted(async () => {
@@ -238,6 +242,7 @@ onMounted(async () => {
         :task-count="taskCount"
         :completed-task-count="completedTaskCount"
         :view-mode="viewMode"
+        @requirements-click="handleRequirementsClick"
       />
 
       <div class="content-grid" :class="`view-${viewMode}`">
@@ -269,16 +274,12 @@ onMounted(async () => {
             <template #header>
               <div class="card-header">
                 <span class="card-title">需求列表</span>
-                <el-button type="primary" size="small">
-                  新建需求
+                <el-button type="primary" link @click="router.push(`/projects/${projectId}/raw-requirements`)">
+                  原始需求
                 </el-button>
               </div>
             </template>
-            <div class="empty-state">
-              <el-icon size="48"><Goods /></el-icon>
-              <p>暂无需求，试试 AI 生成</p>
-              <el-button type="primary">AI 生成需求</el-button>
-            </div>
+            <RequirementList :project-id="projectId" @requirement-created="loadStats" />
           </el-card>
         </div>
 

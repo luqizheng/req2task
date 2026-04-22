@@ -25,6 +25,7 @@
     "cors": "catalog:",
     "dotenv": "catalog:",
     "express": "catalog:",
+    "llm-interface": "^2.0.1495",
     "mammoth": "catalog:",
     "nacos": "catalog:",
     "ollama": "catalog:",

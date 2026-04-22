@@ -1,17 +1,15 @@
 import { Repository, DataSource } from 'typeorm';
 import { Conversation, ConversationStatus } from '../database/entities/conversation.entity.js';
 import { ConversationMessage } from '../database/entities/conversation-message.entity.js';
-import type { CreateConversationRequest, ConversationMetadata } from '../types.js';
+import type { CreateConversationRequest } from '../types.js';
 import type { ConversationListResponseDto, MessageListResponseDto } from '@req2task/dto';
 import { MessageRole } from '@req2task/dto';
 
-const DEFAULT_SYSTEM_PROMPT = `你是一个专业的需求分析师，帮助用户澄清和完善需求。
-请遵循以下原则：
-1. 仔细分析用户描述的需求，提取关键要素
-2. 当需求不明确时，主动提出追问问题
+const DEFAULT_SYSTEM_PROMPT = `你是一个专业的 AI 助手。请遵循以下原则：
+1. 仔细分析用户的问题，提供准确答案
+2. 当问题不明确时，主动提出追问
 3. 每次回复控制在合理长度，聚焦当前话题
-4. 使用清晰、专业的语言
-5. 在适当时机总结关键要素，帮助用户确认理解正确`;
+4. 使用清晰、专业的语言`;
 
 export class ConversationService {
   private conversationRepo: Repository<Conversation>;
@@ -25,17 +23,10 @@ export class ConversationService {
   async create(data: CreateConversationRequest): Promise<Conversation> {
     const conversation = this.conversationRepo.create({
       title: data.title || `Chat ${new Date().toLocaleString('zh-CN')}`,
-      collectionId: data.collectionId || null,
-      rawRequirementId: data.rawRequirementId || null,
       systemPrompt: data.systemPrompt || DEFAULT_SYSTEM_PROMPT,
       status: ConversationStatus.ACTIVE,
       messageCount: 0,
-      metadata: {
-        questionCount: 0,
-        keyElements: [],
-        followUpQuestions: [],
-        isComplete: false,
-      },
+      metadata: data.metadata || null,
     });
 
     return this.conversationRepo.save(conversation);
@@ -44,36 +35,6 @@ export class ConversationService {
   async getById(id: string): Promise<Conversation | null> {
     return this.conversationRepo.findOne({
       where: { id },
-      relations: ['messages'],
-      order: { messages: { createdAt: 'ASC' } },
-    });
-  }
-
-  async getOrCreate(data: CreateConversationRequest): Promise<Conversation> {
-    if (data.collectionId) {
-      const existing = await this.findByCollectionId(data.collectionId);
-      if (existing) return existing;
-    }
-
-    if (data.rawRequirementId) {
-      const existing = await this.findByRawRequirementId(data.rawRequirementId);
-      if (existing) return existing;
-    }
-
-    return this.create(data);
-  }
-
-  async findByCollectionId(collectionId: string): Promise<Conversation | null> {
-    return this.conversationRepo.findOne({
-      where: { collectionId, status: ConversationStatus.ACTIVE },
-      relations: ['messages'],
-      order: { messages: { createdAt: 'ASC' } },
-    });
-  }
-
-  async findByRawRequirementId(rawRequirementId: string): Promise<Conversation | null> {
-    return this.conversationRepo.findOne({
-      where: { rawRequirementId, status: ConversationStatus.ACTIVE },
       relations: ['messages'],
       order: { messages: { createdAt: 'ASC' } },
     });
@@ -98,17 +59,6 @@ export class ConversationService {
     await this.messageRepo.save(newMessage);
 
     conversation.messageCount += 1;
-    if (message.role === 'user') {
-      const meta: ConversationMetadata = {
-        questionCount: (conversation.metadata?.['questionCount'] as number) || 0,
-        keyElements: (conversation.metadata?.['keyElements'] as string[]) || [],
-        followUpQuestions: (conversation.metadata?.['followUpQuestions'] as string[]) || [],
-        isComplete: (conversation.metadata?.['isComplete'] as boolean) || false,
-      };
-      meta.questionCount += 1;
-      conversation.metadata = meta as unknown as Record<string, unknown>;
-    }
-
     await this.conversationRepo.save(conversation);
 
     return newMessage;
@@ -116,24 +66,17 @@ export class ConversationService {
 
   async updateMetadata(
     conversationId: string,
-    metadata: Partial<ConversationMetadata>
+    metadata: Record<string, unknown>
   ): Promise<void> {
     const conversation = await this.conversationRepo.findOneBy({ id: conversationId });
     if (!conversation) {
       throw new Error(`Conversation ${conversationId} not found`);
     }
 
-    const existingMeta: ConversationMetadata = {
-      questionCount: (conversation.metadata?.['questionCount'] as number) || 0,
-      keyElements: (conversation.metadata?.['keyElements'] as string[]) || [],
-      followUpQuestions: (conversation.metadata?.['followUpQuestions'] as string[]) || [],
-      isComplete: (conversation.metadata?.['isComplete'] as boolean) || false,
-    };
-
     conversation.metadata = {
-      ...existingMeta,
+      ...(conversation.metadata || {}),
       ...metadata,
-    } as unknown as Record<string, unknown>;
+    };
 
     await this.conversationRepo.save(conversation);
   }
@@ -146,16 +89,6 @@ export class ConversationService {
 
     conversation.status = ConversationStatus.ARCHIVED;
     await this.conversationRepo.save(conversation);
-  }
-
-  async linkToNext(currentId: string, nextId: string): Promise<void> {
-    const current = await this.conversationRepo.findOneBy({ id: currentId });
-    if (!current) {
-      throw new Error(`Conversation ${currentId} not found`);
-    }
-
-    current.nextConversationId = nextId;
-    await this.conversationRepo.save(current);
   }
 
   async delete(id: string): Promise<boolean> {

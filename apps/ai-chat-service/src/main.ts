@@ -11,7 +11,8 @@ async function main() {
       logger.info({ port: config.app.port }, 'AI Chat Service started');
     });
   } catch (error) {
-    logger.fatal({ error }, 'Failed to start AI Chat Service');
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logger.fatal({ error, errorMessage }, 'Failed to start AI Chat Service');
     process.exit(1);
   }
 }

@@ -182,34 +182,6 @@ export function createConversationRoutes(
     }
   });
 
-  router.post("/:id/link/:nextId", async (req: Request, res: Response) => {
-    try {
-      await conversationService.linkToNext(
-        req.params["id"]!,
-        req.params["nextId"]!,
-      );
-      logger.info(
-        {
-          currentId: req.params["id"],
-          nextId: req.params["nextId"],
-        },
-        "Conversations linked",
-      );
-      return res.json({
-        code: 0,
-        message: "Conversations linked",
-      } as ApiResponse<null>);
-    } catch (error) {
-      logger.error({ error }, "Link conversations error");
-      return res
-        .status(500)
-        .json({
-          code: 1,
-          message: "Failed to link conversations",
-        } as ApiResponse<null>);
-    }
-  });
-
   router.post("/:id/messages", async (req: Request, res: Response) => {
     try {
       const dto = await validateDto(SendMessageDto, req.body);
@@ -263,16 +235,6 @@ export function createConversationRoutes(
         },
       );
 
-      const followUpQuestions = llmService.extractFollowUpQuestions(
-        response.content,
-      );
-      const keyElements = llmService.extractKeyElements(response.content);
-
-      await conversationService.updateMetadata(req.params["id"]!, {
-        followUpQuestions,
-        keyElements,
-      });
-
       logger.info({ conversationId: req.params["id"] }, "Message sent");
 
       return res.json({
@@ -285,7 +247,6 @@ export function createConversationRoutes(
             content: response.content,
             createdAt: assistantMessage.createdAt,
           },
-          metadata: { followUpQuestions, keyElements },
         } as SendMessageResponseDto,
       } as ApiResponse<SendMessageResponseDto>);
     } catch (error) {
@@ -390,21 +351,8 @@ export function createConversationRoutes(
           }
         }
 
-        const followUpQuestions =
-          llmService.extractFollowUpQuestions(fullContent);
-        const keyElements = llmService.extractKeyElements(fullContent);
-
-        await conversationService.updateMetadata(req.params["id"]!, {
-          followUpQuestions,
-          keyElements,
-        });
-
         res.write(
-          `data: ${JSON.stringify({
-            type: "done",
-            followUpQuestions,
-            keyElements,
-          })}\n\n`,
+          `data: ${JSON.stringify({ type: "done" })}\n\n`,
         );
       } catch (llmError) {
         logger.error({ error: llmError }, "LLM stream error");

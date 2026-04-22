@@ -37,7 +37,7 @@ export class LLmClientService {
   private readonly baseUrl: string;
 
   constructor(private readonly httpService: HttpService) {
-    this.baseUrl = process.env['AI_CHAT_SERVICE_URL'] || 'http://localhost:4001';
+    this.baseUrl = (process.env['AI_CHAT_SERVICE_URL'] || 'http://localhost:4001');
   }
 
   streamGenerate(request: LLMStreamRequest): Observable<LLMStreamChunk> {
@@ -56,7 +56,7 @@ export class LLmClientService {
 
       this.httpService
         .post(
-          `${this.baseUrl}/api/ai/generate/stream`,
+          `${this.baseUrl}/${request.conversationId}/messages/stream`,
           {
             systemPrompt: request.systemPrompt,
             userPrompt: request.userPrompt,

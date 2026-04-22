@@ -10,6 +10,7 @@ import { ConversationService } from './services/conversation.service.js';
 import { LlMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
 import { ServiceApiService } from './services/service-api.service.js';
+import { MockProvider } from './llm/providers/mock.provider.js';
 import { initializeDatabase, dataSource } from './database/index.js';
 import { config } from './config/index.js';
 import { logger } from './utils/logger.js';
@@ -73,23 +74,24 @@ export async function createApp(): Promise<Express> {
   await serviceApiService.syncFromRemote();
 
   const defaultLLMConfig = await serviceApiService.getDefaultLLMConfig();
-  if (!defaultLLMConfig) {
-    throw new Error('No default LLM config found. Please configure an LLM provider in the main service first.');
+  
+  let llmService: LLMService;
+  if (!defaultLLMConfig || !defaultLLMConfig.apiKey) {
+    logger.warn('No LLM config found in database, using Mock Provider');
+    llmService = new LLMService(new MockProvider());
+  } else {
+    llmService = new LLMService(defaultLLMConfig.apiKey, defaultLLMConfig.modelName || 'gpt-4o-mini');
   }
   
-  const apiKey = defaultLLMConfig.apiKey || process.env.LLM_API_KEY;
-  if (!apiKey) {
-    throw new Error('No LLM API key configured. Please set LLM_API_KEY environment variable or configure an LLM provider in the main service.');
-  }
-  
-  const llmService = new LLMService(apiKey, defaultLLMConfig.modelName);
   const llmConfigService = new LlMConfigService(dataSource);
+  const useMockProvider = !defaultLLMConfig || !defaultLLMConfig.apiKey;
 
   app.get('/health', (_req: Request, res: Response) => {
     res.json({
       status: 'ok',
       timestamp: new Date().toISOString(),
-      llmConfigured: !!defaultLLMConfig,
+      llmConfigured: !useMockProvider,
+      llmMockMode: useMockProvider,
       databaseConnected: dataSource.isInitialized,
     });
   });

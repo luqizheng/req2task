@@ -54,7 +54,6 @@ export class ConversationMessageDto {
   conversationId!: string;
   role!: MessageRole;
   content!: string;
-  rawRequirementId?: string | null;
   metadata?: Record<string, unknown> | null;
   createdAt!: Date;
 }
@@ -77,34 +76,21 @@ export class ExtractedRequirementDto {
 
 export class SendMessageResultDto {
   message!: ConversationMessageDto;
-  questionAndAnswers!: QuestionAndAnswerDto[];
-  extractedRequirements?: ExtractedRequirementDto[];
-  isComplete!: boolean;
 }
 
 export class ConversationDto {
   id!: string;
   title!: string | null;
   status!: ConversationStatus;
-  conversationType!: string;
   messageCount!: number;
   summary!: string | null;
   metadata!: Record<string, unknown> | null;
-  nextConversationId!: string | null;
   createdAt!: Date;
   updatedAt!: Date;
   messages?: ConversationMessageDto[];
 }
 
 export class ConversationListQueryDto {
-  @IsOptional()
-  @IsString()
-  collectionId?: string;
-
-  @IsOptional()
-  @IsString()
-  rawRequirementId?: string;
-
   @IsOptional()
   @IsEnum(ConversationStatus)
   status?: ConversationStatus;
@@ -138,8 +124,6 @@ export class SessionChatResultDto {
   conversationId!: string;
   messageId!: string;
   content!: string;
-  followUpQuestions?: string[];
-  isComplete?: boolean;
   usage?: {
     promptTokens: number;
     completionTokens: number;
@@ -173,10 +157,6 @@ export class CreateConversationResponseDto {
 
 export class SendMessageResponseDto {
   message!: ConversationMessageDto;
-  metadata!: {
-    followUpQuestions?: string[];
-    keyElements?: string[];
-  };
 }
 
 export class MessageListResponseDto {

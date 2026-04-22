@@ -18,27 +18,8 @@ export class Conversation {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'next_conversation_id', type: 'uuid', nullable: true })
-  nextConversationId!: string | null;
-
   @Column({ name: 'title', type: 'varchar', length: 255, nullable: true })
   title!: string | null;
-
-  @Column({
-    name: 'collection_id',
-    type: 'varchar',
-    length: 36,
-    nullable: true,
-  })
-  collectionId!: string | null;
-
-  @Column({
-    name: 'raw_requirement_id',
-    type: 'varchar',
-    length: 36,
-    nullable: true,
-  })
-  rawRequirementId!: string | null;
 
   @Column({
     type: 'enum',
@@ -60,9 +41,6 @@ export class Conversation {
 
   @Column({ name: 'summary', type: 'text', nullable: true })
   summary!: string | null;
-
-  @Column({ name: 'conversation_type', type: 'varchar', length: 50, default: 'general' })
-  conversationType!: string;
 
   @Column({ name: 'metadata', type: 'json', nullable: true })
   metadata!: Record<string, unknown> | null;

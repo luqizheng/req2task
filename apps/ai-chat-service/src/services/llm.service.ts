@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import type { Message, FileAttachment, LLMConfigMetadata } from '../types.js';
+import type { LLMProvider } from '../llm/providers/types.js';
 
 export interface LLMResponse {
   content: string;
@@ -15,13 +16,19 @@ export class LLMService {
   private openAiClient: OpenAI | null = null;
   private apiKey: string;
   private defaultModel: string;
+  private provider: LLMProvider | null = null;
 
-  constructor(apiKey: string, defaultModel: string = 'gpt-4o-mini') {
-    this.apiKey = apiKey;
-    this.defaultModel = defaultModel;
-
-    if (apiKey) {
-      this.openAiClient = new OpenAI({ apiKey });
+  constructor(apiKeyOrProvider: string | LLMProvider, defaultModel: string = 'gpt-4o-mini') {
+    if (typeof apiKeyOrProvider === 'string') {
+      this.apiKey = apiKeyOrProvider;
+      this.defaultModel = defaultModel;
+      if (apiKeyOrProvider) {
+        this.openAiClient = new OpenAI({ apiKey: apiKeyOrProvider });
+      }
+    } else {
+      this.provider = apiKeyOrProvider;
+      this.apiKey = '';
+      this.defaultModel = defaultModel;
     }
   }
 
@@ -30,6 +37,15 @@ export class LLMService {
     model?: string,
     files?: FileAttachment[]
   ): Promise<LLMResponse> {
+    if (this.provider) {
+      const processedMessages = this.processMessagesForProvider(messages);
+      const response = await this.provider.generate(processedMessages);
+      return {
+        content: response.content,
+        finishReason: (response.finishReason as LLMResponse['finishReason']) || null,
+      };
+    }
+
     if (!this.openAiClient) {
       throw new Error('OpenAI client not initialized. Please set OPENAI_API_KEY.');
     }
@@ -112,6 +128,18 @@ export class LLMService {
     model?: string,
     files?: FileAttachment[]
   ): AsyncGenerator<StreamChunk> {
+    if (this.provider) {
+      const processedMessages = this.processMessagesForProvider(messages);
+      const stream = await this.provider.generateStream(processedMessages);
+      for await (const chunk of stream) {
+        yield {
+          content: chunk.content,
+          done: chunk.done,
+        };
+      }
+      return;
+    }
+
     if (!this.openAiClient) {
       throw new Error('OpenAI client not initialized. Please set OPENAI_API_KEY.');
     }
@@ -177,6 +205,13 @@ export class LLMService {
         };
 
     return [enrichedSystemMessage, ...otherMessages];
+  }
+
+  private processMessagesForProvider(messages: Message[]): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
+    return messages.map(m => ({
+      role: m.role as 'system' | 'user' | 'assistant',
+      content: m.content,
+    }));
   }
 
   extractFollowUpQuestions(content: string): string[] {

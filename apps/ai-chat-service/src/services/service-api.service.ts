@@ -2,21 +2,9 @@ import crypto from 'crypto';
 import { DataSource, Repository } from 'typeorm';
 import { LLMConfig } from '../database/index.js';
 import type { LLMConfigResponseDto } from '@req2task/dto';
-import { LLMProviderType } from '@req2task/dto';
 import { logger } from '../utils/logger.js';
 
 const ALGORITHM = 'aes-256-cbc';
-const IV_LENGTH = 16;
-
-const DEFAULT_LLM_CONFIG_FALLBACK: Partial<LLMConfigResponseDto> = {
-  provider: LLMProviderType.OPENAI,
-  modelName: 'gpt-4o-mini',
-  maxTokens: 4000,
-  temperature: 0.7,
-  topP: 1,
-  isActive: true,
-  isDefault: false,
-};
 
 function getEncryptionKey(): Buffer {
   const key = process.env.LLM_CONFIG_ENCRYPTION_KEY;
@@ -62,8 +50,8 @@ export class ServiceApiService {
       });
 
       if (configs.length === 0) {
-        logger.warn('No LLM configs found in database, using fallback');
-        return this.getDefaultConfigFallback();
+        logger.warn('No LLM configs found in database');
+        return null;
       }
 
       const defaultConfig = configs.find((c) => c.isDefault);
@@ -86,7 +74,7 @@ export class ServiceApiService {
       };
     } catch (error) {
       logger.error({ error }, 'Error fetching default LLM config from database');
-      return this.getDefaultConfigFallback();
+      return null;
     }
   }
 
@@ -192,27 +180,5 @@ export class ServiceApiService {
     } catch {
       return null;
     }
-  }
-
-  private getDefaultConfigFallback(): LLMConfigResponseDto | null {
-    const now = new Date();
-    const fallback: LLMConfigResponseDto = {
-      id: 'fallback',
-      name: 'Default (Fallback)',
-      provider: LLMProviderType.OPENAI,
-      modelName: 'gpt-4o-mini',
-      baseUrl: null,
-      maxTokens: 4000,
-      temperature: 0.7,
-      topP: 1,
-      isActive: true,
-      isDefault: false,
-      apiKey: undefined,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    logger.info('Using fallback LLM config');
-    return fallback;
   }
 }

@@ -21,6 +21,7 @@ import {
   CollectionType,
 } from "@req2task/dto";
 import { LLmClientService } from "./llm-client.service";
+import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
 
 export interface GenerationResult {
   requirements?: Requirement[];
@@ -53,6 +54,7 @@ export class AiGenerationService {
     private readonly promptService: PromptService,
     private readonly llmClient: LLmClientService,
     private readonly dataSource: DataSource,
+    private readonly rawRequirementService: RawRequirementService,
   ) {}
 
   async generateRawRequirement(
@@ -60,12 +62,23 @@ export class AiGenerationService {
     conversationText: string,
     createdById: string,
     context?: string,
+    rawRequirementId?: string,
   ): Promise<{
     rawRequirement: RawRequirement;
     rawContent: string;
     followUpQuestions: string[];
     keyElements: string[];
   }> {
+    if (!rawRequirementId) {
+      const saveOpj = await this.rawRequirementService.addRawRequirement({
+        projectId,
+        content: conversationText,
+        source: RequirementSource.MANUAL,
+        userId: createdById,
+      });
+      rawRequirementId = saveOpj.id;
+    }
+
     const rendered = this.promptService.render("RAW_REQUIREMENT_ANALYSIS", {
       projectId,
       context,

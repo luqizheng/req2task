@@ -14,16 +14,9 @@ export interface Message {
 export interface Conversation {
   id: string;
   title?: string;
-  collectionId?: string;
-  rawRequirementId?: string;
   systemPrompt: string;
   messages: Message[];
-  metadata: {
-    questionCount: number;
-    keyElements: string[];
-    followUpQuestions: string[];
-    isComplete: boolean;
-  };
+  metadata: Record<string, unknown> | null;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -45,18 +38,14 @@ export interface StreamChunk {
   content?: string;
   conversationId?: string;
   messageId?: string;
-  followUpQuestions?: string[];
-  keyElements?: string[];
-  isComplete?: boolean;
   error?: string;
 }
 
 export interface CreateConversationRequest {
-  collectionId?: string;
-  rawRequirementId?: string;
   title?: string;
   systemPrompt?: string;
   configId?: string;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LLMConfigMetadata {
@@ -67,13 +56,6 @@ export interface LLMConfigMetadata {
   maxTokens: number;
   temperature: number;
   topP: number;
-}
-
-export interface ConversationMetadata {
-  questionCount: number;
-  keyElements: string[];
-  followUpQuestions: string[];
-  isComplete: boolean;
 }
 
 export interface ApiResponse<T> {

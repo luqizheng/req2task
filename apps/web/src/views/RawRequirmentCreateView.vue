@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { ElMessage } from 'element-plus';
 import { View, Delete, RefreshRight, ArrowRight, ChatDotRound } from '@element-plus/icons-vue';
@@ -28,13 +28,7 @@ interface GeneratedRequirement {
 
 const generatedRequirements = ref<GeneratedRequirement[]>([]);
 
-const pendingRequirements = computed(() =>
-  requirements.value.filter(r => r.status === RawRequirementStatus.PENDING)
-);
 
-const clarifiedRequirements = computed(() =>
-  requirements.value.filter(r => r.status === RawRequirementStatus.CLARIFIED)
-);
 
 const handleAiSubmitSuccess = async (data: unknown) => {
   const result = data as RawRequirementResponseDto;
@@ -70,7 +64,7 @@ const handleCloseChat = () => {
   chatRawRequirement.value = null;
 };
 
-const handleChatComplete = async (qaItems: Array<{ question: string; answer: string }>) => {
+const handleChatComplete = async (_qaItems: Array<{ question: string; answer: string }>) => {
   if (!chatRawRequirement.value) return;
 
   isGenerating.value = chatRawRequirement.value.id;
@@ -143,9 +137,12 @@ const getPriorityLabel = (priority: string) => {
 const getStatusType = (status: RawRequirementStatus) => {
   const map: Record<RawRequirementStatus, string> = {
     [RawRequirementStatus.PENDING]: 'warning',
+    [RawRequirementStatus.PROCESSING]: 'primary',
+    [RawRequirementStatus.COMPLETED]: 'success',
     [RawRequirementStatus.CLARIFIED]: 'success',
     [RawRequirementStatus.CONVERTED]: 'info',
     [RawRequirementStatus.DISCARDED]: 'info',
+    [RawRequirementStatus.FAILED]: 'danger',
   };
   return map[status] || 'info';
 };
@@ -153,9 +150,12 @@ const getStatusType = (status: RawRequirementStatus) => {
 const getStatusLabel = (status: RawRequirementStatus) => {
   const map: Record<RawRequirementStatus, string> = {
     [RawRequirementStatus.PENDING]: '待澄清',
+    [RawRequirementStatus.PROCESSING]: '处理中',
+    [RawRequirementStatus.COMPLETED]: '已完成',
     [RawRequirementStatus.CLARIFIED]: '已澄清',
     [RawRequirementStatus.CONVERTED]: '已转换',
     [RawRequirementStatus.DISCARDED]: '已废弃',
+    [RawRequirementStatus.FAILED]: '失败',
   };
   return map[status] || status;
 };

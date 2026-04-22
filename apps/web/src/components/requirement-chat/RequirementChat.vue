@@ -2,7 +2,7 @@
 import { ref, computed, watch } from 'vue';
 import { ElMessage } from 'element-plus';
 import { Delete, ChatDotRound, Loading } from '@element-plus/icons-vue';
-import { rawRequirementsApi, type ChatMessage } from '@/api/rawRequirements';
+import { rawRequirementsApi } from '@/api/rawRequirements';
 import type { RawRequirementResponseDto } from '@req2task/dto';
 
 interface QAItem {

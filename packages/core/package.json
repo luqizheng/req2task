@@ -46,20 +46,20 @@
     "test:cov": "jest --coverage"
   },
   "dependencies": {
-    "@req2task/dto": "workspace:*",
+    "@req2task/dto": "workspace:^",
     "@swc/core": "^1.15.26",
-    "axios": "^1.6.0",
-    "mammoth": "^1.6.0",
-    "openai": "^4.20.1",
-    "pdf-parse": "^1.1.1",
-    "typeorm": "^0.3.19"
+    "axios": "catalog:",
+    "mammoth": "catalog:",
+    "openai": "catalog:",
+    "pdf-parse": "catalog:",
+    "typeorm": "catalog:"
   },
   "devDependencies": {
     "@types/jest": "^29.5.11",
     "@types/node": "^20.10.0",
-    "jest": "^29.7.0",
-    "ts-jest": "^29.1.1",
-    "tsup": "^8.3.0",
-    "typescript": "^5.3.0"
+    "jest": "catalog:",
+    "ts-jest": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

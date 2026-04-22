@@ -1,10 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue';
-import { ElMessage } from 'element-plus';
-import { Edit, Close } from '@element-plus/icons-vue';
-import { AIChat } from '@req2task/ai-chat';
-import "@req2task/ai-chat/dist/style.css"
-import type { AIChatMessage } from '@req2task/ai-chat';
+import { ref, reactive } from 'vue';
 import type { GenerateRequirementResponse } from '@/api/ai';
 import {
   useGenerationSteps,
@@ -20,8 +15,6 @@ import {
   RequirementResult,
 } from './AiRequirementGenView/components';
 
-const chatRef = ref<InstanceType<typeof AIChat> | null>(null);
-const showChat = ref(false);
 const rawInput = ref('');
 
 const generatedRequirement = ref<GenerateRequirementResponse | null>(null);
@@ -58,47 +51,6 @@ const errorMessage = ref('');
 const showError = (message: string) => {
   errorMessage.value = message || '发生未知错误';
   errorDialogVisible.value = true;
-};
-
-const chatConfig = computed(() => ({
-  endpoint: '/api/ai/chat',
-  sessionId: `req-gen-${Date.now()}`,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  userRoleName: '需求分析师',
-  assistantRoleName: '需求助手',
-}));
-
-const handleToggleChat = () => {
-  showChat.value = !showChat.value;
-};
-
-const handleChatMessage = (message: AIChatMessage) => {
-  console.log('Chat message received:', message);
-};
-
-const handleChatDone = (message: AIChatMessage) => {
-  console.log('Chat done:', message);
-  ElMessage.info('对话已完成，请查看右侧生成结果');
-};
-
-const handleGenerateFromChat = () => {
-  const chatMessages = chatRef.value?.getMessages();
-  if (!chatMessages || chatMessages.length === 0) {
-    ElMessage.warning('对话内容为空');
-    return;
-  }
-
-  const conversationContent = chatMessages
-    .filter(m => m.role === 'user' || m.role === 'assistant')
-    .map(m => `${m.roleName}: ${m.content}`)
-    .join('\n\n');
-
-  if (conversationContent) {
-    rawInput.value = conversationContent;
-    generateAll(rawInput.value).catch((error) => showError((error as Error).message));
-  }
 };
 
 const handleInputClear = () => {
@@ -170,31 +122,7 @@ const handlePriorityUpdate = (value: string) => {
   <div class="ai-requirement-gen-view">
     <div class="page-header">
       <h2 class="page-title">AI 需求生成</h2>
-      <el-button
-        type="primary"
-        @click="handleToggleChat"
-        :icon="showChat ? Close : Edit"
-      >
-        {{ showChat ? '关闭对话' : '开启对话' }}
-      </el-button>
     </div>
-
-    <el-card v-if="showChat" class="chat-container">
-      <AIChat
-        ref="chatRef"
-        :config="chatConfig"
-        title="需求对话助手"
-        placeholder="输入您的需求描述..."
-        @message-received="handleChatMessage"
-        @done="handleChatDone"
-      />
-      <div class="chat-actions">
-        <el-button type="primary" @click="handleGenerateFromChat">
-          从对话生成需求
-        </el-button>
-        <el-button @click="chatRef?.clearMessages">清空对话</el-button>
-      </div>
-    </el-card>
 
     <el-row :gutter="24">
       <el-col :span="10">
@@ -290,17 +218,6 @@ const handlePriorityUpdate = (value: string) => {
   font-weight: 600;
   color: #1e293b;
   margin: 0;
-}
-
-.chat-container {
-  margin-bottom: 24px;
-}
-
-.chat-actions {
-  margin-top: 16px;
-  display: flex;
-  gap: 12px;
-  justify-content: center;
 }
 
 .empty-result {

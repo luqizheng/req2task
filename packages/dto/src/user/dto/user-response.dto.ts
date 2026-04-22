@@ -1,5 +1,8 @@
 import { UserRole } from '../../enums';
 
+/**
+ * @public
+ */
 export class UserResponseDto {
   id!: string;
   username!: string;
@@ -10,6 +13,9 @@ export class UserResponseDto {
   updatedAt!: Date;
 }
 
+/**
+ * @public
+ */
 export class UserListResponseDto {
   items!: UserResponseDto[];
   total!: number;
@@ -22,6 +28,9 @@ export class PublicUserDto {
   displayName!: string;
 }
 
+/**
+ * @public
+ */
 export class PublicUserListResponseDto {
   items!: PublicUserDto[];
   total!: number;

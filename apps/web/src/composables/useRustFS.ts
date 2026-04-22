@@ -181,7 +181,7 @@ export function useRustFS() {
 
       const attachment = await createAttachment({
         fileDataId,
-        targetType,
+        targetType: targetType as 'collection' | 'raw_requirement' | 'project',
         targetId,
         displayName: file.name,
       });

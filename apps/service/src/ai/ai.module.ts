@@ -10,6 +10,7 @@ import { AiGenerationController } from './ai-generation.controller';
 import { AiRawRequirementController } from './ai-raw-requirement.controller';
 import { ConversationClient } from './conversation.client';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
+import { ProjectsModule } from '../projects/projects.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { RawRequirementModule } from '../raw-requirement/raw-requirement.module'
     HttpModule,
     PromptModule,
     RawRequirementModule,
+    ProjectsModule,
   ],
   controllers: [AiGenerationController, AiRawRequirementController],
   providers: [

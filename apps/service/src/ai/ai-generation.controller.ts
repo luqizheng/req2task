@@ -1,59 +1,74 @@
-import { 
-  Controller, 
-  Post, 
-  Body, 
-  Param, 
-  Query, 
-  HttpCode, 
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Query,
+  HttpCode,
   HttpStatus,
   Request,
-} from '@nestjs/common';
-import { AiGenerationService } from './ai-generation.service';
-import { 
-  GenerateRequirementsDto, 
-  GenerateUserStoriesDto, 
-  GenerateTasksDto, 
-  GenerateModulesDto, 
+  Logger,
+} from "@nestjs/common";
+import { AiGenerationService } from "./ai-generation.service";
+import {
+  GenerateRequirementsDto,
+  GenerateUserStoriesDto,
+  GenerateTasksDto,
+  GenerateModulesDto,
   GenerateRawRequirementDto,
-} from '@req2task/dto';
+} from "@req2task/dto";
+import { ProjectsService } from "src/projects/projects.service";
 
-
-@Controller('ai/generation')
+@Controller("ai/generation")
 export class AiGenerationController {
-  constructor(private readonly aiGenerationService: AiGenerationService) {}
+  private readonly logger = new Logger(AiGenerationController.name);
 
-  @Post('raw-requirements/:projectId')
+  constructor(
+    private readonly aiGenerationService: AiGenerationService,
+    private readonly projectsService: ProjectsService,
+  ) {}
+
+  @Post("raw-requirements/:projectId")
   @HttpCode(HttpStatus.CREATED)
   async generateRawRequirement(
-    @Param('projectId') projectId: string,
+    @Param("projectId") projectId: string,
     @Body() dto: GenerateRawRequirementDto,
     @Request() req: any,
   ) {
-    const createdById = req.user?.id || 'system';
-    
+    const createdById = req.user?.id || "system";
+    const project = await this.projectsService.findById(projectId);
+
+    this.logger.log(
+      `开始生成原始需求 | 项目: ${projectId} | 用户: ${createdById} | submit ${dto.conversationText}`,
+    );
+
     const result = await this.aiGenerationService.generateRawRequirement(
       projectId,
       dto.conversationText,
       createdById,
-      dto.source,
-      dto.collectionType,
-      dto.context,
+      project.description,
+    );
+
+    this.logger.log(
+      `原始需求生成完成 | 项目: ${projectId} | 需求ID: ${result.rawRequirement?.id || "N/A"} | 原始内容长度: ${result.rawContent?.length || 0}`,
     );
 
     return {
       code: 0,
       data: {
-        rawRequirement: result.rawRequirement ? {
-          id: result.rawRequirement.id,
-          projectId: result.rawRequirement.projectId,
-          originalContent: result.rawRequirement.originalContent,
-          collectionType: result.rawRequirement.collectionType,
-          source: result.rawRequirement.source,
-          keyElements: result.rawRequirement.keyElements,
-          status: result.rawRequirement.status,
-          questionAndAnswers: result.rawRequirement.questionAndAnswers,
-          createdAt: result.rawRequirement.createdAt,
-        } : null,
+        rawRequirement: result.rawRequirement
+          ? {
+              id: result.rawRequirement.id,
+              projectId: result.rawRequirement.projectId,
+              originalContent: result.rawRequirement.originalContent,
+              collectionType: result.rawRequirement.collectionType,
+              source: result.rawRequirement.source,
+              keyElements: result.rawRequirement.keyElements,
+              status: result.rawRequirement.status,
+              questionAndAnswers: result.rawRequirement.questionAndAnswers,
+              createdAt: result.rawRequirement.createdAt,
+            }
+          : null,
         rawContent: result.rawContent,
         followUpQuestions: result.followUpQuestions,
         keyElements: result.keyElements,
@@ -61,14 +76,14 @@ export class AiGenerationController {
     };
   }
 
-  @Post('requirements')
+  @Post("requirements")
   @HttpCode(HttpStatus.CREATED)
   async generateRequirements(
     @Body() dto: GenerateRequirementsDto,
     @Request() req: any,
   ) {
-    const createdById = req.user?.id || 'system';
-    
+    const createdById = req.user?.id || "system";
+
     const result = await this.aiGenerationService.generateRequirements(
       dto.projectId,
       dto.rawRequirement,
@@ -80,7 +95,7 @@ export class AiGenerationController {
     return {
       code: 0,
       data: {
-        requirements: result.requirements.map(r => ({
+        requirements: result.requirements.map((r) => ({
           id: r.id,
           title: r.title,
           description: r.description,
@@ -97,16 +112,16 @@ export class AiGenerationController {
     };
   }
 
-  @Post('user-stories/:requirementId')
+  @Post("user-stories/:requirementId")
   @HttpCode(HttpStatus.CREATED)
   async generateUserStories(
-    @Param('requirementId') requirementId: string,
+    @Param("requirementId") requirementId: string,
     @Body() dto: GenerateUserStoriesDto,
-    @Query('projectId') projectId: string,
+    @Query("projectId") projectId: string,
     @Request() req: any,
   ) {
-    const createdById = req.user?.id || 'system';
-    
+    const createdById = req.user?.id || "system";
+
     const result = await this.aiGenerationService.generateUserStories(
       requirementId,
       dto.featurePoints,
@@ -118,7 +133,7 @@ export class AiGenerationController {
     return {
       code: 0,
       data: {
-        userStories: result.userStories.map(us => ({
+        userStories: result.userStories.map((us) => ({
           id: us.id,
           requirementId: us.requirementId,
           role: us.role,
@@ -132,16 +147,16 @@ export class AiGenerationController {
     };
   }
 
-  @Post('tasks/:requirementId')
+  @Post("tasks/:requirementId")
   @HttpCode(HttpStatus.CREATED)
   async generateTasks(
-    @Param('requirementId') requirementId: string,
+    @Param("requirementId") requirementId: string,
     @Body() dto: GenerateTasksDto,
-    @Query('projectId') projectId: string,
+    @Query("projectId") projectId: string,
     @Request() req: any,
   ) {
-    const createdById = req.user?.id || 'system';
-    
+    const createdById = req.user?.id || "system";
+
     const result = await this.aiGenerationService.generateTasks(
       requirementId,
       dto.featurePoints,
@@ -153,7 +168,7 @@ export class AiGenerationController {
     return {
       code: 0,
       data: {
-        tasks: result.tasks.map(t => ({
+        tasks: result.tasks.map((t) => ({
           id: t.id,
           taskNo: t.taskNo,
           title: t.title,
@@ -169,15 +184,15 @@ export class AiGenerationController {
     };
   }
 
-  @Post('modules/:projectId')
+  @Post("modules/:projectId")
   @HttpCode(HttpStatus.CREATED)
   async generateModules(
-    @Param('projectId') projectId: string,
+    @Param("projectId") projectId: string,
     @Body() dto: GenerateModulesDto,
     @Request() req: any,
   ) {
-    const createdById = req.user?.id || 'system';
-    
+    const createdById = req.user?.id || "system";
+
     const result = await this.aiGenerationService.generateModules(
       projectId,
       dto.requirements,
@@ -189,7 +204,7 @@ export class AiGenerationController {
     return {
       code: 0,
       data: {
-        modules: result.modules.map(m => ({
+        modules: result.modules.map((m) => ({
           id: m.id,
           name: m.name,
           description: m.description,

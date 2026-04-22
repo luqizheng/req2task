@@ -1,19 +1,26 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
-import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement } from '@req2task/core';
-import { PromptService } from '@req2task/core';
-import { 
-  RequirementStatus, 
-  Priority, 
-  RequirementSource, 
-  TaskStatus, 
+import { Injectable, Logger, BadRequestException } from "@nestjs/common";
+import { InjectRepository } from "@nestjs/typeorm";
+import { Repository, DataSource } from "typeorm";
+import {
+  Requirement,
+  UserStory,
+  AcceptanceCriteria,
+  Task,
+  FeatureModule,
+  RawRequirement,
+} from "@req2task/core";
+import { PromptService } from "@req2task/core";
+import {
+  RequirementStatus,
+  Priority,
+  RequirementSource,
+  TaskStatus,
   TaskPriority,
   CriteriaType,
   RawRequirementStatus,
   CollectionType,
-} from '@req2task/dto';
-import { LLmClientService } from './llm-client.service';
+} from "@req2task/dto";
+import { LLmClientService } from "./llm-client.service";
 
 export interface GenerationResult {
   requirements?: Requirement[];
@@ -52,11 +59,14 @@ export class AiGenerationService {
     projectId: string,
     conversationText: string,
     createdById: string,
-    source?: string,
-    collectionType?: string,
     context?: string,
-  ): Promise<{ rawRequirement: RawRequirement; rawContent: string; followUpQuestions: string[]; keyElements: string[] }> {
-    const rendered = this.promptService.render('RAW_REQUIREMENT_ANALYSIS', {
+  ): Promise<{
+    rawRequirement: RawRequirement;
+    rawContent: string;
+    followUpQuestions: string[];
+    keyElements: string[];
+  }> {
+    const rendered = this.promptService.render("RAW_REQUIREMENT_ANALYSIS", {
       projectId,
       context,
       rawRequirement: conversationText,
@@ -76,14 +86,20 @@ export class AiGenerationService {
       createdById,
       questions,
       keyElements,
-      source,
-      collectionType,
     );
 
-    return { rawRequirement, rawContent: content, followUpQuestions: questions, keyElements };
+    return {
+      rawRequirement,
+      rawContent: content,
+      followUpQuestions: questions,
+      keyElements,
+    };
   }
 
-  private extractAnalysisResult(content: string): { questions: string[]; keyElements: string[] } {
+  private extractAnalysisResult(content: string): {
+    questions: string[];
+    keyElements: string[];
+  } {
     try {
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
@@ -105,8 +121,6 @@ export class AiGenerationService {
     createdById: string,
     followUpQuestions: string[],
     keyElements: string[],
-    source?: string,
-    collectionType?: string,
   ): Promise<RawRequirement | null> {
     try {
       const questionAndAnswers = followUpQuestions.map((question, index) => ({
@@ -125,8 +139,8 @@ export class AiGenerationService {
         const rawRequirement = queryRunner.manager.create(RawRequirement, {
           projectId,
           originalContent: content,
-          collectionType: collectionType as CollectionType || null,
-          source: source || null,
+          // collectionType: (collectionType as CollectionType) || null,
+          // source: source || null,
           keyElements,
           status: RawRequirementStatus.PENDING,
           questionAndAnswers,
@@ -135,7 +149,9 @@ export class AiGenerationService {
 
         const saved = await queryRunner.manager.save(rawRequirement);
         await queryRunner.commitTransaction();
-        this.logger.log(`Created raw requirement ${saved.id} with ${followUpQuestions.length} follow-up questions`);
+        this.logger.log(
+          `Created raw requirement ${saved.id} with ${followUpQuestions.length} follow-up questions`,
+        );
 
         return saved;
       } catch (error) {
@@ -145,7 +161,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist raw requirement');
+      this.logger.error({ error }, "Failed to persist raw requirement");
       return null;
     }
   }
@@ -157,7 +173,7 @@ export class AiGenerationService {
     context?: string,
     moduleIds?: string[],
   ): Promise<{ requirements: Requirement[]; rawContent: string }> {
-    const rendered = this.promptService.render('REQUIREMENT_GENERATION', {
+    const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
       moduleIds,
@@ -193,10 +209,10 @@ export class AiGenerationService {
     });
 
     if (!requirement) {
-      throw new BadRequestException('Requirement not found');
+      throw new BadRequestException("Requirement not found");
     }
 
-    const rendered = this.promptService.render('USER_STORY_GENERATION', {
+    const rendered = this.promptService.render("USER_STORY_GENERATION", {
       projectId,
       context,
       requirementTitle: requirement.title,
@@ -228,10 +244,10 @@ export class AiGenerationService {
     });
 
     if (!requirement) {
-      throw new BadRequestException('Requirement not found');
+      throw new BadRequestException("Requirement not found");
     }
 
-    const rendered = this.promptService.render('TASK_BREAKDOWN', {
+    const rendered = this.promptService.render("TASK_BREAKDOWN", {
       projectId,
       requirementId,
       context,
@@ -258,7 +274,7 @@ export class AiGenerationService {
     context?: string,
     existingModulesTree?: string,
   ): Promise<{ modules: FeatureModule[]; rawContent: string }> {
-    const rendered = this.promptService.render('MODULE_DECOMPOSITION', {
+    const rendered = this.promptService.render("MODULE_DECOMPOSITION", {
       projectId,
       context,
       requirements,
@@ -286,7 +302,7 @@ export class AiGenerationService {
     try {
       const data = this.extractJsonArray(content);
       if (!data || data.length === 0) {
-        this.logger.warn('No requirements found in AI response');
+        this.logger.warn("No requirements found in AI response");
         return [];
       }
 
@@ -316,7 +332,9 @@ export class AiGenerationService {
         }
 
         await queryRunner.commitTransaction();
-        this.logger.log(`Created ${requirements.length} requirements for project ${projectId}`);
+        this.logger.log(
+          `Created ${requirements.length} requirements for project ${projectId}`,
+        );
 
         return requirements;
       } catch (error) {
@@ -326,7 +344,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist requirements');
+      this.logger.error({ error }, "Failed to persist requirements");
       return [];
     }
   }
@@ -338,7 +356,7 @@ export class AiGenerationService {
     try {
       const data = this.extractJsonArray(content);
       if (!data || data.length === 0) {
-        this.logger.warn('No user stories found in AI response');
+        this.logger.warn("No user stories found in AI response");
         return [];
       }
 
@@ -361,21 +379,30 @@ export class AiGenerationService {
           const saved = await queryRunner.manager.save(userStory);
           userStories.push(saved);
 
-          if (item.acceptanceCriteria && Array.isArray(item.acceptanceCriteria)) {
+          if (
+            item.acceptanceCriteria &&
+            Array.isArray(item.acceptanceCriteria)
+          ) {
             for (const criteria of item.acceptanceCriteria) {
-              const acceptanceCriteria = queryRunner.manager.create(AcceptanceCriteria, {
-                userStoryId: saved.id,
-                criteriaType: criteria.criteriaType || CriteriaType.FUNCTIONAL,
-                content: criteria.content,
-                testMethod: criteria.testMethod || null,
-              });
+              const acceptanceCriteria = queryRunner.manager.create(
+                AcceptanceCriteria,
+                {
+                  userStoryId: saved.id,
+                  criteriaType:
+                    criteria.criteriaType || CriteriaType.FUNCTIONAL,
+                  content: criteria.content,
+                  testMethod: criteria.testMethod || null,
+                },
+              );
               await queryRunner.manager.save(acceptanceCriteria);
             }
           }
         }
 
         await queryRunner.commitTransaction();
-        this.logger.log(`Created ${userStories.length} user stories for requirement ${requirementId}`);
+        this.logger.log(
+          `Created ${userStories.length} user stories for requirement ${requirementId}`,
+        );
 
         return userStories;
       } catch (error) {
@@ -385,7 +412,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist user stories');
+      this.logger.error({ error }, "Failed to persist user stories");
       return [];
     }
   }
@@ -398,7 +425,7 @@ export class AiGenerationService {
     try {
       const data = this.extractJsonArray(content);
       if (!data || data.length === 0) {
-        this.logger.warn('No tasks found in AI response');
+        this.logger.warn("No tasks found in AI response");
         return [];
       }
 
@@ -411,7 +438,7 @@ export class AiGenerationService {
 
         for (const item of data) {
           const taskNo = await this.generateTaskNo(queryRunner.manager);
-          
+
           const task = queryRunner.manager.create(Task, {
             taskNo,
             title: item.title,
@@ -428,7 +455,9 @@ export class AiGenerationService {
         }
 
         await queryRunner.commitTransaction();
-        this.logger.log(`Created ${tasks.length} tasks for requirement ${requirementId}`);
+        this.logger.log(
+          `Created ${tasks.length} tasks for requirement ${requirementId}`,
+        );
 
         return tasks;
       } catch (error) {
@@ -438,7 +467,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist tasks');
+      this.logger.error({ error }, "Failed to persist tasks");
       return [];
     }
   }
@@ -450,7 +479,7 @@ export class AiGenerationService {
     try {
       const jsonMatch = content.match(/\{[\s\S]*"modules"[\s\S]*\}/);
       if (!jsonMatch) {
-        this.logger.warn('No modules found in AI response');
+        this.logger.warn("No modules found in AI response");
         return [];
       }
 
@@ -479,7 +508,9 @@ export class AiGenerationService {
         }
 
         await queryRunner.commitTransaction();
-        this.logger.log(`Created ${modules.length} modules for project ${projectId}`);
+        this.logger.log(
+          `Created ${modules.length} modules for project ${projectId}`,
+        );
 
         return modules;
       } catch (error) {
@@ -489,7 +520,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist modules');
+      this.logger.error({ error }, "Failed to persist modules");
       return [];
     }
   }
@@ -513,7 +544,12 @@ export class AiGenerationService {
 
     if (data.children && Array.isArray(data.children)) {
       for (const child of data.children) {
-        await this.createModuleWithChildren(manager, child, projectId, saved.id);
+        await this.createModuleWithChildren(
+          manager,
+          child,
+          projectId,
+          saved.id,
+        );
       }
     }
 
@@ -522,10 +558,10 @@ export class AiGenerationService {
 
   private async generateTaskNo(manager: any): Promise<string> {
     const result = await manager.query(
-      "SELECT COALESCE(MAX(CAST(SUBSTRING(task_no, 5) AS INTEGER)), 0) + 1 as next_no FROM tasks WHERE task_no LIKE 'TASK%'"
+      "SELECT COALESCE(MAX(CAST(SUBSTRING(task_no, 5) AS INTEGER)), 0) + 1 as next_no FROM tasks WHERE task_no LIKE 'TASK%'",
     );
     const nextNo = result[0]?.next_no || 1;
-    return `TASK${String(nextNo).padStart(5, '0')}`;
+    return `TASK${String(nextNo).padStart(5, "0")}`;
   }
 
   private mapPriority(priority: string): TaskPriority {
@@ -546,7 +582,7 @@ export class AiGenerationService {
     try {
       const data = this.extractRawRequirementJson(content);
       if (!data) {
-        this.logger.warn('No raw requirement data found in AI response');
+        this.logger.warn("No raw requirement data found in AI response");
         return null;
       }
 
@@ -564,15 +600,19 @@ export class AiGenerationService {
           other: CollectionType.OTHER,
         };
 
-        const collectionType = collectionTypeMap[data.collectionType?.toLowerCase()] || CollectionType.OTHER;
+        const collectionType =
+          collectionTypeMap[data.collectionType?.toLowerCase()] ||
+          CollectionType.OTHER;
 
-        const questionAndAnswers = (data.questionAndAnswers || []).map((qa: any) => ({
-          id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          question: qa.question || '',
-          answer: qa.answer || null,
-          createdAt: new Date().toISOString(),
-          answeredAt: qa.answeredAt || null,
-        }));
+        const questionAndAnswers = (data.questionAndAnswers || []).map(
+          (qa: any) => ({
+            id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            question: qa.question || "",
+            answer: qa.answer || null,
+            createdAt: new Date().toISOString(),
+            answeredAt: qa.answeredAt || null,
+          }),
+        );
 
         const rawRequirement = queryRunner.manager.create(RawRequirement, {
           projectId,
@@ -588,7 +628,9 @@ export class AiGenerationService {
         const saved = await queryRunner.manager.save(rawRequirement);
 
         await queryRunner.commitTransaction();
-        this.logger.log(`Created raw requirement ${saved.id} for project ${projectId}`);
+        this.logger.log(
+          `Created raw requirement ${saved.id} for project ${projectId}`,
+        );
 
         return saved;
       } catch (error) {
@@ -598,7 +640,7 @@ export class AiGenerationService {
         await queryRunner.release();
       }
     } catch (error) {
-      this.logger.error({ error }, 'Failed to persist raw requirement');
+      this.logger.error({ error }, "Failed to persist raw requirement");
       return null;
     }
   }
@@ -611,7 +653,7 @@ export class AiGenerationService {
       }
       return null;
     } catch (error) {
-      this.logger.error({ error }, 'Failed to extract JSON from content');
+      this.logger.error({ error }, "Failed to extract JSON from content");
       return null;
     }
   }
@@ -639,7 +681,10 @@ export class AiGenerationService {
 
       return [];
     } catch (error) {
-      this.logger.error({ error, content: content.substring(0, 500) }, 'Failed to extract JSON from content');
+      this.logger.error(
+        { error, content: content.substring(0, 500) },
+        "Failed to extract JSON from content",
+      );
       return [];
     }
   }

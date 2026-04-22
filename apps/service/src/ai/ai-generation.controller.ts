@@ -34,9 +34,53 @@ interface GenerateModulesDto {
   existingModulesTree?: string;
 }
 
+interface GenerateRawRequirementDto {
+  conversationText: string;
+  source?: string;
+  collectionType?: string;
+  context?: string;
+}
+
 @Controller('ai/generation')
 export class AiGenerationController {
   constructor(private readonly aiGenerationService: AiGenerationService) {}
+
+  @Post('raw-requirements/:projectId')
+  @HttpCode(HttpStatus.CREATED)
+  async generateRawRequirement(
+    @Param('projectId') projectId: string,
+    @Body() dto: GenerateRawRequirementDto,
+    @Request() req: any,
+  ) {
+    const createdById = req.user?.id || 'system';
+    
+    const result = await this.aiGenerationService.generateRawRequirement(
+      projectId,
+      dto.conversationText,
+      createdById,
+      dto.source,
+      dto.collectionType as any,
+      dto.context,
+    );
+
+    return {
+      code: 0,
+      data: {
+        rawRequirement: result.rawRequirement ? {
+          id: result.rawRequirement.id,
+          projectId: result.rawRequirement.projectId,
+          originalContent: result.rawRequirement.originalContent,
+          collectionType: result.rawRequirement.collectionType,
+          source: result.rawRequirement.source,
+          keyElements: result.rawRequirement.keyElements,
+          status: result.rawRequirement.status,
+          questionAndAnswers: result.rawRequirement.questionAndAnswers,
+          createdAt: result.rawRequirement.createdAt,
+        } : null,
+        rawContent: result.rawContent,
+      },
+    };
+  }
 
   @Post('requirements')
   @HttpCode(HttpStatus.CREATED)

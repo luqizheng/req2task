@@ -1,7 +1,7 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource } from 'typeorm';
-import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule } from '@req2task/core';
+import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement } from '@req2task/core';
 import { PromptService } from '@req2task/core';
 import { 
   RequirementStatus, 
@@ -9,7 +9,9 @@ import {
   RequirementSource, 
   TaskStatus, 
   TaskPriority,
-  CriteriaType 
+  CriteriaType,
+  RawRequirementStatus,
+  CollectionType,
 } from '@req2task/dto';
 import { LLmClientService } from './llm-client.service';
 
@@ -18,6 +20,7 @@ export interface GenerationResult {
   userStories?: UserStory[];
   tasks?: Task[];
   modules?: FeatureModule[];
+  rawRequirements?: RawRequirement[];
   rawContent?: string;
   followUpQuestions?: string[];
   keyElements?: string[];
@@ -38,10 +41,40 @@ export class AiGenerationService {
     private taskRepository: Repository<Task>,
     @InjectRepository(FeatureModule)
     private featureModuleRepository: Repository<FeatureModule>,
+    @InjectRepository(RawRequirement)
+    private rawRequirementRepository: Repository<RawRequirement>,
     private readonly promptService: PromptService,
     private readonly llmClient: LLmClientService,
     private readonly dataSource: DataSource,
   ) {}
+
+  async generateRawRequirement(
+    projectId: string,
+    conversationText: string,
+    createdById: string,
+    source?: string,
+    collectionType?: string,
+    context?: string,
+  ): Promise<{ rawRequirement: RawRequirement; rawContent: string }> {
+    const rendered = this.promptService.render('RAW_REQUIREMENT_GENERATION', {
+      projectId,
+      context,
+      conversationText,
+      source,
+      collectionType,
+    });
+
+    const content = await this.llmClient.generate({
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
+
+    const rawRequirement = await this.persistRawRequirement(content, projectId, createdById);
+
+    return { rawRequirement, rawContent: content };
+  }
 
   async generateRequirements(
     projectId: string,
@@ -429,6 +462,84 @@ export class AiGenerationService {
       low: TaskPriority.LOW,
     };
     return mapping[priority?.toLowerCase()] || TaskPriority.MEDIUM;
+  }
+
+  private async persistRawRequirement(
+    content: string,
+    projectId: string,
+    createdById: string,
+  ): Promise<RawRequirement | null> {
+    try {
+      const data = this.extractRawRequirementJson(content);
+      if (!data) {
+        this.logger.warn('No raw requirement data found in AI response');
+        return null;
+      }
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const collectionTypeMap: Record<string, CollectionType> = {
+          text: CollectionType.OTHER,
+          audio: CollectionType.OTHER,
+          document: CollectionType.DOCUMENT,
+          meeting: CollectionType.MEETING,
+          interview: CollectionType.INTERVIEW,
+          other: CollectionType.OTHER,
+        };
+
+        const collectionType = collectionTypeMap[data.collectionType?.toLowerCase()] || CollectionType.OTHER;
+
+        const questionAndAnswers = (data.questionAndAnswers || []).map((qa: any) => ({
+          id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          question: qa.question || '',
+          answer: qa.answer || null,
+          createdAt: new Date().toISOString(),
+          answeredAt: qa.answeredAt || null,
+        }));
+
+        const rawRequirement = queryRunner.manager.create(RawRequirement, {
+          projectId,
+          originalContent: data.originalContent || content,
+          collectionType,
+          source: data.source || null,
+          keyElements: data.keyElements || [],
+          status: RawRequirementStatus.PENDING,
+          questionAndAnswers,
+          createdById,
+        });
+
+        const saved = await queryRunner.manager.save(rawRequirement);
+
+        await queryRunner.commitTransaction();
+        this.logger.log(`Created raw requirement ${saved.id} for project ${projectId}`);
+
+        return saved;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to persist raw requirement');
+      return null;
+    }
+  }
+
+  private extractRawRequirementJson(content: string): any | null {
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[0]);
+      }
+      return null;
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to extract JSON from content');
+      return null;
+    }
   }
 
   private extractJsonArray(content: string): any[] {

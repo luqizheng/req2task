@@ -119,4 +119,60 @@ JSON格式：
       { name: 'message', type: 'string', required: true, description: '用户消息' },
     ],
   },
+  {
+    code: 'RAW_REQUIREMENT_GENERATION',
+    name: '原始需求生成',
+    category: 'conversation',
+    description: '从对话内容生成结构化原始需求',
+    systemPrompt: `你是一个专业的需求分析师。请根据对话内容生成结构化的原始需求。
+
+重要：RawRequirement业务对象字段（必须严格遵守）：
+- originalContent: string (原始内容，完整的用户需求描述)
+- collectionType: "text" | "audio" | "document" | "meeting" | "interview" | "other" (采集类型)
+- source: string | null (来源描述，如"用户访谈"、"需求文档"等)
+- keyElements: string[] (关键要素列表)
+- status: "pending" (固定值，初始状态)
+- questionAndAnswers: 问答记录列表，每个包含：
+  - question: string (问题)
+  - answer: string | null (回答，可为空表示未回答)
+  - answeredAt: string | null (回答时间)`,
+    userPromptTemplate: `{{#if projectId}}项目ID: {{projectId}}
+
+{{/if}}{{#if context}}## 上下文信息
+{{context}}
+
+{{/if}}{{#if conversationText}}## 对话内容
+{{conversationText}}
+{{/if}}{{#if source}}## 来源
+{{source}}
+{{/if}}{{#if collectionType}}## 采集类型
+{{collectionType}}
+{{/if}}请根据以上信息生成原始需求记录。
+
+JSON格式：
+{
+  "originalContent": "完整的原始需求描述",
+  "collectionType": "text",
+  "source": "用户访谈",
+  "keyElements": ["关键要素1", "关键要素2"],
+  "status": "pending",
+  "questionAndAnswers": [
+    {
+      "question": "追问问题",
+      "answer": "用户回答",
+      "answeredAt": null
+    }
+  ]
+}`,
+    temperature: 0.3,
+    maxTokens: 3000,
+    isActive: true,
+    parameters: [
+      { name: 'projectId', type: 'string', description: '项目ID' },
+      { name: 'context', type: 'string', description: '上下文信息' },
+      { name: 'conversationText', type: 'string', required: true, description: '对话内容' },
+      { name: 'source', type: 'string', description: '需求来源' },
+      { name: 'collectionType', type: 'string', description: '采集类型' },
+    ],
+  },
 ];

@@ -1,7 +1,13 @@
 import api from './axios';
-import type { CreateRawRequirementDto } from '@req2task/dto';
-export { RawRequirementStatus } from './requirementCollection';
-export type { RawRequirementStatus as RawRequirementStatusType } from './requirementCollection';
+import type { 
+  CreateRawRequirementInput, 
+  CollectionType, 
+  RawRequirementResponseDto 
+} from '@req2task/dto';
+import { RawRequirementStatus } from '@req2task/dto';
+
+export type { CreateRawRequirementInput, CollectionType, RawRequirementResponseDto };
+export { RawRequirementStatus };
 
 export interface RawRequirementListParams {
   page?: number;
@@ -13,27 +19,6 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-}
-
-export interface QuestionAndAnswer {
-  id: string;
-  question: string;
-  answer: string;
-  createdAt: string;
-  answeredAt?: string;
-}
-
-export interface RawRequirementResponse {
-  id: string;
-  collectionId?: string;
-  conversationId?: string;
-  content: string;
-  source?: string;
-  status: string;
-  questionAndAnswers: QuestionAndAnswer[];
-  keyElements: string[];
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface ChatResult {
@@ -50,17 +35,17 @@ export interface RawRequirementStreamOptions {
 }
 
 export const rawRequirementsApi = {
-  getByModule: (moduleId: string, params?: RawRequirementListParams) => {
+  getByProject: (projectId: string, params?: RawRequirementListParams) => {
     const { page = 1, limit = 20, ...rest } = params || {};
-    return api.get<RawRequirementResponse[]>(
-      `/ai/modules/${moduleId}/raw-requirements`,
+    return api.get<RawRequirementResponseDto[]>(
+      `/ai/projects/${projectId}/raw-requirements`,
       { params: { page, limit, ...rest } }
     );
   },
 
-  create: (moduleId: string, data: CreateRawRequirementDto) => {
-    return api.post<RawRequirementResponse>(
-      `/ai/modules/${moduleId}/raw-requirements`,
+  create: (data: CreateRawRequirementInput) => {
+    return api.post<RawRequirementResponseDto>(
+      `/ai/projects/${data.projectId}/raw-requirements`,
       data
     );
   },
@@ -73,7 +58,7 @@ export const rawRequirementsApi = {
     return api.post(`/ai/raw-requirements/${id}/detect-conflicts`, { configId });
   },
 
-  getRawRequirement: (rawRequirementId: string): Promise<RawRequirementResponse> => {
+  getRawRequirement: (rawRequirementId: string): Promise<RawRequirementResponseDto> => {
     return api.get(`/raw-requirements/${rawRequirementId}`);
   },
 
@@ -116,14 +101,14 @@ export const rawRequirementsApi = {
   },
 
   getFollowUpQuestions: (rawRequirementId: string): Promise<string[]> => {
-    return api.get(`/collections/raw-requirements/${rawRequirementId}/follow-up-questions`);
+    return api.get(`/ai/raw-requirements/${rawRequirementId}/follow-up-questions`);
   },
 
   clarifyRawRequirement: (
     rawRequirementId: string,
     clarifiedContent: string
-  ): Promise<RawRequirementResponse> => {
-    return api.post(`/collections/raw-requirements/${rawRequirementId}/clarify`, {
+  ): Promise<RawRequirementResponseDto> => {
+    return api.post(`/ai/raw-requirements/${rawRequirementId}/clarify`, {
       clarifiedContent,
     });
   },

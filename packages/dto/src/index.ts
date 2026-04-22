@@ -5,7 +5,6 @@ export * from './user';
 export * from './project';
 export * from './requirement';
 export * from './ai';
-export * from './raw-requirement-collection';
 export * from './notification';
 export * from './conversation/index';
 export * from './llm-config';

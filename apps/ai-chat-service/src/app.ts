@@ -5,6 +5,7 @@ import * as nacos from 'nacos';
 import { createConversationRoutes } from './routes/conversation.routes.js';
 import { createTextRoutes } from './routes/text.routes.js';
 import { createLlMConfigRoutes } from './routes/llm-config.routes.js';
+import { createLlmRoutes } from './routes/llm.routes.js';
 import { ConversationService } from './services/conversation.service.js';
 import { LlMConfigService } from './services/llm-config.service.js';
 import { LLMService } from './services/llm.service.js';
@@ -95,6 +96,7 @@ export async function createApp(): Promise<Express> {
 
   app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
   app.use('/api/ai/text', createTextRoutes(llmService));
+  app.use('/api/ai', createLlmRoutes(llmService));
   app.use('/api/llm-configs', createLlMConfigRoutes(llmConfigService));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {

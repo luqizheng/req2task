@@ -1,14 +1,11 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import {
-  requirementCollectionApi,
-  RawRequirementCollectionResponse,
-  RawRequirementCollectionDetail,
-  RawRequirementInCollection,
-  CreateCollectionDto,
-  CompleteCollectionResult,
-  CollectionStatus,
-} from '@/api/requirementCollection';
+  rawRequirementsApi,
+  CreateRawRequirementInput,
+} from '@/api/rawRequirements';
+import type { RawRequirementResponseDto, CollectionType } from '@req2task/dto';
+import { RawRequirementStatus } from '@req2task/dto';
 import {
   conversationApi,
   Conversation,
@@ -17,9 +14,8 @@ import {
 } from '@/api/conversation';
 
 export const useRequirementCollectStore = defineStore('requirementCollect', () => {
-  const collections = ref<RawRequirementCollectionResponse[]>([]);
-  const currentCollection = ref<RawRequirementCollectionDetail | null>(null);
-  const rawRequirements = ref<RawRequirementInCollection[]>([]);
+  const currentProjectId = ref<string | null>(null);
+  const rawRequirements = ref<RawRequirementResponseDto[]>([]);
   const isLoading = ref(false);
   const error = ref<string | null>(null);
   const currentRawRequirementId = ref<string | null>(null);
@@ -32,57 +28,22 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     return rawRequirements.value.find(r => r.id === currentRawRequirementId.value) || null;
   });
 
-  const canCompleteCollection = computed(() => {
-    if (!currentCollection.value) return false;
-    const unhandledRequirements = rawRequirements.value.filter(
-      r => r.status !== 'converted' && r.status !== 'discarded' && r.status !== 'clarified'
-    );
-    return unhandledRequirements.length === 0;
-  });
-
-  const unclarifiedRequirements = computed(() => {
+  const unhandledRequirements = computed(() => {
     return rawRequirements.value.filter(
-      r => r.status !== 'converted' && r.status !== 'discarded' && r.status !== 'clarified'
+      r => r.status !== RawRequirementStatus.CONVERTED && 
+           r.status !== RawRequirementStatus.DISCARDED && 
+           r.status !== RawRequirementStatus.CLARIFIED
     );
   });
 
-  const createCollection = async (dto: CreateCollectionDto): Promise<RawRequirementCollectionResponse> => {
+  const fetchRawRequirements = async (projectId: string): Promise<void> => {
     isLoading.value = true;
     error.value = null;
+    currentProjectId.value = projectId;
     try {
-      const result = await requirementCollectionApi.createCollection(dto);
-      collections.value.unshift(result);
-      return result;
+      rawRequirements.value = await rawRequirementsApi.getByProject(projectId);
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '创建收集失败';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  const fetchCollections = async (projectId: string): Promise<void> => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      collections.value = await requirementCollectionApi.getCollections(projectId);
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '获取收集列表失败';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  const selectCollection = async (collectionId: string): Promise<void> => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      currentCollection.value = await requirementCollectionApi.getCollection(collectionId);
-      rawRequirements.value = currentCollection.value.rawRequirements || [];
-      currentRawRequirementId.value = null;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '获取收集详情失败';
+      error.value = err instanceof Error ? err.message : '获取原始需求失败';
       throw err;
     } finally {
       isLoading.value = false;
@@ -93,19 +54,23 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     currentRawRequirementId.value = rawRequirementId;
   };
 
-  const addRequirement = async (
+  const addRawRequirement = async (
     content: string,
-    source: string = '手动添加'
-  ): Promise<RawRequirementInCollection | null> => {
-    if (!currentCollection.value) return null;
+    source: string = '手动添加',
+    collectionType?: CollectionType
+): Promise<RawRequirementResponseDto | null> => {
+    if (!currentProjectId.value) return null;
 
     isLoading.value = true;
     error.value = null;
     try {
-      const result = await requirementCollectionApi.addRawRequirement(
-        currentCollection.value.id,
-        { content, source }
-      );
+      const input: CreateRawRequirementInput = {
+        projectId: currentProjectId.value,
+        content,
+        source,
+        collectionType,
+      };
+      const result = await rawRequirementsApi.create(input);
       rawRequirements.value.unshift(result);
       return result;
     } catch (err) {
@@ -116,57 +81,31 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     }
   };
 
-  const deleteCollection = async (collectionId: string): Promise<void> => {
+  const deleteRawRequirement = async (rawRequirementId: string): Promise<void> => {
     isLoading.value = true;
     error.value = null;
     try {
-      await requirementCollectionApi.deleteCollection(collectionId);
-      collections.value = collections.value.filter(c => c.id !== collectionId);
-      if (currentCollection.value?.id === collectionId) {
-        currentCollection.value = null;
-        rawRequirements.value = [];
+      await rawRequirementsApi.deleteRawRequirement(rawRequirementId);
+      rawRequirements.value = rawRequirements.value.filter(r => r.id !== rawRequirementId);
+      if (currentRawRequirementId.value === rawRequirementId) {
         currentRawRequirementId.value = null;
       }
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '删除收集失败';
+      error.value = err instanceof Error ? err.message : '删除需求失败';
       throw err;
     } finally {
       isLoading.value = false;
     }
   };
 
-  const completeCollection = async (): Promise<CompleteCollectionResult> => {
-    if (!currentCollection.value) {
-      return { success: false, message: '没有选中的收集' };
-    }
-
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const result = await requirementCollectionApi.completeCollection(currentCollection.value.id);
-      if (result.success) {
-        currentCollection.value = {
-          ...currentCollection.value,
-          status: CollectionStatus.COMPLETED,
-        };
-      }
-      return result;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '完成收集失败';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
-  const clarifyRequirement = async (
+  const clarifyRawRequirement = async (
     rawRequirementId: string,
     clarifiedContent: string
-  ): Promise<RawRequirementInCollection | null> => {
+  ): Promise<RawRequirementResponseDto | null> => {
     isLoading.value = true;
     error.value = null;
     try {
-      const result = await requirementCollectionApi.clarifyRawRequirement(
+      const result = await rawRequirementsApi.clarifyRawRequirement(
         rawRequirementId,
         clarifiedContent
       );
@@ -183,43 +122,8 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
     }
   };
 
-  const deleteRequirement = async (rawRequirementId: string): Promise<void> => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      await requirementCollectionApi.deleteRawRequirement(rawRequirementId);
-      rawRequirements.value = rawRequirements.value.filter(r => r.id !== rawRequirementId);
-      if (currentRawRequirementId.value === rawRequirementId) {
-        currentRawRequirementId.value = null;
-      }
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '删除需求失败';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
-  };
-
   const clearError = (): void => {
     error.value = null;
-  };
-
-  const createConversationForCollection = async (collectionId: string): Promise<Conversation> => {
-    isLoading.value = true;
-    error.value = null;
-    try {
-      const dto: CreateConversationDto = {
-        collectionId,
-      };
-      currentConversation.value = await conversationApi.createConversation(dto);
-      conversationMessages.value = [];
-      return currentConversation.value;
-    } catch (err) {
-      error.value = err instanceof Error ? err.message : '创建会话失败';
-      throw err;
-    } finally {
-      isLoading.value = false;
-    }
   };
 
   const createConversationForRawRequirement = async (rawRequirementId: string): Promise<Conversation> => {
@@ -291,10 +195,10 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
         messageCount: (currentConversation.value.messageCount || 0) + 2,
       };
 
-      const updatedRawRequirements = await requirementCollectionApi.getRawRequirements(
-        currentCollection.value!.id
-      );
-      rawRequirements.value = updatedRawRequirements;
+      if (currentProjectId.value) {
+        const updatedRawRequirements = await rawRequirementsApi.getByProject(currentProjectId.value);
+        rawRequirements.value = updatedRawRequirements;
+      }
     } catch (err) {
       const msgIndex = conversationMessages.value.findIndex((m) => m.id === userMessage.id);
       if (msgIndex !== -1) {
@@ -308,8 +212,7 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
   };
 
   const reset = (): void => {
-    collections.value = [];
-    currentCollection.value = null;
+    currentProjectId.value = null;
     rawRequirements.value = [];
     currentRawRequirementId.value = null;
     currentConversation.value = null;
@@ -319,29 +222,22 @@ export const useRequirementCollectStore = defineStore('requirementCollect', () =
   };
 
   return {
-    collections,
-    currentCollection,
+    currentProjectId,
     rawRequirements,
     isLoading,
     error,
     currentRawRequirementId,
     currentRawRequirement,
-    canCompleteCollection,
-    unclarifiedRequirements,
-    createCollection,
-    fetchCollections,
-    selectCollection,
+    unhandledRequirements,
+    fetchRawRequirements,
     selectRawRequirement,
-    addRequirement,
-    deleteCollection,
-    completeCollection,
-    clarifyRequirement,
-    deleteRequirement,
+    addRawRequirement,
+    deleteRawRequirement,
+    clarifyRawRequirement,
     clearError,
     reset,
     currentConversation,
     conversationMessages,
-    createConversationForCollection,
     createConversationForRawRequirement,
     loadConversation,
     sendMessageViaConversation,

@@ -10,8 +10,8 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { Requirement } from './requirement.entity';
-import { RawRequirementStatus } from '@req2task/dto';
-import { RawRequirementCollection } from './raw-requirement-collection.entity';
+import { Project } from './project.entity';
+import { RawRequirementStatus, CollectionType } from '@req2task/dto';
 
 export interface QuestionAndAnswer {
   id: string;
@@ -26,12 +26,20 @@ export class RawRequirement {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'collection_id', type: 'uuid', nullable: true })
-  collectionId!: string | null;
+  @Column({ name: 'project_id' })
+  projectId!: string;
 
-  @ManyToOne(() => RawRequirementCollection, (c) => c.rawRequirements, { nullable: true })
-  @JoinColumn({ name: 'collection_id' })
-  collection!: RawRequirementCollection | null;
+  @ManyToOne(() => Project)
+  @JoinColumn({ name: 'project_id' })
+  project!: Project;
+
+  @Column({
+    name: 'collection_type',
+    type: 'enum',
+    enum: CollectionType,
+    nullable: true,
+  })
+  collectionType!: CollectionType | null;
 
   @Column({ name: 'original_content', type: 'text' })
   originalContent!: string;

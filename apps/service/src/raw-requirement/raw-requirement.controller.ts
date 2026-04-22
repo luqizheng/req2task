@@ -1,19 +1,12 @@
 import {
   Controller,
   Get,
-  Post,
   Delete,
   Param,
-  Body,
   UseGuards,
-  Res,
-  BadRequestException,
 } from "@nestjs/common";
-import { Response } from "express";
 import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementService } from "./raw-requirement.service";
-import { RequirementCollectService } from "./requirement-collect.service";
-import { CollectRequirementDto } from "@req2task/dto";
 
 interface ApiResponse<T> {
   code: number;
@@ -26,7 +19,6 @@ interface ApiResponse<T> {
 export class RawRequirementController {
   constructor(
     private readonly rawRequirementService: RawRequirementService,
-    private readonly requirementCollectService: RequirementCollectService,
   ) {}
 
   @Get(":rawRequirementId")
@@ -36,19 +28,6 @@ export class RawRequirementController {
     const result =
       await this.rawRequirementService.getRawRequirementById(rawRequirementId);
     return { code: 0, data: result };
-  }
-
-  @Post(":rawRequirementId/collect")
-  async collectRequirement(
-    @Param("rawRequirementId") rawRequirementId: string,
-    @Body() dto: CollectRequirementDto,
-    @Res() res: Response,
-  ): Promise<void> {
-    if (!rawRequirementId) {
-      throw new BadRequestException("rawRequirementId 不能为空");
-    }
-
-    return this.requirementCollectService.collect(rawRequirementId, dto, res);
   }
 
   @Delete(":rawRequirementId")

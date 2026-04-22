@@ -78,8 +78,8 @@ const handleChatMessage = (message: AIChatMessage) => {
   console.log('Chat message received:', message);
 };
 
-const handleChatDone = (message: AIChatMessage, conversationId: string) => {
-  console.log('Chat done:', message, conversationId);
+const handleChatDone = (message: AIChatMessage) => {
+  console.log('Chat done:', message);
   ElMessage.info('对话已完成，请查看右侧生成结果');
 };
 

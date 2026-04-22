@@ -10,8 +10,6 @@ import {
   UserStory,
   AcceptanceCriteria,
   RawRequirement,
-  RawRequirementCollection,
-  LLMConfig,
 } from "@req2task/core";
 
 @Module({
@@ -32,8 +30,6 @@ import {
         UserStory,
         AcceptanceCriteria,
         RawRequirement,
-        RawRequirementCollection,
-        LLMConfig,
       ],
       synchronize: false,
     }),

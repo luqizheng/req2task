@@ -4,6 +4,7 @@ import { HttpModule } from "@nestjs/axios";
 import * as nacos from "nacos";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
+import { PromptModule } from "@req2task/core";
 import {
   User,
   Project,
@@ -13,11 +14,9 @@ import {
   UserStory,
   AcceptanceCriteria,
   Task,
-  LLMConfig,
   Baseline,
   Notification,
   RawRequirement,
-  RawRequirementCollection,
   FileData,
   ProjectAttachment,
 } from "@req2task/core";
@@ -28,11 +27,11 @@ import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 import { RequirementsModule } from "./requirements/requirements.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { NotificationModule } from "./notifications/notification.module";
-import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
 import { RawRequirementModule } from "./raw-requirement/raw-requirement.module";
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
+import { AiModule } from "./ai/ai.module";
 import * as os from "os";
 
 const getIP = (): string => {
@@ -82,11 +81,9 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
         UserStory,
         AcceptanceCriteria,
         Task,
-        LLMConfig,
         Baseline,
         Notification,
         RawRequirement,
-        RawRequirementCollection,
         FileData,
         ProjectAttachment,
       ],
@@ -103,10 +100,11 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
     RequirementsModule,
     TasksModule,
     NotificationModule,
-    RawRequirementCollectionModule,
     DeveloperWsModule,
     SeedModule,
     ProjectAttachmentModule,
+    PromptModule,
+    AiModule,
   ],
   controllers: [AppController],
   providers: [AppService],

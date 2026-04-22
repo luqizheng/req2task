@@ -108,21 +108,6 @@ const router = createRouter({
       component: () => import('@/views/RequirementChatView.vue')
     },
     {
-      path: '/projects/:projectId/collections',
-      name: 'projectCollections',
-      component: () => import('@/views/ProjectCollectionsView/ProjectCollectionsView.vue')
-    },
-    {
-      path: '/projects/:projectId/collect/:collectionId',
-      name: 'projectAiCollect',
-      component: () => import('@/views/RawRequirementCollectView/RawRequirementCollectView.vue')
-    },
-    {
-      path: '/projects/:projectId/modules/:moduleId/collect',
-      name: 'requirementCollect',
-      component: () => import('@/views/RawRequirementCollectView/RawRequirementCollectView.vue')
-    },
-    {
       path: '/requirements/:requirementId/user-stories',
       name: 'userStoryManage',
       component: () => import('@/views/UserStoryManageView.vue')

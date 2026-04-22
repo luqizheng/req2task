@@ -7,15 +7,22 @@ import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import {
   RawRequirement,
-  CollectionStatus,
   QuestionAndAnswer,
 } from "@req2task/core";
 import {
   RawRequirementResponseDto,
   RawRequirementStatus,
   QuestionAndAnswerDto,
-  RawRequirementInCollectionDto,
+  CollectionType,
 } from "@req2task/dto";
+
+export interface AddRawRequirementDto {
+  projectId: string;
+  content: string;
+  source?: string;
+  collectionType?: CollectionType;
+  userId: string;
+}
 
 @Injectable()
 export class RawRequirementService {
@@ -39,26 +46,13 @@ export class RawRequirementService {
     }));
   }
 
-  private toRawRequirementInDto(
-    entity: RawRequirement,
-  ): RawRequirementInCollectionDto {
-    return {
-      id: entity.id,
-      content: entity.originalContent,
-      status: entity.status,
-      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
-      keyElements: entity.keyElements || [],
-      createdAt: entity.createdAt.toISOString(),
-      updatedAt: entity.updatedAt.toISOString(),
-    };
-  }
-
   private toRawRequirementResponseDto(
     entity: RawRequirement,
   ): RawRequirementResponseDto {
     return {
       id: entity.id,
-      collectionId: entity.collectionId || "",
+      projectId: entity.projectId,
+      collectionType: entity.collectionType || undefined,
       conversationId: entity.conversationId || undefined,
       content: entity.originalContent,
       source: entity.source || "",
@@ -70,18 +64,14 @@ export class RawRequirementService {
     };
   }
 
-  async addRawRequirement(
-    collectionId: string,
-    content: string,
-    source: string,
-    userId: string,
-  ): Promise<RawRequirementResponseDto> {
+  async addRawRequirement(dto: AddRawRequirementDto): Promise<RawRequirementResponseDto> {
     const rawRequirement = this.rawRequirementRepository.create({
-      collectionId,
-      originalContent: content,
-      source,
+      projectId: dto.projectId,
+      collectionType: dto.collectionType || null,
+      originalContent: dto.content,
+      source: dto.source || null,
       status: RawRequirementStatus.PENDING,
-      createdById: userId,
+      createdById: dto.userId,
       questionAndAnswers: [],
       keyElements: [],
     });
@@ -127,15 +117,13 @@ export class RawRequirementService {
     return this.toRawRequirementResponseDto(updated!);
   }
 
-  async getRawRequirements(
-    collectionId: string,
-  ): Promise<RawRequirementInCollectionDto[]> {
+  async getRawRequirementsByProject(projectId: string): Promise<RawRequirementResponseDto[]> {
     const rawRequirements = await this.rawRequirementRepository.find({
-      where: { collectionId },
+      where: { projectId },
       relations: ["createdBy"],
       order: { createdAt: "DESC" },
     });
-    return rawRequirements.map((r) => this.toRawRequirementInDto(r));
+    return rawRequirements.map((r) => this.toRawRequirementResponseDto(r));
   }
 
   async getQuestionAndAnswers(
@@ -178,17 +166,5 @@ export class RawRequirementService {
     }
 
     await this.rawRequirementRepository.remove(rawRequirement);
-  }
-
-  async checkCollectionCompleted(collectionId: string): Promise<boolean> {
-    const collection = await this.rawRequirementRepository.manager
-      .getRepository("RawRequirementCollection")
-      .findOne({ where: { id: collectionId } });
-
-    if (!collection) {
-      throw new NotFoundException(`Collection ${collectionId} not found`);
-    }
-
-    return collection.status === CollectionStatus.COMPLETED;
   }
 }

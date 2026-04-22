@@ -14,7 +14,8 @@ import {
 import { Response } from "express";
 import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementCollectionService } from "./raw-requirement-collection.service";
-import { AIChatService } from "../ai/ai-chat.service";
+import { PromptsService, RequirementCollectDto } from "../ai/PromptsService";
+import { ProjectsService } from "../projects/projects.service";
 import {
   CreateRawRequirementCollectionDto,
   UpdateRawRequirementCollectionDto,
@@ -22,6 +23,7 @@ import {
 } from "@req2task/dto";
 import { of, EMPTY, Observable } from "rxjs";
 import { mergeMap, catchError } from "rxjs/operators";
+import { ConversationClient } from "src/ai/conversation.client";
 
 interface ApiResponse<T> {
   code: number;
@@ -61,7 +63,9 @@ interface RequirementAnalyzeBody {
 export class RawRequirementCollectionController {
   constructor(
     private readonly collectionService: RawRequirementCollectionService,
-    private readonly aiChatService: AIChatService,
+    private readonly promptsService: PromptsService,
+    private readonly projectService: ProjectsService,
+    private readonly conversationClient: ConversationClient,
   ) {}
 
   @Post()
@@ -143,11 +147,28 @@ export class RawRequirementCollectionController {
   }
 
   @Post(":id/analyze/stream")
-  analyzeRequirementStream(
+  async analyzeRequirementStream(
     @Param("id") collectionId: string,
     @Body() body: RequirementAnalyzeBody,
     @Res() res: Response,
   ) {
+    const collection = await this.collectionService.findById(collectionId);
+    if (!collection) {
+      res.status(404).json({ code: 1, message: "项目不存在" });
+      return;
+    }
+    if (!collection.mainConversationId) {
+      const lastConversation = await this.conversationClient.create({
+        title: `Collection ${collectionId} analysis`,
+      });
+      collection.mainConversationId = lastConversation.id;
+      this.updateCollection(collectionId, collection);
+    }
+    const project = await this.projectService.findById(collection.projectId);
+    if (!project) {
+      res.status(404).json({ code: 1, message: "项目不存在" });
+      return;
+    }
     return of(null).pipe(
       mergeMap(() => {
         return new Observable((observer) => {
@@ -161,21 +182,29 @@ export class RawRequirementCollectionController {
           res.setHeader("X-Accel-Buffering", "no");
 
           const sendError = (error: unknown) => {
-            const message = error instanceof Error ? error.message : "Unknown error";
+            const message =
+              error instanceof Error ? error.message : "Unknown error";
             if (!res.writableEnded) {
-              res.write(`data: ${JSON.stringify({ type: "error", error: message })}\n\n`);
+              res.write(
+                `data: ${JSON.stringify({ type: "error", error: message })}\n\n`,
+              );
               res.end();
             }
           };
 
           const run = async () => {
             try {
-              const prompts = await this.aiChatService.chatWithRequirementPromptStream({
+              const param: RequirementCollectDto = {
+                projectId: project.id,
                 rawRequirement: rawRequirementText,
-                projectContext: body.projectContext,
+                projectContext: project.description || "",
                 previousQuestions: body.previousQuestions,
-                configId: body.configId,
-              });
+              } as RequirementCollectDto;
+
+              const prompts =
+                await this.promptsService.chatWithRequirementPromptStream(
+                  param,
+                );
 
               res.write(
                 `data: ${JSON.stringify({
@@ -187,80 +216,22 @@ export class RawRequirementCollectionController {
                 })}\n\n`,
               );
 
-              const context = {
-                collectionId,
-                title: `Collection ${collectionId} analysis`,
-                systemPrompt: prompts.systemPrompt,
-              };
-
-              const conversation =
-                await this.aiChatService.getOrCreateConversation(context);
+              this.conversationClient.streamMessage(
+                collection.mainConversationId,
+                {
+                  content: prompts.userPrompt,
+               
+                  files: [...requirementFiles, ...projectAttachments],
+                },
+              );
 
               res.write(
                 `data: ${JSON.stringify({
                   type: "conversation_start",
-                  conversationId: conversation.id,
+                  conversationId: collection.mainConversationId,
                   isNewConversation: true,
                 })}\n\n`,
               );
-
-              const response = await fetch(
-                `${process.env["AI_CHAT_SERVICE_URL"] || "http://localhost:4001"}/api/ai/conversations/${conversation.id}/messages/stream`,
-                {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    content: prompts.userPrompt,
-                    configId: body.configId,
-                    files: [...requirementFiles, ...projectAttachments],
-                  }),
-                },
-              );
-
-              if (!response.ok) {
-                sendError(new Error(`Request failed: ${response.status}`));
-                return;
-              }
-
-              const reader = response.body?.getReader();
-              if (!reader) {
-                sendError(new Error("No response body"));
-                return;
-              }
-
-              const decoder = new TextDecoder();
-              let buffer = "";
-              let isFirstEvent = true;
-
-              try {
-                for (;;) {
-                  const { done, value } = await reader.read();
-                  if (done) break;
-
-                  buffer += decoder.decode(value, { stream: true });
-                  const lines = buffer.split("\n");
-                  buffer = lines.pop() || "";
-
-                  for (const line of lines) {
-                    if (line.startsWith("data: ")) {
-                      const data = line.slice(6);
-                      if (data === "[DONE]") continue;
-
-                      if (isFirstEvent) {
-                        isFirstEvent = false;
-                        continue;
-                      }
-
-                      const event = JSON.parse(data);
-                      if (event.type === "content" || event.type === "message" || event.type === "error") {
-                        res.write(`${line}\n`);
-                      }
-                    }
-                  }
-                }
-              } finally {
-                reader.releaseLock();
-              }
 
               res.write(`data: ${JSON.stringify({ type: "done" })}\n\n`);
               res.end();

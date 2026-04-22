@@ -1,15 +1,15 @@
-import { RenderService } from './render.service';
-import { requirementPrompts } from './requirement.prompts';
-import { taskPrompts } from './task.prompts';
-import { qualityPrompts } from './quality.prompts';
-import { reviewPrompts } from './review.prompts';
-import { conflictPrompts } from './conflict.prompts';
-import { conversationPrompts } from './conversation.prompts';
+import { RenderService } from "./render.service";
+import { requirementPrompts } from "./requirement.prompts";
+import { taskPrompts } from "./task.prompts";
+import { qualityPrompts } from "./quality.prompts";
+import { reviewPrompts } from "./review.prompts";
+import { conflictPrompts } from "./conflict.prompts";
+import { conversationPrompts } from "./conversation.prompts";
 import {
   PromptTemplate,
   PromptCategory,
   RenderOptions,
-} from './prompt.interface';
+} from "./prompt.interface";
 
 export interface RenderedPrompt {
   systemPrompt: string;
@@ -57,13 +57,27 @@ export class PromptService {
   }
 
   getActive(): PromptTemplate[] {
-    return Array.from(this.prompts.values()).filter((p) => p.isActive !== false);
+    return Array.from(this.prompts.values()).filter(
+      (p) => p.isActive !== false,
+    );
   }
 
   render(code: string, params: Record<string, unknown>): RenderedPrompt {
     const prompt = this.getByCode(code);
     if (!prompt) {
       throw new Error(`Prompt not found: ${code}`);
+    }
+
+    const missingParams: string[] = [];
+    prompt.parameters.forEach((param) => {
+      if (params[param.name] === undefined && param.required) {
+        missingParams.push(param.name);
+      }
+    });
+    if (missingParams.length > 0) {
+      throw new Error(
+        `Missing required parameters: ${missingParams.join(", ")}`,
+      );
     }
 
     return {
@@ -103,6 +117,8 @@ export class PromptService {
   }
 
   getCategories(): PromptCategory[] {
-    return Array.from(new Set(Array.from(this.prompts.values()).map((p) => p.category)));
+    return Array.from(
+      new Set(Array.from(this.prompts.values()).map((p) => p.category)),
+    );
   }
 }

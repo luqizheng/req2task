@@ -1,7 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { Microphone, Upload, Paperclip, Close, Promotion } from '@element-plus/icons-vue';
-import { useAiSubmit, type AnalyzeStartEvent, type ConversationStartEvent, type MessageEvent, type DoneEvent, type ErrorEvent } from '@/composables/useAiSubmit';
+import { ref } from "vue";
+import {
+  Microphone,
+  Upload,
+  Paperclip,
+  Close,
+  Promotion,
+} from "@element-plus/icons-vue";
+import {
+  useAiSubmit,
+  type AnalyzeStartEvent,
+  type ConversationStartEvent,
+  type MessageEvent,
+  type DoneEvent,
+  type ErrorEvent,
+} from "@/composables/useAiSubmit";
 
 interface Props {
   url: string;
@@ -16,19 +29,19 @@ interface Props {
 const props = withDefaults(defineProps<Props>(), {
   uploadFile: false,
   audit: false,
-  placeholder: '描述您的需求或问题，AI 将为您分析和处理...',
+  placeholder: "描述您的需求或问题，AI 将为您分析和处理...",
   useStream: false,
 });
 
 const emit = defineEmits<{
-  (e: 'success', data: unknown): void;
-  (e: 'error', error: Error): void;
-  (e: 'analyzeStart', event: AnalyzeStartEvent): void;
-  (e: 'conversationStart', event: ConversationStartEvent): void;
-  (e: 'content', content: string): void;
-  (e: 'message', event: MessageEvent): void;
-  (e: 'done', event: DoneEvent): void;
-  (e: 'streamError', error: ErrorEvent): void;
+  (e: "success", data: unknown): void;
+  (e: "error", error: Error): void;
+  (e: "analyzeStart", event: AnalyzeStartEvent): void;
+  (e: "conversationStart", event: ConversationStartEvent): void;
+  (e: "content", content: string): void;
+  (e: "message", event: MessageEvent): void;
+  (e: "done", event: DoneEvent): void;
+  (e: "streamError", error: ErrorEvent): void;
 }>();
 
 const {
@@ -53,19 +66,19 @@ const {
   audit: props.audit,
   extraData: props.extraData,
   messageKey: props.messageKey,
-  onSuccess: (data) => emit('success', data),
-  onError: (error) => emit('error', error),
+  onSuccess: (data) => emit("success", data),
+  onError: (error) => emit("error", error),
 });
 
 const audioInputRef = ref<HTMLInputElement | null>(null);
 const attachmentInputRef = ref<HTMLInputElement | null>(null);
 
 const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) return "0 B";
   const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const sizes = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 };
 
 const handleRecordClick = () => {
@@ -91,15 +104,15 @@ const handleCancel = () => {
 const handleSubmit = () => {
   if (props.useStream) {
     submitStream({
-      onAnalyzeStart: (event) => emit('analyzeStart', event),
-      onConversationStart: (event) => emit('conversationStart', event),
-      onContent: (content) => emit('content', content),
-      onMessage: (event) => emit('message', event),
+      onAnalyzeStart: (event) => emit("analyzeStart", event),
+      onConversationStart: (event) => emit("conversationStart", event),
+      onContent: (content) => emit("content", content),
+      onMessage: (event) => emit("message", event),
       onDone: (event) => {
-        emit('done', event);
+        emit("done", event);
         reset();
       },
-      onError: (error) => emit('streamError', error),
+      onError: (error) => emit("streamError", error),
     });
   } else {
     submit();
@@ -129,7 +142,7 @@ const handleSubmit = () => {
           :disabled="isSubmitting || !!audioFile"
           @click="handleRecordClick"
         >
-          {{ isRecording ? '停止' : '录音' }}
+          {{ isRecording ? "停止" : "录音" }}
         </el-button>
 
         <el-button

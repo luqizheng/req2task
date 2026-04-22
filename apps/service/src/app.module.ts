@@ -18,8 +18,6 @@ import {
   Notification,
   RawRequirement,
   RawRequirementCollection,
-  Conversation,
-  ConversationMessage,
   FileData,
   ProjectAttachment,
 } from "@req2task/core";
@@ -29,13 +27,11 @@ import { ProjectsModule } from "./projects/projects.module";
 import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 import { RequirementsModule } from "./requirements/requirements.module";
 import { TasksModule } from "./tasks/tasks.module";
-import { AiModule } from "./ai/ai.module";
 import { NotificationModule } from "./notifications/notification.module";
 import { RawRequirementCollectionModule } from "./raw-requirement-collection/raw-requirement-collection.module";
 import { RawRequirementModule } from "./raw-requirement/raw-requirement.module";
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
-import { ConversationModule } from "./conversation/conversation.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
 import * as os from "os";
 
@@ -91,8 +87,6 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
         Notification,
         RawRequirement,
         RawRequirementCollection,
-        Conversation,
-        ConversationMessage,
         FileData,
         ProjectAttachment,
       ],
@@ -108,12 +102,10 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
     FeatureModulesModule,
     RequirementsModule,
     TasksModule,
-    AiModule,
     NotificationModule,
     RawRequirementCollectionModule,
     DeveloperWsModule,
     SeedModule,
-    ConversationModule,
     ProjectAttachmentModule,
   ],
   controllers: [AppController],

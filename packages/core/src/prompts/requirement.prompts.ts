@@ -1,11 +1,11 @@
-import { PromptTemplate } from './prompt.interface';
+import { PromptTemplate } from "./prompt.interface";
 
 export const requirementPrompts: PromptTemplate[] = [
   {
-    code: 'REQUIREMENT_GENERATION',
-    name: '需求生成',
-    category: 'requirement-generation',
-    description: '根据原始需求和追问问答生成结构化需求列表',
+    code: "REQUIREMENT_GENERATION",
+    name: "需求生成",
+    category: "requirement-generation",
+    description: "根据原始需求和追问问答生成结构化需求列表",
     systemPrompt: `你是一个专业的需求分析师。你需要从原始需求和对话内容中提取结构化需求。
 
 要求：
@@ -43,17 +43,22 @@ JSON格式：
     maxTokens: 3000,
     isActive: true,
     parameters: [
-      { name: 'projectId', type: 'string', description: '项目ID' },
-      { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'rawRequirement', type: 'string', required: true, description: '原始需求' },
-      { name: 'conversation', type: 'string', description: '追问问答内容' },
+      { name: "projectId", type: "string", description: "项目ID" },
+      { name: "context", type: "string", description: "上下文信息" },
+      {
+        name: "rawRequirement",
+        type: "string",
+        required: true,
+        description: "原始需求",
+      },
+      { name: "conversation", type: "string", description: "追问问答内容" },
     ],
   },
   {
-    code: 'RAW_REQUIREMENT_ANALYSIS',
-    name: '原始需求分析',
-    category: 'requirement-generation',
-    description: '分析原始需求，生成结构化需求和追问问题',
+    code: "RAW_REQUIREMENT_ANALYSIS",
+    name: "原始需求分析",
+    category: "requirement-generation",
+    description: "分析原始需求，生成结构化需求和追问问题",
     systemPrompt: `你是一个专业的需求分析师。请分析用户提供的需求信息，完成以下任务：
 
 {{#if previousQuestions}}
@@ -98,18 +103,27 @@ JSON格式：
     maxTokens: 4000,
     isActive: true,
     parameters: [
-      { name: 'projectId', type: 'string', description: '项目ID' },
-      { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'rawRequirement', type: 'string', required: true, description: '原始需求' },
-      { name: 'projectContext', type: 'string', description: '项目背景' },
-      { name: 'previousQuestions', type: 'array', description: '之前的追问问答' },
+      { name: "projectId", type: "string", description: "项目ID" },
+      { name: "context", type: "string", description: "上下文信息" },
+      {
+        name: "rawRequirement",
+        type: "string",
+        required: true,
+        description: "原始需求",
+      },
+      { name: "projectContext", type: "string", description: "项目背景" },
+      {
+        name: "previousQuestions",
+        type: "array",
+        description: "之前的追问问答",
+      },
     ],
   },
   {
-    code: 'MODULE_DECOMPOSITION',
-    name: '模块分解',
-    category: 'requirement-generation',
-    description: '基于需求和已有模块生成功能模块建议（树形结构）',
+    code: "MODULE_DECOMPOSITION",
+    name: "模块分解",
+    category: "requirement-generation",
+    description: "基于需求和已有模块生成功能模块建议（树形结构）",
     systemPrompt: `你是一个专业的系统架构师。请根据项目需求和已有功能模块，生成新的功能模块建议。
 
 要求：
@@ -153,18 +167,32 @@ JSON格式：
     maxTokens: 3000,
     isActive: true,
     parameters: [
-      { name: 'projectId', type: 'string', description: '项目ID' },
-      { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'requirements', type: 'string', required: true, description: '需求列表' },
-      { name: 'existingModulesTree', type: 'string', description: '已有功能模块树' },
-      { name: 'count', type: 'number', defaultValue: '3', description: '生成模块数量' },
+      { name: "projectId", type: "string", description: "项目ID" },
+      { name: "context", type: "string", description: "上下文信息" },
+      {
+        name: "requirements",
+        type: "string",
+        required: true,
+        description: "需求列表",
+      },
+      {
+        name: "existingModulesTree",
+        type: "string",
+        description: "已有功能模块树",
+      },
+      {
+        name: "count",
+        type: "number",
+        defaultValue: "3",
+        description: "生成模块数量",
+      },
     ],
   },
   {
-    code: 'FEATURE_POINT_DECOMPOSITION',
-    name: '功能点分解',
-    category: 'requirement-generation',
-    description: '将需求拆解为多个功能点（支持树状结构）',
+    code: "FEATURE_POINT_DECOMPOSITION",
+    name: "功能点分解",
+    category: "requirement-generation",
+    description: "将需求拆解为多个功能点（支持树状结构）",
     systemPrompt: `你是一个专业的需求分析师。请将以下需求拆解为多个功能点。
 
 要求：
@@ -209,18 +237,28 @@ JSON格式：
     maxTokens: 3000,
     isActive: true,
     parameters: [
-      { name: 'projectId', type: 'string', description: '项目ID' },
-      { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'requirementTitle', type: 'string', required: true, description: '需求标题' },
-      { name: 'requirementDescription', type: 'string', required: true, description: '需求描述' },
-      { name: 'existingPoints', type: 'string', description: '已有功能点' },
+      { name: "projectId", type: "string", description: "项目ID" },
+      { name: "context", type: "string", description: "上下文信息" },
+      {
+        name: "requirementTitle",
+        type: "string",
+        required: true,
+        description: "需求标题",
+      },
+      {
+        name: "requirementDescription",
+        type: "string",
+        required: true,
+        description: "需求描述",
+      },
+      { name: "existingPoints", type: "string", description: "已有功能点" },
     ],
   },
   {
-    code: 'PRD_GENERATION',
-    name: 'PRD 文档生成',
-    category: 'requirement-generation',
-    description: '根据对话内容生成结构化的产品需求文档',
+    code: "PRD_GENERATION",
+    name: "PRD 文档生成",
+    category: "requirement-generation",
+    description: "根据对话内容生成结构化的产品需求文档",
     systemPrompt: `你是一个专业的 PRD 文档生成助手。根据对话内容，生成结构化的产品需求文档。
 
 文档格式要求：
@@ -237,14 +275,19 @@ JSON格式：
     maxTokens: 8000,
     isActive: true,
     parameters: [
-      { name: 'conversationText', type: 'string', required: true, description: '对话内容' },
+      {
+        name: "conversationText",
+        type: "string",
+        required: true,
+        description: "对话内容",
+      },
     ],
   },
   {
-    code: 'REQUIREMENT_COLLECTION_CHAT',
-    name: '需求收集对话',
-    category: 'requirement-generation',
-    description: 'AI 需求采集助手对话提示词，通过对话帮助用户完善需求细节',
+    code: "REQUIREMENT_COLLECTION_CHAT",
+    name: "需求收集对话",
+    category: "requirement-generation",
+    description: "AI 需求采集助手对话提示词，通过对话帮助用户完善需求细节",
     systemPrompt: `你是一个友好的AI助手。请用简洁的语言回答用户的问题。`,
     userPromptTemplate: `用户说：{{message}}
 
@@ -253,7 +296,12 @@ JSON格式：
     maxTokens: 4000,
     isActive: true,
     parameters: [
-      { name: 'message', type: 'string', required: true, description: '用户消息' },
+      {
+        name: "message",
+        type: "string",
+        required: true,
+        description: "用户消息",
+      },
     ],
   },
 ];

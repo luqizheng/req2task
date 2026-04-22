@@ -19,6 +19,11 @@ import { ProjectProgressService } from './project-progress.service';
   ],
   controllers: [ProjectsController],
   providers: [ProjectsService, BaselineService, ProjectProgressService],
-  exports: [ProjectsService, BaselineService, ProjectProgressService],
+  exports: [
+    ProjectsService,
+    BaselineService,
+    ProjectProgressService,
+    TypeOrmModule,
+  ],
 })
 export class ProjectsModule {}

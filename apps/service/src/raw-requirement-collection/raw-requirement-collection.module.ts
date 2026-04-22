@@ -4,33 +4,29 @@ import { HttpModule } from "@nestjs/axios";
 import { RawRequirementCollection, RawRequirement } from "@req2task/core";
 import { RawRequirementCollectionService } from "./raw-requirement-collection.service";
 import { RawRequirementCollectionController } from "./raw-requirement-collection.controller";
-import { RequirementGenerationService } from "../ai/requirement-generation.service";
-import { LLMService, PromptService, ChromaVectorStore, FileParserService } from "@req2task/core";
-import { AIChatClientService } from "../ai/ai-chat-client.service";
-import { AIChatService } from "../ai/ai-chat.service";
+
+import { ChromaVectorStore, FileParserService } from "@req2task/core";
+
+import { PromptsService } from "../ai/PromptsService";
 import { RawRequirementModule } from "../raw-requirement/raw-requirement.module";
+import { ProjectsService } from "../projects/projects.service";
+import { ProjectsModule } from "src/projects/projects.module";
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([RawRequirementCollection, RawRequirement]),
     HttpModule,
     RawRequirementModule,
+    ProjectsModule,
   ],
   controllers: [RawRequirementCollectionController],
   providers: [
     RawRequirementCollectionService,
-    RequirementGenerationService,
-    LLMService,
-    PromptService,
     ChromaVectorStore,
     FileParserService,
-    AIChatClientService,
-    AIChatService,
+    PromptsService,
+    ProjectsService,
   ],
-  exports: [
-    RawRequirementCollectionService,
-    AIChatClientService,
-    AIChatService,
-  ],
+  exports: [RawRequirementCollectionService, PromptsService],
 })
 export class RawRequirementCollectionModule {}

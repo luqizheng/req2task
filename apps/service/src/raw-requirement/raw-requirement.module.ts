@@ -5,7 +5,7 @@ import { RawRequirement, FileData, ProjectAttachment } from "@req2task/core";
 import { RawRequirementService } from "./raw-requirement.service";
 import { RawRequirementController } from "./raw-requirement.controller";
 import { RequirementCollectService } from "./requirement-collect.service";
-import { AIChatClientService } from "../ai/ai-chat-client.service";
+import { AiService } from "../ai/ai.service";
 import { FileConversionClientService } from "../common/services/file-conversion-client.service";
 import { StorageService } from "../common/services/storage.service";
 import { ProjectAttachmentService } from "../project-attachment/project-attachment.service";
@@ -16,7 +16,7 @@ import { ProjectAttachmentService } from "../project-attachment/project-attachme
   providers: [
     RawRequirementService,
     RequirementCollectService,
-    AIChatClientService,
+    AiService,
     FileConversionClientService,
     StorageService,
     ProjectAttachmentService,

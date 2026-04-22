@@ -1,7 +1,7 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Response } from 'express';
 import { RawRequirementService } from './raw-requirement.service';
-import { AIChatClientService } from '../ai/ai-chat-client.service';
+import { AiService } from '../ai/ai.service';
 import { FileConversionClientService } from '../common/services/file-conversion-client.service';
 import { ProjectAttachmentService } from '../project-attachment/project-attachment.service';
 import { CollectRequirementDto } from '@req2task/dto';
@@ -20,9 +20,10 @@ export class RequirementCollectService {
 
   constructor(
     private readonly rawRequirementService: RawRequirementService,
-    private readonly aiChatClient: AIChatClientService,
+    private readonly aiChatClient: AiService,
     private readonly fileConversionClient: FileConversionClientService,
     private readonly projectAttachmentService: ProjectAttachmentService,
+    
   ) {}
 
   async collect(

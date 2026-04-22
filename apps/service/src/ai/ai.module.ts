@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule } from '@req2task/core';
+import { HttpModule } from '@nestjs/axios';
+import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, ChromaVectorStore } from '@req2task/core';
 import { PromptModule } from '@req2task/core';
 import { AiService } from './ai.service';
 import { LLmClientService } from './llm-client.service';
@@ -11,16 +12,19 @@ import { ConversationClient } from './conversation.client';
 @Module({
   imports: [
     TypeOrmModule.forFeature([Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule]),
+    HttpModule,
     PromptModule,
   ],
   controllers: [AiGenerationController],
   providers: [
+    ChromaVectorStore,
     AiService,
     LLmClientService,
     AiGenerationService,
     ConversationClient,
   ],
   exports: [
+    ChromaVectorStore,
     AiService,
     LLmClientService,
     AiGenerationService,

@@ -76,6 +76,7 @@ apps/
 ## SSE 通信规范
 
 所有涉及 SSE (Server-Sent Events) 通信的子包必须遵循 [SSE 通信协议](docs/reference/sse-protocol.md)：
+
 - Web 前端：负责 SSE 事件解析和 UI 更新
 - Service 后端：负责需求分析场景的 SSE 流处理
 - AI Chat Service：负责对话场景的 SSE 流处理
@@ -103,19 +104,19 @@ apps/
 
 ```typescript
 // tsup.config.ts
-import { defineConfig } from 'tsup'
-import { baseTsupConfig } from '@req2task/dev-config/tsup'
+import { defineConfig } from "tsup";
+import { baseTsupConfig } from "@req2task/dev-config/tsup";
 
 export default defineConfig([
   {
     ...baseTsupConfig[0],
-    entry: ['src/index.ts'],
+    entry: ["src/index.ts"],
   },
   {
     ...baseTsupConfig[1],
-    entry: ['src/index.ts'],
+    entry: ["src/index.ts"],
   },
-])
+]);
 ```
 
 ### 构建命令
@@ -146,22 +147,23 @@ export default defineConfig([
      ```
 3. 新增代码必须有对应测试
 4. 使用结构化日志，禁止 console.log
+5. 项目不需要考虑数据迁移、api接口兼容问题。请激进重构。只讲合不合理。
 
 **强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则。
 
 ## 文档导航
 
-| 你想做什么 | 去哪里看 |
-|-----------|---------|
-| 了解系统架构 | [docs/architecture/overview.md](docs/architecture/overview.md) |
-| 了解模块边界和依赖规则 | [docs/design/module-design.md](docs/design/module-design.md) |
-| 了解数据库设计 | [docs/design/database-design.md](docs/design/database-design.md) |
-| 了解 API 规范 | [docs/reference/api-spec.md](docs/reference/api-spec.md) |
-| 了解实施计划 | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
-| 了解编码规范 | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) |
-| Bug修复流程 | [.agents/rules/bug-fix-rules.md](.agents/rules/bug-fix-rules.md) |
-| 了解完整文档索引 | [docs/README.md](docs/README.md) |
-| 查看用户手册 | [docs/manuals/index.md](docs/manuals/index.md) |
+| 你想做什么             | 去哪里看                                                                 |
+| ---------------------- | ------------------------------------------------------------------------ |
+| 了解系统架构           | [docs/architecture/overview.md](docs/architecture/overview.md)           |
+| 了解模块边界和依赖规则 | [docs/design/module-design.md](docs/design/module-design.md)             |
+| 了解数据库设计         | [docs/design/database-design.md](docs/design/database-design.md)         |
+| 了解 API 规范          | [docs/reference/api-spec.md](docs/reference/api-spec.md)                 |
+| 了解实施计划           | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
+| 了解编码规范           | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md)                 |
+| Bug修复流程            | [.agents/rules/bug-fix-rules.md](.agents/rules/bug-fix-rules.md)         |
+| 了解完整文档索引       | [docs/README.md](docs/README.md)                                         |
+| 查看用户手册           | [docs/manuals/index.md](docs/manuals/index.md)                           |
 
 ### 文档层级
 

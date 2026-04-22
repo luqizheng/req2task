@@ -248,6 +248,9 @@ export class NacosService implements OnModuleInit, OnModuleDestroy {
       'file-conversion': [
         { instanceId: 'fallback-file-1', ip: 'localhost', port: 4002, serviceName: 'file-conversion', healthStatus: 'healthy', weight: 1, enabled: true, ephemeral: false, clusterName: 'DEFAULT', metadata: {}, lastHeartbeat: Date.now() },
       ],
+      'rustfs': [
+        { instanceId: 'fallback-rustfs-1', ip: 'rustfs', port: 9000, serviceName: 'rustfs', healthStatus: 'healthy', weight: 1, enabled: true, ephemeral: false, clusterName: 'DEFAULT', metadata: {}, lastHeartbeat: Date.now() },
+      ],
     };
 
     return fallbackConfigs[serviceName] || [];
@@ -373,6 +376,9 @@ export class NacosService implements OnModuleInit, OnModuleDestroy {
           { id: 'conversations', path: '/api/conversations/*', serviceName: 'ai-chat-service', targetPort: 4001, priority: 10 },
           { id: 'chat', path: '/api/chat/*', serviceName: 'ai-chat-service', targetPort: 4001, priority: 10 },
           { id: 'convert', path: '/api/convert/*', serviceName: 'file-conversion', targetPort: 4002, priority: 10 },
+          { id: 'rustfs-upload', path: '/api/storage/upload/*', serviceName: 'rustfs', targetPort: 9000, priority: 10 },
+          { id: 'rustfs-download', path: '/api/storage/download/*', serviceName: 'rustfs', targetPort: 9000, priority: 10 },
+          { id: 'rustfs-presigned', path: '/api/storage/presigned/*', serviceName: 'rustfs', targetPort: 9000, priority: 10 },
         ],
       }),
       'gateway-loadbalancer': JSON.stringify({
@@ -381,6 +387,7 @@ export class NacosService implements OnModuleInit, OnModuleDestroy {
           'service': 'weightedRoundRobin',
           'ai-chat-service': 'weightedRandom',
           'file-conversion': 'roundRobin',
+          'rustfs': 'roundRobin',
         },
       }),
       'gateway-circuitbreaker': JSON.stringify({

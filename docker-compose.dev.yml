@@ -66,8 +66,9 @@ services:
 
   # RustFS 对象存储服务 (S3兼容，高性能)
   rustfs:
+    hostname: rustfs
     image: rustfs/rustfs:latest
-    container_name: ai-sowf-rustfs
+    container_name: req2task-rustfs
     ports:
       - "${MINIO_PORT:-9000}:9000"
       - "${MINIO_CONSOLE_PORT:-9001}:9001"

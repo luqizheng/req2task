@@ -14,16 +14,16 @@ import {
   type MessageEvent,
   type DoneEvent,
   type ErrorEvent,
-} from "@/composables/useAiSubmit";
+} from "./composables/useAiSubmit";
+import { AiSubmitRequestDto } from "@req2task/dto";
 
 interface Props {
   url: string;
   uploadFile?: boolean;
   audit?: boolean;
-  extraData?: Record<string, string | number | boolean | undefined>;
-  messageKey?: string;
   placeholder?: string;
   useStream?: boolean;
+  transRequest?: (data: AiSubmitRequestDto) => unknown;
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -64,10 +64,9 @@ const {
   url: props.url,
   uploadFile: props.uploadFile,
   audit: props.audit,
-  extraData: props.extraData,
-  messageKey: props.messageKey,
   onSuccess: (data) => emit("success", data),
   onError: (error) => emit("error", error),
+  transRequest: (data: AiSubmitRequestDto) => props.transRequest?.(data),
 });
 
 const audioInputRef = ref<HTMLInputElement | null>(null);
@@ -123,46 +122,28 @@ const handleSubmit = () => {
 <template>
   <div class="ai-submit">
     <div class="input-section">
-      <el-input
-        v-model="message"
-        type="textarea"
-        :rows="3"
-        :placeholder="placeholder"
-        resize="none"
-        :disabled="isSubmitting"
-      />
+      <el-input v-model="message" type="textarea" :rows="3" :placeholder="placeholder" resize="none"
+        :disabled="isSubmitting" />
     </div>
 
     <div class="toolbar">
       <div class="toolbar-left">
-        <el-button
-          :type="isRecording ? 'danger' : 'default'"
-          :icon="isRecording ? Close : Microphone"
-          size="small"
-          :disabled="isSubmitting || !!audioFile"
-          @click="handleRecordClick"
-        >
+        <el-button :type="isRecording ? 'danger' : 'default'" :icon="isRecording ? Close : Microphone" size="small"
+          :disabled="isSubmitting || !!audioFile" @click="handleRecordClick">
           {{ isRecording ? "停止" : "录音" }}
         </el-button>
 
-        <el-button
-          text
-          size="small"
-          :disabled="isSubmitting || !!audioFile || isRecording"
-          @click="triggerAudioSelect"
-        >
-          <el-icon class="tool-icon"><Upload /></el-icon>
+        <el-button text size="small" :disabled="isSubmitting || !!audioFile || isRecording" @click="triggerAudioSelect">
+          <el-icon class="tool-icon">
+            <Upload />
+          </el-icon>
           上传音频
         </el-button>
 
-        <el-button
-          v-if="uploadFile"
-          text
-          size="small"
-          :disabled="isSubmitting"
-          @click="triggerAttachmentSelect"
-        >
-          <el-icon class="tool-icon"><Paperclip /></el-icon>
+        <el-button v-if="uploadFile" text size="small" :disabled="isSubmitting" @click="triggerAttachmentSelect">
+          <el-icon class="tool-icon">
+            <Paperclip />
+          </el-icon>
           上传附件
         </el-button>
       </div>
@@ -171,7 +152,9 @@ const handleSubmit = () => {
     <div v-if="audioFile" class="audio-preview">
       <div class="file-item">
         <div class="file-icon">
-          <el-icon :size="20"><Microphone /></el-icon>
+          <el-icon :size="20">
+            <Microphone />
+          </el-icon>
         </div>
         <div class="file-info">
           <div class="file-name">{{ audioFile.name }}</div>
@@ -180,18 +163,18 @@ const handleSubmit = () => {
             <span class="file-type">音频</span>
           </div>
         </div>
-        <el-icon class="remove-icon" @click="clearAudio"><Close /></el-icon>
+        <el-icon class="remove-icon" @click="clearAudio">
+          <Close />
+        </el-icon>
       </div>
     </div>
 
     <div v-if="uploadedFiles.length > 0" class="attachment-list">
-      <div
-        v-for="file in uploadedFiles"
-        :key="file.id"
-        :class="['file-item', file.status]"
-      >
+      <div v-for="file in uploadedFiles" :key="file.id" :class="['file-item', file.status]">
         <div class="file-icon">
-          <el-icon :size="20"><Paperclip /></el-icon>
+          <el-icon :size="20">
+            <Paperclip />
+          </el-icon>
         </div>
         <div class="file-info">
           <div class="file-name">{{ file.name }}</div>
@@ -199,21 +182,15 @@ const handleSubmit = () => {
             <span class="file-size">{{ formatSize(file.size) }}</span>
             <span class="file-type">附件</span>
           </div>
-          <el-progress
-            v-if="file.status === 'uploading'"
-            :percentage="file.progress"
-            :show-text="false"
-            :stroke-width="2"
-          />
+          <el-progress v-if="file.status === 'uploading'" :percentage="file.progress" :show-text="false"
+            :stroke-width="2" />
         </div>
-        <el-icon
-          v-if="file.status !== 'uploading'"
-          class="remove-icon"
-          @click="removeUploadedFile(file.id)"
-        >
+        <el-icon v-if="file.status !== 'uploading'" class="remove-icon" @click="removeUploadedFile(file.id)">
           <Close />
         </el-icon>
-        <el-icon v-else class="loading-icon"><Upload /></el-icon>
+        <el-icon v-else class="loading-icon">
+          <Upload />
+        </el-icon>
       </div>
     </div>
 
@@ -221,32 +198,14 @@ const handleSubmit = () => {
       <el-button size="default" @click="handleCancel" :disabled="isSubmitting">
         取消
       </el-button>
-      <el-button
-        type="primary"
-        :icon="Promotion"
-        :disabled="!canSubmit"
-        :loading="isSubmitting"
-        @click="handleSubmit"
-      >
+      <el-button type="primary" :icon="Promotion" :disabled="!canSubmit" :loading="isSubmitting" @click="handleSubmit">
         提交
       </el-button>
     </div>
 
-    <input
-      ref="audioInputRef"
-      type="file"
-      accept="audio/*"
-      class="hidden-input"
-      @change="handleAudioFileSelect"
-    />
-    <input
-      ref="attachmentInputRef"
-      type="file"
-      multiple
-      accept=".pdf,.docx,.doc,.xlsx,.xls,.txt"
-      class="hidden-input"
-      @change="handleAttachmentSelect"
-    />
+    <input ref="audioInputRef" type="file" accept="audio/*" class="hidden-input" @change="handleAudioFileSelect" />
+    <input ref="attachmentInputRef" type="file" multiple accept=".pdf,.docx,.doc,.xlsx,.xls,.txt" class="hidden-input"
+      @change="handleAttachmentSelect" />
   </div>
 </template>
 
@@ -421,6 +380,7 @@ const handleSubmit = () => {
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }

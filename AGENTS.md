@@ -17,6 +17,7 @@ req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端、N
 - **后端**: NestJS + TypeORM + PostgreSQL
 - **语言**: TypeScript
 - **包编译**: tsup（用于 packages/ 下的共享包）
+- **对象存储**: RustFS API 兼容 MinIO（S3 协议）
 
 ## 全局命令
 

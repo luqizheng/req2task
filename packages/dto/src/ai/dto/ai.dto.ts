@@ -8,9 +8,18 @@ import {
   ValidateNested,
   Min,
   Max,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-import { LLMProviderType } from '../../enums';
+} from "class-validator";
+import { Type } from "class-transformer";
+import { LLMProviderType } from "../../enums";
+
+/**
+ * aiSubmit 的基础组件请求参数
+ */
+export type AiSubmitRequestDto = {
+  auditRustFSId: string[];
+  attachmentsRustFSId: string[];
+  message: string;
+};
 
 export class CreateLLMConfigDto {
   @IsString()

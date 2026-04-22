@@ -1,18 +1,19 @@
-import { ref, computed } from 'vue';
-import { ElMessage } from 'element-plus';
-import { attachmentApi } from '@/api/attachment';
+import { ref, computed } from "vue";
+import { ElMessage } from "element-plus";
+import { attachmentApi } from "@/api/attachment";
+import { AiSubmitRequestDto } from "@req2task/dto";
 
 export interface UploadedFile {
   id: string;
   name: string;
   size: number;
   type: string;
-  status: 'uploading' | 'success' | 'error';
+  status: "uploading" | "success" | "error";
   progress: number;
 }
 
 export interface AnalyzeStartEvent {
-  type: 'analyze_start';
+  type: "analyze_start";
   collectionId: string;
   prompts?: { systemPrompt: string; userPrompt: string };
   requirementFiles?: Array<{ type: string; data: string; name?: string }>;
@@ -20,18 +21,18 @@ export interface AnalyzeStartEvent {
 }
 
 export interface ConversationStartEvent {
-  type: 'conversation_start';
+  type: "conversation_start";
   conversationId: string;
   isNewConversation?: boolean;
 }
 
 export interface ContentEvent {
-  type: 'content';
+  type: "content";
   content: string;
 }
 
 export interface MessageEvent {
-  type: 'message';
+  type: "message";
   message: {
     id: string;
     conversationId: string;
@@ -42,26 +43,31 @@ export interface MessageEvent {
 }
 
 export interface DoneEvent {
-  type: 'done';
+  type: "done";
   followUpQuestions?: string[];
   keyElements?: string[];
 }
 
 export interface ErrorEvent {
-  type: 'error';
+  type: "error";
   message: string;
 }
 
-export type SSEEvent = AnalyzeStartEvent | ConversationStartEvent | ContentEvent | MessageEvent | DoneEvent | ErrorEvent;
+export type SSEEvent =
+  | AnalyzeStartEvent
+  | ConversationStartEvent
+  | ContentEvent
+  | MessageEvent
+  | DoneEvent
+  | ErrorEvent;
 
 export interface UseAiSubmitOptions {
   url: string;
   uploadFile?: boolean;
   audit?: boolean;
-  extraData?: Record<string, string | number | boolean | undefined>;
-  messageKey?: string;
   onSuccess?: (data: unknown) => void;
   onError?: (error: Error) => void;
+  transRequest?: (data: AiSubmitRequestDto) => unknown;
 }
 
 export interface StreamCallbacks {
@@ -74,7 +80,7 @@ export interface StreamCallbacks {
 }
 
 export function useAiSubmit(options: UseAiSubmitOptions) {
-  const message = ref('');
+  const message = ref("");
   const audioFile = ref<File | null>(null);
   const uploadedFiles = ref<UploadedFile[]>([]);
   const isSubmitting = ref(false);
@@ -84,7 +90,9 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   let audioChunks: Blob[] = [];
 
   const hasContent = computed(() => {
-    return message.value.trim() || audioFile.value || uploadedFiles.value.length > 0;
+    return (
+      message.value.trim() || audioFile.value || uploadedFiles.value.length > 0
+    );
   });
 
   const canSubmit = computed(() => {
@@ -94,7 +102,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" });
       audioChunks = [];
 
       mediaRecorder.ondataavailable = (event) => {
@@ -104,19 +112,19 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       };
 
       mediaRecorder.onstop = () => {
-        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
         const fileName = `recording_${Date.now()}.webm`;
-        audioFile.value = new File([blob], fileName, { type: 'audio/webm' });
-        stream.getTracks().forEach(track => track.stop());
-        ElMessage.success('录音完成');
+        audioFile.value = new File([blob], fileName, { type: "audio/webm" });
+        stream.getTracks().forEach((track) => track.stop());
+        ElMessage.success("录音完成");
       };
 
       mediaRecorder.start();
       isRecording.value = true;
-      ElMessage.info('开始录音...');
+      ElMessage.info("开始录音...");
     } catch (error) {
-      ElMessage.error('无法访问麦克风，请检查权限设置');
-      console.error('Recording error:', error);
+      ElMessage.error("无法访问麦克风，请检查权限设置");
+      console.error("Recording error:", error);
     }
   };
 
@@ -133,49 +141,54 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     if (file) {
       audioFile.value = file;
     }
-    target.value = '';
+    target.value = "";
   };
 
   const handleAttachmentSelect = (event: Event) => {
     const target = event.target as HTMLInputElement;
     const files = Array.from(target.files || []);
 
-    files.forEach(file => {
+    files.forEach((file) => {
       const uploadedFile: UploadedFile = {
         id: `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         name: file.name,
         size: file.size,
         type: file.type,
-        status: 'uploading',
+        status: "uploading",
         progress: 0,
       };
       uploadedFiles.value = [...uploadedFiles.value, uploadedFile];
       uploadFile(file, uploadedFile.id);
     });
 
-    target.value = '';
+    target.value = "";
   };
 
   const uploadFile = async (file: File, tempId: string) => {
     try {
       const response = await attachmentApi.upload({
         file,
-        targetType: options.audit ? 'raw_requirement' : 'project',
+        targetType: options.audit ? "raw_requirement" : "project",
       });
 
-      const index = uploadedFiles.value.findIndex(f => f.id === tempId);
+      const index = uploadedFiles.value.findIndex((f) => f.id === tempId);
       if (index !== -1) {
         uploadedFiles.value = uploadedFiles.value.map((f, i) =>
           i === index
-            ? { ...f, id: response.id, status: 'success' as const, progress: 100 }
-            : f
+            ? {
+                ...f,
+                id: response.id,
+                status: "success" as const,
+                progress: 100,
+              }
+            : f,
         );
       }
     } catch (error) {
-      const index = uploadedFiles.value.findIndex(f => f.id === tempId);
+      const index = uploadedFiles.value.findIndex((f) => f.id === tempId);
       if (index !== -1) {
         uploadedFiles.value = uploadedFiles.value.map((f, i) =>
-          i === index ? { ...f, status: 'error' as const } : f
+          i === index ? { ...f, status: "error" as const } : f,
         );
       }
       ElMessage.error(`${file.name} 上传失败，请重试`);
@@ -183,7 +196,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   };
 
   const removeUploadedFile = (id: string) => {
-    uploadedFiles.value = uploadedFiles.value.filter(f => f.id !== id);
+    uploadedFiles.value = uploadedFiles.value.filter((f) => f.id !== id);
   };
 
   const clearAudio = () => {
@@ -191,7 +204,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   };
 
   const reset = () => {
-    message.value = '';
+    message.value = "";
     audioFile.value = null;
     uploadedFiles.value = [];
     isRecording.value = false;
@@ -208,22 +221,22 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
 
   const handleSSEEvent = (event: SSEEvent, callbacks: StreamCallbacks) => {
     switch (event.type) {
-      case 'analyze_start':
+      case "analyze_start":
         callbacks.onAnalyzeStart?.(event);
         break;
-      case 'conversation_start':
+      case "conversation_start":
         callbacks.onConversationStart?.(event);
         break;
-      case 'content':
+      case "content":
         callbacks.onContent?.(event.content);
         break;
-      case 'message':
+      case "message":
         callbacks.onMessage?.(event);
         break;
-      case 'done':
+      case "done":
         callbacks.onDone?.(event);
         break;
-      case 'error':
+      case "error":
         callbacks.onError?.(event);
         break;
     }
@@ -235,34 +248,25 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     isSubmitting.value = true;
 
     try {
-      const body: Record<string, unknown> = {};
+      const body: AiSubmitRequestDto = {
+        message: message.value.trim(),
+        auditRustFSId: [],
+        attachmentsRustFSId: uploadedFiles.value
+          .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
+          .map((f) => f.id),
+      };
 
-      if (message.value.trim()) {
-        const key = options.messageKey || 'content';
-        body[key] = message.value.trim();
-      }
-
-      if (options.extraData) {
-        Object.assign(body, options.extraData);
-      }
-
-      const successfulUploads = uploadedFiles.value
-        .filter(f => f.status === 'success' && !f.id.startsWith('temp_'))
-        .map(f => f.id);
-
-      if (successfulUploads.length > 0) {
-        body.attachments = JSON.stringify(successfulUploads);
-      }
-
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(options.url, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify(body),
+        body: !options.transRequest
+          ? JSON.stringify(body)
+          : JSON.stringify(options.transRequest(body)),
       });
 
       if (!response.ok) {
@@ -271,11 +275,11 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
 
       const reader = response.body?.getReader();
       if (!reader) {
-        throw new Error('无法读取响应流');
+        throw new Error("无法读取响应流");
       }
 
       const decoder = new TextDecoder();
-      let buffer = '';
+      let buffer = "";
 
       try {
         while (true) {
@@ -283,15 +287,15 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
           if (done) break;
 
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          
-          buffer = lines.pop() || '';
+          const lines = buffer.split("\n");
+
+          buffer = lines.pop() || "";
 
           for (const line of lines) {
-            if (line.startsWith('data: ')) {
+            if (line.startsWith("data: ")) {
               const data = line.slice(6);
-              if (data === '[DONE]') {
-                callbacks.onDone?.({ type: 'done' });
+              if (data === "[DONE]") {
+                callbacks.onDone?.({ type: "done" });
                 return;
               }
 
@@ -306,9 +310,10 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
         reader.releaseLock();
       }
     } catch (error) {
-      const err = error instanceof Error ? error : new Error('提交失败，请稍后重试');
+      const err =
+        error instanceof Error ? error : new Error("提交失败，请稍后重试");
       ElMessage.error(err.message);
-      callbacks.onError?.({ type: 'error', message: err.message });
+      callbacks.onError?.({ type: "error", message: err.message });
     } finally {
       isSubmitting.value = false;
     }
@@ -323,34 +328,25 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       const formData = new FormData();
 
       if (message.value.trim()) {
-        const key = options.messageKey || 'message';
-        formData.append(key, message.value.trim());
-      }
-
-      if (options.extraData) {
-        Object.entries(options.extraData).forEach(([key, value]) => {
-          if (value !== undefined) {
-            formData.append(key, String(value));
-          }
-        });
+        formData.append("message", message.value.trim());
       }
 
       if (audioFile.value) {
-        formData.append('audio', audioFile.value);
+        formData.append("audio", audioFile.value);
       }
 
       const successfulUploads = uploadedFiles.value
-        .filter(f => f.status === 'success' && !f.id.startsWith('temp_'))
-        .map(f => f.id);
+        .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
+        .map((f) => f.id);
 
       if (successfulUploads.length > 0) {
-        formData.append('attachments', JSON.stringify(successfulUploads));
+        formData.append("attachments", JSON.stringify(successfulUploads));
       }
 
-      const token = localStorage.getItem('accessToken');
+      const token = localStorage.getItem("accessToken");
 
       const response = await fetch(options.url, {
-        method: 'POST',
+        method: "POST",
         headers: token ? { Authorization: `Bearer ${token}` } : {},
         body: formData,
       });
@@ -360,11 +356,12 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       }
 
       const data = await response.json();
-      ElMessage.success('提交成功');
+      ElMessage.success("提交成功");
       options.onSuccess?.(data);
       reset();
     } catch (error) {
-      const err = error instanceof Error ? error : new Error('提交失败，请稍后重试');
+      const err =
+        error instanceof Error ? error : new Error("提交失败，请稍后重试");
       ElMessage.error(err.message);
       options.onError?.(err);
     } finally {

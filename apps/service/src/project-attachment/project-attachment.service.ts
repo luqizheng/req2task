@@ -8,6 +8,7 @@ import {
   AttachmentResponseDto,
   AttachmentQueryDto,
   BatchGetAttachmentsDto,
+  CreateAttachmentByFileDataIdDto,
 } from '@req2task/dto';
 import { StorageService } from '../common/services/storage.service';
 import { Readable } from 'stream';
@@ -59,6 +60,31 @@ export class ProjectAttachmentService {
       targetType: dto.targetType,
       targetId: dto.targetId,
       displayName: dto.displayName || fileName,
+      description: dto.description || null,
+      createdById: userId,
+    });
+    await this.attachmentRepository.save(attachment);
+
+    return this.toResponseDto(attachment, fileData);
+  }
+
+  async createByFileDataId(
+    dto: CreateAttachmentByFileDataIdDto,
+    userId: string,
+  ): Promise<AttachmentResponseDto> {
+    const fileData = await this.fileDataRepository.findOne({
+      where: { storagePath: dto.fileDataId },
+    });
+
+    if (!fileData) {
+      throw new NotFoundException('FileData not found');
+    }
+
+    const attachment = this.attachmentRepository.create({
+      fileDataId: fileData.id,
+      targetType: dto.targetType,
+      targetId: dto.targetId,
+      displayName: dto.displayName || fileData.originalName,
       description: dto.description || null,
       createdById: userId,
     });

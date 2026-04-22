@@ -24,6 +24,7 @@ import {
   UploadAttachmentDto,
   AttachmentQueryDto,
   BatchGetAttachmentsDto,
+  CreateAttachmentByFileDataIdDto,
 } from '@req2task/dto';
 
 @Controller('attachments')
@@ -40,6 +41,14 @@ export class ProjectAttachmentController {
     @Res({ passthrough: true }) res: Response,
   ) {
     return this.attachmentService.upload(dto, file.buffer, file.originalname, file.mimetype, userId);
+  }
+
+  @Post('create')
+  async createByFileDataId(
+    @Body() dto: CreateAttachmentByFileDataIdDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.attachmentService.createByFileDataId(dto, userId);
   }
 
   @Get(':id')

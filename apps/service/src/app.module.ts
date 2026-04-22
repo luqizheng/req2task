@@ -32,6 +32,7 @@ import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
 import { AiModule } from "./ai/ai.module";
+import { RustFSModule } from "./rustfs/rustfs.module";
 import * as os from "os";
 
 const getIP = (): string => {
@@ -105,6 +106,7 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
     ProjectAttachmentModule,
     PromptModule,
     AiModule,
+    RustFSModule,
   ],
   controllers: [AppController],
   providers: [AppService],

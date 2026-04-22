@@ -12,19 +12,30 @@ interface Props {
   trend?: string;
   trendUp?: boolean;
   layout?: LayoutMode;
+  clickable?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   trend: undefined,
   trendUp: true,
   layout: 'horizontal',
+  clickable: false,
 });
+
+const emit = defineEmits<{
+  click: [];
+}>();
 
 const isVertical = computed(() => props.layout === 'vertical');
 </script>
 
 <template>
-  <el-card class="stat-card" shadow="hover">
+  <el-card
+    class="stat-card"
+    :class="{ 'is-clickable': clickable }"
+    shadow="hover"
+    @click="clickable && emit('click')"
+  >
     <div :class="['stat-content', { vertical: isVertical }]">
       <div class="stat-icon" :style="{ backgroundColor: color + '15', color: color }">
         <el-icon :size="24">
@@ -52,6 +63,16 @@ const isVertical = computed(() => props.layout === 'vertical');
 <style scoped>
 .stat-card {
   height: 100%;
+}
+
+.stat-card.is-clickable {
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.stat-card.is-clickable:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .stat-card :deep(.el-card__body) {

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
-import { ArrowLeft, Refresh, Document } from "@element-plus/icons-vue";
+import { ArrowLeft, Refresh, Document, Plus } from "@element-plus/icons-vue";
 import { ElMessage } from "element-plus";
 import {
   rawRequirementsApi,
@@ -124,6 +124,9 @@ onMounted(() => {
         <h1 class="page-title">原始需求列表</h1>
       </div>
       <div class="header-right">
+        <el-button type="primary" :icon="Plus" @click="router.push(`/projects/${projectId}/raw-requirements/create`)">
+          新增
+        </el-button>
         <el-button :icon="Refresh" @click="loadRequirements"> 刷新 </el-button>
       </div>
     </header>

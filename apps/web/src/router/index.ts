@@ -53,6 +53,11 @@ const router = createRouter({
       component: () => import('@/views/RawRequirementListView.vue')
     },
     {
+      path: '/projects/:id/raw-requirements/create',
+      name: 'rawRequirementCreate',
+      component: () => import('@/views/RawRequirmentCreateView.vue')
+    },
+    {
       path: '/projects/:id/modules',
       name: 'projectModules',
       component: () => import('@/views/ProjectModulesView.vue')

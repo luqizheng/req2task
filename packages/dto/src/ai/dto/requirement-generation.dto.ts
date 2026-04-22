@@ -1,6 +1,75 @@
-import { IsString, IsOptional } from 'class-validator';
-import { Priority } from '../../enums';
+import { IsString, IsOptional, IsArray, IsEnum } from 'class-validator';
+import { Priority, CollectionType } from '../../enums';
 import { QuestionAndAnswerDto } from '../../conversation/dto';
+import { RawRequirementQADto } from '../../raw-requirement';
+
+export class GenerateRequirementsDto {
+  @IsString()
+  projectId!: string;
+
+  @IsString()
+  rawRequirement!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+
+  @IsOptional()
+  @IsArray()
+  moduleIds?: string[];
+}
+
+export class GenerateUserStoriesDto {
+  @IsString()
+  featurePoints!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
+export class GenerateTasksDto {
+  @IsString()
+  featurePoints!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
+export class GenerateModulesDto {
+  @IsString()
+  requirements!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+
+  @IsOptional()
+  @IsString()
+  existingModulesTree?: string;
+}
+
+export class GenerateRawRequirementDto {
+  @IsString()
+  conversationText!: string;
+
+  @IsOptional()
+  @IsString()
+  source?: string;
+
+  @IsOptional()
+  @IsEnum(CollectionType)
+  collectionType?: CollectionType;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+
+  @IsOptional()
+  @IsArray()
+  previousQuestions?: RawRequirementQADto[];
+}
 
 export class GenerateRequirementResultDto {
   id!: string;

@@ -6,40 +6,17 @@ import {
   Query, 
   HttpCode, 
   HttpStatus,
-  UseGuards,
   Request,
 } from '@nestjs/common';
 import { AiGenerationService } from './ai-generation.service';
+import { 
+  GenerateRequirementsDto, 
+  GenerateUserStoriesDto, 
+  GenerateTasksDto, 
+  GenerateModulesDto, 
+  GenerateRawRequirementDto,
+} from '@req2task/dto';
 
-interface GenerateRequirementsDto {
-  projectId: string;
-  rawRequirement: string;
-  context?: string;
-  moduleIds?: string[];
-}
-
-interface GenerateUserStoriesDto {
-  featurePoints: string;
-  context?: string;
-}
-
-interface GenerateTasksDto {
-  featurePoints: string;
-  context?: string;
-}
-
-interface GenerateModulesDto {
-  requirements: string;
-  context?: string;
-  existingModulesTree?: string;
-}
-
-interface GenerateRawRequirementDto {
-  conversationText: string;
-  source?: string;
-  collectionType?: string;
-  context?: string;
-}
 
 @Controller('ai/generation')
 export class AiGenerationController {
@@ -59,7 +36,7 @@ export class AiGenerationController {
       dto.conversationText,
       createdById,
       dto.source,
-      dto.collectionType as any,
+      dto.collectionType,
       dto.context,
     );
 
@@ -78,6 +55,8 @@ export class AiGenerationController {
           createdAt: result.rawRequirement.createdAt,
         } : null,
         rawContent: result.rawContent,
+        followUpQuestions: result.followUpQuestions,
+        keyElements: result.keyElements,
       },
     };
   }

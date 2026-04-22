@@ -55,13 +55,11 @@ export class AiGenerationService {
     source?: string,
     collectionType?: string,
     context?: string,
-  ): Promise<{ rawRequirement: RawRequirement; rawContent: string }> {
-    const rendered = this.promptService.render('RAW_REQUIREMENT_GENERATION', {
+  ): Promise<{ rawRequirement: RawRequirement; rawContent: string; followUpQuestions: string[]; keyElements: string[] }> {
+    const rendered = this.promptService.render('RAW_REQUIREMENT_ANALYSIS', {
       projectId,
       context,
-      conversationText,
-      source,
-      collectionType,
+      rawRequirement: conversationText,
     });
 
     const content = await this.llmClient.generate({
@@ -71,9 +69,85 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const rawRequirement = await this.persistRawRequirement(content, projectId, createdById);
+    const { questions, keyElements } = this.extractAnalysisResult(content);
+    const rawRequirement = await this.persistRawRequirementWithAnalysis(
+      content,
+      projectId,
+      createdById,
+      questions,
+      keyElements,
+      source,
+      collectionType,
+    );
 
-    return { rawRequirement, rawContent: content };
+    return { rawRequirement, rawContent: content, followUpQuestions: questions, keyElements };
+  }
+
+  private extractAnalysisResult(content: string): { questions: string[]; keyElements: string[] } {
+    try {
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          questions: parsed.questions?.map((q: any) => q.question) || [],
+          keyElements: parsed.keyElements || [],
+        };
+      }
+      return { questions: [], keyElements: [] };
+    } catch {
+      return { questions: [], keyElements: [] };
+    }
+  }
+
+  private async persistRawRequirementWithAnalysis(
+    content: string,
+    projectId: string,
+    createdById: string,
+    followUpQuestions: string[],
+    keyElements: string[],
+    source?: string,
+    collectionType?: string,
+  ): Promise<RawRequirement | null> {
+    try {
+      const questionAndAnswers = followUpQuestions.map((question, index) => ({
+        id: `qa_${Date.now()}_${index}`,
+        question,
+        answer: null,
+        createdAt: new Date().toISOString(),
+        answeredAt: null,
+      }));
+
+      const queryRunner = this.dataSource.createQueryRunner();
+      await queryRunner.connect();
+      await queryRunner.startTransaction();
+
+      try {
+        const rawRequirement = queryRunner.manager.create(RawRequirement, {
+          projectId,
+          originalContent: content,
+          collectionType: collectionType as CollectionType || null,
+          source: source || null,
+          keyElements,
+          status: RawRequirementStatus.PENDING,
+          questionAndAnswers,
+          createdById,
+        });
+
+        const saved = await queryRunner.manager.save(rawRequirement);
+        await queryRunner.commitTransaction();
+        this.logger.log(`Created raw requirement ${saved.id} with ${followUpQuestions.length} follow-up questions`);
+
+        return saved;
+      } catch (error) {
+        await queryRunner.rollbackTransaction();
+        throw error;
+      } finally {
+        await queryRunner.release();
+      }
+    } catch (error) {
+      this.logger.error({ error }, 'Failed to persist raw requirement');
+      return null;
+    }
   }
 
   async generateRequirements(

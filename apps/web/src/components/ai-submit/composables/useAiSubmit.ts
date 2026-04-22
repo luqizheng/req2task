@@ -2,6 +2,7 @@ import { ref, computed } from "vue";
 import { ElMessage } from "element-plus";
 import { attachmentApi } from "@/api/attachment";
 import { AiSubmitRequestDto } from "@req2task/dto";
+import axios from "@/api/axios";
 
 export interface UploadedFile {
   id: string;
@@ -244,7 +245,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
 
   const submitStream = async (callbacks: StreamCallbacks) => {
     if (!canSubmit.value) return;
-
+    debugger;
     isSubmitting.value = true;
 
     try {
@@ -257,7 +258,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       };
 
       const token = localStorage.getItem("accessToken");
-
+      debugger;
       const response = await fetch(options.url, {
         method: "POST",
         headers: {
@@ -325,37 +326,24 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     isSubmitting.value = true;
 
     try {
-      const formData = new FormData();
+      const formData: AiSubmitRequestDto = {
+        message: message.value.trim(),
+        auditRustFSId: [],
+        attachmentsRustFSId: uploadedFiles.value
+          .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
+          .map((f) => f.id),
+      };
+      debugger;
+      const response = await axios.post(
+        options.url,
+        !options.transRequest ? formData : options.transRequest(formData),
+      );
 
-      if (message.value.trim()) {
-        formData.append("message", message.value.trim());
-      }
-
-      if (audioFile.value) {
-        formData.append("audio", audioFile.value);
-      }
-
-      const successfulUploads = uploadedFiles.value
-        .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
-        .map((f) => f.id);
-
-      if (successfulUploads.length > 0) {
-        formData.append("attachments", JSON.stringify(successfulUploads));
-      }
-
-      const token = localStorage.getItem("accessToken");
-
-      const response = await fetch(options.url, {
-        method: "POST",
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`请求失败: ${response.status}`);
-      }
-
-      const data = await response.json();
+      debugger
+      console.log(response)
+      
+   
+      const data = response;
       ElMessage.success("提交成功");
       options.onSuccess?.(data);
       reset();

@@ -71,7 +71,7 @@ const {
   audit: props.audit,
   onSuccess: (data) => emit("success", data),
   onError: (error) => emit("error", error),
-  transRequest: (data: AiSubmitRequestDto) => props.transRequest?.(data),
+  transRequest: props.transRequest
 });
 
 const { upload: rustfsUpload, uploadingFiles, removeFile, clearFiles } = useRustFS();

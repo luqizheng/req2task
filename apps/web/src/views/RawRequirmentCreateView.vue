@@ -1,13 +1,20 @@
 <script setup lang="ts">
-import { ref } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { ElMessage } from 'element-plus';
-import { View, Delete, RefreshRight, ArrowRight, ChatDotRound } from '@element-plus/icons-vue';
-import { aiApi } from '@/api/ai';
-import type { RawRequirementResponseDto } from '@/api/rawRequirements';
-import { RawRequirementStatus } from '@/api/rawRequirements';
-import { AiSubmit } from '@/components/ai-submit';
-import { RequirementChat } from '@/components/requirement-chat';
+import { ref } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { ElMessage } from "element-plus";
+import {
+  View,
+  Delete,
+  RefreshRight,
+  ArrowRight,
+  ChatDotRound,
+} from "@element-plus/icons-vue";
+import { aiApi } from "@/api/ai";
+import type { RawRequirementResponseDto } from "@/api/rawRequirements";
+import { RawRequirementStatus } from "@/api/rawRequirements";
+import { AiSubmit } from "@/components/ai-submit";
+import { RequirementChat } from "@/components/requirement-chat";
+import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
 
 const router = useRouter();
 const route = useRoute();
@@ -28,8 +35,6 @@ interface GeneratedRequirement {
 
 const generatedRequirements = ref<GeneratedRequirement[]>([]);
 
-
-
 const handleAiSubmitSuccess = async (data: unknown) => {
   const result = data as RawRequirementResponseDto;
   if (result?.id) {
@@ -37,19 +42,19 @@ const handleAiSubmitSuccess = async (data: unknown) => {
       chatRawRequirement.value = result;
     } else {
       requirements.value.unshift(result);
-      ElMessage.success('原始需求已录入');
+      ElMessage.success("原始需求已录入");
     }
   }
 };
 
 const handleAiSubmitError = (error: Error) => {
-  ElMessage.error(error.message || '提交失败');
+  ElMessage.error(error.message || "提交失败");
 };
 
 const handleDelete = (id: string) => {
-  requirements.value = requirements.value.filter(r => r.id !== id);
+  requirements.value = requirements.value.filter((r) => r.id !== id);
   generatedRequirements.value = generatedRequirements.value.filter(
-    g => g.rawRequirementId !== id
+    (g) => g.rawRequirementId !== id,
   );
   if (chatRawRequirement.value?.id === id) {
     chatRawRequirement.value = null;
@@ -64,7 +69,9 @@ const handleCloseChat = () => {
   chatRawRequirement.value = null;
 };
 
-const handleChatComplete = async (_qaItems: Array<{ question: string; answer: string }>) => {
+const handleChatComplete = async (
+  _qaItems: Array<{ question: string; answer: string }>,
+) => {
   if (!chatRawRequirement.value) return;
 
   isGenerating.value = chatRawRequirement.value.id;
@@ -72,17 +79,19 @@ const handleChatComplete = async (_qaItems: Array<{ question: string; answer: st
     const result = await aiApi.generateFromRaw(chatRawRequirement.value.id);
     generatedRequirements.value.push({
       id: result.id || crypto.randomUUID(),
-      title: result.title || '未命名需求',
-      description: result.description || '',
-      priority: result.priority || 'medium',
+      title: result.title || "未命名需求",
+      description: result.description || "",
+      priority: result.priority || "medium",
       rawRequirementId: chatRawRequirement.value.id,
     });
 
-    requirements.value = requirements.value.filter(r => r.id !== chatRawRequirement.value?.id);
+    requirements.value = requirements.value.filter(
+      (r) => r.id !== chatRawRequirement.value?.id,
+    );
     chatRawRequirement.value = null;
-    ElMessage.success('需求生成成功');
+    ElMessage.success("需求生成成功");
   } catch (error) {
-    ElMessage.error((error as Error).message || '生成失败');
+    ElMessage.error((error as Error).message || "生成失败");
   } finally {
     isGenerating.value = null;
   }
@@ -94,14 +103,14 @@ const handleGenerate = async (rawRequirement: RawRequirementResponseDto) => {
     const result = await aiApi.generateFromRaw(rawRequirement.id);
     generatedRequirements.value.push({
       id: result.id || crypto.randomUUID(),
-      title: result.title || '未命名需求',
-      description: result.description || '',
-      priority: result.priority || 'medium',
+      title: result.title || "未命名需求",
+      description: result.description || "",
+      priority: result.priority || "medium",
       rawRequirementId: rawRequirement.id,
     });
-    ElMessage.success('需求生成成功');
+    ElMessage.success("需求生成成功");
   } catch (error) {
-    ElMessage.error((error as Error).message || '生成失败');
+    ElMessage.error((error as Error).message || "生成失败");
   } finally {
     isGenerating.value = null;
   }
@@ -109,55 +118,65 @@ const handleGenerate = async (rawRequirement: RawRequirementResponseDto) => {
 
 const handleViewDetail = (requirement: GeneratedRequirement) => {
   router.push({
-    name: 'requirementDetail',
+    name: "requirementDetail",
     params: { id: requirement.id },
   });
 };
 
 const getPriorityType = (priority: string) => {
   const map: Record<string, string> = {
-    critical: 'danger',
-    high: 'warning',
-    medium: 'primary',
-    low: 'info',
+    critical: "danger",
+    high: "warning",
+    medium: "primary",
+    low: "info",
   };
-  return map[priority.toLowerCase()] || 'info';
+  return map[priority.toLowerCase()] || "info";
 };
 
 const getPriorityLabel = (priority: string) => {
   const map: Record<string, string> = {
-    critical: '紧急',
-    high: '高',
-    medium: '中',
-    low: '低',
+    critical: "紧急",
+    high: "高",
+    medium: "中",
+    low: "低",
   };
   return map[priority.toLowerCase()] || priority;
 };
 
 const getStatusType = (status: RawRequirementStatus) => {
   const map: Record<RawRequirementStatus, string> = {
-    [RawRequirementStatus.PENDING]: 'warning',
-    [RawRequirementStatus.PROCESSING]: 'primary',
-    [RawRequirementStatus.COMPLETED]: 'success',
-    [RawRequirementStatus.CLARIFIED]: 'success',
-    [RawRequirementStatus.CONVERTED]: 'info',
-    [RawRequirementStatus.DISCARDED]: 'info',
-    [RawRequirementStatus.FAILED]: 'danger',
+    [RawRequirementStatus.PENDING]: "warning",
+    [RawRequirementStatus.PROCESSING]: "primary",
+    [RawRequirementStatus.COMPLETED]: "success",
+    [RawRequirementStatus.CLARIFIED]: "success",
+    [RawRequirementStatus.CONVERTED]: "info",
+    [RawRequirementStatus.DISCARDED]: "info",
+    [RawRequirementStatus.FAILED]: "danger",
   };
-  return map[status] || 'info';
+  return map[status] || "info";
 };
 
 const getStatusLabel = (status: RawRequirementStatus) => {
   const map: Record<RawRequirementStatus, string> = {
-    [RawRequirementStatus.PENDING]: '待澄清',
-    [RawRequirementStatus.PROCESSING]: '处理中',
-    [RawRequirementStatus.COMPLETED]: '已完成',
-    [RawRequirementStatus.CLARIFIED]: '已澄清',
-    [RawRequirementStatus.CONVERTED]: '已转换',
-    [RawRequirementStatus.DISCARDED]: '已废弃',
-    [RawRequirementStatus.FAILED]: '失败',
+    [RawRequirementStatus.PENDING]: "待澄清",
+    [RawRequirementStatus.PROCESSING]: "处理中",
+    [RawRequirementStatus.COMPLETED]: "已完成",
+    [RawRequirementStatus.CLARIFIED]: "已澄清",
+    [RawRequirementStatus.CONVERTED]: "已转换",
+    [RawRequirementStatus.DISCARDED]: "已废弃",
+    [RawRequirementStatus.FAILED]: "失败",
   };
   return map[status] || status;
+};
+const translRequestData = (
+  data: AiSubmitRequestDto,
+): GenerateRawRequirementDto => {
+  debugger;
+  return {
+    conversationText: data.message,
+
+    //previousQuestions?: RawRequirementQADto[];
+  } as GenerateRawRequirementDto;
 };
 </script>
 
@@ -177,13 +196,14 @@ const getStatusLabel = (status: RawRequirementStatus) => {
             <span class="card-title">原始需求录入</span>
           </template>
           <AiSubmit
-            :url="`/api/ai/generation/raw-requirements/${projectId}`"
+            :url="`/ai/generation/raw-requirements/${projectId}`"
             :upload-file="true"
             :use-stream="false"
             message-key="conversationText"
             placeholder="描述您的需求或问题，AI 将为您分析和处理..."
             @success="handleAiSubmitSuccess"
             @error="handleAiSubmitError"
+            :trans-request="translRequestData"
           />
         </el-card>
       </el-col>
@@ -193,7 +213,9 @@ const getStatusLabel = (status: RawRequirementStatus) => {
           <template #header>
             <div class="card-header">
               <span class="card-title">已录入的原始需求</span>
-              <span class="requirement-count">{{ requirements.length }} 条</span>
+              <span class="requirement-count"
+                >{{ requirements.length }} 条</span
+              >
             </div>
           </template>
 
@@ -225,7 +247,9 @@ const getStatusLabel = (status: RawRequirementStatus) => {
 
               <div class="requirement-actions">
                 <el-button
-                  v-if="req.questionAndAnswers && req.questionAndAnswers.length > 0"
+                  v-if="
+                    req.questionAndAnswers && req.questionAndAnswers.length > 0
+                  "
                   type="success"
                   :icon="ChatDotRound"
                   size="small"
@@ -251,21 +275,30 @@ const getStatusLabel = (status: RawRequirementStatus) => {
               </div>
 
               <div
-                v-if="generatedRequirements.some(g => g.rawRequirementId === req.id)"
+                v-if="
+                  generatedRequirements.some(
+                    (g) => g.rawRequirementId === req.id,
+                  )
+                "
                 class="generated-section"
               >
                 <div class="section-divider">
                   <span>生成的需求</span>
                 </div>
                 <div
-                  v-for="gen in generatedRequirements.filter(g => g.rawRequirementId === req.id)"
+                  v-for="gen in generatedRequirements.filter(
+                    (g) => g.rawRequirementId === req.id,
+                  )"
                   :key="gen.id"
                   class="generated-item"
                 >
                   <div class="generated-info">
                     <div class="generated-title">
                       <span class="title-text">{{ gen.title }}</span>
-                      <el-tag :type="getPriorityType(gen.priority)" size="small">
+                      <el-tag
+                        :type="getPriorityType(gen.priority)"
+                        size="small"
+                      >
                         {{ getPriorityLabel(gen.priority) }}
                       </el-tag>
                     </div>

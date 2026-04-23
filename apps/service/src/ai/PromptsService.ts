@@ -1,12 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { HttpService } from "@nestjs/axios";
-import { firstValueFrom } from "rxjs";
-import {
-  FileParserService,
-  PromptService,
-  RenderedPrompt,
-} from "@req2task/core";
-import { ConversationClient } from "./conversation.client";
+import { PromptService } from "@req2task/core";
+import type { RenderedPrompt } from "@req2task/core";
 
 export interface ChatContext {
   collectionId?: string;

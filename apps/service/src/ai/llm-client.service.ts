@@ -1,27 +1,32 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { HttpService } from '@nestjs/axios';
 import { Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export interface LLMStreamRequest {
   systemPrompt: string;
   userPrompt: string;
   temperature?: number;
   maxTokens?: number;
+  title?: string;
   conversationId?: string;
 }
 
 export interface LLMStreamChunk {
-  type: 'metadata' | 'content' | 'message' | 'done' | 'error';
+  type: 'conversation_start' | 'content' | 'message' | 'done' | 'error';
   conversationId?: string;
+  isNewConversation?: boolean;
   content?: string;
-  message?: {
+  messageData?: {
     id: string;
     conversationId: string;
     role: string;
     content: string;
     createdAt: string;
   };
-  error?: string;
+  followUpQuestions?: string[];
+  keyElements?: string[];
+  message?: string;
 }
 
 export interface LLMStreamResult {
@@ -37,7 +42,7 @@ export class LLmClientService {
   private readonly baseUrl: string;
 
   constructor(private readonly httpService: HttpService) {
-    this.baseUrl = (process.env['AI_CHAT_SERVICE_URL'] || 'http://localhost:4001');
+    this.baseUrl = process.env['AI_CHAT_SERVICE_URL'] || 'http://localhost:4001';
   }
 
   streamGenerate(request: LLMStreamRequest): Observable<LLMStreamChunk> {
@@ -45,24 +50,22 @@ export class LLmClientService {
       const controller = new AbortController();
 
       this.logger.debug(
-        { 
+        {
           hasSystemPrompt: !!request.systemPrompt,
           userPromptLength: request.userPrompt.length,
           temperature: request.temperature,
           maxTokens: request.maxTokens,
         },
-        'Starting LLM stream request',
+        'Starting LLM SSE stream request',
       );
 
       this.httpService
         .post(
-          `${this.baseUrl}/${request.conversationId}/messages/stream`,
+          `${this.baseUrl}/api/ai/conversations/start`,
           {
+            title: request.title,
             systemPrompt: request.systemPrompt,
-            userPrompt: request.userPrompt,
-            temperature: request.temperature ?? 0.7,
-            maxTokens: request.maxTokens ?? 2000,
-            conversationId: request.conversationId,
+            content: request.userPrompt,
           },
           {
             responseType: 'stream',
@@ -97,17 +100,17 @@ export class LLmClientService {
             });
 
             stream.on('end', () => {
-              this.logger.debug('Stream ended');
+              this.logger.debug('SSE stream ended');
               subscriber.complete();
             });
 
             stream.on('error', (error: Error) => {
-              this.logger.error({ error }, 'Stream error');
+              this.logger.error({ error }, 'SSE stream error');
               subscriber.error(error);
             });
           },
           error: (error: Error) => {
-            this.logger.error({ error }, 'Stream request error');
+            this.logger.error({ error }, 'SSE stream request error');
             subscriber.error(error);
           },
         });
@@ -118,25 +121,55 @@ export class LLmClientService {
     });
   }
 
-  async generate(request: LLMStreamRequest): Promise<string> {
+  async generate(request: LLMStreamRequest): Promise<LLMStreamResult> {
     return new Promise((resolve, reject) => {
       let content = '';
+      let conversationId: string | undefined;
+      const followUpQuestions: string[] = [];
+      const keyElements: string[] = [];
 
       this.streamGenerate(request).subscribe({
         next: (chunk) => {
-          if (chunk.type === 'content' && chunk.content) {
+          if (chunk.type === 'conversation_start') {
+            conversationId = chunk.conversationId;
+          } else if (chunk.type === 'content' && chunk.content) {
             content += chunk.content;
-          } else if (chunk.type === 'message' && chunk.message) {
-            content = chunk.message.content;
+          } else if (chunk.type === 'message' && chunk.messageData) {
+            content = chunk.messageData.content;
+          } else if (chunk.type === 'done') {
+            if (chunk.followUpQuestions) {
+              followUpQuestions.push(...chunk.followUpQuestions);
+            }
+            if (chunk.keyElements) {
+              keyElements.push(...chunk.keyElements);
+            }
+          } else if (chunk.type === 'error') {
+            reject(new Error(chunk.message || 'SSE stream error'));
           }
         },
         error: (error) => {
           reject(error);
         },
         complete: () => {
-          resolve(content);
+          resolve({
+            content,
+            conversationId,
+            followUpQuestions,
+            keyElements,
+          });
         },
       });
     });
+  }
+
+  generateStream(request: LLMStreamRequest): Observable<string> {
+    return this.streamGenerate(request).pipe(
+      map((chunk) => {
+        if (chunk.type === 'content' && chunk.content) {
+          return chunk.content;
+        }
+        return '';
+      }),
+    );
   }
 }

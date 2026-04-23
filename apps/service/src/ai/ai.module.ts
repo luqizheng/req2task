@@ -8,7 +8,6 @@ import { LLmClientService } from './llm-client.service';
 import { AiGenerationService } from './ai-generation.service';
 import { AiGenerationController } from './ai-generation.controller';
 import { AiRawRequirementController } from './ai-raw-requirement.controller';
-import { ConversationClient } from './conversation.client';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 import { ProjectsModule } from '../projects/projects.module';
 
@@ -26,14 +25,12 @@ import { ProjectsModule } from '../projects/projects.module';
     AiService,
     LLmClientService,
     AiGenerationService,
-    ConversationClient,
   ],
   exports: [
     ChromaVectorStore,
     AiService,
     LLmClientService,
     AiGenerationService,
-    ConversationClient,
   ],
 })
 export class AiModule {}

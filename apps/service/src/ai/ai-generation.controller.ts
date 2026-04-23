@@ -4,11 +4,13 @@ import {
   Body,
   Param,
   Query,
+  Res,
   HttpCode,
   HttpStatus,
   Request,
   Logger,
 } from "@nestjs/common";
+import { Response } from "express";
 import { AiGenerationService } from "./ai-generation.service";
 import {
   GenerateRequirementsDto,
@@ -18,6 +20,7 @@ import {
   GenerateRawRequirementDto,
 } from "@req2task/dto";
 import { ProjectsService } from "src/projects/projects.service";
+import { LLmClientService } from "./llm-client.service";
 
 @Controller("ai/generation")
 export class AiGenerationController {
@@ -26,7 +29,57 @@ export class AiGenerationController {
   constructor(
     private readonly aiGenerationService: AiGenerationService,
     private readonly projectsService: ProjectsService,
+    private readonly llmClient: LLmClientService,
   ) {}
+
+  @Post("raw-requirements/:projectId/stream")
+  @HttpCode(HttpStatus.OK)
+  async streamGenerateRawRequirement(
+    @Param("projectId") projectId: string,
+    @Body() dto: GenerateRawRequirementDto,
+    @Request() req: any,
+    @Res() res: Response,
+  ) {
+    const createdById = req.user?.id || "system";
+    const project = await this.projectsService.findById(projectId);
+
+    this.logger.log(
+      `开始流式生成原始需求 | 项目: ${projectId} | 用户: ${createdById}`,
+    );
+
+    res.setHeader("Content-Type", "text/event-stream");
+    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Connection", "keep-alive");
+    res.setHeader("X-Accel-Buffering", "no");
+
+    const stream$ = this.aiGenerationService.streamGenerateRawRequirement(
+      projectId,
+      dto.conversationText,
+      createdById,
+      project.description,
+    );
+
+    stream$.subscribe({
+      next: (chunk) => {
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      },
+      error: (error: Error) => {
+        this.logger.error({ error }, "SSE stream error");
+        res.write(
+          `data: ${JSON.stringify({
+            type: "error",
+            message: error.message,
+          })}\n\n`,
+        );
+        res.end();
+      },
+      complete: () => {
+        this.logger.log(`流式生成完成 | 项目: ${projectId}`);
+        res.write("data: [DONE]\n\n");
+        res.end();
+      },
+    });
+  }
 
   @Post("raw-requirements/:projectId")
   @HttpCode(HttpStatus.CREATED)

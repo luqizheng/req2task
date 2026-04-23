@@ -1,6 +1,7 @@
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository, DataSource } from "typeorm";
+import { Observable } from "rxjs";
 import {
   Requirement,
   UserStory,
@@ -20,7 +21,7 @@ import {
   RawRequirementStatus,
   CollectionType,
 } from "@req2task/dto";
-import { LLmClientService } from "./llm-client.service";
+import { LLmClientService, LLMStreamChunk } from "./llm-client.service";
 import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
 
 export interface GenerationResult {
@@ -85,16 +86,16 @@ export class AiGenerationService {
       rawRequirement: conversationText,
     });
 
-    const content = await this.llmClient.generate({
+    const result = await this.llmClient.generate({
       systemPrompt: rendered.systemPrompt,
       userPrompt: rendered.userPrompt,
       temperature: rendered.temperature,
       maxTokens: rendered.maxTokens,
     });
 
-    const { questions, keyElements } = this.extractAnalysisResult(content);
+    const { questions, keyElements } = this.extractAnalysisResult(result.content);
     const rawRequirement = await this.persistRawRequirementWithAnalysis(
-      content,
+      result.content,
       projectId,
       createdById,
       questions,
@@ -103,10 +104,33 @@ export class AiGenerationService {
 
     return {
       rawRequirement,
-      rawContent: content,
+      rawContent: result.content,
       followUpQuestions: questions,
       keyElements,
     };
+  }
+
+  streamGenerateRawRequirement(
+    projectId: string,
+    conversationText: string,
+    createdById: string,
+    context?: string,
+  ): Observable<LLMStreamChunk> {
+    const title = `RawReq_${projectId}_${Date.now()}`;
+
+    const rendered = this.promptService.render("RAW_REQUIREMENT_ANALYSIS", {
+      projectId,
+      context,
+      rawRequirement: conversationText,
+    });
+
+    return this.llmClient.streamGenerate({
+      title,
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
   }
 
   private extractAnalysisResult(content: string): {
@@ -193,7 +217,7 @@ export class AiGenerationService {
       rawRequirement,
     });
 
-    const content = await this.llmClient.generate({
+    const result = await this.llmClient.generate({
       systemPrompt: rendered.systemPrompt,
       userPrompt: rendered.userPrompt,
       temperature: rendered.temperature,
@@ -201,13 +225,13 @@ export class AiGenerationService {
     });
 
     const requirements = await this.persistRequirements(
-      content,
+      result.content,
       projectId,
       createdById,
       moduleIds,
     );
 
-    return { requirements, rawContent: content };
+    return { requirements, rawContent: result.content };
   }
 
   async generateUserStories(
@@ -233,16 +257,16 @@ export class AiGenerationService {
       featurePoints,
     });
 
-    const content = await this.llmClient.generate({
+    const result = await this.llmClient.generate({
       systemPrompt: rendered.systemPrompt,
       userPrompt: rendered.userPrompt,
       temperature: rendered.temperature,
       maxTokens: rendered.maxTokens,
     });
 
-    const userStories = await this.persistUserStories(content, requirementId);
+    const userStories = await this.persistUserStories(result.content, requirementId);
 
-    return { userStories, rawContent: content };
+    return { userStories, rawContent: result.content };
   }
 
   async generateTasks(
@@ -268,16 +292,16 @@ export class AiGenerationService {
       userStory: requirement.title,
     });
 
-    const content = await this.llmClient.generate({
+    const result = await this.llmClient.generate({
       systemPrompt: rendered.systemPrompt,
       userPrompt: rendered.userPrompt,
       temperature: rendered.temperature,
       maxTokens: rendered.maxTokens,
     });
 
-    const tasks = await this.persistTasks(content, requirementId, createdById);
+    const tasks = await this.persistTasks(result.content, requirementId, createdById);
 
-    return { tasks, rawContent: content };
+    return { tasks, rawContent: result.content };
   }
 
   async generateModules(
@@ -294,16 +318,16 @@ export class AiGenerationService {
       existingModulesTree,
     });
 
-    const content = await this.llmClient.generate({
+    const result = await this.llmClient.generate({
       systemPrompt: rendered.systemPrompt,
       userPrompt: rendered.userPrompt,
       temperature: rendered.temperature,
       maxTokens: rendered.maxTokens,
     });
 
-    const modules = await this.persistModules(content, projectId);
+    const modules = await this.persistModules(result.content, projectId);
 
-    return { modules, rawContent: content };
+    return { modules, rawContent: result.content };
   }
 
   private async persistRequirements(

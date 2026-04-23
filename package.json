@@ -13,7 +13,7 @@
     "dev:service": "npx tsx scripts/dev-service.ts",
     "dev:ai-chat-service": "npx tsx scripts/dev-ai-chat-service.ts",
     "dev:file-conversion": "pnpm -F @req2task/file-conversion dev",
-    "dev:gateway": "pnpm -F @req2task/gateway dev",
+    "dev:gateway": "npx tsx scripts/dev-gateway.ts",
     "dev:infra": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env up -d",
     "dev:infra:stop": "docker-compose -f docker-compose.dev.yml --env-file ./apps/service/.env down",
     "check:env": "npx ts-node scripts/check-env.ts",

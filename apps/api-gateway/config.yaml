@@ -1,0 +1,32 @@
+server:
+  host: "0.0.0.0"
+  port: 8080
+  worker_threads: 4
+
+nacos:
+  server_addr: "localhost:8848"
+  namespace: "public"
+  username: "nacos"
+  password: "nacos"
+  cluster_name: "DEFAULT"
+  group_name: "DEFAULT_GROUP"
+  refresh_interval_secs: 30
+
+routes:
+  - path: "/api/service"
+    protocol: "http"
+    service_name: "service"
+    load_balance: "roundrobin"
+    timeout_secs: 60
+
+  - path: "/ws/ai-chat"
+    protocol: "websocket"
+    service_name: "ai-chat-service"
+    load_balance: "roundrobin"
+    timeout_secs: 300
+
+  - path: "/sse/events"
+    protocol: "sse"
+    service_name: "ai-chat-service"
+    load_balance: "roundrobin"
+    timeout_secs: 3600

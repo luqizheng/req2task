@@ -142,7 +142,7 @@ services:
     restart: unless-stopped
     networks:
       - ai-sowf-dev-network
-  # Gateway 服务
+  # Gateway 服务 (Node.js)
   gateway:
     image: zhcoder-docker-registry.com:8000/coder/req2task-gateway:1.0
     hostname: gateway
@@ -189,6 +189,26 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  # Rust API Gateway 服务
+  rust-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    hostname: rust-gateway
+    ports:
+      - "${RUST_GATEWAY_HTTP_PORT:-8080}:8080"
+      - "${RUST_GATEWAY_WS_PORT:-8081}:8081"
+      - "${RUST_GATEWAY_SSE_PORT:-8082}:8082"
+    volumes:
+      - ./apps/api-gateway/config.yaml:/app/config.yaml:ro
+    environment:
+      - RUST_LOG=info
+    depends_on:
+      r-nacos:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
 
 volumes:
   postgres_dev_data:

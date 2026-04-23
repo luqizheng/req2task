@@ -21,11 +21,11 @@ function run(command: string, cwd?: string): void {
 
 function main(): void {
   const workspaceRoot = path.join(__dirname, '..');
-  const appDir = path.join(workspaceRoot, 'apps', 'gateway');
+  const appDir = path.join(workspaceRoot, 'apps', 'api-gateway');
 
   console.log('🐳 Building Docker image...');
 
-  run(`docker buildx build -t ${REGISTRY}/req2task-gateway:1.0 --platform linux/amd64 --push -f ${appDir}/Dockerfile .`);
+  run(`docker buildx build -t ${REGISTRY}/req2task-gateway:1.0 --platform linux/amd64 --push .`, appDir);
 
   console.log(`✅ Done! Image: ${REGISTRY}/req2task-gateway:1.0`);
 }

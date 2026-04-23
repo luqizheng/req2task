@@ -1,0 +1,17 @@
+{
+  "name": "@req2task/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "cargo run --bin api-gateway -- start --config config.yaml",
+    "build": "cargo build --release",
+    "start": "cargo run --bin api-gateway -- start --config config.yaml",
+    "build:docker": "docker build -t req2task-gateway:latest ."
+  },
+  "keywords": ["api-gateway", "rust", "pingora", "nacos"],
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=10.0.0"
+  }
+}

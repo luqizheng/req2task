@@ -22,7 +22,7 @@ export interface LLMConfigResponse {
 
 export const llmConfigApi = {
   getConfigs: () => {
-    return api.get<LLMConfigResponse[]>('/ai/llm-configs');
+    return api.get<{ configs: LLMConfigResponse[],total: number }>('/ai/llm-configs');
   },
 
   getConfigById: (id: string) => {

@@ -128,7 +128,7 @@ services:
   # Nacos 配置中心服务
   r-nacos:
     image: zhcoder-docker-registry.com:8000/official/qingpan/rnacos:stable
-    container_name: ai-sowf-nacos
+    hostname: nacos
     ports:
       - "${NACOS_PORT:-8848}:8848"
       - "9848:9848"
@@ -145,15 +145,15 @@ services:
   # Gateway 服务
   gateway:
     image: zhcoder-docker-registry.com:8000/coder/req2task-gateway:1.0
-    container_name: gateway
+    hostname: gateway
     ports:
       - "${GATEWAY_PORT:-8080}:8080"
     environment:
       - NODE_ENV=development
       - PORT=8080
-      - NACOS_HOST=r-nacos
+      - NACOS_HOST=nacos
       - NACOS_PORT=8848
-      - NACOS_NAMESPACE=${NACOS_NAMESPACE:-}
+      - NACOS_NAMESPACE=${NACOS_NAMESPACE:-public}
       - NACOS_GROUP=${NACOS_GROUP:-DEFAULT_GROUP}
       - NACOS_TIMEOUT=3000
       - NACOS_CLUSTER=DEFAULT

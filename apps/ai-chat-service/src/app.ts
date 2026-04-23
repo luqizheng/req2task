@@ -91,7 +91,7 @@ export async function createApp(): Promise<Express> {
   app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
   app.use('/api/ai/text', createTextRoutes(llmService));
   app.use('/api/ai', createLlmRoutes(llmService));
-  app.use('/api/llm-configs', createLlMConfigRoutes(llmConfigService));
+  app.use('/api/ai/llm-configs', createLlMConfigRoutes(llmConfigService));
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     logger.error({ error: err }, 'Unhandled error');

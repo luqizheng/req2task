@@ -12,13 +12,17 @@ export default defineConfig({
   server: {
     port: 3000,
     proxy: {
-      '/api/chat': {
-        target: 'http://localhost:4001',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/chat/, '/api/ai/conversations')
-      },
-      '/api': {
-        target: 'http://localhost:4000',
+      // '/api/chat': {
+      //   target: 'http://localhost:4001',
+      //   changeOrigin: true,
+      //   rewrite: (path) => path.replace(/^\/api\/chat/, '/api/ai/conversations')
+      // },
+      // '/api/ai/llm-configs': {
+      //   target: 'http://localhost:4001',
+      //   changeOrigin: true
+      // },
+      '/api': { // gateway api url
+        target: 'http://localhost:8080',
         changeOrigin: true
       }
     }

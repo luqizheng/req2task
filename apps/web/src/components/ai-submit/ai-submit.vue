@@ -49,6 +49,7 @@ const emit = defineEmits<{
   (e: "done", event: DoneEvent): void;
   (e: "streamError", error: ErrorEvent): void;
   (e: "uploadSuccess", attachmentIds: string[]): void;
+  (e: "update:useStream", value: boolean): void;
 }>();
 
 const {
@@ -83,6 +84,12 @@ const sseOutputRef = ref<InstanceType<typeof SseOutput> | null>(null);
 const showSseOutput = ref(false);
 const conversationId = ref<string | undefined>();
 const isNewConversation = ref(false);
+const localUseStream = ref(props.useStream);
+
+const onUseStreamChange = (value: boolean) => {
+  localUseStream.value = value;
+  emit("update:useStream", value);
+};
 
 const formatSize = (bytes: number) => {
   if (bytes === 0) return "0 B";
@@ -145,7 +152,7 @@ const hideOutput = () => {
 };
 
 const handleSubmit = () => {
-  if (props.useStream) {
+  if (localUseStream.value) {
     submitStream();
   } else {
     submit();
@@ -332,11 +339,12 @@ const submitStream = async () => {
 
         <div class="toolbar-right">
           <el-switch
-            v-model="useStream"
+            :model-value="localUseStream"
             active-text="流式"
             inactive-text="普通"
             inline-prompt
             style="--el-switch-on-color: #6366f1"
+            @update:model-value="onUseStreamChange"
           />
         </div>
       </div>
@@ -413,7 +421,7 @@ const submitStream = async () => {
           :loading="isSubmitting"
           @click="handleSubmit"
         >
-          {{ useStream ? "流式提交" : "提交" }}
+          {{ localUseStream ? "流式提交" : "提交" }}
         </el-button>
       </div>
     </div>

@@ -2,6 +2,7 @@
   "name": "@req2task/gateway",
   "version": "0.1.0",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "build": "nest build",
     "start": "nest start",

@@ -8,11 +8,17 @@ export interface RouteRule {
   targetService: string;
   targetPort: number;
   isRegex: boolean;
+  pathRewrite?: PathRewriteRule;
   headers?: Record<string, string>;
   timeout?: number;
   retryAttempts?: number;
   loadBalancer?: 'roundRobin' | 'weightedRandom' | 'weightedRoundRobin';
   metadata?: Record<string, string>;
+}
+
+export interface PathRewriteRule {
+  pattern: string;
+  replacement: string;
 }
 
 export interface RouteMatchResult {

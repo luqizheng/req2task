@@ -79,7 +79,11 @@
       "methods": ["ALL"],
       "targetService": "service",
       "targetPort": 4000,
-      "isRegex": false
+      "isRegex": false,
+      "pathRewrite": {
+        "pattern": "^/api/ai",
+        "replacement": ""
+      }
     },
     {
       "id": "conversations",
@@ -142,9 +146,54 @@
 | `targetService` | string    | 是  | 目标服务标识                                              |
 | `targetPort`    | number    | 是  | 目标服务端口                                              |
 | `isRegex`       | boolean   | 否  | 是否使用正则匹配，默认 false                                   |
+| `pathRewrite`   | object    | 否  | 路径重写规则，用于转发时修改请求路径                               |
 | `timeout`       | number    | 否  | 请求超时时间(ms)，默认 30000                                 |
 | `retryAttempts` | number    | 否  | 重试次数，默认 0                                           |
 | `loadBalancer`  | string    | 否  | 负载均衡策略：roundRobin/weightedRandom/weightedRoundRobin |
+
+### pathRewrite 字段说明
+
+| 字段          | 类型     | 说明                    |
+| ----------- | ------ | --------------------- |
+| `pattern`   | string | 正则匹配模式（JavaScript 正则）  |
+| `replacement` | string | 替换字符串，支持捕获组 `$1` 等 |
+
+#### 使用示例
+
+将 `/api/ai/xxx` 路径重写为 `/xxx`：
+
+```json
+{
+  "pathRewrite": {
+    "pattern": "^/api/ai",
+    "replacement": ""
+  }
+}
+```
+
+将 `/api/v1/users/*` 重写为 `/api/users/*`：
+
+```json
+{
+  "pathRewrite": {
+    "pattern": "^/api/v1",
+    "replacement": "/api"
+  }
+}
+```
+
+使用捕获组重写路径：
+
+```json
+{
+  "pathRewrite": {
+    "pattern": "^/api/([^/]+)/(.+)$",
+    "replacement": "/$2"
+  }
+}
+```
+
+> 注意：`pattern` 为 JavaScript 正则表达式，请确保转义特殊字符。
 
 ## 其他 Nacos 配置
 

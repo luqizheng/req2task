@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { NacosService } from '../nacos/nacos.service';
 import { Logger } from '../common/utils/logger';
 import { ServiceInstance } from '../common/types';
@@ -7,7 +7,7 @@ import { WeightedRoundRobinStrategy } from './weighted-round-robin.strategy';
 import { WeightedRandomStrategy } from './weighted-random.strategy';
 
 @Injectable()
-export class LoadBalancerService implements OnModuleInit {
+export class LoadBalancerService implements OnApplicationBootstrap {
   private readonly logger = new Logger('LoadBalancer');
   private strategies: Map<string, LoadBalancerStrategy> = new Map();
   private serviceStrategyMap: Map<string, string> = new Map();
@@ -19,7 +19,7 @@ export class LoadBalancerService implements OnModuleInit {
     private readonly weightedRandom: WeightedRandomStrategy,
   ) {}
 
-  async onModuleInit() {
+  async onApplicationBootstrap() {
     this.strategies.set('roundRobin', this.roundRobin);
     this.strategies.set('weightedRoundRobin', this.roundRobin);
     this.strategies.set('weightedRandom', this.weightedRandom);
@@ -29,6 +29,7 @@ export class LoadBalancerService implements OnModuleInit {
 
   private async loadStrategyConfig() {
     try {
+      await this.nacosService.waitForReady();
       const configStr = await this.nacosService.getConfig('gateway-loadbalancer');
       if (configStr) {
         const config = JSON.parse(configStr);
@@ -65,7 +66,8 @@ export class LoadBalancerService implements OnModuleInit {
 
     const selected = strategy.select(instances);
     if (selected) {
-      this.logger.debug(`服务 ${serviceName} 选择实例 ${selected.ip}:${selected.port}`);
+      const source = selected.instanceId.startsWith('fallback') ? '(fallback)' : '(nacos)';
+      this.logger.debug(`服务 ${serviceName} 选择实例 ${selected.ip}:${selected.port} ${source}`);
     }
     return selected;
   }

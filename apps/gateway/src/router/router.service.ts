@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NacosService } from '../nacos/nacos.service';
 import { Logger } from '../common/utils/logger';
@@ -6,7 +6,7 @@ import { RouteMatcher } from './route-matcher';
 import { RouteRule, RouteMatchResult } from './router.types';
 
 @Injectable()
-export class RouterService implements OnModuleInit {
+export class RouterService implements OnApplicationBootstrap {
   private readonly logger = new Logger('RouterService');
   private routes: RouteRule[] = [];
   private routeMap: Map<string, RouteRule[]> = new Map();
@@ -17,13 +17,14 @@ export class RouterService implements OnModuleInit {
     private readonly configService: ConfigService,
   ) {}
 
-  async onModuleInit() {
+  async onApplicationBootstrap() {
     await this.loadRoutes();
     await this.subscribeRouteChanges();
   }
 
   private async loadRoutes() {
     try {
+      await this.nacosService.waitForReady();
       const configStr = await this.nacosService.getConfig('gateway-routes');
       if (configStr) {
         const config = JSON.parse(configStr);
@@ -36,23 +37,23 @@ export class RouterService implements OnModuleInit {
         this.loadDefaultRoutes();
       }
     } catch (error) {
-      this.logger.warn(`加载路由配置失败: ${error.message}，使用默认路由`);
+      this.logger.error(`加载路由配置失败: ${error?.message || error}`);
       this.loadDefaultRoutes();
     }
   }
 
   private loadDefaultRoutes() {
     this.routes = [
-      { id: 'auth', name: 'Auth Service', priority: 10, serviceName: 'service', pathPattern: '/api/auth/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'users', name: 'Users Service', priority: 10, serviceName: 'service', pathPattern: '/api/users/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'projects', name: 'Projects Service', priority: 10, serviceName: 'service', pathPattern: '/api/projects/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'requirements', name: 'Requirements Service', priority: 10, serviceName: 'service', pathPattern: '/api/requirements/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'tasks', name: 'Tasks Service', priority: 10, serviceName: 'service', pathPattern: '/api/tasks/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'ai', name: 'AI Service', priority: 10, serviceName: 'service', pathPattern: '/api/ai/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
-      { id: 'conversations', name: 'Conversations Service', priority: 10, serviceName: 'ai-chat-service', pathPattern: '/api/conversations/*', methods: ['ALL'], targetService: 'ai-chat-service', targetPort: 4001, isRegex: false },
-      { id: 'chat', name: 'Chat Service', priority: 10, serviceName: 'ai-chat-service', pathPattern: '/api/chat/*', methods: ['ALL'], targetService: 'ai-chat-service', targetPort: 4001, isRegex: false },
-      { id: 'convert', name: 'File Conversion Service', priority: 10, serviceName: 'file-conversion', pathPattern: '/api/convert/*', methods: ['ALL'], targetService: 'file-conversion', targetPort: 4002, isRegex: false },
-      { id: 'health', name: 'Health Check', priority: 100, serviceName: 'gateway', pathPattern: '/api/health/*', methods: ['ALL'], targetService: 'gateway', targetPort: 3000, isRegex: false },
+      // { id: 'auth', name: 'Auth Service', priority: 10, serviceName: 'service', pathPattern: '/api/auth/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
+      // { id: 'users', name: 'Users Service', priority: 10, serviceName: 'service', pathPattern: '/api/users/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
+      // { id: 'projects', name: 'Projects Service', priority: 10, serviceName: 'service', pathPattern: '/api/projects/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
+      // { id: 'requirements', name: 'Requirements Service', priority: 10, serviceName: 'service', pathPattern: '/api/requirements/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
+      // { id: 'tasks', name: 'Tasks Service', priority: 10, serviceName: 'service', pathPattern: '/api/tasks/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false },
+      // { id: 'ai', name: 'AI Service', priority: 10, serviceName: 'service', pathPattern: '/api/ai/*', methods: ['ALL'], targetService: 'service', targetPort: 4000, isRegex: false, pathRewrite: { pattern: '^/api/ai', replacement: '' } },
+      // { id: 'conversations', name: 'Conversations Service', priority: 10, serviceName: 'ai-chat-service', pathPattern: '/api/conversations/*', methods: ['ALL'], targetService: 'ai-chat-service', targetPort: 4001, isRegex: false },
+      // { id: 'chat', name: 'Chat Service', priority: 10, serviceName: 'ai-chat-service', pathPattern: '/api/chat/*', methods: ['ALL'], targetService: 'ai-chat-service', targetPort: 4001, isRegex: false },
+      // { id: 'convert', name: 'File Conversion Service', priority: 10, serviceName: 'file-conversion', pathPattern: '/api/convert/*', methods: ['ALL'], targetService: 'file-conversion', targetPort: 4002, isRegex: false },
+      // { id: 'health', name: 'Health Check', priority: 100, serviceName: 'gateway', pathPattern: '/api/health/*', methods: ['ALL'], targetService: 'gateway', targetPort: 3000, isRegex: false },
     ];
     this.buildRouteIndex();
     this.logger.log('加载默认路由规则');
@@ -69,6 +70,7 @@ export class RouterService implements OnModuleInit {
       targetService: route.targetService || route.serviceName,
       targetPort: route.targetPort || route.port,
       isRegex: route.isRegex || false,
+      pathRewrite: route.pathRewrite,
       headers: route.headers,
       timeout: route.timeout || 30000,
       retryAttempts: route.retryAttempts || 0,

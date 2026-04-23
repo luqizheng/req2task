@@ -6,6 +6,7 @@ import { RouterService } from '../router/router.service';
 import { LoadBalancerService } from '../loadbalancer/loadbalancer.service';
 import { CircuitBreakerService } from '../circuit-breaker/circuit-breaker.service';
 import { TracingService } from '../tracing/tracing.service';
+import { RouteRule } from '../router/router.types';
 
 @Injectable()
 export class ProxyService {
@@ -53,7 +54,8 @@ export class ProxyService {
       throw new HttpException('No available instances', HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    const targetUrl = `http://${instance.ip}:${instance.port}${path}`;
+    const rewritePath = this.rewritePath(path, route);
+    const targetUrl = `http://${instance.ip}:${instance.port}${rewritePath}`;
     const timeout = route.timeout || this.defaultTimeout;
 
     const requestHeaders = this.buildHeaders(headers, requestId, traceId);
@@ -136,6 +138,21 @@ export class ProxyService {
     return headers;
   }
 
+  private rewritePath(originalPath: string, route: RouteRule): string {
+    if (!route.pathRewrite) {
+      return originalPath;
+    }
+
+    const { pattern, replacement } = route.pathRewrite;
+    const rewrittenPath = originalPath.replace(new RegExp(pattern), replacement);
+    
+    if (rewrittenPath !== originalPath) {
+      this.logger.debug(`路径重写: ${originalPath} -> ${rewrittenPath}`);
+    }
+    
+    return rewrittenPath;
+  }
+
   async streamForward(
     method: string,
     path: string,
@@ -154,7 +171,8 @@ export class ProxyService {
       throw new HttpException('No available instances', HttpStatus.SERVICE_UNAVAILABLE);
     }
 
-    const targetUrl = `http://${instance.ip}:${instance.port}${path}`;
+    const rewritePath = this.rewritePath(path, route);
+    const targetUrl = `http://${instance.ip}:${instance.port}${rewritePath}`;
     return axios({
       method,
       url: targetUrl,

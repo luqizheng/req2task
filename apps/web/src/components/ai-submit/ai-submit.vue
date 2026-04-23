@@ -162,7 +162,6 @@ const handleSubmit = () => {
 
 const submitStream = async () => {
 
-
   if (!canSubmit.value) return;
 
   showSseOutput.value = true;

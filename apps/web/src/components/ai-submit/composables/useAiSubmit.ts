@@ -250,6 +250,7 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   };
 
   const submitStream = async (callbacks: StreamCallbacks) => {
+
     if (!canSubmit.value) return;
 
     isSubmitting.value = true;

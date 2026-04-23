@@ -196,9 +196,9 @@ const translRequestData = (
             <span class="card-title">原始需求录入</span>
           </template>
           <AiSubmit
-            :url="`/ai/generation/raw-requirements/${projectId}`"
+            :url="`/api/raw-requirements/${projectId}/stream`"
             :upload-file="true"
-            :use-stream="false"
+            :use-stream="true"
             message-key="conversationText"
             placeholder="描述您的需求或问题，AI 将为您分析和处理..."
             @success="handleAiSubmitSuccess"

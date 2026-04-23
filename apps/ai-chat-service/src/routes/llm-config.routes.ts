@@ -14,6 +14,7 @@ interface ApiResponse<T> {
   code: number;
   data?: T;
   message?: string;
+  success?: boolean;
 }
 
 async function validateDto<T extends object>(dtoClass: new () => T, body: unknown): Promise<T | null> {
@@ -32,25 +33,25 @@ export function createLlMConfigRoutes(llmConfigService: LlMConfigService): Route
     try {
       const dto = await validateDto(CreateLlmConfigDto, req.body);
       if (!dto) {
-        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
+        return res.status(400).json({ code: 1, message: 'Validation failed',success: false } as ApiResponse<null>);
       }
 
       const config = await llmConfigService.create(dto);
       logger.info({ configId: config.id }, 'LLM config created');
-      return res.status(201).json({ code: 0, data: config } as ApiResponse<CreateLlmConfigDto>);
+      return res.status(201).json({ code: 0, data: config,success: true } as ApiResponse<CreateLlmConfigDto>);
     } catch (error) {
       logger.error({ error }, 'Create LLM config error');
-      return res.status(500).json({ code: 1, message: 'Failed to create LLM config' } as ApiResponse<null>);
+      return res.status(500).json({ code: 1, message: 'Failed to create LLM config',success: false } as ApiResponse<null>);
     }
   });
 
   router.get('/', async (req: Request, res: Response) => {
     try {
       const result = await llmConfigService.findAll();
-      return res.json({ code: 0, data: result } as ApiResponse<LlmConfigListResponseDto>);
+      return res.json({ code: 0, data: result,success: true } as ApiResponse<LlmConfigListResponseDto>);
     } catch (error) {
       logger.error({ error }, 'List LLM configs error');
-      return res.status(500).json({ code: 1, message: 'Failed to list LLM configs' } as ApiResponse<null>);
+      return res.status(500).json({ code: 1, message: 'Failed to list LLM configs',success: false } as ApiResponse<null>);
     }
   });
 
@@ -58,9 +59,9 @@ export function createLlMConfigRoutes(llmConfigService: LlMConfigService): Route
     try {
       const config = await llmConfigService.findOne(req.params['id']!);
       if (!config) {
-        return res.status(404).json({ code: 1, message: 'LLM config not found' } as ApiResponse<null>);
+        return res.status(404).json({ code: 1, message: 'LLM config not found',success: false } as ApiResponse<null>);
       }
-      return res.json({ code: 0, data: config } as ApiResponse<LlmConfigDetailResponseDto>);
+      return res.json({ code: 0, data: config,success: true } as ApiResponse<LlmConfigDetailResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Get LLM config error');
       return res.status(500).json({ code: 1, message: 'Failed to get LLM config' } as ApiResponse<null>);
@@ -71,18 +72,18 @@ export function createLlMConfigRoutes(llmConfigService: LlMConfigService): Route
     try {
       const dto = await validateDto(UpdateLlmConfigDto, req.body);
       if (!dto) {
-        return res.status(400).json({ code: 1, message: 'Validation failed' } as ApiResponse<null>);
+        return res.status(400).json({ code: 1, message: 'Validation failed',success: false } as ApiResponse<null>);
       }
 
       const config = await llmConfigService.update(req.params['id']!, dto);
       if (!config) {
         return res.status(404).json({ code: 1, message: 'LLM config not found' } as ApiResponse<null>);
       }
-      logger.info({ configId: req.params['id'] }, 'LLM config updated');
-      return res.json({ code: 0, data: config } as ApiResponse<LlmConfigDetailResponseDto>);
+      logger.info({ configId: req.params['id']!, success: true }, 'LLM config updated');
+      return res.json({ code: 0, data: config,success: true } as ApiResponse<LlmConfigDetailResponseDto>);
     } catch (error) {
       logger.error({ error }, 'Update LLM config error');
-      return res.status(500).json({ code: 1, message: 'Failed to update LLM config' } as ApiResponse<null>);
+      return res.status(500).json({ code: 1, message: 'Failed to update LLM config',success: false } as ApiResponse<null>); 
     }
   });
 
@@ -90,24 +91,26 @@ export function createLlMConfigRoutes(llmConfigService: LlMConfigService): Route
     try {
       const deleted = await llmConfigService.remove(req.params['id']!);
       if (!deleted) {
-        return res.status(404).json({ code: 1, message: 'LLM config not found' } as ApiResponse<null>);
+        return res.status(404).json({ code: 1, message: 'LLM config not found',success: false } as ApiResponse<null>);
       }
-      logger.info({ configId: req.params['id'] }, 'LLM config deleted');
+      logger.info({ configId: req.params['id']!, success: true }, 'LLM config deleted');
       return res.status(204).send();
     } catch (error) {
       logger.error({ error }, 'Delete LLM config error');
-      return res.status(500).json({ code: 1, message: 'Failed to delete LLM config' } as ApiResponse<null>);
+      return res.status(500).json({ code: 1, message: 'Failed to delete LLM config',success: false } as ApiResponse<null>); 
     }
   });
 
   router.post('/:id/test', async (req: Request, res: Response) => {
     try {
       const result = await llmConfigService.testConnection(req.params['id']!);
-      logger.info({ configId: req.params['id'], success: result.success }, 'LLM config test completed');
+      logger.info({ configId: req.params['id']!, success: result.success }, 'LLM config test completed');
       return res.json({
         code: result.success ? 0 : 1,
         data: result,
         message: result.message,
+        success: result.success,
+        successMessage: result.success ? 'success' : 'failed',
       } as ApiResponse<{ success: boolean; message: string }>);
     } catch (error) {
       logger.error({ error }, 'Test LLM config error');

@@ -152,6 +152,7 @@ const hideOutput = () => {
 };
 
 const handleSubmit = () => {
+  debugger;
   if (localUseStream.value) {
     submitStream();
   } else {
@@ -160,6 +161,8 @@ const handleSubmit = () => {
 };
 
 const submitStream = async () => {
+
+  debugger
   if (!canSubmit.value) return;
 
   showSseOutput.value = true;
@@ -183,6 +186,7 @@ const submitStream = async () => {
   const token = localStorage.getItem("accessToken");
 
   try {
+    debugger
     const response = await fetch(props.url, {
       method: "POST",
       headers: {

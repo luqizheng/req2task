@@ -258,17 +258,24 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       };
 
       const token = localStorage.getItem("accessToken");
- 
+      const requestBody = !options.transRequest
+        ? JSON.stringify(body)
+        : JSON.stringify(options.transRequest(body));
+      console.log("[submitStream] 请求 URL:", options.url);
+      console.log("[submitStream] 请求 Body:", requestBody);
+      console.log("[submitStream] Token:", token ? "存在" : "不存在");
+
       const response = await fetch(options.url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: !options.transRequest
-          ? JSON.stringify(body)
-          : JSON.stringify(options.transRequest(body)),
+        body: requestBody,
       });
+
+      console.log("[submitStream] 响应状态:", response.status);
+      console.log("[submitStream] 响应状态文本:", response.statusText);
 
       if (!response.ok) {
         throw new Error(`请求失败: ${response.status}`);
@@ -283,11 +290,17 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
       let buffer = "";
 
       try {
+        console.log("[submitStream] 开始读取流...");
         while (true) {
           const { done, value } = await reader.read();
-          if (done) break;
+          if (done) {
+            console.log("[submitStream] 流读取完成");
+            break;
+          }
 
+          console.log("[submitStream] 收到数据块:", value);
           buffer += decoder.decode(value, { stream: true });
+          console.log("[submitStream] buffer:", buffer);
           const lines = buffer.split("\n");
 
           buffer = lines.pop() || "";
@@ -295,12 +308,15 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
           for (const line of lines) {
             if (line.startsWith("data: ")) {
               const data = line.slice(6);
+              console.log("[submitStream] 解析到的数据:", data);
               if (data === "[DONE]") {
+                console.log("[submitStream] 收到完成标记");
                 callbacks.onDone?.({ type: "done" });
                 return;
               }
 
               const event = parseSSEEvent(data);
+              console.log("[submitStream] 解析后的事件:", event);
               if (event) {
                 handleSSEEvent(event, callbacks);
               }

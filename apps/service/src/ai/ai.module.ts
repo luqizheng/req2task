@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
 import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement, ChromaVectorStore } from '@req2task/core';
@@ -16,7 +16,7 @@ import { ProjectsModule } from '../projects/projects.module';
     TypeOrmModule.forFeature([Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement]),
     HttpModule,
     PromptModule,
-    RawRequirementModule,
+    forwardRef(() => RawRequirementModule),
     ProjectsModule,
   ],
   controllers: [AiGenerationController, AiRawRequirementController],

@@ -138,8 +138,6 @@ volumes:
     name: ai-sowf-rustfs-dev-logs
   chromadb_data:
     name: ai-sowf-chromadb-data
-  nacos_data:
-    name: ai-sowf-nacos-data
 
 networks:
   ai-sowf-dev-network:

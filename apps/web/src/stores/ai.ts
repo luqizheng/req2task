@@ -14,14 +14,11 @@ export const useAiStore = defineStore('ai', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await llmConfigApi.getConfigs();
-      let data = response;
-      if (data && typeof data === 'object' && 'data' in data) {
-        data = (data as { data: LLMConfigResponse[] }).data;
-      }
-      if (Array.isArray(data)) {
-        configs.value = data;
-        const defaultConfig = data.find(c => c.isDefault);
+      const resp = await llmConfigApi.getConfigs();
+  
+      if (Array.isArray(resp.configs)) {
+        configs.value = resp.configs;
+        const defaultConfig = resp.configs.find(c => c.isDefault);
         if (defaultConfig) {
           currentConfig.value = defaultConfig;
         }

@@ -11,41 +11,23 @@ import {
 import { FeatureModule } from './feature-module.entity';
 import { User } from './user.entity';
 import { UserStory } from './user-story.entity';
-
-export enum RequirementStatus {
-  DRAFT = 'draft',
-  REVIEWED = 'reviewed',
-  APPROVED = 'approved',
-  REJECTED = 'rejected',
-  PROCESSING = 'processing',
-  COMPLETED = 'completed',
-  CANCELLED = 'cancelled',
-}
-
-export enum Priority {
-  CRITICAL = 'critical',
-  HIGH = 'high',
-  MEDIUM = 'medium',
-  LOW = 'low',
-}
-
-export enum RequirementSource {
-  MANUAL = 'manual',
-  AI_GENERATED = 'ai_generated',
-  DOCUMENT_IMPORT = 'document_import',
-}
+import { RawRequirement } from './raw-requirement.entity';
+import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 
 @Entity('requirements')
 export class Requirement {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
-  @Column({ name: 'module_id' })
-  moduleId!: string;
+  @Column({ name: 'module_id', nullable: true })
+  moduleId!: string | null;
 
-  @ManyToOne(() => FeatureModule, { onDelete: 'CASCADE' })
+  @ManyToOne(() => FeatureModule, { onDelete: 'CASCADE', nullable: true })
   @JoinColumn({ name: 'module_id' })
-  module!: FeatureModule;
+  module!: FeatureModule | null;
+
+  @Column({ name: 'module_ids', type: 'simple-array', nullable: true })
+  moduleIds!: string[] | null;
 
   @Column()
   title!: string;
@@ -88,8 +70,21 @@ export class Requirement {
   @OneToMany(() => Requirement, (req) => req.parent)
   children!: Requirement[];
 
+  @Column({ name: 'source_raw_requirement_id', type: 'uuid', nullable: true })
+  sourceRawRequirementId!: string | null;
+
+  @ManyToOne(() => RawRequirement, { nullable: true })
+  @JoinColumn({ name: 'source_raw_requirement_id' })
+  sourceRawRequirement!: RawRequirement | null;
+
   @OneToMany(() => UserStory, (us) => us.requirement)
   userStories!: UserStory[];
+
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId!: string | null;
+
+  @Column({ name: 'review_chain_id', type: 'uuid', nullable: true })
+  reviewChainId!: string | null;
 
   @Column({ name: 'created_by_id' })
   createdById!: string;

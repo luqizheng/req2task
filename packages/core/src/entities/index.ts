@@ -1,7 +1,16 @@
 export * from './user.entity';
 export * from './project.entity';
 export * from './feature-module.entity';
+export * from './raw-requirement.entity';
+export * from './conversation.entity';
+export * from './conversation-message.entity';
 export * from './requirement.entity';
 export * from './requirement-change-log.entity';
 export * from './user-story.entity';
 export * from './acceptance-criteria.entity';
+export * from './task.entity';
+
+export * from './baseline.entity';
+export * from './notification.entity';
+export * from './file-data.entity';
+export * from './project-attachment.entity';

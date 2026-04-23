@@ -1,0 +1,41 @@
+# Tasks
+- [x] Task 1: 修改 types/adapter.ts - 增加远程操作方法
+  - [x] SubTask 1.1: 在 MessageAdapter 接口增加 onDelete 方法
+  - [x] SubTask 1.2: 在 MessageAdapter 接口增加 onSearch 方法
+- [x] Task 2: 修改 types/config.ts - 移除 conversationId 相关
+  - [x] SubTask 2.1: 移除 SendMessageOptions.conversationId
+  - [x] SubTask 2.2: 移除 StreamChunk.conversationId 和 isNewConversation
+  - [x] SubTask 2.3: 移除 AIChatConfig.sessionId
+- [x] Task 3: 修改 composables/useStream.ts - 移除 conversationId 处理
+  - [x] SubTask 3.1: 移除 StreamOptions.conversationId
+  - [x] SubTask 3.2: 移除请求体中的 conversationId
+  - [x] SubTask 3.3: 移除响应中的 metadata conversationId 处理
+- [x] Task 4: 修改 composables/useChat.ts - 移除 conversationId 状态和方法
+  - [x] SubTask 4.1: 移除 conversationId ref 和 currentConversationId
+  - [x] SubTask 4.2: 移除 setConversationId 方法
+  - [x] SubTask 4.3: 移除 updateConfig 中的 sessionId 处理
+  - [x] SubTask 4.4: 移除 onConversationCreated 回调
+  - [x] SubTask 4.5: 移除 sendMessage 中的 conversationId 处理
+  - [x] SubTask 4.6: 集成 adapter 的 onDelete 和 onSearch
+  - [x] SubTask 4.7: 更新返回对象
+- [x] Task 5: 修改 components/AIChat.vue - 移除 conversationId 相关
+  - [x] SubTask 5.1: 移除 emit conversation-created
+  - [x] SubTask 5.2: 移除 conversationId 解构
+  - [x] SubTask 5.3: 移除 defineExpose 中的 conversationId 方法
+- [x] Task 6: 修改 adapters/index.ts - 实现新方法
+  - [x] SubTask 6.1: 实现 defaultAdapter.onDelete
+  - [x] SubTask 6.2: 实现 defaultAdapter.onSearch
+- [x] Task 7: 修改 adapters/index.ts - 移除业务代码
+  - [x] SubTask 7.1: 移除 requirementCollectAdapter 导入
+  - [x] SubTask 7.2: 移除 requirementCollectAdapter 注册
+- [x] Task 8: 修改 index.ts - 移除业务代码
+  - [x] SubTask 8.1: 移除 requirementCollectAdapter 导出
+  - [x] SubTask 8.2: 移除 requirementCollectAdapter 注册
+- [x] Task 9: 修改 types/events.ts - 移除 conversation-created 事件
+  - [x] SubTask 9.1: 移除 'conversation-created' 事件类型
+
+# Task Dependencies
+- Task 2 完成后才可开始 Task 3
+- Task 2 完成后才可开始 Task 4
+- Task 2 完成后才可开始 Task 5
+- Task 1 完成后才可开始 Task 6

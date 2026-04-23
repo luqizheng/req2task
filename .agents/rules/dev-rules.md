@@ -1,4 +1,4 @@
-﻿# 开发规则
+# 开发规则
 
 ## 输出规则
 
@@ -24,6 +24,23 @@
 - 使用 `<script setup lang="ts">` 语法（Vue）
 - 使用 Constructor Injection（NestJS）
 
+## Service 规则
+
+以下服务适用本规则：
+- `apps/service/` - NestJS 后端
+- `apps/ai-chat-service/` - AI 聊天服务
+- `apps/file-conversion/` - 文件转换服务
+
+通用规则：
+
+- Controller 方法必须显式声明返回类型
+- Web 项目调用的 API 类型必须与 Service 保持一致（使用 `packages/dto` 中定义的类型）
+- **Service 层输入和输出参数必须使用 DTO**：
+  - 输入参数：使用 `packages/dto` 中定义的 Request DTO
+  - 输出参数：使用 `packages/dto` 中定义的 Response DTO
+  - 禁止在 Service 方法签名中直接使用实体类型作为输入/输出
+  - 实体仅限 Service 内部逻辑使用，跨层交互必须转换为 DTO
+
 ## DTO 共享规则
 
 Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/dto` 中：
@@ -38,6 +55,47 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
 
 - 在 web 或 service 中单独定义已存在于 dto 包的类型
 - 直接在 controller 中返回数据库实体（应使用 DTO 转换）
+- **在 dto 包中使用框架特定装饰器**（如 `@nestjs/swagger`），dto 包应保持框架无关性
+
+## 枚举/常量共享规则
+
+枚举和常量类型必须定义在 `packages/dto` 中，供前后端共享：
+
+- `packages/dto/src/enums/` - 共享枚举定义
+- 命名：PascalCase（如 `RequirementStatus`, `TaskPriority`）
+- 导出文件：kebab-case + `.enum.ts` 后缀（如 `requirement-status.enum.ts`）
+
+适用场景：
+- 状态类型（Draft/Approved/Rejected 等）
+- 优先级类型（High/Medium/Low 等）
+- 角色类型（Admin/User/Guest 等）
+- 任何前后端需要一致使用的常量
+
+禁止：
+
+- 将枚举放入 `packages/core`（实体文件除外）
+- 在 web 或 service 中重复定义已存在于 dto 的枚举
+- core 向 dto 单向依赖，core 不得反向依赖 dto
+
+当前共享枚举：
+
+| 枚举名 | 路径 | 用途 |
+| ------ | ---- | ---- |
+| RequirementStatus | `dto/src/enums/requirement-status.enum.ts` | 需求状态 |
+| RawRequirementStatus | `dto/src/enums/raw-requirement-status.enum.ts` | 原始需求状态 |
+| Priority | `dto/src/enums/priority.enum.ts` | 优先级 |
+| TaskStatus | `dto/src/enums/task-status.enum.ts` | 任务状态 |
+| TaskPriority | `dto/src/enums/task-priority.enum.ts` | 任务优先级 |
+| ProjectStatus | `dto/src/enums/project-status.enum.ts` | 项目状态 |
+| UserRole | `dto/src/enums/user-role.enum.ts` | 用户角色 |
+| Permission | `dto/src/enums/permission.enum.ts` | 权限 |
+| LLMProviderType | `dto/src/enums/llm-provider-type.enum.ts` | LLM 提供商 |
+| CriteriaType | `dto/src/enums/criteria-type.enum.ts` | 验收标准类型 |
+| RequirementSource | `dto/src/enums/requirement-source.enum.ts` | 需求来源 |
+| ChangeType | `dto/src/enums/change-type.enum.ts` | 变更类型 |
+| ConflictType | `dto/src/enums/conflict-type.enum.ts` | 冲突类型 |
+| ConversationStatus | `dto/src/enums/conversation-status.enum.ts` | 会话状态 |
+| MessageRole | `dto/src/enums/message-role.enum.ts` | 消息角色 |
 
 ## 命名规范
 
@@ -83,3 +141,39 @@ Web 和 Service 之间交互的 Request/Response DTO 必须定义在 `packages/d
   - `users`, `items`, `roles`
 - 临时变量：`tmp`, `temp` 前缀
   - `tmpUser`, `tempFile`
+
+## 视图目录组织规则
+
+视图的私有组件应放在视图目录下，而非平铺在 `components/` 中：
+
+```
+views/
+└── {ViewName}/
+    ├── {ViewName}.vue          # 主视图文件
+    ├── components/             # 视图私有组件（可选）
+    │   ├── ComponentA.vue
+    │   └── ComponentB.vue
+    └── composables/            # 视图私有组合式函数（可选）
+        └── useViewLogic.ts
+```
+
+适用范围：
+- 视图强依赖的组件（仅被该视图使用）
+- 视图专用的组合式函数
+
+适用示例（推荐）：
+```
+views/
+└── ProjectDetailView/
+    ├── ProjectDetailView.vue
+    ├── components/
+    │   ├── ProjectStatsCard.vue
+    │   ├── ProjectInfoCard.vue
+    │   └── ProjectMemberCard.vue
+    └── composables/
+        └── useProjectDetail.ts
+```
+
+不适用示例（应保留在 `components/`）：
+- 被多个视图共享的组件
+- `ui/` 下的通用 UI 组件

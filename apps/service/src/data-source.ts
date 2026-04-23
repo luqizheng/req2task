@@ -1,7 +1,23 @@
 import { DataSource, DataSourceOptions } from "typeorm";
 import * as dotenv from "dotenv";
 
-import { User, Project, FeatureModule } from "@req2task/core";
+import {
+  User,
+  Project,
+  FeatureModule,
+  RawRequirement,
+  Requirement,
+  RequirementChangeLog,
+  UserStory,
+  AcceptanceCriteria,
+  Task,
+  Baseline,
+  Notification,
+  Conversation,
+  ConversationMessage,
+  FileData,
+  ProjectAttachment,
+} from "@req2task/core";
 dotenv.config({ path: ".env" });
 
 const options: DataSourceOptions = {
@@ -11,7 +27,24 @@ const options: DataSourceOptions = {
   username: process.env.DB_USER || "postgres",
   password: process.env.DB_PASSWORD || "postgres",
   database: process.env.DB_NAME || "req2task",
-  entities: [User, Project, FeatureModule],
+  entities: [
+    User,
+    Project,
+    FeatureModule,
+    RawRequirement,
+    Conversation,
+    Requirement,
+    RequirementChangeLog,
+    UserStory,
+    AcceptanceCriteria,
+    Task,
+    Baseline,
+    Notification,
+
+    ConversationMessage,
+    FileData,
+    ProjectAttachment,
+  ],
   migrations: ["./src/migrations/**/*{.js,.ts}"],
   migrationsTableName: "migrations",
   synchronize: false,

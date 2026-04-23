@@ -1,40 +1,38 @@
 {
   "name": "@req2task/dto",
-  "version": "0.0.1",
+  "version": "0.1.0",
+  "private": true,
   "description": "Shared DTOs for req2task web and service",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.mjs",
-  "types": "./dist/esm/index.d.mts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/esm/index.d.mts",
-        "default": "./dist/esm/index.mjs"
-      },
-      "require": {
-        "types": "./dist/cjs/index.d.ts",
-        "default": "./dist/cjs/index.js"
-      }
+      "types": "./dist/index.d.ts",
+      "import": "./dist/esm/index.mjs",
+      "require": "./dist/cjs/index.js"
     }
   },
   "files": [
     "dist"
   ],
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsc --emitDeclarationOnly && api-extractor run --local",
     "dev": "tsup --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
   },
   "keywords": [],
   "license": "MIT",
   "dependencies": {
-    "@req2task/core": "workspace:*",
-    "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.0"
+    "class-transformer": "catalog:",
+    "class-validator": "catalog:"
   },
   "devDependencies": {
-    "@req2task/dev-config": "workspace:*",
-    "tsup": "^8.3.0",
-    "typescript": "^5.7.2"
+    "@microsoft/api-extractor": "^7.58.5",
+    "@req2task/dev-config": "workspace:^",
+    "eslint": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

@@ -1,8 +1,9 @@
-import axios, { AxiosError, AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
 
-const api = axios.create({
-  baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/api`,
-  timeout: 10000,
+const baseUrl = import.meta.env.VITE_API_BASE_URL || '';
+const axiosInstance = axios.create({
+  baseURL: baseUrl ? `${baseUrl}/api` : '/api',
+  timeout: 300000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,7 +19,7 @@ interface ApiResponse<T = unknown> {
   body?: Record<string, unknown>
 }
 
-api.interceptors.request.use(
+axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
     if (token) {
@@ -29,13 +30,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-api.interceptors.response.use(
+axiosInstance.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const apiResponse = response.data;
     if (!apiResponse.success) {
       return Promise.reject(new Error(apiResponse.message));
     }
-    return response;
+    let data = apiResponse.data;
+    while (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+      data = (data as { code: number; data: unknown }).data;
+    }
+    return data as never;
   },
   (error: AxiosError<ApiResponse>) => {
     if (error.response?.status === 401) {
@@ -47,5 +52,15 @@ api.interceptors.response.use(
     return Promise.reject(new Error(message));
   }
 );
+
+interface ApiAxiosInstance extends Omit<AxiosInstance, 'get' | 'post' | 'put' | 'delete' | 'patch'> {
+  get<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  post<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  put<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+  delete<T>(url: string, config?: AxiosRequestConfig): Promise<T>;
+  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig): Promise<T>;
+}
+
+const api = axiosInstance as ApiAxiosInstance;
 
 export default api;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, markRaw } from "vue";
 import { useRouter } from "vue-router";
 import { User, Lock, Message, MagicStick } from "@element-plus/icons-vue";
 import { ElMessage, type FormInstance, type FormRules } from "element-plus";
@@ -8,6 +8,12 @@ import { authApi } from "@/api";
 const router = useRouter();
 const registerFormRef = ref<FormInstance>();
 const loading = ref(false);
+
+const icons = {
+  user: markRaw(User),
+  lock: markRaw(Lock),
+  message: markRaw(Message),
+};
 const registerForm = ref({
   username: "",
   email: "",
@@ -17,7 +23,7 @@ const registerForm = ref({
   agree: false,
 });
 
-const validatePassword = (_rule: any, value: any, callback: any) => {
+const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
   if (value !== registerForm.value.password) {
     callback(new Error("两次输入密码不一致"));
   } else {
@@ -62,8 +68,9 @@ const handleRegister = async () => {
         });
         ElMessage.success("注册成功，请登录");
         router.push("/login");
-      } catch (error: any) {
-        ElMessage.error(error.response?.data?.message || "注册失败");
+      } catch (error: unknown) {
+        const axiosError = error as { response?: { data?: { message?: string } } };
+        ElMessage.error(axiosError.response?.data?.message || "注册失败");
       } finally {
         loading.value = false;
       }
@@ -107,7 +114,7 @@ const goToLogin = () => {
             v-model="registerForm.username"
             placeholder="用户名"
             size="large"
-            :prefix-icon="User"
+            :prefix-icon="icons.user"
           />
         </el-form-item>
 
@@ -116,7 +123,7 @@ const goToLogin = () => {
             v-model="registerForm.email"
             placeholder="邮箱"
             size="large"
-            :prefix-icon="Message"
+            :prefix-icon="icons.message"
           />
         </el-form-item>
 
@@ -125,7 +132,7 @@ const goToLogin = () => {
             v-model="registerForm.displayName"
             placeholder="显示名称（可选）"
             size="large"
-            :prefix-icon="User"
+            :prefix-icon="icons.user"
           />
         </el-form-item>
 
@@ -135,7 +142,7 @@ const goToLogin = () => {
             type="password"
             placeholder="密码（至少6位）"
             size="large"
-            :prefix-icon="Lock"
+            :prefix-icon="icons.lock"
             show-password
           />
         </el-form-item>
@@ -146,7 +153,7 @@ const goToLogin = () => {
             type="password"
             placeholder="确认密码"
             size="large"
-            :prefix-icon="Lock"
+            :prefix-icon="icons.lock"
             show-password
           />
         </el-form-item>
@@ -189,7 +196,7 @@ const goToLogin = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
   position: relative;
   overflow: hidden;
 }
@@ -203,32 +210,34 @@ const goToLogin = () => {
 .register-decoration .circle {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(
-    135deg,
-    rgba(37, 99, 235, 0.1),
-    rgba(99, 102, 241, 0.05)
-  );
+  filter: blur(40px);
 }
 
 .circle-1 {
-  width: 400px;
-  height: 400px;
-  top: -100px;
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  top: -200px;
   right: -100px;
+  opacity: 0.6;
 }
 
 .circle-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -50px;
-  left: -50px;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  bottom: -150px;
+  left: -100px;
+  opacity: 0.5;
 }
 
 .circle-3 {
-  width: 200px;
-  height: 200px;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
   top: 50%;
-  left: 20%;
+  left: 25%;
+  opacity: 0.25;
 }
 
 .register-card {

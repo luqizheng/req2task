@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, markRaw } from 'vue'
-import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Top, Bottom, Timer, Reading, CircleCheck } from '@element-plus/icons-vue'
+import { ref, markRaw, type Component } from 'vue'
+import { Folder, Document, Check, Warning, MagicStick, ArrowRight, Timer, Reading, CircleCheck } from '@element-plus/icons-vue'
+import { StatCard } from '@/components/common'
 
 const folderIcon = markRaw(Folder)
 const documentIcon = markRaw(Document)
@@ -9,18 +10,14 @@ const warningIcon = markRaw(Warning)
 const timerIcon = markRaw(Timer)
 const readingIcon = markRaw(Reading)
 const circleCheckIcon = markRaw(CircleCheck)
-const magicStickIcon = markRaw(MagicStick)
-const arrowRightIcon = markRaw(ArrowRight)
-const topIcon = markRaw(Top)
-const bottomIcon = markRaw(Bottom)
 
-interface StatCard {
+interface StatItem {
   title: string
   value: number | string
   trend?: string
   trendUp?: boolean
   color: string
-  icon: any
+  icon: Component
 }
 
 interface CostStat {
@@ -28,7 +25,7 @@ interface CostStat {
   current: number
   total: number
   unit: string
-  icon: any
+  icon: Component
   color: string
 }
 
@@ -48,7 +45,7 @@ interface RecentActivity {
   type: 'create' | 'update' | 'ai'
 }
 
-const statCards = ref<StatCard[]>([
+const statCards = ref<StatItem[]>([
   { title: '需求总数', value: 128, trend: '+12%', trendUp: true, color: '#2563eb', icon: folderIcon },
   { title: '用户故事', value: 356, trend: '+8%', trendUp: true, color: '#10b981', icon: documentIcon },
   { title: '待验收', value: 24, trend: '-5%', trendUp: false, color: '#f59e0b', icon: checkIcon },
@@ -115,23 +112,14 @@ const getCostPercentage = (current: number, total: number) => {
 
     <el-row :gutter="16" class="stat-row">
       <el-col :xs="12" :sm="12" :md="6" v-for="stat in statCards" :key="stat.title">
-        <el-card class="stat-card" shadow="hover">
-          <div class="stat-content">
-            <div class="stat-icon" :style="{ backgroundColor: stat.color + '15', color: stat.color }">
-              <el-icon :size="24"><component :is="stat.icon" /></el-icon>
-            </div>
-            <div class="stat-info">
-              <p class="stat-title">{{ stat.title }}</p>
-              <div class="stat-value-row">
-                <span class="stat-value">{{ stat.value }}</span>
-                <span v-if="stat.trend" class="stat-trend" :class="{ up: stat.trendUp, down: !stat.trendUp }">
-                  <el-icon><Top v-if="stat.trendUp" /><Bottom v-else /></el-icon>
-                  {{ stat.trend }}
-                </span>
-              </div>
-            </div>
-          </div>
-        </el-card>
+        <StatCard
+          :title="stat.title"
+          :value="stat.value"
+          :icon="stat.icon"
+          :color="stat.color"
+          :trend="stat.trend"
+          :trend-up="stat.trendUp"
+        />
       </el-col>
     </el-row>
 
@@ -348,62 +336,6 @@ const getCostPercentage = (current: number, total: number) => {
   color: #94a3b8;
   font-size: 12px;
   margin-left: 4px;
-}
-
-.stat-card {
-  height: 100%;
-}
-
-.stat-card :deep(.el-card__body) {
-  padding: 16px;
-}
-
-.stat-content {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.stat-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.stat-title {
-  margin: 0 0 4px;
-  font-size: 13px;
-  color: #64748b;
-}
-
-.stat-value-row {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.stat-value {
-  font-size: 24px;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.stat-trend {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  font-size: 12px;
-}
-
-.stat-trend.up {
-  color: #10b981;
-}
-
-.stat-trend.down {
-  color: #ef4444;
 }
 
 .content-row {

@@ -7,8 +7,14 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
-import { User, UserRole } from '@req2task/core';
-import { RegisterDto, LoginDto, LoginResponseDto } from './dto';
+import { User } from '@req2task/core';
+import { UserRole } from '@req2task/dto';
+import {
+  RegisterRequestDto,
+  LoginRequestDto,
+  LoginResponseDto,
+  UserResponseDto,
+} from '@req2task/dto';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +24,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async register(registerDto: RegisterDto): Promise<Omit<User, 'passwordHash'>> {
+  async register(registerDto: RegisterRequestDto): Promise<UserResponseDto> {
     const existingUser = await this.userRepository.findOne({
       where: [
         { username: registerDto.username },
@@ -34,21 +40,22 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    const userCount = await this.userRepository.count();
+    const role = userCount === 0 ? UserRole.ADMIN : UserRole.USER;
 
     const user = this.userRepository.create({
       username: registerDto.username,
       email: registerDto.email,
       displayName: registerDto.displayName,
       passwordHash,
-      role: UserRole.USER,
+      role,
     });
 
     const savedUser = await this.userRepository.save(user);
-    const { passwordHash: _, ...result } = savedUser;
-    return result;
+    return this.toUserResponseDto(savedUser);
   }
 
-  async login(loginDto: LoginDto): Promise<LoginResponseDto> {
+  async login(loginDto: LoginRequestDto): Promise<LoginResponseDto> {
     const user = await this.userRepository.findOne({
       where: { username: loginDto.username },
     });
@@ -81,6 +88,18 @@ export class AuthService {
         displayName: user.displayName,
         role: user.role,
       },
+    };
+  }
+
+  private toUserResponseDto(user: User): UserResponseDto {
+    return {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      displayName: user.displayName,
+      role: user.role,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
   }
 }

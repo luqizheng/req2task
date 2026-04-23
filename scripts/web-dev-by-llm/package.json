@@ -1,0 +1,23 @@
+{
+  "name": "web-dev-by-llm",
+  "version": "1.0.0",
+  "description": "Web功能自动化测试框架，通过LLM+Chrome MCP实现",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test:ai-config": "ts-node src/index.ts --test ai-config"
+  },
+  "dependencies": {
+    "chalk": "^4.1.2",
+    "inquirer": "^8.2.5",
+    "ora": "^5.4.1"
+  },
+  "devDependencies": {
+    "@types/inquirer": "^8.2.12",
+    "@types/node": "^20.10.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

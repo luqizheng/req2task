@@ -1,0 +1,44 @@
+{
+  "schema_version": "1.0",
+  "last_updated": "2026-04-17",
+  "categories": [
+    {
+      "id": "ai",
+      "name": "AI 设计",
+      "description": "AI 助手和 LLM 相关设计文档",
+      "path": "ai/",
+      "documents": [
+        "ai/ai-assistant-design.md",
+        "ai/llm-management.md",
+        "ai/templates/"
+      ]
+    },
+    {
+      "id": "data",
+      "name": "数据设计",
+      "description": "数据库和数据模型设计",
+      "path": "data/",
+      "documents": [
+        "data/database-design.md"
+      ]
+    },
+    {
+      "id": "modules",
+      "name": "模块设计",
+      "description": "系统模块边界和依赖关系",
+      "path": "modules/",
+      "documents": [
+        "modules/module-design.md"
+      ]
+    },
+    {
+      "id": "project",
+      "name": "项目设计",
+      "description": "项目管理系统设计",
+      "path": "project/",
+      "documents": [
+        "project/project-user-system-plan.md"
+      ]
+    }
+  ]
+}

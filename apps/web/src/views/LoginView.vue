@@ -33,16 +33,17 @@ const handleLogin = async () => {
     if (valid) {
       loading.value = true
       try {
-        const { data } = await authApi.login({
+        const data = await authApi.login({
           username: loginForm.value.username,
           password: loginForm.value.password
         })
         userStore.setToken(data.accessToken)
         userStore.setUserInfo(data.user)
         ElMessage.success('登录成功')
-        router.push('/HomeView')
-      } catch (error: any) {
-        ElMessage.error(error.response?.data?.message || '登录失败')
+        router.push('/dashboard')
+      } catch (error) {
+        const message = (error as { message?: string })?.message || '登录失败';
+        ElMessage.error(message);
       } finally {
         loading.value = false
       }
@@ -143,7 +144,7 @@ const goToRegister = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #bfdbfe 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
   position: relative;
   overflow: hidden;
 }
@@ -157,28 +158,34 @@ const goToRegister = () => {
 .login-decoration .circle {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(37, 99, 235, 0.1), rgba(99, 102, 241, 0.05));
+  filter: blur(40px);
 }
 
 .circle-1 {
-  width: 400px;
-  height: 400px;
-  top: -100px;
+  width: 500px;
+  height: 500px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  top: -200px;
   right: -100px;
+  opacity: 0.6;
 }
 
 .circle-2 {
-  width: 300px;
-  height: 300px;
-  bottom: -50px;
-  left: -50px;
+  width: 400px;
+  height: 400px;
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  bottom: -150px;
+  left: -100px;
+  opacity: 0.5;
 }
 
 .circle-3 {
-  width: 200px;
-  height: 200px;
+  width: 300px;
+  height: 300px;
+  background: linear-gradient(135deg, #f59e0b, #ef4444);
   top: 50%;
-  left: 20%;
+  left: 25%;
+  opacity: 0.25;
 }
 
 .login-card {

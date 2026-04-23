@@ -37,14 +37,29 @@
     }
   },
   "scripts": {
-    "build": "tsc",
-    "lint": "eslint \"src/**/*.ts\" --fix"
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
-    "typeorm": "^0.3.19"
+    "@req2task/dto": "workspace:^",
+    "@swc/core": "^1.15.26",
+    "axios": "catalog:",
+    "mammoth": "catalog:",
+    "openai": "catalog:",
+    "pdf-parse": "catalog:",
+    "typeorm": "catalog:"
   },
   "devDependencies": {
+    "@types/jest": "^29.5.11",
     "@types/node": "^20.10.0",
-    "typescript": "^5.3.0"
+    "jest": "catalog:",
+    "ts-jest": "catalog:",
+    "tsup": "catalog:",
+    "typescript": "catalog:"
   }
 }

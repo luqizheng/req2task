@@ -1,231 +1,407 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
-import { Search, Plus, Edit, Delete, Refresh } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, computed, onMounted } from 'vue';
+import { Search, Plus, Edit, Delete, Refresh } from '@element-plus/icons-vue';
+import type { FormInstance, FormRules } from 'element-plus';
+import { ElMessage, ElMessageBox } from 'element-plus';
+import { useUserManageStore } from '@/stores/userManage';
+import type { UserListParams } from '@/api/users';
+import type {
+  CreateUserDto,
+  UpdateUserDto,
+} from '@req2task/dto';
 
-interface UserItem {
-  id: number
-  username: string
-  name: string
-  email: string
-  phone: string
-  role: string
-  status: number
-  createTime: string
-}
+const UserRole = {
+  ADMIN: 'admin',
+  USER: 'user',
+  PROJECT_MANAGER: 'projectManager',
+  REQUIREMENT_ANALYST: 'requirementAnalyst',
+  DEVELOPER: 'developer',
+  TESTER: 'tester',
+} as const;
 
-const loading = ref(false)
-const searchKeyword = ref('')
-const roleFilter = ref('')
-const statusFilter = ref<number | null>(null)
+const roleConfig: Record<string, { label: string; tagType: string }> = {
+  [UserRole.ADMIN]: { label: '管理员', tagType: 'danger' },
+  [UserRole.PROJECT_MANAGER]: { label: '项目经理', tagType: 'primary' },
+  [UserRole.REQUIREMENT_ANALYST]: { label: '需求分析师', tagType: 'success' },
+  [UserRole.DEVELOPER]: { label: '开发人员', tagType: 'warning' },
+  [UserRole.TESTER]: { label: '测试人员', tagType: 'info' },
+};
 
-const userList = ref<UserItem[]>([
-  { id: 1, username: 'admin', name: '张经理', email: 'zhang@company.com', phone: '13800138000', role: '项目经理', status: 1, createTime: '2024-01-15' },
-  { id: 2, username: 'analyst', name: '李分析师', email: 'li@company.com', phone: '13800138001', role: '需求分析师', status: 1, createTime: '2024-01-16' },
-  { id: 3, username: 'dev001', name: '王开发', email: 'wang@company.com', phone: '13800138002', role: '开发人员', status: 1, createTime: '2024-01-17' },
-  { id: 4, username: 'test001', name: '赵测试', email: 'zhao@company.com', phone: '13800138003', role: '测试人员', status: 0, createTime: '2024-01-18' },
-])
+const roleOptions = computed(() =>
+  Object.entries(roleConfig).map(([value, { label }]) => ({ value, label }))
+);
 
-const total = ref(4)
+const getRoleName = (role: string) => roleConfig[role]?.label || role;
+const getRoleTagType = (role: string) => roleConfig[role]?.tagType || '';
 
-const dialogVisible = ref(false)
-const dialogTitle = ref('添加用户')
-const formRef = ref<FormInstance>()
+const emptyText = computed(() => {
+  if (loading.value) return '加载中...';
+  if (searchKeyword.value || roleFilter.value || statusFilter.value !== null) {
+    return '未找到匹配的用户，请尝试调整筛选条件';
+  }
+  return '暂无用户数据';
+});
+
+const userManageStore = useUserManageStore();
+const loading = ref(false);
+const searchKeyword = ref('');
+const roleFilter = ref('');
+const statusFilter = ref<number | null>(null);
+const currentPage = ref(1);
+const pageSize = ref(10);
+
+const dialogVisible = ref(false);
+const dialogTitle = ref('添加用户');
+const formRef = ref<FormInstance>();
 const formData = reactive({
-  id: null as number | null,
+  id: null as string | null,
   username: '',
-  name: '',
   email: '',
-  phone: '',
-  role: '',
-  password: ''
-})
+  displayName: '',
+  password: '',
+  role: '' as keyof typeof UserRole | '',
+});
 
 const rules: FormRules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入姓名', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+  ],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
-  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }],
-  role: [{ required: true, message: '请选择角色', trigger: 'change' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }, { min: 6, message: '密码至少6位', trigger: 'blur' }]
-}
+  displayName: [
+    { required: true, message: '请输入姓名', trigger: 'blur' },
+  ],
+  role: [
+    { required: true, message: '请选择角色', trigger: 'change' },
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, message: '密码至少6位', trigger: 'blur' },
+  ],
+};
 
-const roleOptions = [
-  { value: '项目经理', label: '项目经理' },
-  { value: '需求分析师', label: '需求分析师' },
-  { value: '开发人员', label: '开发人员' },
-  { value: '测试人员', label: '测试人员' },
-]
+const loadUsers = async () => {
+  loading.value = true;
+  try {
+    const params: UserListParams = {
+      page: currentPage.value,
+      limit: pageSize.value,
+      keyword: searchKeyword.value || undefined,
+      role: roleFilter.value || undefined,
+      status: statusFilter.value ?? undefined,
+    };
+    await userManageStore.fetchUserList(params);
+  } finally {
+    loading.value = false;
+  }
+};
 
 const handleSearch = () => {
-  loading.value = true
-  setTimeout(() => {
-    loading.value = false
-  }, 500)
-}
+  currentPage.value = 1;
+  loadUsers();
+};
 
 const handleReset = () => {
-  searchKeyword.value = ''
-  roleFilter.value = ''
-  statusFilter.value = null
-}
+  searchKeyword.value = '';
+  roleFilter.value = '';
+  statusFilter.value = null;
+  currentPage.value = 1;
+  loadUsers();
+};
 
 const handleAdd = () => {
-  dialogTitle.value = '添加用户'
-  Object.assign(formData, { id: null, username: '', name: '', email: '', phone: '', role: '', password: '' })
-  dialogVisible.value = true
-}
+  dialogTitle.value = '添加用户';
+  Object.assign(formData, {
+    id: null,
+    username: '',
+    email: '',
+    displayName: '',
+    password: '',
+    role: '',
+  });
+  dialogVisible.value = true;
+};
 
-const handleEdit = (row: UserItem) => {
-  dialogTitle.value = '编辑用户'
-  Object.assign(formData, row)
-  formData.password = ''
-  dialogVisible.value = true
-}
+const handleEdit = (row: { id: string; username: string; email: string; displayName: string; role: string }) => {
+  dialogTitle.value = '编辑用户';
+  Object.assign(formData, {
+    id: row.id,
+    username: row.username,
+    email: row.email,
+    displayName: row.displayName,
+    password: '',
+    role: row.role,
+  });
+  dialogVisible.value = true;
+};
 
-const handleDelete = async (row: UserItem) => {
+const handleDelete = async (row: { id: string; displayName: string }) => {
   try {
-    await ElMessageBox.confirm(`确定删除用户 "${row.name}" 吗？`, '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    })
-    const idx = userList.value.findIndex(u => u.id === row.id)
-    if (idx > -1) userList.value.splice(idx, 1)
-    ElMessage.success('删除成功')
-  } catch {
-    // cancelled
+    await ElMessageBox.confirm(
+      `确定删除用户 "${row.displayName}" 吗？`,
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    );
+    await userManageStore.deleteUser(row.id);
+    ElMessage.success('删除成功');
+    loadUsers();
+  } catch (error) {
+    if ((error as Error).message !== 'cancel') {
+      ElMessage.error((error as Error).message || '删除失败');
+    }
   }
-}
+};
 
 const handleSubmit = async () => {
-  if (!formRef.value) return
-  await formRef.value.validate((valid) => {
+  if (!formRef.value) return;
+  await formRef.value.validate(async (valid) => {
     if (valid) {
-      if (formData.id) {
-        const idx = userList.value.findIndex(u => u.id === formData.id)
-        if (idx > -1) Object.assign(userList.value[idx], formData, { password: undefined })
-        ElMessage.success('更新成功')
-      } else {
-        userList.value.unshift({ ...formData, id: Date.now(), status: 1, createTime: new Date().toISOString().split('T')[0] })
-        ElMessage.success('添加成功')
+      try {
+        if (formData.id) {
+          const updateData: UpdateUserDto = {
+            email: formData.email,
+            displayName: formData.displayName,
+            role: formData.role as UpdateUserDto['role'],
+          };
+          await userManageStore.updateUser(formData.id, updateData);
+          ElMessage.success('更新成功');
+        } else {
+          const createData: CreateUserDto = {
+            username: formData.username,
+            email: formData.email,
+            displayName: formData.displayName,
+            password: formData.password,
+          };
+          await userManageStore.createUser(createData);
+          ElMessage.success('添加成功');
+        }
+        dialogVisible.value = false;
+        loadUsers();
+      } catch (error) {
+        ElMessage.error((error as Error).message || '操作失败');
       }
-      dialogVisible.value = false
     }
-  })
-}
+  });
+};
 
-const getRoleTagType = (role: string) => {
-  const map: Record<string, string> = {
-    '项目经理': 'primary',
-    '需求分析师': 'success',
-    '开发人员': 'warning',
-    '测试人员': 'info'
-  }
-  return map[role] || ''
-}
+const handlePageChange = (page: number) => {
+  currentPage.value = page;
+  loadUsers();
+};
+
+const handleSizeChange = (size: number) => {
+  pageSize.value = size;
+  currentPage.value = 1;
+  loadUsers();
+};
+
+onMounted(() => {
+  loadUsers();
+});
 </script>
 
 <template>
-  <div class="user-manage">
-    <div class="page-header">
-      <h2 class="page-title">用户管理</h2>
-    </div>
+  <main class="user-manage" role="main" aria-label="用户管理">
+    <header class="page-header">
+      <h1 class="page-title">用户管理</h1>
+      <p class="page-subtitle">管理系统用户账户和权限</p>
+    </header>
 
-    <el-card class="filter-card">
-      <el-form :inline="true" class="filter-form">
-        <el-form-item label="关键词">
-          <el-input v-model="searchKeyword" placeholder="用户名/姓名/邮箱" clearable :prefix-icon="Search" style="width: 200px" />
-        </el-form-item>
-        <el-form-item label="角色">
-          <el-select v-model="roleFilter" placeholder="全部" clearable style="width: 140px">
-            <el-option v-for="r in roleOptions" :key="r.value" :label="r.label" :value="r.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="statusFilter" placeholder="全部" clearable style="width: 120px">
-            <el-option label="启用" :value="1" />
-            <el-option label="禁用" :value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">搜索</el-button>
-          <el-button :icon="Refresh" @click="handleReset">重置</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+    <section class="filter-section" aria-label="筛选条件">
+      <el-card class="filter-card" shadow="hover">
+        <el-form :inline="true" class="filter-form" role="search">
+          <el-form-item label="关键词" class="filter-item">
+            <el-input
+              v-model="searchKeyword"
+              placeholder="用户名/姓名/邮箱"
+              clearable
+              :prefix-icon="Search"
+              style="width: 220px"
+              aria-label="搜索关键词"
+              @keyup.enter="handleSearch"
+            />
+          </el-form-item>
+          <el-form-item label="角色" class="filter-item">
+            <el-select
+              v-model="roleFilter"
+              placeholder="全部"
+              clearable
+              style="width: 150px"
+              aria-label="筛选角色"
+            >
+              <el-option
+                v-for="r in roleOptions"
+                :key="r.value"
+                :label="r.label"
+                :value="r.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="状态" class="filter-item">
+            <el-select
+              v-model="statusFilter"
+              placeholder="全部"
+              clearable
+              style="width: 120px"
+              aria-label="筛选状态"
+            >
+              <el-option label="启用" :value="1" />
+              <el-option label="禁用" :value="0" />
+            </el-select>
+          </el-form-item>
+          <el-form-item class="filter-actions">
+            <el-button type="primary" :icon="Search" @click="handleSearch">
+              搜索
+            </el-button>
+            <el-button :icon="Refresh" @click="handleReset">重置</el-button>
+          </el-form-item>
+        </el-form>
+      </el-card>
+    </section>
 
-    <el-card class="table-card">
-      <div class="table-toolbar">
-        <el-button type="primary" :icon="Plus" @click="handleAdd">添加用户</el-button>
-      </div>
+    <section class="table-section" aria-label="用户列表">
+      <el-card class="table-card" shadow="never">
+        <template #header>
+          <div class="table-toolbar">
+            <span class="table-count">
+              共 {{ userManageStore.total }} 位用户
+            </span>
+            <el-button type="primary" :icon="Plus" @click="handleAdd">
+              添加用户
+            </el-button>
+          </div>
+        </template>
 
-      <el-table :data="userList" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="email" label="邮箱" min-width="160">
-          <template #default="{ row }">
-            <el-link type="primary" underline="never">{{ row.email }}</el-link>
-          </template>
-        </el-table-column>
-        <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column prop="role" label="角色" width="120">
-          <template #default="{ row }">
-            <el-tag :type="getRoleTagType(row.role)" size="small">{{ row.role }}</el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="80">
-          <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'" size="small">
-              {{ row.status === 1 ? '启用' : '禁用' }}
-            </el-tag>
-          </template>
-        </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="120" />
-        <el-table-column label="操作" width="140" fixed="right">
-          <template #default="{ row }">
-            <el-button type="primary" link :icon="Edit" @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link :icon="Delete" @click="handleDelete(row)">删除</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
+        <el-table
+          :data="userManageStore.userList"
+          v-loading="loading"
+          stripe
+          highlight-current-row
+          :empty-text="emptyText"
+        >
+          
+          <el-table-column prop="username" label="用户名" width="120" />
+          <el-table-column prop="displayName" label="姓名" width="120" />
+          <el-table-column prop="email" label="邮箱" min-width="160" />
+          <el-table-column prop="role" label="角色" width="120" align="center">
+            <template #default="{ row }">
+              <el-tag :type="getRoleTagType(row.role)" size="small" effect="light">
+                {{ getRoleName(row.role) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="createdAt" label="创建时间" width="160" align="center">
+            <template #default="{ row }">
+              <time :datetime="row.createdAt">
+                {{ new Date(row.createdAt).toLocaleDateString('zh-CN') }}
+              </time>
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="140" align="center" fixed="right">
+            <template #default="{ row }">
+              <el-button
+                type="primary"
+                link
+                :icon="Edit"
+                @click="handleEdit(row)"
+                aria-label="编辑用户"
+              >
+                编辑
+              </el-button>
+              <el-button
+                type="danger"
+                link
+                :icon="Delete"
+                @click="handleDelete(row)"
+                aria-label="删除用户"
+              >
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
 
-      <div class="pagination-wrapper">
-        <el-pagination
-          :total="total"
-          :current-page="1"
-          :page-size="10"
-          layout="total, prev, pager, next"
-        />
-      </div>
-    </el-card>
+        <div class="pagination-wrapper" v-if="userManageStore.total > 0">
+          <el-pagination
+            :total="userManageStore.total"
+            :current-page="currentPage"
+            :page-size="pageSize"
+            :page-sizes="[10, 20, 50, 100]"
+            layout="total, sizes, prev, pager, next"
+            @current-change="handlePageChange"
+            @size-change="handleSizeChange"
+          />
+        </div>
+      </el-card>
+    </section>
 
-    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" destroy-on-close>
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="80" class="user-form">
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="520px"
+      destroy-on-close
+      align-center
+    >
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="rules"
+        label-width="80px"
+        class="user-form"
+        aria-label="用户表单"
+      >
         <el-form-item label="用户名" prop="username">
-          <el-input v-model="formData.username" :disabled="!!formData.id" />
+          <el-input
+            v-model="formData.username"
+            :disabled="!!formData.id"
+            autocomplete="username"
+            aria-required="true"
+          />
         </el-form-item>
-        <el-form-item label="姓名" prop="name">
-          <el-input v-model="formData.name" />
+        <el-form-item label="姓名" prop="displayName">
+          <el-input
+            v-model="formData.displayName"
+            autocomplete="name"
+            aria-required="true"
+          />
         </el-form-item>
         <el-form-item label="邮箱" prop="email">
-          <el-input v-model="formData.email" />
-        </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="formData.phone" />
+          <el-input
+            v-model="formData.email"
+            type="email"
+            autocomplete="email"
+            aria-required="true"
+          />
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="formData.role" placeholder="请选择角色" style="width: 100%">
-            <el-option v-for="r in roleOptions" :key="r.value" :label="r.label" :value="r.value" />
+          <el-select
+            v-model="formData.role"
+            placeholder="请选择角色"
+            style="width: 100%"
+            aria-required="true"
+          >
+            <el-option
+              v-for="r in roleOptions"
+              :key="r.value"
+              :label="r.label"
+              :value="r.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="密码" :prop="formData.id ? '' : 'password'">
-          <el-input v-model="formData.password" type="password" show-password :placeholder="formData.id ? '留空则不修改' : '请输入密码'" />
+          <el-input
+            v-model="formData.password"
+            type="password"
+            show-password
+            :placeholder="formData.id ? '留空则不修改' : '请输入密码'"
+            :autocomplete="formData.id ? 'off' : 'new-password'"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -233,49 +409,39 @@ const getRoleTagType = (role: string) => {
         <el-button type="primary" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
-  </div>
+  </main>
 </template>
 
 <style scoped>
-.user-manage {
-  padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-title {
-  font-size: 20px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.filter-card {
-  margin-bottom: 16px;
-}
-
-.filter-form {
-  margin-bottom: 0;
-}
-
-.table-card :deep(.el-card__body) {
-  padding: 0;
-}
-
-.table-toolbar {
-  padding: 12px 16px;
-  border-bottom: 1px solid #e2e8f0;
-}
-
-.pagination-wrapper {
-  padding: 16px;
-  display: flex;
-  justify-content: flex-end;
-}
-
-.user-form {
-  padding-right: 16px;
+.user-manage { padding: 24px; max-width: 1200px; margin: 0 auto; }
+.page-header { margin-bottom: 24px; }
+.page-title { font-size: 24px; font-weight: 600; color: var(--el-text-color-primary); margin: 0 0 8px; letter-spacing: -0.02em; }
+.page-subtitle { font-size: 14px; color: var(--el-text-color-secondary); margin: 0; }
+.filter-section, .table-section { margin-bottom: 20px; }
+.filter-card, .table-card { border-radius: 12px; border: 1px solid var(--el-border-color-lighter); overflow: hidden; }
+.filter-card :deep(.el-card__body), .table-card :deep(.el-card__header) { padding: 16px 20px; }
+.table-card :deep(.el-card__header) { background: var(--el-fill-color-lightest); }
+.table-card :deep(.el-card__body) { padding: 0; }
+.filter-form { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 0; }
+.filter-item, .filter-actions { margin: 0; }
+.filter-actions { margin-left: auto; }
+.table-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.table-count { font-size: 14px; color: var(--el-text-color-secondary); font-weight: 500; }
+.table-card :deep(.el-table) { --el-table-border-color: var(--el-border-color-lighter); --el-table-header-bg-color: var(--el-fill-color-lightest); }
+.table-card :deep(.el-table th.el-table__cell) { font-weight: 600; font-size: 13px; color: var(--el-text-color-regular); text-transform: uppercase; letter-spacing: 0.02em; }
+.table-card :deep(.el-table td.el-table__cell) { font-size: 14px; }
+.table-card :deep(.el-tag) { border-radius: 6px; font-weight: 500; }
+.table-card :deep(.el-button.is-link) { font-weight: 500; transition: all 0.2s ease; }
+.table-card :deep(.el-button.is-link:hover) { transform: translateY(-1px); }
+.pagination-wrapper { padding: 16px 20px; display: flex; justify-content: flex-end; border-top: 1px solid var(--el-border-color-lighter); }
+.user-form { padding-right: 16px; }
+.user-form :deep(.el-form-item__label) { font-weight: 500; color: var(--el-text-color-regular); }
+.user-form :deep(.el-input__wrapper) { border-radius: 8px; }
+.user-form :deep(.el-select) { width: 100%; }
+@media (max-width: 768px) {
+  .user-manage { padding: 16px; }
+  .filter-form { flex-direction: column; }
+  .filter-actions { margin-left: 0; justify-content: flex-start; }
+  .table-toolbar { flex-direction: column; align-items: flex-start; }
 }
 </style>

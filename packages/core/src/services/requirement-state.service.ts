@@ -1,12 +1,7 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import {
-  Requirement,
-  RequirementStatus,
-  RequirementChangeLog,
-  ChangeType,
-} from '../entities';
+import { Requirement, RequirementChangeLog } from '../entities';
+import { RequirementStatus, ChangeType } from '@req2task/dto';
+import { NotFoundException, ValidationException } from '../exceptions/business.exception';
 
 const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.DRAFT]: [
@@ -34,12 +29,9 @@ const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.CANCELLED]: [RequirementStatus.DRAFT],
 };
 
-@Injectable()
 export class RequirementStateService {
   constructor(
-    @InjectRepository(Requirement)
     private requirementRepository: Repository<Requirement>,
-    @InjectRepository(RequirementChangeLog)
     private changeLogRepository: Repository<RequirementChangeLog>,
   ) {}
 
@@ -63,14 +55,14 @@ export class RequirementStateService {
     });
 
     if (!requirement) {
-      throw new BadRequestException(`Requirement with ID ${requirementId} not found`);
+      throw new NotFoundException(`Requirement with ID ${requirementId} not found`);
     }
 
     const currentStatus = requirement.status;
     const canTransition = await this.canTransition(currentStatus, targetStatus);
 
     if (!canTransition) {
-      throw new BadRequestException(
+      throw new ValidationException(
         `Cannot transition from ${currentStatus} to ${targetStatus}`,
       );
     }

@@ -1,0 +1,24 @@
+runner:
+  id: "runner-001"
+  token: "${RUNNER_TOKEN}"
+  max_containers: 10
+
+websocket:
+  url: "ws://localhost:8765/runner"
+  reconnect_interval: 3000
+  max_reconnect_attempts: 10
+  heartbeat_interval: 30000
+
+docker:
+  host: "unix:///var/run/docker.sock"
+  registry: "zhcoder-docker-registry.com:8000"
+  image_pull_timeout: 300
+
+port:
+  base: 8080
+  range_start: 8080
+  range_end: 8990
+
+log:
+  level: "info"
+  path: "/var/log/req2task-runner"

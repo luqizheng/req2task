@@ -8,14 +8,7 @@ import {
   JoinColumn,
 } from 'typeorm';
 import { UserStory } from './user-story.entity';
-
-export enum CriteriaType {
-  FUNCTIONAL = 'functional',
-  NON_FUNCTIONAL = 'non_functional',
-  PERFORMANCE = 'performance',
-  SECURITY = 'security',
-  USABILITY = 'usability',
-}
+import { CriteriaType } from '@req2task/dto';
 
 @Entity('acceptance_criteria')
 export class AcceptanceCriteria {
@@ -39,7 +32,7 @@ export class AcceptanceCriteria {
   @Column({ type: 'text' })
   content!: string;
 
-  @Column({ name: 'test_method', nullable: true })
+  @Column({ name: 'test_method', type: 'text', nullable: true })
   testMethod!: string | null;
 
   @CreateDateColumn({ name: 'created_at' })

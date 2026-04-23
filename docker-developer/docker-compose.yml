@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  docker-developer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: docker-developer
+    environment:
+      - RUNNER_WS_URL=ws://host.docker.internal:8765/ws/developer
+      - WORKSPACE=/workspace
+      - CONTAINER_ID=docker-dev-${CONTAINER_INDEX:-0}
+      - LOG_LEVEL=info
+    volumes:
+      - workspace:/workspace
+      - ~/.ssh:/home/developer/.ssh:ro
+    ports:
+      - "${BASE_PORT:-8080}:3000"
+      - "${BASE_PORT:-8080}+1:3001"
+    networks:
+      - developer-network
+
+volumes:
+  workspace:
+
+networks:
+  developer-network:
+    driver: bridge

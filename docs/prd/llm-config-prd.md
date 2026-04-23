@@ -70,17 +70,20 @@ type LLMProvider = 'deepseek' | 'openai' | 'ollama' | 'minimax';
 
 #### 3.1 配置管理 API
 
+> **服务**: ai-chat-service  
+> **端点前缀**: `/api/ai/llm-configs`
+
 **创建配置**
 ```http
-POST /api/llm/configs
+POST /api/ai/llm-configs
 Content-Type: application/json
 
 {
   "name": "DeepSeek 生产配置",
   "provider": "deepseek",
-  "modelId": "deepseek-chat",
+  "modelName": "deepseek-chat",
   "apiKey": "sk-xxx",
-  "apiEndpoint": "https://api.deepseek.com/v1",
+  "baseUrl": "https://api.deepseek.com/v1",
   "temperature": 0.7,
   "maxTokens": 2000,
   "isDefault": true
@@ -89,38 +92,37 @@ Content-Type: application/json
 
 **获取配置列表**
 ```http
-GET /api/llm/configs
-Query Params:
-- provider?: string      # 按提供商过滤
-- activeOnly?: boolean   # 只返回启用配置
-- page?: number         # 页码
-- limit?: number        # 每页数量
+GET /api/ai/llm-configs
 ```
 
 **获取单个配置**
 ```http
-GET /api/llm/configs/:id
+GET /api/ai/llm-configs/:id
 ```
 
 **更新配置**
 ```http
-PUT /api/llm/configs/:id
+PUT /api/ai/llm-configs/:id
 Content-Type: application/json
 
 {
-  "temperature": 0.8,
-  "isDefault": true
+  "temperature": 0.8
 }
 ```
 
 **删除配置**
 ```http
-DELETE /api/llm/configs/:id
+DELETE /api/ai/llm-configs/:id
 ```
 
-**设置默认配置**
+**测试配置连接**
 ```http
-POST /api/llm/configs/:id/set-default
+POST /api/ai/llm-configs/:id/test
+Content-Type: application/json
+
+{
+  "testMessage": "你好，请回复测试成功"
+}
 ```
 
 #### 3.2 配置使用 API
@@ -306,7 +308,7 @@ enum LLMConfigError {
 
 #### 9.2 统计 API
 ```http
-GET /api/llm/configs/:id/metrics
+GET /api/ai/llm-configs/:id/metrics
 Query Params:
 - startDate?: string    # 开始日期
 - endDate?: string      # 结束日期

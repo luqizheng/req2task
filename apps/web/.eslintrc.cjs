@@ -10,11 +10,17 @@ module.exports = {
     '@vue/eslint-config-typescript'
   ],
   parserOptions: {
-    ecmaVersion: 'latest'
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: './tsconfig.json'
   },
   plugins: ['import'],
   rules: {
-    '@typescript-eslint/no-explicit-any': 'warn'
+    '@typescript-eslint/no-explicit-any': 'warn',
+    '@typescript-eslint/no-unused-vars': ['warn', {
+      argsIgnorePattern: '^_',
+      varsIgnorePattern: '^_'
+    }]
   },
   settings: {
     'import/resolver': {
@@ -26,5 +32,6 @@ module.exports = {
         extensions: ['.ts', '.tsx', '.vue']
       }
     }
-  }
+  },
+  ignorePatterns: ['e2e/**', 'vite.config.*', 'vitest.config.*', 'dist/**', 'node_modules/**']
 }

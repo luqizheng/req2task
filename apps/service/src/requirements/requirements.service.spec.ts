@@ -4,21 +4,32 @@ import { NotFoundException } from '@nestjs/common';
 import { RequirementsService } from './requirements.service';
 import {
   Requirement,
+  UserStory,
+  AcceptanceCriteria,
+  User,
+} from '@req2task/core';
+import {
   RequirementStatus,
   Priority,
   RequirementSource,
-  UserStory,
-  AcceptanceCriteria,
   CriteriaType,
-  User,
   UserRole,
-} from '@req2task/core';
+} from '@req2task/dto';
+
+interface MockRepository {
+  findAndCount: jest.Mock;
+  findOne: jest.Mock;
+  create: jest.Mock;
+  save: jest.Mock;
+  remove: jest.Mock;
+  find: jest.Mock;
+}
 
 describe('RequirementsService', () => {
   let service: RequirementsService;
-  let requirementRepository: any;
-  let userStoryRepository: any;
-  let acceptanceCriteriaRepository: any;
+  let requirementRepository: MockRepository;
+  let userStoryRepository: MockRepository;
+  let acceptanceCriteriaRepository: MockRepository;
 
   const mockUser: User = {
     id: 'user-uuid',
@@ -74,6 +85,7 @@ describe('RequirementsService', () => {
 
   beforeEach(async () => {
     requirementRepository = {
+      find: jest.fn(),
       findAndCount: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
@@ -83,6 +95,7 @@ describe('RequirementsService', () => {
 
     userStoryRepository = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
@@ -91,6 +104,7 @@ describe('RequirementsService', () => {
 
     acceptanceCriteriaRepository = {
       find: jest.fn(),
+      findAndCount: jest.fn(),
       findOne: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),

@@ -2,11 +2,20 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException, ConflictException } from '@nestjs/common';
 import { FeatureModulesService } from './feature-modules.service';
-import { FeatureModule } from '@req2task/core';
+import { FeatureModule, Project } from '@req2task/core';
+
+interface MockRepository {
+  findAndCount: jest.Mock;
+  findOne: jest.Mock;
+  create: jest.Mock;
+  save: jest.Mock;
+  remove: jest.Mock;
+  find: jest.Mock;
+}
 
 describe('FeatureModulesService', () => {
   let service: FeatureModulesService;
-  let featureModuleRepository: any;
+  let featureModuleRepository: MockRepository;
 
   const mockModule: FeatureModule = {
     id: 'module-uuid',
@@ -18,7 +27,7 @@ describe('FeatureModulesService', () => {
     parent: null,
     children: [],
     projectId: 'project-uuid',
-    project: null as any,
+    project: null as unknown as Project,
     createdAt: new Date(),
     updatedAt: new Date(),
   };

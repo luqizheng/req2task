@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum } from 'class-validator';
-import { CriteriaType } from '@req2task/core';
+import { CriteriaType } from '../../enums';
 
 export class CreateAcceptanceCriteriaDto {
   @IsEnum(CriteriaType)

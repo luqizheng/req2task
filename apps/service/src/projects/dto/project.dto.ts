@@ -1,5 +1,5 @@
 import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { ProjectStatus } from '@req2task/core';
+import { ProjectStatus } from '@req2task/dto';
 
 export class CreateProjectDto {
   @IsString()

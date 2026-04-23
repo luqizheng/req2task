@@ -34,9 +34,9 @@ export class FeatureModulesController {
     return this.featureModulesService.findByProject(projectId, parseInt(page), parseInt(limit));
   }
 
-  @Get('tree')
+  @Get('tree/:projectId')
   async findTreeByProject(
-    @Query('projectId') projectId: string,
+    @Param('projectId') projectId: string,
   ): Promise<FeatureModuleResponseDto[]> {
     return this.featureModulesService.findTreeByProject(projectId);
   }

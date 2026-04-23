@@ -5,12 +5,7 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-
-export enum UserRole {
-  ADMIN = 'admin',
-  USER = 'user',
-  PROJECT_MANAGER = 'projectManager',
-}
+import { UserRole } from '@req2task/dto';
 
 @Entity()
 export class User {

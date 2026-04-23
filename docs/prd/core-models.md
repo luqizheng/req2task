@@ -1,4 +1,4 @@
-﻿# 核心模型
+# 核心模型
 
 ## 2.1 层级结构
 
@@ -118,7 +118,7 @@ Project（项目）
 | title            | string(255)  | 是   | 任务标题       | 同一需求下标题不可重复                                     |
 | description      | string       | 是   | 任务描述       | 必须描述清楚具体工作                                       |
 | priority         | enum         | 是   | 任务优先级     | critical / high / medium / low                             |
-| status           | enum         | 是   | 任务状态       | todo / in_progress / in_review / done / blocked / cancelled   |
+| status           | enum         | 是   | 任务状态       | todo / in_progress / in_review / done / blocked / cancelled / replaced   |
 | type             | enum         | 是   | 任务类型       | development / testing / documentation / deployment / other |
 | assigneeType     | enum         | 是   | 负责人类型     | human / ai_agent                                           |
 | assigneeId       | UUID         | 否   | 负责人ID       | 人类用户或AI机器人，分配时必填                             |
@@ -168,14 +168,15 @@ Project（项目）
 
 ### RawRequirement（原始需求）
 
-| 字段名    | 类型        | 必填 | 说明               | 业务规则                                     |
-| --------- | ----------- | ---- | ------------------ | -------------------------------------------- |
-| id        | UUID        | 是   | 原始需求的唯一编号 | 系统自动生成                                 |
-| content   | text        | 是   | 原始需求内容       | 客户原话或原始描述                           |
-| source    | string(200) | 是   | 需求来源           | 客户姓名、文档名称等                         |
-| status    | enum        | 是   | 处理状态           | pending / processing / converted / discarded |
-| createdAt | datetime    | 是   | 创建时间           | 系统自动生成                                 |
-| updatedAt | datetime    | 是   | 更新时间           | 系统自动更新                                 |
+| 字段名                   | 类型        | 必填 | 说明                   | 业务规则                                     |
+| ------------------------ | ----------- | ---- | ---------------------- | -------------------------------------------- |
+| id                       | UUID        | 是   | 原始需求的唯一编号     | 系统自动生成                                 |
+| content                  | text        | 是   | 原始需求内容           | 客户原话或原始描述                           |
+| source                   | string(200) | 是   | 需求来源               | 客户姓名、文档名称等                         |
+| status                   | enum        | 是   | 处理状态               | pending / processing / converted / discarded |
+| relatedRawRequirementIds | json        | 否   | 关联的原始需求ID数组   | 如 [uuid1, uuid2]，支持版本链和关联需求      |
+| createdAt                | datetime    | 是   | 创建时间               | 系统自动生成                                 |
+| updatedAt                | datetime    | 是   | 更新时间               | 系统自动更新                                 |
 
 ### RawRequirementCollectionRequirement（原始需求关联）
 

@@ -6,16 +6,9 @@ import {
   ManyToOne,
   JoinColumn,
 } from 'typeorm';
-import { Requirement, RequirementStatus } from './requirement.entity';
+import { Requirement } from './requirement.entity';
 import { User } from './user.entity';
-
-export enum ChangeType {
-  STATUS_CHANGE = 'status_change',
-  CONTENT_CHANGE = 'content_change',
-  PRIORITY_CHANGE = 'priority_change',
-  ASSIGNEE_CHANGE = 'assignee_change',
-  REVIEW_RESULT = 'review_result',
-}
+import { ChangeType, RequirementStatus } from '@req2task/dto';
 
 @Entity('requirement_change_logs')
 export class RequirementChangeLog {

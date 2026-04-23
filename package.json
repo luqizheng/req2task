@@ -20,6 +20,7 @@
     "build": "pnpm -r run build",
     "build:web": " pnpm -F @req2task/web run build ",
     "build:service": "pnpm -F @req2task/service  build ",
+    "build:gateway": "pnpm -F @req2task/gateway run build",
     "build:docker:gateway": "ts-node ./scripts/build-gateway.ts",
     "lint": "pnpm -r run lint",
     "test": "pnpm -r run test",

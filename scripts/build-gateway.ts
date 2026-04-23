@@ -25,7 +25,7 @@ function main(): void {
 
   console.log('🐳 Building Docker image...');
 
-  run(`docker buildx build -t ${REGISTRY}/req2task-gateway:1.0 --platform linux/amd64 --push .`, appDir);
+  run(`docker buildx build -t ${REGISTRY}/req2task-gateway:1.0 --platform linux/amd64 --push -f ${appDir}/Dockerfile .`);
 
   console.log(`✅ Done! Image: ${REGISTRY}/req2task-gateway:1.0`);
 }

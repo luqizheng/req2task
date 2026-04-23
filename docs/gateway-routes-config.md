@@ -25,7 +25,6 @@
 | `/api/conversations/*` | 对话模块 | conversation.controller |
 | `/api/attachments/*` | 附件模块 | project-attachment.controller |
 | `/api/ai/*` | AI能力 | ai-chat, requirement-generation, conflict-detection, task-decomposition |
-| `/api/ai/llm-configs/*` | LLM配置 | llm-config.controller |
 | `/api/ai/vector-store/*` | 向量存储 | vector-store.controller |
 
 ### AI Chat Service
@@ -35,6 +34,7 @@
 | `/api/ai/conversations/*` | 对话管理 | conversation.routes.js |
 | `/api/ai/text/*` | 文本处理 | text.routes.js |
 | `/api/llm-configs/*` | LLM配置 | llm-config.routes.js |
+| `/api/ai/llm-configs/*` | LLM配置 | llm-config.routes.js |
 
 ### File Conversion Service
 
@@ -44,6 +44,14 @@
 | `/api/convert/sync` | 同步转换 | - |
 | `/api/convert/async` | 异步转换 | - |
 | `/api/convert/supported-types` | 支持的类型 | - |
+
+## 完整配置示例
+
+详细配置示例见 [apps/gateway/router.demo.md](../../apps/gateway/router.demo.md)，包含：
+- 完整 JSON 配置示例
+- 负载均衡策略原理说明
+- 熔断器配置说明
+- RustFS 手动注册指南
 
 ## Nacos 配置
 

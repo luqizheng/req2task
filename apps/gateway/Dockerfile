@@ -2,8 +2,8 @@ FROM zhcoder-docker-registry.com:8000/builder/node:v22-slim AS builder
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install -g pnpm@9.0.0 && pnpm install
+COPY package*.json pnpm-workspace.yaml ./
+RUN npm install -g pnpm && pnpm install
 
 COPY . .
 RUN pnpm build
@@ -14,7 +14,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends dumb-init && rm -rf /var/lib/apt/lists/*
 
-COPY package*.json ./
+COPY package*.json pnpm-workspace.yaml ./
 RUN npm install -g pnpm@9.0.0 && pnpm install --prod
 
 COPY --from=builder /app/dist ./dist

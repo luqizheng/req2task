@@ -22,7 +22,11 @@ export default defineConfig({
       //   changeOrigin: true
       // },
       '/api': { // gateway api url
-        target: 'http://localhost:8080',
+        target: 'http://localhost:4000',
+        changeOrigin: true
+      },
+      '/api/ai': {
+        target: 'http://localhost:4001',
         changeOrigin: true
       }
     }

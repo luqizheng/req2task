@@ -43,10 +43,16 @@ export interface MessageEvent {
   };
 }
 
+export interface AiQuestion {
+  question: string;
+  purpose?: string;
+}
+
 export interface DoneEvent {
   type: "done";
   followUpQuestions?: string[];
   keyElements?: string[];
+  questions?: AiQuestion[];
 }
 
 export interface ErrorEvent {

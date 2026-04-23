@@ -152,7 +152,7 @@ const hideOutput = () => {
 };
 
 const handleSubmit = () => {
-  debugger;
+
   if (localUseStream.value) {
     submitStream();
   } else {
@@ -162,7 +162,7 @@ const handleSubmit = () => {
 
 const submitStream = async () => {
 
-  debugger
+
   if (!canSubmit.value) return;
 
   showSseOutput.value = true;
@@ -186,7 +186,7 @@ const submitStream = async () => {
   const token = localStorage.getItem("accessToken");
 
   try {
-    debugger
+
     const response = await fetch(props.url, {
       method: "POST",
       headers: {
@@ -251,6 +251,10 @@ const submitStream = async () => {
               case "done":
                 sseOutputRef.value?.handleDone(event);
                 emit("done", event);
+                emit("success", {
+                  keyElements: event.keyElements,
+                  questions: event.questions || event.followUpQuestions?.map((q: string) => ({ question: q })) || [],
+                });
                 break;
               case "error":
                 sseOutputRef.value?.handleError(event);

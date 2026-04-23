@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import { AiSubmit } from "@/components/ai-submit";
-import type { UseWizardReturn } from "@/composables/useWizard";
+import type { UseWizardReturn, AiQuestion } from "@/composables/useWizard";
 import type { RawRequirementResponseDto } from "@req2task/dto";
 import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
 
@@ -13,14 +13,23 @@ interface Props {
 const props = defineProps<Props>();
 
 const handleSuccess = (data: unknown) => {
-  const result = data as RawRequirementResponseDto;
-  if (result?.id) {
+  if (!data) {
+    ElMessage.warning("未收到有效数据");
+    return;
+  }
+
+  if ((data as RawRequirementResponseDto)?.id) {
+    const result = data as RawRequirementResponseDto;
     props.wizard.setRawRequirement(result);
     if (result.questionAndAnswers && result.questionAndAnswers.length > 0) {
       ElMessage.success("需求已录入，发现追问问题");
     } else {
       ElMessage.success("需求已录入");
     }
+  } else if ((data as { questions?: AiQuestion[] })?.questions) {
+    const sseData = data as { keyElements?: string[]; questions?: AiQuestion[] };
+    props.wizard.setQuestionsFromSSE(null as unknown as RawRequirementResponseDto, sseData);
+    ElMessage.success("需求已录入，发现追问问题");
   }
 };
 
@@ -44,19 +53,14 @@ const translRequestData = (
       <p>描述您的需求或问题，AI 将为您分析和处理。如果需要，AI 会生成追问问题帮助澄清需求。</p>
     </div>
 
-    <AiSubmit
-      :url="`/api/raw-requirements/${projectId}/stream`"
-      :upload-file="true"
-      :use-stream="true"
-      message-key="conversationText"
-      placeholder="描述您的需求或问题，AI 将为您分析和处理..."
-      @success="handleSuccess"
-      @error="handleError"
-      :trans-request="translRequestData"
-    />
+    <AiSubmit :url="`/api/raw-requirements/${projectId}/stream`" :upload-file="true" :use-stream="true"
+      message-key="conversationText" placeholder="描述您的需求或问题，AI 将为您分析和处理..." @success="handleSuccess"
+      @error="handleError" :trans-request="translRequestData" />
 
     <div v-if="wizard.hasQuestions.value" class="questions-hint">
-      <el-icon><ChatDotRound /></el-icon>
+      <el-icon>
+        <ChatDotRound />
+      </el-icon>
       <span>已检测到追问问题，将自动进入问题澄清步骤</span>
     </div>
   </div>

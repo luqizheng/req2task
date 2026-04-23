@@ -1,6 +1,11 @@
 import { ref, computed } from "vue";
 import type { RawRequirementResponseDto } from "@req2task/dto";
 
+export interface AiQuestion {
+  question: string;
+  purpose?: string;
+}
+
 export interface QAItem {
   id: string;
   question: string;
@@ -93,6 +98,26 @@ export function useWizard(options: UseWizardOptions) {
     goToStep(2);
   };
 
+  const setQuestionsFromSSE = (
+    data: RawRequirementResponseDto,
+    sseData?: { keyElements?: string[]; questions?: AiQuestion[] }
+  ) => {
+    rawRequirement.value = data;
+
+    if (sseData?.questions && sseData.questions.length > 0) {
+      questions.value = sseData.questions.map((q, index) => ({
+        id: `sse_q_${Date.now()}_${index}`,
+        question: q.question,
+        answer: "",
+        isAnswered: false,
+        isDeleted: false,
+        isManuallyAdded: false,
+      }));
+    }
+
+    goToStep(2);
+  };
+
   const addQuestion = (question: string, answer: string = "") => {
     questions.value.push({
       id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -158,6 +183,7 @@ export function useWizard(options: UseWizardOptions) {
     nextStep,
     prevStep,
     setRawRequirement,
+    setQuestionsFromSSE,
     addQuestion,
     updateQuestion,
     deleteQuestion,

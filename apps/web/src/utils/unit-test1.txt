@@ -1,0 +1,42 @@
+’--------------------asdfjlajdfa
+{
+  "number":1,
+  "string":"asdf",
+  "keyElements": ["项目ID"],
+  "questions": [
+    { "question": "问题1", "purpose": "目的1" },
+    { "question": "问题2", "purpose": "目的2" }
+  ],
+  "user": {
+    "name": "张三",
+    "email": "zhangsan@example.com"
+  },
+  "parameters":[1,"a","test"],
+  "arrayArray":[
+      {
+        "user":"userName1",
+        "roles":["asdf","adsf"]
+      },
+      {
+        "user":"userName2",
+        "roles":["asdf","adsf"]
+      }
+  ],
+  "litters":{
+      "user1":{
+        "email":"aaa@aa.com",
+        "name":"bbb@cc.com"
+      },
+      "user2":{
+        "email":"aaa@aa.com",
+        "name":"bbb@cc.com"
+      }
+  },
+  "unitTests": [
+    {
+      "trigger": "number",
+      "expected": 1
+    }
+  ]
+}
+阿发发打发---------------------------------------

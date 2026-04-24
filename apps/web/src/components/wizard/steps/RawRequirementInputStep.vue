@@ -5,6 +5,9 @@ import type { UseWizardReturn, AiQuestion } from "@/composables/useWizard";
 import type { RawRequirementResponseDto } from "@req2task/dto";
 import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
 
+import { ChatDotRound } from "@element-plus/icons-vue";
+import { useJsonStream as useJsonStream } from "@/utils/useJson";
+
 interface Props {
   projectId: string;
   wizard: UseWizardReturn;
@@ -27,8 +30,14 @@ const handleSuccess = (data: unknown) => {
       ElMessage.success("需求已录入");
     }
   } else if ((data as { questions?: AiQuestion[] })?.questions) {
-    const sseData = data as { keyElements?: string[]; questions?: AiQuestion[] };
-    props.wizard.setQuestionsFromSSE(null as unknown as RawRequirementResponseDto, sseData);
+    const sseData = data as {
+      keyElements?: string[];
+      questions?: AiQuestion[];
+    };
+    props.wizard.setQuestionsFromSSE(
+      null as unknown as RawRequirementResponseDto,
+      sseData,
+    );
     ElMessage.success("需求已录入，发现追问问题");
   }
 };
@@ -38,11 +47,27 @@ const handleError = (error: Error) => {
 };
 
 const translRequestData = (
-  data: AiSubmitRequestDto
+  data: AiSubmitRequestDto,
 ): GenerateRawRequirementDto => {
   return {
     conversationText: data.message,
   } as GenerateRawRequirementDto;
+};
+const jsonHelper = useJsonStream([
+  {
+    trigger: "questions",
+    onValue(obj) {
+      console.log("收到对象:", obj);
+    },
+    onArrayItem(item, index) {
+      console.log("收到数组元素:", item, index);
+    },
+  },
+]);
+const handleData = (data: string) => {
+
+    jsonHelper.feed(data);
+
 };
 </script>
 
@@ -50,12 +75,23 @@ const translRequestData = (
   <div class="raw-requirement-input-step">
     <div class="step-intro">
       <h3>录入原始需求</h3>
-      <p>描述您的需求或问题，AI 将为您分析和处理。如果需要，AI 会生成追问问题帮助澄清需求。</p>
+      <p>
+        描述您的需求或问题，AI 将为您分析和处理。如果需要，AI
+        会生成追问问题帮助澄清需求。
+      </p>
     </div>
 
-    <AiSubmit :url="`/api/raw-requirements/${projectId}/stream`" :upload-file="true" :use-stream="true"
-      message-key="conversationText" placeholder="描述您的需求或问题，AI 将为您分析和处理..." @success="handleSuccess"
-      @error="handleError" :trans-request="translRequestData" />
+    <AiSubmit
+      :url="`/api/raw-requirements/${projectId}/stream`"
+      :upload-file="true"
+      :use-stream="true"
+      message-key="conversationText"
+      placeholder="描述您的需求或问题，AI 将为您分析和处理..."
+      @success="handleSuccess"
+      @error="handleError"
+      :trans-request="translRequestData"
+      @content="handleData"
+    />
 
     <div v-if="wizard.hasQuestions.value" class="questions-hint">
       <el-icon>
@@ -65,13 +101,6 @@ const translRequestData = (
     </div>
   </div>
 </template>
-
-<script lang="ts">
-import { ChatDotRound } from "@element-plus/icons-vue";
-export default {
-  components: { ChatDotRound },
-};
-</script>
 
 <style scoped>
 .raw-requirement-input-step {

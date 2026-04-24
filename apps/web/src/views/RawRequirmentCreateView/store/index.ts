@@ -1,21 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import type { RawRequirementResponseDto } from '@req2task/dto';
+import type { RawRequirementResponseDto, RawRequirementQADto } from '@req2task/dto';
+import { RawRequirementStatus } from '@req2task/dto';
 
-export interface AiQuestion {
-  question: string;
-  purpose?: string;
-}
-
-export interface QAItem {
-  id: string;
-  question: string;
-  answer: string;
-  purpose?: string;
-  isAnswered: boolean;
-  isDeleted: boolean;
-  isManuallyAdded: boolean;
-}
+export type AiQuestion = Pick<RawRequirementQADto, 'question' | 'purpose'>;
 
 export interface GeneratedRequirement {
   id: string;
@@ -30,30 +18,54 @@ export interface GeneratedRequirement {
   }>;
 }
 
+function createDefaultRawRequirement(): RawRequirementResponseDto {
+  return {
+    id: '',
+    projectId: '',
+    collectionType: undefined,
+    content: '',
+    source: '',
+    collectTime: null,
+    status: RawRequirementStatus.PENDING,
+    questionAndAnswers: [],
+    keyElements: [],
+    createdAt: '',
+    updatedAt: '',
+  };
+}
+
+function isTemporaryId(id: string): boolean {
+  return id.startsWith('sse_') || id.startsWith('qa_');
+}
+
 export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', () => {
   const currentStep = ref<1 | 2>(1);
-  const rawRequirement = ref<RawRequirementResponseDto | null>(null);
-  const questions = ref<QAItem[]>([]);
+  const rawRequirement = ref<RawRequirementResponseDto>(createDefaultRawRequirement());
+  const deletedQuestionIds = ref<Set<string>>(new Set());
   const generatedRequirement = ref<GeneratedRequirement | null>(null);
   const isGenerating = ref(false);
 
+  const visibleQuestions = computed(() =>
+    rawRequirement.value.questionAndAnswers.filter((q) => !deletedQuestionIds.value.has(q.id))
+  );
+
   const pendingQuestions = computed(() =>
-    questions.value.filter((q) => !q.isAnswered && !q.isDeleted)
+    visibleQuestions.value.filter((q) => !q.answer)
   );
 
   const answeredQuestions = computed(() =>
-    questions.value.filter((q) => q.isAnswered && !q.isDeleted)
+    visibleQuestions.value.filter((q) => !!q.answer)
   );
 
   const deletedQuestions = computed(() =>
-    questions.value.filter((q) => q.isDeleted)
+    rawRequirement.value.questionAndAnswers.filter((q) => deletedQuestionIds.value.has(q.id))
   );
 
   const canGenerate = computed(
     () => answeredQuestions.value.length > 0 && !isGenerating.value
   );
 
-  const hasQuestions = computed(() => questions.value.length > 0);
+  const hasQuestions = computed(() => visibleQuestions.value.length > 0);
 
   const goToStep = (step: 1 | 2) => {
     currentStep.value = step;
@@ -73,85 +85,88 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
 
   const setRawRequirement = (data: RawRequirementResponseDto) => {
     rawRequirement.value = data;
-
-    if (data.questionAndAnswers && data.questionAndAnswers.length > 0) {
-      questions.value = data.questionAndAnswers.map((qa) => ({
-        id: qa.id,
-        question: qa.question,
-        answer: qa.answer || '',
-        purpose: qa.purpose,
-        isAnswered: !!qa.answer,
-        isDeleted: false,
-        isManuallyAdded: false,
-      }));
-    }
+    deletedQuestionIds.value = new Set();
   };
 
   const setQuestionsFromSSE = (
-    data: RawRequirementResponseDto,
+    data: RawRequirementResponseDto | null,
     sseData?: { keyElements?: string[]; questions?: AiQuestion[] }
   ) => {
-    rawRequirement.value = data;
+    if (data && data.id) {
+      rawRequirement.value = { ...rawRequirement.value, ...data };
+    }
 
     if (sseData?.questions && sseData.questions.length > 0) {
-      questions.value = sseData.questions.map((q, index) => ({
+      rawRequirement.value.questionAndAnswers = sseData.questions.map((q, index) => ({
         id: `sse_q_${Date.now()}_${index}`,
         question: q.question,
-        answer: '',
+        answer: null,
         purpose: q.purpose,
-        isAnswered: false,
-        isDeleted: false,
-        isManuallyAdded: false,
+        createdAt: new Date().toISOString(),
+        answeredAt: null,
       }));
     }
+    deletedQuestionIds.value = new Set();
   };
 
-  const addQuestion = (question: string, answer: string = '') => {
-    questions.value.push({
+  const addQuestion = (question: string, answer: string = '', purpose?: string) => {
+    rawRequirement.value.questionAndAnswers.push({
       id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       question,
-      answer,
-      isAnswered: !!answer,
-      isDeleted: false,
-      isManuallyAdded: true,
+      answer: answer || null,
+      purpose,
+      createdAt: new Date().toISOString(),
+      answeredAt: answer ? new Date().toISOString() : null,
     });
   };
 
   const addQuestionFromSSE = (q: AiQuestion) => {
-    const exists = questions.value.some(
-      (item) => item.question === q.question && !item.isManuallyAdded,
+    const exists = rawRequirement.value.questionAndAnswers.some(
+      (item) => item.question === q.question,
     );
     if (exists) return;
 
-    questions.value.push({
+    rawRequirement.value.questionAndAnswers.push({
       id: `sse_q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       question: q.question,
-      answer: '',
+      answer: null,
       purpose: q.purpose,
-      isAnswered: false,
-      isDeleted: false,
-      isManuallyAdded: false,
+      createdAt: new Date().toISOString(),
+      answeredAt: null,
     });
   };
 
-  const updateQuestion = (id: string, updates: Partial<QAItem>) => {
-    const index = questions.value.findIndex((q) => q.id === id);
+  const updateQuestion = (id: string, updates: Partial<RawRequirementQADto>) => {
+    const index = rawRequirement.value.questionAndAnswers.findIndex((q) => q.id === id);
     if (index !== -1) {
-      questions.value[index] = { ...questions.value[index], ...updates };
+      rawRequirement.value.questionAndAnswers[index] = {
+        ...rawRequirement.value.questionAndAnswers[index],
+        ...updates,
+      };
     }
   };
 
   const deleteQuestion = (id: string) => {
-    const index = questions.value.findIndex((q) => q.id === id);
-    if (index !== -1) {
-      questions.value[index].isDeleted = true;
+    if (isTemporaryId(id)) {
+      const index = rawRequirement.value.questionAndAnswers.findIndex((q) => q.id === id);
+      if (index !== -1) {
+        rawRequirement.value.questionAndAnswers.splice(index, 1);
+      }
+      return;
     }
+    deletedQuestionIds.value = new Set([...deletedQuestionIds.value, id]);
+  };
+
+  const restoreQuestion = (id: string) => {
+    const newSet = new Set(deletedQuestionIds.value);
+    newSet.delete(id);
+    deletedQuestionIds.value = newSet;
   };
 
   const answerQuestion = (id: string, answer: string) => {
     updateQuestion(id, {
       answer,
-      isAnswered: true,
+      answeredAt: new Date().toISOString(),
     });
   };
 
@@ -166,8 +181,8 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
 
   const reset = () => {
     currentStep.value = 1;
-    rawRequirement.value = null;
-    questions.value = [];
+    rawRequirement.value = createDefaultRawRequirement();
+    deletedQuestionIds.value = new Set();
     generatedRequirement.value = null;
     isGenerating.value = false;
   };
@@ -175,9 +190,10 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
   return {
     currentStep,
     rawRequirement,
-    questions,
+    deletedQuestionIds,
     generatedRequirement,
     isGenerating,
+    visibleQuestions,
     pendingQuestions,
     answeredQuestions,
     deletedQuestions,
@@ -192,6 +208,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     addQuestionFromSSE,
     updateQuestion,
     deleteQuestion,
+    restoreQuestion,
     answerQuestion,
     setGeneratedRequirement,
     setIsGenerating,

@@ -71,6 +71,9 @@ export class RawRequirementController {
       dto.conversationText,
       createdById,
       project.description,
+      dto.source,
+      dto.collectionType,
+      dto.collectTime,
     );
 
     stream$.subscribe({

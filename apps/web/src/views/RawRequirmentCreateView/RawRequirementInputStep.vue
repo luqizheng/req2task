@@ -6,7 +6,7 @@ import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import type { AiQuestion } from "./store";
 import type { RawRequirementResponseDto } from "@req2task/dto";
-import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
+import { AiSubmitRequestDto, GenerateRawRequirementDto, CollectionType } from "@req2task/dto";
 import { aiApi } from "@/api/ai";
 import { useJsonStream } from "@/utils/useJson";
 
@@ -21,6 +21,13 @@ const newQuestion = ref("");
 const newAnswer = ref("");
 const editingId = ref<string | null>(null);
 const editingAnswer = ref("");
+
+const collectionTypeOptions = [
+  { label: '会议', value: CollectionType.MEETING },
+  { label: '访谈', value: CollectionType.INTERVIEW },
+  { label: '文档', value: CollectionType.DOCUMENT },
+  { label: '其他', value: CollectionType.OTHER },
+];
 
 const handleSuccess = (data: unknown) => {
   if (!data) {
@@ -42,7 +49,7 @@ const handleSuccess = (data: unknown) => {
       questions?: AiQuestion[];
     };
     props.store.setQuestionsFromSSE(
-      null as unknown as RawRequirementResponseDto,
+      null,
       sseData,
     );
     ElMessage.success("需求已录入，发现追问问题");
@@ -56,9 +63,21 @@ const handleError = (error: Error) => {
 const translRequestData = (
   data: AiSubmitRequestDto,
 ): GenerateRawRequirementDto => {
-  return {
-    conversationText: data.message,
-  } as GenerateRawRequirementDto;
+  const source = props.store.rawRequirement.source?.trim();
+  if (!source) {
+    throw new Error('请填写需求来源');
+  }
+  const dto: GenerateRawRequirementDto = {
+    conversationText: data.message.trim(),
+    source,
+  };
+  if (props.store.rawRequirement.collectionType) {
+    dto.collectionType = props.store.rawRequirement.collectionType;
+  }
+  if (props.store.rawRequirement.collectTime) {
+    dto.collectTime = props.store.rawRequirement.collectTime;
+  }
+  return dto;
 };
 
 const jsonHelper = useJsonStream([
@@ -105,8 +124,8 @@ const handleCancelEdit = () => {
 };
 
 const handleDeleteQuestion = async (id: string) => {
-  const qa = props.store.questions.find((q) => q.id === id);
-  const actionLabel = qa?.isAnswered ? "删除" : "跳过";
+  const qa = props.store.visibleQuestions.find((q) => q.id === id);
+  const actionLabel = qa?.answer ? "删除" : "跳过";
 
   try {
     await ElMessageBox.confirm(
@@ -125,7 +144,7 @@ const handleDeleteQuestion = async (id: string) => {
 };
 
 const handleGenerate = async () => {
-  if (!props.store.rawRequirement) {
+  if (!props.store.rawRequirement.id) {
     ElMessage.error("缺少原始需求数据");
     return;
   }
@@ -161,6 +180,48 @@ const handleGenerate = async () => {
         描述您的需求或问题，AI 将为您分析和处理。如果需要，AI
         会生成追问问题帮助澄清需求。
       </p>
+
+      <div class="meta-form">
+        <div class="meta-field">
+          <label class="form-label" for="source-input">需求来源 <span class="required">*</span></label>
+          <el-input
+            id="source-input"
+            v-model="props.store.rawRequirement.source"
+            placeholder="如：客户会议、产品文档等"
+            size="default"
+            clearable
+          />
+        </div>
+        <div class="meta-field">
+          <label class="form-label" for="collection-type-input">采集方式</label>
+          <el-select
+            id="collection-type-input"
+            v-model="props.store.rawRequirement.collectionType"
+            placeholder="选择采集方式"
+            size="default"
+            clearable
+          >
+            <el-option
+              v-for="opt in collectionTypeOptions"
+              :key="opt.value"
+              :label="opt.label"
+              :value="opt.value"
+            />
+          </el-select>
+        </div>
+        <div class="meta-field">
+          <label class="form-label" for="collect-time-input">收集时间</label>
+          <el-date-picker
+            id="collect-time-input"
+            v-model="props.store.rawRequirement.collectTime"
+            type="datetime"
+            placeholder="选择收集时间"
+            size="default"
+            value-format="YYYY-MM-DDTHH:mm:ssZ"
+            clearable
+          />
+        </div>
+      </div>
 
       <AiSubmit
         :url="`/api/raw-requirements/${projectId}/stream`"
@@ -220,21 +281,14 @@ const handleGenerate = async () => {
 
         <div class="questions-list" role="list" aria-label="问题列表">
           <div
-            v-for="qa in store.questions.filter((q) => !q.isDeleted)"
+            v-for="qa in store.visibleQuestions"
             :key="qa.id"
             class="question-item"
             :class="{
-              answered: qa.isAnswered,
-              'manually-added': qa.isManuallyAdded,
+              answered: !!qa.answer,
             }"
             role="listitem"
           >
-            <div class="question-badge">
-              <el-tag v-if="qa.isManuallyAdded" type="info" size="small">
-                手动添加
-              </el-tag>
-            </div>
-
             <div class="question-content">
               <div class="question-text">
                 <span class="q-label" aria-hidden="true">Q:</span>
@@ -245,7 +299,7 @@ const handleGenerate = async () => {
                 {{ qa.purpose }}
               </div>
 
-              <div v-if="qa.isAnswered" class="answer-text">
+              <div v-if="qa.answer" class="answer-text">
                 <span class="a-label" aria-hidden="true">A:</span>
                 {{ qa.answer }}
               </div>
@@ -282,10 +336,10 @@ const handleGenerate = async () => {
               </template>
               <template v-else>
                 <el-button
-                  v-if="!qa.isAnswered"
+                  v-if="!qa.answer"
                   type="primary"
                   size="small"
-                  @click="handleEditAnswer(qa.id, qa.answer)"
+                  @click="handleEditAnswer(qa.id, qa.answer ?? '')"
                 >
                   回答
                 </el-button>
@@ -293,7 +347,7 @@ const handleGenerate = async () => {
                   v-else
                   type="warning"
                   size="small"
-                  @click="handleEditAnswer(qa.id, qa.answer)"
+                  @click="handleEditAnswer(qa.id, qa.answer ?? '')"
                 >
                   编辑回答
                 </el-button>
@@ -301,10 +355,10 @@ const handleGenerate = async () => {
                   type="danger"
                   :icon="Delete"
                   size="small"
-                  :aria-label="qa.isAnswered ? '删除问题' : '跳过问题'"
+                  :aria-label="qa.answer ? '删除问题' : '跳过问题'"
                   @click="handleDeleteQuestion(qa.id)"
                 >
-                  {{ qa.isAnswered ? "删除" : "跳过" }}
+                  {{ qa.answer ? "删除" : "跳过" }}
                 </el-button>
               </template>
             </div>
@@ -327,7 +381,7 @@ const handleGenerate = async () => {
               type="primary"
               link
               size="small"
-              @click="store.updateQuestion(qa.id, { isDeleted: false })"
+              @click="store.restoreQuestion(qa.id)"
             >
               恢复
             </el-button>
@@ -401,6 +455,18 @@ const handleGenerate = async () => {
   line-height: 1.6;
 }
 
+.meta-form {
+  display: flex;
+  gap: var(--spacing-compact, 8px);
+}
+
+.meta-field {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .panel-header {
   display: flex;
   align-items: center;
@@ -418,6 +484,10 @@ const handleGenerate = async () => {
   color: var(--color-text-secondary, #64748b);
   margin-bottom: 4px;
   display: block;
+}
+
+.required {
+  color: var(--color-danger, #ef4444);
 }
 
 .add-question-form {
@@ -457,15 +527,6 @@ const handleGenerate = async () => {
 .question-item.answered {
   background: #f0fdf4;
   border-color: var(--color-success, #10b981);
-}
-
-.question-item.manually-added {
-  border-left: 3px solid var(--color-info, #6366f1);
-}
-
-.question-badge {
-  display: flex;
-  gap: var(--spacing-compact, 8px);
 }
 
 .question-content {

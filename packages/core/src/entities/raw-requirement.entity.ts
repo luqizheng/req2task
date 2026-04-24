@@ -55,6 +55,9 @@ export class RawRequirement {
   @Column({ name: 'source', type: 'varchar', length: 200, nullable: true })
   source!: string | null;
 
+  @Column({ name: 'collect_time', type: 'timestamptz', nullable: true })
+  collectTime!: Date | null;
+
   @Column({ name: 'generated_content', type: 'text', nullable: true })
   generatedContent!: string | null;
 

@@ -16,6 +16,7 @@ export interface RawRequirementResponseDto {
   conversationId?: string;
   content: string;
   source: string;
+  collectTime: string | null;
   status: RawRequirementStatus;
   questionAndAnswers: RawRequirementQADto[];
   keyElements: string[];
@@ -28,6 +29,7 @@ export interface CreateRawRequirementInput {
   content: string;
   source?: string;
   collectionType?: CollectionType;
+  collectTime?: string;
 }
 
 export interface UpdateRawRequirementDto {

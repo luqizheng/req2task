@@ -21,6 +21,7 @@ export interface AddRawRequirementDto {
   content: string;
   source?: string;
   collectionType?: CollectionType;
+  collectTime?: string;
   userId: string;
 }
 
@@ -57,6 +58,7 @@ export class RawRequirementService {
       conversationId: entity.conversationId || undefined,
       content: entity.originalContent,
       source: entity.source || "",
+      collectTime: entity.collectTime ? entity.collectTime.toISOString() : null,
       status: entity.status,
       questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
       keyElements: entity.keyElements || [],
@@ -71,6 +73,7 @@ export class RawRequirementService {
       collectionType: dto.collectionType || null,
       originalContent: dto.content,
       source: dto.source || null,
+      collectTime: dto.collectTime ? new Date(dto.collectTime) : null,
       status: RawRequirementStatus.PENDING,
       createdById: dto.userId,
       questionAndAnswers: [],

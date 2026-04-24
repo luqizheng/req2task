@@ -115,6 +115,9 @@ export class AiGenerationService {
     conversationText: string,
     createdById: string,
     context?: string,
+    source?: string,
+    collectionType?: CollectionType,
+    collectTime?: string,
   ): Observable<LLMStreamChunk> {
     const title = `RawReq_${projectId}_${Date.now()}`;
 
@@ -646,6 +649,7 @@ export class AiGenerationService {
             id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             question: qa.question || "",
             answer: qa.answer || null,
+            purpose: qa.purpose || undefined,
             createdAt: new Date().toISOString(),
             answeredAt: qa.answeredAt || null,
           }),
@@ -656,6 +660,7 @@ export class AiGenerationService {
           originalContent: data.originalContent || content,
           collectionType,
           source: data.source || null,
+          collectTime: data.collectTime ? new Date(data.collectTime) : null,
           keyElements: data.keyElements || [],
           status: RawRequirementStatus.PENDING,
           questionAndAnswers,

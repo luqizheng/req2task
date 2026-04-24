@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsArray, IsEnum } from 'class-validator';
+import { IsString, IsOptional, IsArray, IsEnum, IsDateString } from 'class-validator';
 import { Priority, CollectionType } from '../../enums';
 import { QuestionAndAnswerDto } from '../../conversation/dto';
 import { RawRequirementQADto } from '../../raw-requirement';
@@ -61,6 +61,10 @@ export class GenerateRawRequirementDto {
   @IsOptional()
   @IsEnum(CollectionType)
   collectionType?: CollectionType;
+
+  @IsOptional()
+  @IsDateString()
+  collectTime?: string;
 
   @IsOptional()
   @IsString()

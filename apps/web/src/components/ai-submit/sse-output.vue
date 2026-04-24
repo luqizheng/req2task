@@ -235,6 +235,8 @@ onMounted(() => {
   background: rgba(255, 255, 255, 0.8);
   border-radius: 8px;
   border: 1px solid rgba(99, 102, 241, 0.1);
+  max-height: 300px;
+  overflow-y: auto;
 }
 
 .typed-text {

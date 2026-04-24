@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Plus, Delete, Edit, Check, Close } from "@element-plus/icons-vue";
+import { Plus, Delete, Check, Close } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import type { AiQuestion } from "./store";
@@ -21,6 +21,7 @@ const newQuestion = ref("");
 const newAnswer = ref("");
 const editingId = ref<string | null>(null);
 const editingAnswer = ref("");
+const showAddDialog = ref(false);
 
 const collectionTypeOptions = [
   { label: '会议', value: CollectionType.MEETING },
@@ -101,6 +102,7 @@ const handleAddQuestion = () => {
   props.store.addQuestion(newQuestion.value.trim(), newAnswer.value.trim());
   newQuestion.value = "";
   newAnswer.value = "";
+  showAddDialog.value = false;
 };
 
 const handleEditAnswer = (id: string, currentAnswer: string) => {
@@ -250,34 +252,14 @@ const handleGenerate = async () => {
           </div>
         </div>
 
-        <div class="add-question-form">
-          <label class="form-label" for="new-question-input">添加新问题（可选）</label>
-          <el-input
-            id="new-question-input"
-            v-model="newQuestion"
-            placeholder="输入问题内容"
-            size="default"
-          >
-            <template #prepend>
-              <el-icon><Edit /></el-icon>
-            </template>
-          </el-input>
-          <label class="form-label" for="new-answer-input">同时回答此问题（可选）</label>
-          <el-input
-            id="new-answer-input"
-            v-model="newAnswer"
-            placeholder="输入回答内容"
-            size="default"
-          />
-          <el-button
-            type="primary"
-            :icon="Plus"
-            size="default"
-            @click="handleAddQuestion"
-          >
-            添加
-          </el-button>
-        </div>
+        <el-button
+          type="primary"
+          :icon="Plus"
+          size="default"
+          @click="showAddDialog = true"
+        >
+          添加新问题
+        </el-button>
 
         <div class="questions-list" role="list" aria-label="问题列表">
           <div
@@ -411,6 +393,36 @@ const handleGenerate = async () => {
       </template>
     </div>
   </div>
+
+  <el-dialog
+    v-model="showAddDialog"
+    title="添加新问题"
+    width="500px"
+    :close-on-click-modal="false"
+  >
+    <el-form label-position="top">
+      <el-form-item label="问题内容">
+        <el-input
+          v-model="newQuestion"
+          placeholder="输入问题内容"
+          type="textarea"
+          :rows="3"
+        />
+      </el-form-item>
+      <el-form-item label="回答内容（可选）">
+        <el-input
+          v-model="newAnswer"
+          placeholder="输入回答内容"
+          type="textarea"
+          :rows="3"
+        />
+      </el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="showAddDialog = false">取消</el-button>
+      <el-button type="primary" @click="handleAddQuestion">确定</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <style scoped>
@@ -426,7 +438,7 @@ const handleGenerate = async () => {
 }
 
 .panel-left {
-  flex: 0 0 380px;
+  flex: 0 0 480px;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-component, 12px);
@@ -488,15 +500,6 @@ const handleGenerate = async () => {
 
 .required {
   color: var(--color-danger, #ef4444);
-}
-
-.add-question-form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-compact, 8px);
-  padding: var(--spacing-component, 12px);
-  background: var(--color-bg-secondary, #f8fafc);
-  border-radius: 8px;
 }
 
 .questions-list {

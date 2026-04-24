@@ -115,6 +115,7 @@ JSON格式：
 
 JSON格式：
 {
+  "projectId": "{{projectId}}",
   "keyElements": ["要素1", "要素2"],
   "questions": [
     {

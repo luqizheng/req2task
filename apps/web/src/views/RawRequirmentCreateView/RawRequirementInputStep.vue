@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { ElMessage } from "element-plus";
+import { ElMessage, ElMessageBox } from "element-plus";
 import { Plus, Delete, Edit, Check, Close } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
@@ -90,6 +90,10 @@ const handleEditAnswer = (id: string, currentAnswer: string) => {
 };
 
 const handleSaveAnswer = (id: string) => {
+  if (!editingAnswer.value.trim()) {
+    ElMessage.warning("请输入回答内容");
+    return;
+  }
   props.store.answerQuestion(id, editingAnswer.value.trim());
   editingId.value = null;
   editingAnswer.value = "";
@@ -100,8 +104,24 @@ const handleCancelEdit = () => {
   editingAnswer.value = "";
 };
 
-const handleDeleteQuestion = (id: string) => {
-  props.store.deleteQuestion(id);
+const handleDeleteQuestion = async (id: string) => {
+  const qa = props.store.questions.find((q) => q.id === id);
+  const actionLabel = qa?.isAnswered ? "删除" : "跳过";
+
+  try {
+    await ElMessageBox.confirm(
+      `确定要${actionLabel}该问题吗？`,
+      "确认操作",
+      {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      },
+    );
+    props.store.deleteQuestion(id);
+  } catch {
+    // 用户取消
+  }
 };
 
 const handleGenerate = async () => {
@@ -136,7 +156,7 @@ const handleGenerate = async () => {
 <template>
   <div class="input-and-questions">
     <div class="panel panel-left">
-      <h3 class="panel-title">录入原始需求</h3>
+      <h2 class="panel-title">录入原始需求</h2>
       <p class="panel-desc">
         描述您的需求或问题，AI 将为您分析和处理。如果需要，AI
         会生成追问问题帮助澄清需求。
@@ -158,7 +178,7 @@ const handleGenerate = async () => {
     <div class="panel panel-right">
       <template v-if="store.hasQuestions">
         <div class="panel-header">
-          <h3 class="panel-title">问题澄清</h3>
+          <h2 class="panel-title">问题澄清</h2>
           <div class="question-stats">
             <el-tag type="warning" size="small">
               {{ store.pendingQuestions.length }} 待回答
@@ -170,18 +190,22 @@ const handleGenerate = async () => {
         </div>
 
         <div class="add-question-form">
+          <label class="form-label" for="new-question-input">添加新问题（可选）</label>
           <el-input
+            id="new-question-input"
             v-model="newQuestion"
-            placeholder="添加新问题（可选）"
+            placeholder="输入问题内容"
             size="default"
           >
             <template #prepend>
               <el-icon><Edit /></el-icon>
             </template>
           </el-input>
+          <label class="form-label" for="new-answer-input">同时回答此问题（可选）</label>
           <el-input
+            id="new-answer-input"
             v-model="newAnswer"
-            placeholder="同时回答此问题（可选）"
+            placeholder="输入回答内容"
             size="default"
           />
           <el-button
@@ -194,7 +218,7 @@ const handleGenerate = async () => {
           </el-button>
         </div>
 
-        <div class="questions-list">
+        <div class="questions-list" role="list" aria-label="问题列表">
           <div
             v-for="qa in store.questions.filter((q) => !q.isDeleted)"
             :key="qa.id"
@@ -203,6 +227,7 @@ const handleGenerate = async () => {
               answered: qa.isAnswered,
               'manually-added': qa.isManuallyAdded,
             }"
+            role="listitem"
           >
             <div class="question-badge">
               <el-tag v-if="qa.isManuallyAdded" type="info" size="small">
@@ -212,7 +237,7 @@ const handleGenerate = async () => {
 
             <div class="question-content">
               <div class="question-text">
-                <span class="q-label">Q:</span>
+                <span class="q-label" aria-hidden="true">Q:</span>
                 {{ qa.question }}
               </div>
               <div v-if="qa.purpose" class="purpose-text">
@@ -221,7 +246,7 @@ const handleGenerate = async () => {
               </div>
 
               <div v-if="qa.isAnswered" class="answer-text">
-                <span class="a-label">A:</span>
+                <span class="a-label" aria-hidden="true">A:</span>
                 {{ qa.answer }}
               </div>
             </div>
@@ -234,11 +259,13 @@ const handleGenerate = async () => {
                   :rows="2"
                   placeholder="输入回答..."
                   size="small"
+                  aria-label="编辑回答"
                 />
                 <el-button
                   type="success"
                   :icon="Check"
                   size="small"
+                  aria-label="保存回答"
                   @click="handleSaveAnswer(qa.id)"
                 >
                   保存
@@ -247,6 +274,7 @@ const handleGenerate = async () => {
                   type="info"
                   :icon="Close"
                   size="small"
+                  aria-label="取消编辑"
                   @click="handleCancelEdit"
                 >
                   取消
@@ -273,6 +301,7 @@ const handleGenerate = async () => {
                   type="danger"
                   :icon="Delete"
                   size="small"
+                  :aria-label="qa.isAnswered ? '删除问题' : '跳过问题'"
                   @click="handleDeleteQuestion(qa.id)"
                 >
                   {{ qa.isAnswered ? "删除" : "跳过" }}
@@ -292,10 +321,11 @@ const handleGenerate = async () => {
             :key="qa.id"
             class="skipped-item"
           >
-            <span class="q-label">Q:</span>
+            <span class="q-label" aria-hidden="true">Q:</span>
             {{ qa.question }}
             <el-button
-              type="text"
+              type="primary"
+              link
               size="small"
               @click="store.updateQuestion(qa.id, { isDeleted: false })"
             >
@@ -332,7 +362,7 @@ const handleGenerate = async () => {
 <style scoped>
 .input-and-questions {
   display: flex;
-  gap: 24px;
+  gap: var(--spacing-card, 16px);
   min-height: 500px;
 }
 
@@ -345,28 +375,28 @@ const handleGenerate = async () => {
   flex: 0 0 380px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--spacing-component, 12px);
 }
 
 .panel-right {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding-left: 24px;
-  border-left: 1px solid #e2e8f0;
+  gap: var(--spacing-component, 12px);
+  padding-left: var(--spacing-card, 16px);
+  border-left: 1px solid var(--color-border, #e2e8f0);
 }
 
 .panel-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   margin: 0 0 4px 0;
 }
 
 .panel-desc {
   font-size: 14px;
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
   margin: 0;
   line-height: 1.6;
 }
@@ -379,22 +409,30 @@ const handleGenerate = async () => {
 
 .question-stats {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-compact, 8px);
+}
+
+.form-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 4px;
+  display: block;
 }
 
 .add-question-form {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: #f8fafc;
+  gap: var(--spacing-compact, 8px);
+  padding: var(--spacing-component, 12px);
+  background: var(--color-bg-secondary, #f8fafc);
   border-radius: 8px;
 }
 
 .questions-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-component, 12px);
   overflow-y: auto;
   max-height: 400px;
   padding-right: 4px;
@@ -403,31 +441,31 @@ const handleGenerate = async () => {
 .question-item {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  gap: var(--spacing-compact, 8px);
+  padding: var(--spacing-component, 12px);
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
   border-radius: 8px;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .question-item:hover {
-  border-color: #6366f1;
+  border-color: var(--color-info, #6366f1);
   box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
 }
 
 .question-item.answered {
   background: #f0fdf4;
-  border-color: #10b981;
+  border-color: var(--color-success, #10b981);
 }
 
 .question-item.manually-added {
-  border-left: 3px solid #8b5cf6;
+  border-left: 3px solid var(--color-info, #6366f1);
 }
 
 .question-badge {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-compact, 8px);
 }
 
 .question-content {
@@ -442,12 +480,12 @@ const handleGenerate = async () => {
 }
 
 .question-text {
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .purpose-text {
   font-size: 13px;
-  color: #8b5cf6;
+  color: var(--color-info, #6366f1);
   padding-left: 16px;
   margin-bottom: 4px;
 }
@@ -458,7 +496,7 @@ const handleGenerate = async () => {
 }
 
 .answer-text {
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
   padding-left: 16px;
 }
 
@@ -469,16 +507,16 @@ const handleGenerate = async () => {
 }
 
 .q-label {
-  color: #f59e0b;
+  color: var(--color-warning, #f59e0b);
 }
 
 .a-label {
-  color: #10b981;
+  color: var(--color-success, #10b981);
 }
 
 .question-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-compact, 8px);
   align-items: flex-start;
   flex-wrap: wrap;
 }
@@ -489,27 +527,27 @@ const handleGenerate = async () => {
 }
 
 .skipped-section {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px dashed #e2e8f0;
+  margin-top: var(--spacing-component, 12px);
+  padding-top: var(--spacing-component, 12px);
+  border-top: 1px dashed var(--color-border, #e2e8f0);
 }
 
 .section-title {
   font-size: 13px;
   font-weight: 600;
-  color: #94a3b8;
-  margin-bottom: 8px;
+  color: var(--color-text-placeholder, #94a3b8);
+  margin-bottom: var(--spacing-compact, 8px);
 }
 
 .skipped-item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-compact, 8px);
   padding: 6px 10px;
-  background: #f8fafc;
+  background: var(--color-bg-secondary, #f8fafc);
   border-radius: 6px;
   margin-bottom: 6px;
-  color: #94a3b8;
+  color: var(--color-text-placeholder, #94a3b8);
   text-decoration: line-through;
   font-size: 13px;
 }
@@ -518,15 +556,15 @@ const handleGenerate = async () => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e2e8f0;
+  gap: var(--spacing-compact, 8px);
+  margin-top: var(--spacing-component, 12px);
+  padding-top: var(--spacing-component, 12px);
+  border-top: 1px solid var(--color-border, #e2e8f0);
 }
 
 .generate-hint {
-  font-size: 12px;
-  color: #94a3b8;
+  font-size: 13px;
+  color: var(--color-text-placeholder, #94a3b8);
   margin: 0;
 }
 
@@ -535,5 +573,38 @@ const handleGenerate = async () => {
   align-items: center;
   justify-content: center;
   flex: 1;
+}
+
+@media (max-width: 768px) {
+  .input-and-questions {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .panel-left {
+    flex: none;
+    width: 100%;
+  }
+
+  .panel-right {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    padding-top: var(--spacing-component, 12px);
+  }
+
+  .questions-list {
+    max-height: 300px;
+  }
+
+  .question-actions :deep(.el-textarea) {
+    min-width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .question-item {
+    transition: none;
+  }
 }
 </style>

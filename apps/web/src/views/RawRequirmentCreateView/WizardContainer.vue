@@ -27,12 +27,12 @@ const stepConfig = [
       />
     </div>
 
-    <div class="wizard-content">
-      <div v-if="store.currentStep === 1" class="step-content">
+    <div class="wizard-content" tabindex="-1" aria-live="polite">
+      <div v-if="store.currentStep === 1" class="step-content" role="tabpanel" aria-label="步骤1: 录入与澄清">
         <slot name="step1" />
       </div>
 
-      <div v-else-if="store.currentStep === 2" class="step-content">
+      <div v-else-if="store.currentStep === 2" class="step-content" role="tabpanel" aria-label="步骤2: 生成结果">
         <slot name="step2" />
       </div>
     </div>
@@ -53,38 +53,42 @@ const stepConfig = [
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #fff;
+  background: var(--color-bg-card, #fff);
   border-radius: 12px;
   overflow: hidden;
 }
 
 .wizard-header {
-  padding: 24px;
+  padding: var(--spacing-card, 16px);
   background: linear-gradient(135deg, #fafafa 0%, #f5f5ff 100%);
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
 }
 
 .wizard-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   margin: 0 0 20px 0;
 }
 
 .wizard-content {
   flex: 1;
   overflow-y: auto;
-  padding: 24px;
+  padding: var(--spacing-card, 16px);
+}
+
+.wizard-content:focus {
+  outline: none;
 }
 
 .step-content {
-  animation: fadeIn 0.3s ease;
+  animation: fadeIn 0.25s ease-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -95,9 +99,15 @@ const stepConfig = [
 .wizard-footer {
   display: flex;
   justify-content: center;
-  gap: 12px;
-  padding: 20px 24px;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  gap: var(--spacing-component, 12px);
+  padding: 20px var(--spacing-card, 16px);
+  border-top: 1px solid var(--color-border, #e2e8f0);
+  background: var(--color-bg-secondary, #f8fafc);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-content {
+    animation: none;
+  }
 }
 </style>

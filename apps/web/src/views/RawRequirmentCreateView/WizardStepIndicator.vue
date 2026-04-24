@@ -22,23 +22,26 @@ const getStepStatus = (step: number) => {
 </script>
 
 <template>
-  <div class="step-indicator">
-    <div
-      v-for="(item, index) in steps"
-      :key="item.step"
-      class="step-item"
-      :class="getStepStatus(item.step)"
-    >
-      <div class="step-circle">
-        <el-icon v-if="getStepStatus(item.step) === 'completed'">
-          <Check />
-        </el-icon>
-        <span v-else>{{ item.step }}</span>
-      </div>
-      <span class="step-title">{{ item.title }}</span>
-      <div v-if="index < steps.length - 1" class="step-line" />
-    </div>
-  </div>
+  <nav class="step-indicator" aria-label="向导步骤">
+    <ol class="step-list">
+      <li
+        v-for="(item, index) in steps"
+        :key="item.step"
+        class="step-item"
+        :class="getStepStatus(item.step)"
+        :aria-current="getStepStatus(item.step) === 'active' ? 'step' : undefined"
+      >
+        <div class="step-circle" :aria-label="`步骤 ${item.step}: ${item.title}`">
+          <el-icon v-if="getStepStatus(item.step) === 'completed'">
+            <Check />
+          </el-icon>
+          <span v-else>{{ item.step }}</span>
+        </div>
+        <span class="step-title">{{ item.title }}</span>
+        <div v-if="index < steps.length - 1" class="step-line" aria-hidden="true" />
+      </li>
+    </ol>
+  </nav>
 </template>
 
 <style scoped>
@@ -46,7 +49,16 @@ const getStepStatus = (step: number) => {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+.step-list {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 0;
+  list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .step-item {
@@ -64,54 +76,63 @@ const getStepStatus = (step: number) => {
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .step-title {
-  margin-left: 8px;
+  margin-left: var(--spacing-compact, 8px);
   font-size: 14px;
   font-weight: 500;
-  transition: all 0.3s ease;
+  transition: color 0.2s ease;
 }
 
 .step-line {
   width: 60px;
   height: 2px;
-  margin: 0 16px;
-  background: #e2e8f0;
-  transition: all 0.3s ease;
+  margin: 0 var(--spacing-component, 12px);
+  background: var(--color-border, #e2e8f0);
+  transition: background 0.2s ease;
 }
 
 .step-item.completed .step-circle {
-  background: #10b981;
+  background: var(--color-success, #10b981);
   color: white;
 }
 
 .step-item.completed .step-title {
-  color: #10b981;
+  color: var(--color-success, #10b981);
 }
 
 .step-item.completed .step-line {
-  background: #10b981;
+  background: var(--color-success, #10b981);
 }
 
 .step-item.active .step-circle {
-  background: #6366f1;
+  background: var(--color-primary, #2563eb);
   color: white;
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
 }
 
 .step-item.active .step-title {
-  color: #6366f1;
+  color: var(--color-primary, #2563eb);
+  font-weight: 600;
 }
 
 .step-item.pending .step-circle {
-  background: #f1f5f9;
-  color: #94a3b8;
-  border: 2px solid #e2e8f0;
+  background: var(--color-bg, #f1f5f9);
+  color: var(--color-text-placeholder, #94a3b8);
+  border: 2px solid var(--color-border, #e2e8f0);
 }
 
 .step-item.pending .step-title {
-  color: #94a3b8;
+  color: var(--color-text-placeholder, #94a3b8);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-circle,
+  .step-title,
+  .step-line {
+    transition: none;
+  }
 }
 </style>

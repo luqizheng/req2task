@@ -46,9 +46,9 @@ const handleContinue = () => {
 
 <template>
   <div class="requirement-result-step">
-    <div class="success-banner">
+    <div class="success-banner" role="status" aria-label="需求生成成功">
       <el-icon class="success-icon"><Check /></el-icon>
-      <h3>需求生成成功！</h3>
+      <h2>需求生成成功！</h2>
       <p>以下是 AI 根据您的需求和问答信息生成的需求详情</p>
     </div>
 
@@ -57,9 +57,9 @@ const handleContinue = () => {
       class="requirement-detail"
     >
       <div class="detail-header">
-        <h2 class="requirement-title">
+        <h3 class="requirement-title">
           {{ store.generatedRequirement.title }}
-        </h2>
+        </h3>
         <el-tag :type="getPriorityType(store.generatedRequirement.priority)">
           {{ getPriorityLabel(store.generatedRequirement.priority) }}
         </el-tag>
@@ -150,20 +150,20 @@ const handleContinue = () => {
   padding: 32px;
   background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
   border-radius: 12px;
-  margin-bottom: 24px;
+  margin-bottom: var(--spacing-card, 16px);
 }
 
 .success-icon {
   font-size: 48px;
-  color: #10b981;
+  color: var(--color-success, #10b981);
   margin-bottom: 16px;
 }
 
-.success-banner h3 {
+.success-banner h2 {
   font-size: 20px;
   font-weight: 600;
   color: #166534;
-  margin: 0 0 8px 0;
+  margin: 0 0 var(--spacing-compact, 8px) 0;
 }
 
 .success-banner p {
@@ -173,27 +173,27 @@ const handleContinue = () => {
 }
 
 .requirement-detail {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--color-bg-card, #fff);
+  border: 1px solid var(--color-border, #e2e8f0);
   border-radius: 12px;
-  padding: 24px;
-  margin-bottom: 24px;
+  padding: var(--spacing-card, 16px);
+  margin-bottom: var(--spacing-card, 16px);
 }
 
 .detail-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #e2e8f0;
+  gap: var(--spacing-component, 12px);
+  margin-bottom: var(--spacing-card, 16px);
+  padding-bottom: var(--spacing-component, 12px);
+  border-bottom: 1px solid var(--color-border, #e2e8f0);
 }
 
 .requirement-title {
   font-size: 18px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   margin: 0;
   flex: 1;
 }
@@ -209,15 +209,15 @@ const handleContinue = () => {
 .detail-section h4 {
   font-size: 14px;
   font-weight: 600;
-  color: #64748b;
-  margin: 0 0 12px 0;
+  color: var(--color-text-secondary, #64748b);
+  margin: 0 0 var(--spacing-component, 12px) 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
 .description-content {
   font-size: 14px;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   line-height: 1.7;
   white-space: pre-wrap;
 }
@@ -229,9 +229,9 @@ const handleContinue = () => {
 
 .criteria-list li {
   font-size: 14px;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   line-height: 1.6;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-compact, 8px);
 }
 
 .criteria-list li:last-child {
@@ -241,23 +241,23 @@ const handleContinue = () => {
 .user-stories {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-component, 12px);
 }
 
 .user-story-item {
-  padding: 12px 16px;
-  background: #f8fafc;
+  padding: var(--spacing-component, 12px) var(--spacing-card, 16px);
+  background: var(--color-bg-secondary, #f8fafc);
   border-radius: 8px;
-  border-left: 3px solid #6366f1;
+  border-left: 3px solid var(--color-info, #6366f1);
 }
 
 .story-header {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-compact, 8px);
 }
 
 .story-role {
   font-weight: 600;
-  color: #6366f1;
+  color: var(--color-info, #6366f1);
   font-size: 13px;
 }
 
@@ -269,16 +269,40 @@ const handleContinue = () => {
 }
 
 .story-goal {
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
 }
 
 .story-benefit {
-  color: #64748b;
+  color: var(--color-text-secondary, #64748b);
 }
 
 .action-buttons {
   display: flex;
   justify-content: center;
-  gap: 16px;
+  gap: var(--spacing-component, 12px);
+}
+
+@media (max-width: 768px) {
+  .success-banner {
+    padding: 20px;
+  }
+
+  .success-icon {
+    font-size: 36px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+  }
+
+  .action-buttons .el-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .success-banner {
+    animation: none;
+  }
 }
 </style>

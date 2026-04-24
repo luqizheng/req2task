@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
+import { ArrowLeft } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
 import WizardContainer from "./WizardContainer.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
@@ -21,12 +22,12 @@ const handleBack = () => {
   <div class="raw-requirement-create">
     <div class="page-header">
       <div class="header-left">
-        <el-button @click="handleBack">返回</el-button>
-        <h2 class="page-title">录入原始需求</h2>
+        <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
+        <h1 class="page-title">录入原始需求</h1>
       </div>
     </div>
 
-    <el-card class="wizard-card">
+    <el-card class="wizard-card" shadow="hover">
       <WizardContainer :store="store" title="需求录入向导">
         <template #step1>
           <RawRequirementInputStep :project-id="projectId" :store="store" />
@@ -42,36 +43,46 @@ const handleBack = () => {
 
 <style scoped>
 .raw-requirement-create {
-  padding: 20px;
-  min-height: calc(100vh - 100px);
+  padding: var(--spacing-page, 20px);
+  min-height: calc(100dvh - 100px);
 }
 
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-card, 16px);
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-component, 12px);
 }
 
 .page-title {
   font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--color-text-primary, #1e293b);
   margin: 0;
 }
 
 .wizard-card {
-  max-width: 1100px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
 .wizard-card :deep(.el-card__body) {
   padding: 0;
+}
+
+@media (max-width: 768px) {
+  .raw-requirement-create {
+    padding: var(--spacing-compact, 8px);
+  }
+
+  .page-title {
+    font-size: 16px;
+  }
 }
 </style>

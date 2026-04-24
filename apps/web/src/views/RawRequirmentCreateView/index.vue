@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
 import { useWizard } from "@/composables/useWizard";
-import {
-  WizardContainer,
-  RawRequirementInputStep,
-  QuestionListStep,
-  RequirementResultStep,
-} from "@/components/wizard";
+import WizardContainer from "./WizardContainer.vue";
+import RawRequirementInputStep from "./RawRequirementInputStep.vue";
+import QuestionListStep from "./QuestionListStep.vue";
+import RequirementResultStep from "./RequirementResultStep.vue";
 
 const router = useRouter();
 const route = useRoute();

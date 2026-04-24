@@ -55,7 +55,7 @@ const router = createRouter({
     {
         path: '/projects/:id/raw-requirements/create',
         name: 'rawRequirementCreate',
-        component: () => import('@/views/RawRequirmentCreateView/index.vue')
+        component: () => import('@/views/RawRequirmentCreateView/RawRequirementCreateView.vue')
     },
     {
       path: '/projects/:id/modules',

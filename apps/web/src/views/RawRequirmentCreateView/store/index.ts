@@ -44,17 +44,30 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
   const deletedQuestionIds = ref<Set<string>>(new Set());
   const generatedRequirement = ref<GeneratedRequirement | null>(null);
   const isGenerating = ref(false);
+  const questionFilter = ref<'all' | 'pending' | 'answered'>('all');
 
-  const visibleQuestions = computed(() =>
+  const allVisibleQuestions = computed(() =>
     rawRequirement.value.questionAndAnswers.filter((q) => !deletedQuestionIds.value.has(q.id))
   );
 
+  const visibleQuestions = computed(() => {
+    const questions = allVisibleQuestions.value;
+    switch (questionFilter.value) {
+      case 'pending':
+        return questions.filter((q) => !q.answer);
+      case 'answered':
+        return questions.filter((q) => !!q.answer);
+      default:
+        return questions;
+    }
+  });
+
   const pendingQuestions = computed(() =>
-    visibleQuestions.value.filter((q) => !q.answer)
+    allVisibleQuestions.value.filter((q) => !q.answer)
   );
 
   const answeredQuestions = computed(() =>
-    visibleQuestions.value.filter((q) => !!q.answer)
+    allVisibleQuestions.value.filter((q) => !!q.answer)
   );
 
   const deletedQuestions = computed(() =>
@@ -65,7 +78,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     () => answeredQuestions.value.length > 0 && !isGenerating.value
   );
 
-  const hasQuestions = computed(() => visibleQuestions.value.length > 0);
+  const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
 
   const goToStep = (step: 1 | 2) => {
     currentStep.value = step;
@@ -139,10 +152,11 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
   const updateQuestion = (id: string, updates: Partial<RawRequirementQADto>) => {
     const index = rawRequirement.value.questionAndAnswers.findIndex((q) => q.id === id);
     if (index !== -1) {
-      rawRequirement.value.questionAndAnswers[index] = {
+      const updated = {
         ...rawRequirement.value.questionAndAnswers[index],
         ...updates,
       };
+      rawRequirement.value.questionAndAnswers.splice(index, 1, updated);
     }
   };
 
@@ -179,12 +193,29 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     isGenerating.value = value;
   };
 
+  const setQuestionFilter = (filter: 'all' | 'pending' | 'answered') => {
+    questionFilter.value = filter;
+  };
+
+  const setSource = (value: string) => {
+    rawRequirement.value.source = value;
+  };
+
+  const setCollectionType = (value: RawRequirementResponseDto['collectionType']) => {
+    rawRequirement.value.collectionType = value;
+  };
+
+  const setCollectTime = (value: RawRequirementResponseDto['collectTime']) => {
+    rawRequirement.value.collectTime = value;
+  };
+
   const reset = () => {
     currentStep.value = 1;
     rawRequirement.value = createDefaultRawRequirement();
     deletedQuestionIds.value = new Set();
     generatedRequirement.value = null;
     isGenerating.value = false;
+    questionFilter.value = 'all';
   };
 
   return {
@@ -193,6 +224,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     deletedQuestionIds,
     generatedRequirement,
     isGenerating,
+    questionFilter,
     visibleQuestions,
     pendingQuestions,
     answeredQuestions,
@@ -212,6 +244,10 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     answerQuestion,
     setGeneratedRequirement,
     setIsGenerating,
+    setQuestionFilter,
+    setSource,
+    setCollectionType,
+    setCollectTime,
     reset,
   };
 });

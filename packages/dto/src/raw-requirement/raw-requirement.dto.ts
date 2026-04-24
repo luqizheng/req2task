@@ -4,6 +4,7 @@ export interface RawRequirementQADto {
   id: string;
   question: string;
   answer: string | null;
+  purpose?: string;
   createdAt: string;
   answeredAt: string | null;
 }

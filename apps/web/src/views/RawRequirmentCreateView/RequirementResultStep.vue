@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { View, Refresh, Check } from "@element-plus/icons-vue";
-import type { UseWizardReturn } from "@/composables/useWizard";
+import { useRawRequirementCreateStore } from "./store";
 
 interface Props {
-  wizard: UseWizardReturn;
+  store: ReturnType<typeof useRawRequirementCreateStore>;
 }
 
 const props = defineProps<Props>();
@@ -31,16 +31,16 @@ const getPriorityLabel = (priority: string) => {
 };
 
 const handleViewDetail = () => {
-  if (props.wizard.generatedRequirement.value?.id) {
+  if (props.store.generatedRequirement?.id) {
     router.push({
       name: "requirementDetail",
-      params: { id: props.wizard.generatedRequirement.value.id },
+      params: { id: props.store.generatedRequirement.id },
     });
   }
 };
 
 const handleContinue = () => {
-  props.wizard.reset();
+  props.store.reset();
 };
 </script>
 
@@ -53,36 +53,36 @@ const handleContinue = () => {
     </div>
 
     <div
-      v-if="wizard.generatedRequirement.value"
+      v-if="store.generatedRequirement"
       class="requirement-detail"
     >
       <div class="detail-header">
         <h2 class="requirement-title">
-          {{ wizard.generatedRequirement.value.title }}
+          {{ store.generatedRequirement.title }}
         </h2>
-        <el-tag :type="getPriorityType(wizard.generatedRequirement.value.priority)">
-          {{ getPriorityLabel(wizard.generatedRequirement.value.priority) }}
+        <el-tag :type="getPriorityType(store.generatedRequirement.priority)">
+          {{ getPriorityLabel(store.generatedRequirement.priority) }}
         </el-tag>
       </div>
 
       <div class="detail-section">
         <h4>需求描述</h4>
         <div class="description-content">
-          {{ wizard.generatedRequirement.value.description || "暂无描述" }}
+          {{ store.generatedRequirement.description || "暂无描述" }}
         </div>
       </div>
 
       <div
         v-if="
-          wizard.generatedRequirement.value.acceptanceCriteria &&
-          wizard.generatedRequirement.value.acceptanceCriteria.length > 0
+          store.generatedRequirement.acceptanceCriteria &&
+          store.generatedRequirement.acceptanceCriteria.length > 0
         "
         class="detail-section"
       >
         <h4>验收标准</h4>
         <ul class="criteria-list">
           <li
-            v-for="(criteria, index) in wizard.generatedRequirement.value.acceptanceCriteria"
+            v-for="(criteria, index) in store.generatedRequirement.acceptanceCriteria"
             :key="index"
           >
             {{ criteria }}
@@ -92,15 +92,15 @@ const handleContinue = () => {
 
       <div
         v-if="
-          wizard.generatedRequirement.value.userStories &&
-          wizard.generatedRequirement.value.userStories.length > 0
+          store.generatedRequirement.userStories &&
+          store.generatedRequirement.userStories.length > 0
         "
         class="detail-section"
       >
         <h4>用户故事</h4>
         <div class="user-stories">
           <div
-            v-for="(story, index) in wizard.generatedRequirement.value.userStories"
+            v-for="(story, index) in store.generatedRequirement.userStories"
             :key="index"
             class="user-story-item"
           >

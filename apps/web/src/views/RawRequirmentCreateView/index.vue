@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from "vue-router";
-import { useWizard } from "@/composables/useWizard";
+import { useRawRequirementCreateStore } from "./store";
 import WizardContainer from "./WizardContainer.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
 import QuestionListStep from "./QuestionListStep.vue";
@@ -11,12 +11,7 @@ const route = useRoute();
 
 const projectId = route.params.id as string;
 
-const wizard = useWizard({
-  projectId,
-  onComplete: (requirement) => {
-    console.log("需求生成完成:", requirement);
-  },
-});
+const store = useRawRequirementCreateStore();
 
 const handleBack = () => {
   router.back();
@@ -33,17 +28,17 @@ const handleBack = () => {
     </div>
 
     <el-card class="wizard-card">
-      <WizardContainer :wizard="wizard" title="需求录入向导">
+      <WizardContainer :store="store" title="需求录入向导">
         <template #step1>
-          <RawRequirementInputStep :project-id="projectId" :wizard="wizard" />
+          <RawRequirementInputStep :project-id="projectId" :store="store" />
         </template>
 
         <template #step2>
-          <QuestionListStep :wizard="wizard" />
+          <QuestionListStep :store="store" />
         </template>
 
         <template #step3>
-          <RequirementResultStep :wizard="wizard" />
+          <RequirementResultStep :store="store" />
         </template>
       </WizardContainer>
     </el-card>

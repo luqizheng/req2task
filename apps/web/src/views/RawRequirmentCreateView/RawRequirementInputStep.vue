@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ElMessage } from "element-plus";
 import { AiSubmit } from "@/components/ai-submit";
-import type { UseWizardReturn, AiQuestion } from "@/composables/useWizard";
+import { useRawRequirementCreateStore } from "./store";
+import type { AiQuestion } from "./store";
 import type { RawRequirementResponseDto } from "@req2task/dto";
 import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
 
@@ -10,7 +11,7 @@ import { useJsonStream as useJsonStream } from "@/utils/useJson";
 
 interface Props {
   projectId: string;
-  wizard: UseWizardReturn;
+  store: ReturnType<typeof useRawRequirementCreateStore>;
 }
 
 const props = defineProps<Props>();
@@ -23,7 +24,7 @@ const handleSuccess = (data: unknown) => {
 
   if ((data as RawRequirementResponseDto)?.id) {
     const result = data as RawRequirementResponseDto;
-    props.wizard.setRawRequirement(result);
+    props.store.setRawRequirement(result);
     if (result.questionAndAnswers && result.questionAndAnswers.length > 0) {
       ElMessage.success("需求已录入，发现追问问题");
     } else {
@@ -34,7 +35,7 @@ const handleSuccess = (data: unknown) => {
       keyElements?: string[];
       questions?: AiQuestion[];
     };
-    props.wizard.setQuestionsFromSSE(
+    props.store.setQuestionsFromSSE(
       null as unknown as RawRequirementResponseDto,
       sseData,
     );
@@ -93,7 +94,7 @@ const handleData = (data: string) => {
       @content="handleData"
     />
 
-    <div v-if="wizard.hasQuestions.value" class="questions-hint">
+    <div v-if="store.hasQuestions" class="questions-hint">
       <el-icon>
         <ChatDotRound />
       </el-icon>

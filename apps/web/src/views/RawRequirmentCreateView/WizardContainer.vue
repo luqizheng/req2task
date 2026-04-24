@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { UseWizardReturn } from "@/composables/useWizard";
+import { useRawRequirementCreateStore } from "./store";
 import WizardStepIndicator from "./WizardStepIndicator.vue";
 
 interface Props {
-  wizard: UseWizardReturn;
+  store: ReturnType<typeof useRawRequirementCreateStore>;
   title?: string;
 }
 
@@ -23,37 +23,37 @@ const stepConfig = [
     <div class="wizard-header">
       <h2 class="wizard-title">{{ title }}</h2>
       <WizardStepIndicator
-        :current-step="wizard.currentStep.value"
+        :current-step="store.currentStep"
         :steps="stepConfig"
       />
     </div>
 
     <div class="wizard-content">
-      <div v-if="wizard.currentStep.value === 1" class="step-content">
+      <div v-if="store.currentStep === 1" class="step-content">
         <slot name="step1" />
       </div>
 
-      <div v-else-if="wizard.currentStep.value === 2" class="step-content">
+      <div v-else-if="store.currentStep === 2" class="step-content">
         <slot name="step2" />
       </div>
 
-      <div v-else-if="wizard.currentStep.value === 3" class="step-content">
+      <div v-else-if="store.currentStep === 3" class="step-content">
         <slot name="step3" />
       </div>
     </div>
 
     <div class="wizard-footer">
       <el-button
-        v-if="wizard.currentStep.value > 1"
-        @click="wizard.prevStep"
+        v-if="store.currentStep > 1"
+        @click="store.prevStep"
       >
         上一步
       </el-button>
       <el-button
-        v-if="wizard.currentStep.value < 3"
+        v-if="store.currentStep < 3"
         type="primary"
-        :disabled="!wizard.hasQuestions.value"
-        @click="wizard.nextStep"
+        :disabled="!store.hasQuestions"
+        @click="store.nextStep"
       >
         下一步
       </el-button>

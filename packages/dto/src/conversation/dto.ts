@@ -62,6 +62,7 @@ export class QuestionAndAnswerDto {
   id!: string;
   question!: string;
   answer!: string | null;
+  purpose?: string;
   createdAt!: string;
   answeredAt!: string | null;
 }

@@ -2,11 +2,11 @@
 import { ref } from "vue";
 import { ElMessage } from "element-plus";
 import { Plus, Delete, Edit, Check, Close } from "@element-plus/icons-vue";
-import type { UseWizardReturn } from "@/composables/useWizard";
+import { useRawRequirementCreateStore } from "./store";
 import { aiApi } from "@/api/ai";
 
 interface Props {
-  wizard: UseWizardReturn;
+  store: ReturnType<typeof useRawRequirementCreateStore>;
 }
 
 const props = defineProps<Props>();
@@ -21,7 +21,7 @@ const handleAddQuestion = () => {
     ElMessage.warning("请输入问题内容");
     return;
   }
-  props.wizard.addQuestion(newQuestion.value.trim(), newAnswer.value.trim());
+  props.store.addQuestion(newQuestion.value.trim(), newAnswer.value.trim());
   newQuestion.value = "";
   newAnswer.value = "";
 };
@@ -32,7 +32,7 @@ const handleEditAnswer = (id: string, currentAnswer: string) => {
 };
 
 const handleSaveAnswer = (id: string) => {
-  props.wizard.answerQuestion(id, editingAnswer.value.trim());
+  props.store.answerQuestion(id, editingAnswer.value.trim());
   editingId.value = null;
   editingAnswer.value = "";
 };
@@ -43,22 +43,22 @@ const handleCancelEdit = () => {
 };
 
 const handleDeleteQuestion = (id: string) => {
-  props.wizard.deleteQuestion(id);
+  props.store.deleteQuestion(id);
 };
 
 const handleGenerate = async () => {
-  if (!props.wizard.rawRequirement.value) {
+  if (!props.store.rawRequirement) {
     ElMessage.error("缺少原始需求数据");
     return;
   }
 
-  props.wizard.setIsGenerating(true);
+  props.store.setIsGenerating(true);
 
   try {
     const result = await aiApi.generateFromRaw(
-      props.wizard.rawRequirement.value.id
+      props.store.rawRequirement.id
     );
-    props.wizard.setGeneratedRequirement({
+    props.store.setGeneratedRequirement({
       id: result.id || crypto.randomUUID(),
       title: result.title || "未命名需求",
       description: result.description || "",
@@ -70,7 +70,7 @@ const handleGenerate = async () => {
   } catch (error) {
     ElMessage.error((error as Error).message || "生成失败");
   } finally {
-    props.wizard.setIsGenerating(false);
+    props.store.setIsGenerating(false);
   }
 };
 </script>
@@ -84,13 +84,13 @@ const handleGenerate = async () => {
 
     <div class="question-stats">
       <el-tag type="warning" size="large">
-        {{ wizard.pendingQuestions.value.length }} 个问题待回答
+        {{ store.pendingQuestions.length }} 个问题待回答
       </el-tag>
       <el-tag type="success" size="large">
-        {{ wizard.answeredQuestions.value.length }} 个问题已回答
+        {{ store.answeredQuestions.length }} 个问题已回答
       </el-tag>
-      <el-tag v-if="wizard.deletedQuestions.value.length > 0" type="info" size="large">
-        {{ wizard.deletedQuestions.value.length }} 个问题已跳过
+      <el-tag v-if="store.deletedQuestions.length > 0" type="info" size="large">
+        {{ store.deletedQuestions.length }} 个问题已跳过
       </el-tag>
     </div>
 
@@ -121,7 +121,7 @@ const handleGenerate = async () => {
 
     <div class="questions-list">
       <div
-        v-for="qa in wizard.questions.value.filter((q) => !q.isDeleted)"
+        v-for="qa in store.questions.filter((q) => !q.isDeleted)"
         :key="qa.id"
         class="question-item"
         :class="{
@@ -139,6 +139,10 @@ const handleGenerate = async () => {
           <div class="question-text">
             <span class="q-label">Q:</span>
             {{ qa.question }}
+          </div>
+          <div v-if="qa.purpose" class="purpose-text">
+            <span class="p-label">目的:</span>
+            {{ qa.purpose }}
           </div>
 
           <div v-if="qa.isAnswered" class="answer-text">
@@ -204,12 +208,12 @@ const handleGenerate = async () => {
     </div>
 
     <div
-      v-if="wizard.deletedQuestions.value.length > 0"
+      v-if="store.deletedQuestions.length > 0"
       class="skipped-section"
     >
       <div class="section-title">已跳过的问题</div>
       <div
-        v-for="qa in wizard.deletedQuestions.value"
+        v-for="qa in store.deletedQuestions"
         :key="qa.id"
         class="skipped-item"
       >
@@ -218,7 +222,7 @@ const handleGenerate = async () => {
         <el-button
           type="text"
           size="small"
-          @click="wizard.updateQuestion(qa.id, { isDeleted: false })"
+          @click="store.updateQuestion(qa.id, { isDeleted: false })"
         >
           恢复
         </el-button>
@@ -229,11 +233,11 @@ const handleGenerate = async () => {
       <el-button
         type="primary"
         size="large"
-        :disabled="!wizard.canGenerate.value"
-        :loading="wizard.isGenerating.value"
+        :disabled="!store.canGenerate"
+        :loading="store.isGenerating"
         @click="handleGenerate"
       >
-        {{ wizard.isGenerating.value ? "生成中..." : "生成需求" }}
+        {{ store.isGenerating ? "生成中..." : "生成需求" }}
       </el-button>
       <p class="generate-hint">
         至少回答一个问题后可以生成需求
@@ -333,6 +337,18 @@ const handleGenerate = async () => {
 
 .question-text {
   color: #1e293b;
+}
+
+.purpose-text {
+  font-size: 13px;
+  color: #8b5cf6;
+  padding-left: 16px;
+  margin-bottom: 8px;
+}
+
+.p-label {
+  font-weight: 600;
+  margin-right: 4px;
 }
 
 .answer-text {

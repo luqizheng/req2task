@@ -41,6 +41,7 @@ export class RawRequirementService {
       id: qa.id,
       question: qa.question,
       answer: qa.answer,
+      purpose: qa.purpose,
       createdAt: qa.createdAt,
       answeredAt: qa.answeredAt,
     }));

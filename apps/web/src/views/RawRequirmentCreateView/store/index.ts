@@ -31,7 +31,7 @@ export interface GeneratedRequirement {
 }
 
 export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', () => {
-  const currentStep = ref<1 | 2 | 3>(1);
+  const currentStep = ref<1 | 2>(1);
   const rawRequirement = ref<RawRequirementResponseDto | null>(null);
   const questions = ref<QAItem[]>([]);
   const generatedRequirement = ref<GeneratedRequirement | null>(null);
@@ -55,19 +55,19 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
 
   const hasQuestions = computed(() => questions.value.length > 0);
 
-  const goToStep = (step: 1 | 2 | 3) => {
+  const goToStep = (step: 1 | 2) => {
     currentStep.value = step;
   };
 
   const nextStep = () => {
-    if (currentStep.value < 3) {
-      currentStep.value = (currentStep.value + 1) as 1 | 2 | 3;
+    if (currentStep.value < 2) {
+      currentStep.value = 2;
     }
   };
 
   const prevStep = () => {
     if (currentStep.value > 1) {
-      currentStep.value = (currentStep.value - 1) as 1 | 2 | 3;
+      currentStep.value = 1;
     }
   };
 
@@ -85,8 +85,6 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
         isManuallyAdded: false,
       }));
     }
-
-    goToStep(2);
   };
 
   const setQuestionsFromSSE = (
@@ -106,8 +104,6 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
         isManuallyAdded: false,
       }));
     }
-
-    goToStep(2);
   };
 
   const addQuestion = (question: string, answer: string = '') => {
@@ -118,6 +114,23 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
       isAnswered: !!answer,
       isDeleted: false,
       isManuallyAdded: true,
+    });
+  };
+
+  const addQuestionFromSSE = (q: AiQuestion) => {
+    const exists = questions.value.some(
+      (item) => item.question === q.question && !item.isManuallyAdded,
+    );
+    if (exists) return;
+
+    questions.value.push({
+      id: `sse_q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      question: q.question,
+      answer: '',
+      purpose: q.purpose,
+      isAnswered: false,
+      isDeleted: false,
+      isManuallyAdded: false,
     });
   };
 
@@ -144,7 +157,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
 
   const setGeneratedRequirement = (data: GeneratedRequirement) => {
     generatedRequirement.value = data;
-    goToStep(3);
+    goToStep(2);
   };
 
   const setIsGenerating = (value: boolean) => {
@@ -176,6 +189,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     setRawRequirement,
     setQuestionsFromSSE,
     addQuestion,
+    addQuestionFromSSE,
     updateQuestion,
     deleteQuestion,
     answerQuestion,

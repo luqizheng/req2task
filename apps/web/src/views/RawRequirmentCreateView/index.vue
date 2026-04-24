@@ -3,7 +3,6 @@ import { useRouter, useRoute } from "vue-router";
 import { useRawRequirementCreateStore } from "./store";
 import WizardContainer from "./WizardContainer.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
-import QuestionListStep from "./QuestionListStep.vue";
 import RequirementResultStep from "./RequirementResultStep.vue";
 
 const router = useRouter();
@@ -34,10 +33,6 @@ const handleBack = () => {
         </template>
 
         <template #step2>
-          <QuestionListStep :store="store" />
-        </template>
-
-        <template #step3>
           <RequirementResultStep :store="store" />
         </template>
       </WizardContainer>
@@ -72,7 +67,7 @@ const handleBack = () => {
 }
 
 .wizard-card {
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 

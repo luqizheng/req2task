@@ -12,9 +12,8 @@ withDefaults(defineProps<Props>(), {
 });
 
 const stepConfig = [
-  { step: 1, title: "录入需求", icon: "Edit" },
-  { step: 2, title: "问题澄清", icon: "ChatDotRound" },
-  { step: 3, title: "生成结果", icon: "DocumentChecked" },
+  { step: 1, title: "录入与澄清", icon: "Edit" },
+  { step: 2, title: "生成结果", icon: "DocumentChecked" },
 ];
 </script>
 
@@ -36,10 +35,6 @@ const stepConfig = [
       <div v-else-if="store.currentStep === 2" class="step-content">
         <slot name="step2" />
       </div>
-
-      <div v-else-if="store.currentStep === 3" class="step-content">
-        <slot name="step3" />
-      </div>
     </div>
 
     <div class="wizard-footer">
@@ -48,14 +43,6 @@ const stepConfig = [
         @click="store.prevStep"
       >
         上一步
-      </el-button>
-      <el-button
-        v-if="store.currentStep < 3"
-        type="primary"
-        :disabled="!store.hasQuestions"
-        @click="store.nextStep"
-      >
-        下一步
       </el-button>
     </div>
   </div>

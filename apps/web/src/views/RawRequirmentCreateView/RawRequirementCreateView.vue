@@ -3,23 +3,26 @@ import ViewContainer from "@/components/view-container.vue";
 import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
-import WizardContainer from "./WizardContainer.vue";
+
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
-import { ref, reactive } from "vue";
+import { ref, reactive, onMounted } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
+import { rawRequirementsApi } from "@/api/rawRequirements";
 
 const router = useRouter();
 const route = useRoute();
 
 const projectId = route.params.id as string;
+const rawRequirementId = route.params.rawRequirementId as string | undefined;
 
 const store = useRawRequirementCreateStore();
 store.projectId = projectId;
 const rawRequirementSubmitHelper = useRequirementSubmit(store);
 const { rawRequirement } = storeToRefs(store);
+const loading = ref(false);
 
 const formRef = ref<FormInstance>();
 
@@ -45,6 +48,20 @@ const collectionTypeOptions = [
   { label: "其他", value: CollectionType.OTHER },
 ];
 
+onMounted(async () => {
+  if (rawRequirementId) {
+    loading.value = true;
+    try {
+      const data = await rawRequirementsApi.getRawRequirement(rawRequirementId);
+      store.loadRawRequirement(data);
+    } catch (error) {
+      console.error("加载原始需求失败:", error);
+    } finally {
+      loading.value = false;
+    }
+  }
+});
+
 const handleSubmit = async () => {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
@@ -53,12 +70,16 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <ViewContainer>ss
+  <ViewContainer v-loading="loading">
     <div class="raw-requirement-create">
       <div class="page-header">
         <div class="header-left">
           <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
-          <h1 class="page-title">  <h2 class="panel-title">{{ store.rawRequirement.id ? '更新原始需求' : '录入原始需求' }}</h2></h1>
+          <h1 class="page-title">
+            <h2 class="panel-title">
+              {{ store.rawRequirement.id ? "更新原始需求" : "录入原始需求" }}
+            </h2>
+          </h1>
         </div>
       </div>
 

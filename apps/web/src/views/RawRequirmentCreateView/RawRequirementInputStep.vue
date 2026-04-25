@@ -15,10 +15,6 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
-  (e: "submit"): void;
-}>();
-
 const aiSubmitRef = ref<InstanceType<typeof AiSubmit> | null>(null);
 
 const questionFilter = computed({

@@ -182,6 +182,12 @@ export const useRawRequirementCreateStore = defineStore(
       questionFilter.value = "all";
     };
 
+    const loadRawRequirement = (data: RawRequirementResponseDto) => {
+      rawRequirement.value = { ...data };
+      projectId.value = data.projectId;
+      deletedQuestionIds.value = new Set();
+    };
+
     return {
       rawRequirement,
       deletedQuestionIds,
@@ -203,6 +209,7 @@ export const useRawRequirementCreateStore = defineStore(
       answerQuestion,
       setQuestionFilter,
       reset,
+      loadRawRequirement,
     };
   },
 );

@@ -17,10 +17,6 @@ const emit = defineEmits<{
   cancelEdit: [];
   deleteQuestion: [id: string];
 }>();
-
-const updateEditingAnswer = (value: string) => {
-  emit("update:editingAnswer", value);
-};
 </script>
 
 <template>
@@ -57,7 +53,7 @@ const updateEditingAnswer = (value: string) => {
             placeholder="输入回答..."
             size="small"
             aria-label="编辑回答"
-            @update:model-value="updateEditingAnswer"
+            @update:model-value="(v: string) => emit('update:editingAnswer', v)"
           />
           <el-button
             type="success"
@@ -83,7 +79,7 @@ const updateEditingAnswer = (value: string) => {
             v-if="!qa.answer"
             type="primary"
             size="small"
-            @click="emit('editAnswer', qa.id, qa.answer ?? '')"
+            @click="emit('editAnswer', qa.id, '')"
           >
             回答
           </el-button>
@@ -91,7 +87,7 @@ const updateEditingAnswer = (value: string) => {
             v-else
             type="warning"
             size="small"
-            @click="emit('editAnswer', qa.id, qa.answer ?? '')"
+            @click="emit('editAnswer', qa.id, qa.answer)"
           >
             编辑回答
           </el-button>

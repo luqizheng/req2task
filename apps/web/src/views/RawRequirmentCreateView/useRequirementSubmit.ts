@@ -49,6 +49,7 @@ export function useRequirementSubmit(
     {
       trigger: "questions",
       onArrayItem(item) {
+        console.log("item", item, "addQuestionFromSSE");
         store.addQuestionFromSSE(item as AiQuestion);
       },
     },
@@ -74,9 +75,12 @@ export function useRequirementSubmit(
           });
       if (result) {
         if (!store.rawRequirement.id) {
+          ElMessage.success("创建成功");
           store.rawRequirement.id = result.id;
+        } else {
+          ElMessage.success("更新成功");
         }
-        ElMessage.success("创建成功");
+
         return true;
       }
       return false;

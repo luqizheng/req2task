@@ -34,4 +34,7 @@ export class CreateAttachmentByFileDataIdDto {
   targetId?: string;
   displayName?: string;
   description?: string;
+  fileName!: string;
+  contentType!: string;
+  size!: number;
 }

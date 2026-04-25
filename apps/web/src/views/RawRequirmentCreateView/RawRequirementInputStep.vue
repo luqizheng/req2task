@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from "vue";
-import { Plus } from "@element-plus/icons-vue";
+import { computed, ref } from "vue";
+import { Plus, Promotion } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
@@ -14,6 +14,12 @@ interface Props {
 }
 
 const props = defineProps<Props>();
+
+const emit = defineEmits<{
+  (e: "submit"): void;
+}>();
+
+const aiSubmitRef = ref<InstanceType<typeof AiSubmit> | null>(null);
 
 const questionFilter = computed({
   get: () => props.store.questionFilter,
@@ -36,6 +42,12 @@ const {
 
 const { handleSuccess, handleError, translRequestData, handleSSEData } =
   useRequirementSubmit(props.store);
+
+const handleSubmitAnswers = () => {
+
+  // emit("submit");
+  aiSubmitRef.value?.submitStream();
+};
 </script>
 
 <template>
@@ -48,6 +60,7 @@ const { handleSuccess, handleError, translRequestData, handleSSEData } =
       </p>
 
       <AiSubmit
+        ref="aiSubmitRef"
         :url="`/api/raw-requirements/${projectId}/stream`"
         :upload-file="true"
         :use-stream="true"
@@ -59,6 +72,15 @@ const { handleSuccess, handleError, translRequestData, handleSSEData } =
         @content="handleSSEData"
         mode="input-only"
       />
+
+      <el-button
+        v-if="store.hasAnsweredQuestions"
+        type="primary"
+        :icon="Promotion"
+        @click="handleSubmitAnswers"
+      >
+        提交答案
+      </el-button>
     </div>
 
     <div class="panel panel-right">

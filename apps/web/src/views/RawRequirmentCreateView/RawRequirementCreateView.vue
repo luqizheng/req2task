@@ -53,12 +53,12 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <ViewContainer>
+  <ViewContainer>ss
     <div class="raw-requirement-create">
       <div class="page-header">
         <div class="header-left">
           <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
-          <h1 class="page-title">录入原始需求</h1>
+          <h1 class="page-title">  <h2 class="panel-title">{{ store.rawRequirement.id ? '更新原始需求' : '录入原始需求' }}</h2></h1>
         </div>
       </div>
 

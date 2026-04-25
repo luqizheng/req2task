@@ -93,6 +93,7 @@ const {
   onError: (error) => emit("error", error),
   transRequest: props.transRequest,
   getRustfsIds: getSuccessRustfsIds,
+  hasExternalContent: () => rustfsFiles.value.length > 0,
 });
 
 const audioInputRef = ref<HTMLInputElement | null>(null);
@@ -143,6 +144,7 @@ const handleFileSelect = async (event: Event) => {
     try {
       await rustfsUpload(file, props.targetType, props.targetId);
     } catch (error) {
+      debugger
       ElMessage.error(`${file.name} 上传失败`);
     }
   }
@@ -165,6 +167,7 @@ const hideOutput = () => {
 };
 
 const handleSubmit = () => {
+
   if (localUseStream.value) {
     submitStream();
   } else {
@@ -178,7 +181,8 @@ const submitStream = async () => {
   const userMessage = message.value.trim();
   submittedMessage.value = userMessage;
   messageHistory.value.push({ role: "user", content: userMessage });
-  message.value = "";
+
+
   showSseOutput.value = true;
   isStreaming.value = true;
   sseOutputRef.value?.reset();
@@ -190,45 +194,48 @@ const submitStream = async () => {
 
   let fullContent = "";
 
-  await submitStreamBase({
-    onConversationStart: (event) => {
-      conversationId.value = event.conversationId;
-      isNewConversation.value = event.isNewConversation ?? false;
-      sseOutputRef.value?.handleConversationStart(event);
-      emit("conversationStart", event);
+  await submitStreamBase(
+    {
+      onConversationStart: (event) => {
+        conversationId.value = event.conversationId;
+        isNewConversation.value = event.isNewConversation ?? false;
+        sseOutputRef.value?.handleConversationStart(event);
+        emit("conversationStart", event);
+      },
+      onContent: (content) => {
+        fullContent += content;
+        sseOutputRef.value?.handleContent(content);
+        emit("content", content);
+      },
+      onMessage: (event) => {
+        if (event.message?.content) {
+          sseOutputRef.value?.handleMessage(event.message.content);
+        }
+        emit("message", event.message?.content);
+      },
+      onDone: (event) => {
+        sseOutputRef.value?.handleDone(event);
+        emit("done", event);
+        emit("success", {
+          request: {
+            message: userMessage,
+            auditRustFSId: [],
+            attachmentsRustFSId: rustfsIds,
+          },
+          response: fullContent,
+        });
+        isStreaming.value = false;
+        reset();
+        clearFiles();
+      },
+      onError: (error) => {
+        sseOutputRef.value?.handleError(error);
+        emit("streamError", error);
+        isStreaming.value = false;
+      },
     },
-    onContent: (content) => {
-      fullContent += content;
-      sseOutputRef.value?.handleContent(content);
-      emit("content", content);
-    },
-    onMessage: (event) => {
-      if (event.message?.content) {
-        sseOutputRef.value?.handleMessage(event.message.content);
-      }
-      emit("message", event.message?.content);
-    },
-    onDone: (event) => {
-      sseOutputRef.value?.handleDone(event);
-      emit("done", event);
-      emit("success", {
-        request: {
-          message: userMessage,
-          auditRustFSId: [],
-          attachmentsRustFSId: rustfsIds,
-        },
-        response: fullContent,
-      });
-      isStreaming.value = false;
-      reset();
-      clearFiles();
-    },
-    onError: (error) => {
-      sseOutputRef.value?.handleError(error);
-      emit("streamError", error);
-      isStreaming.value = false;
-    },
-  });
+    userMessage,
+  );
 };
 
 defineExpose({

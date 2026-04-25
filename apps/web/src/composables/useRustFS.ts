@@ -98,6 +98,12 @@ export interface CreateAttachmentByFileDataIdDto {
   displayName?: string;
   /** 描述 */
   description?: string;
+  /** 原始文件名 */
+  fileName: string;
+  /** MIME 类型 */
+  contentType: string;
+  /** 文件大小（字节） */
+  size: number;
 }
 
 export function useRustFS() {
@@ -113,13 +119,15 @@ export function useRustFS() {
     fileName: string,
     contentType: string,
   ): Promise<PresignPutResponse> => {
-    const response = await api.get<{ code: number; data: PresignPutResponse }>(
+
+    const response = await api.get<PresignPutResponse>(
       '/rustfs/presign-put',
       {
         params: { fileName, contentType },
       },
     );
-    return response.data as PresignPutResponse;
+    debugger
+    return response;
   };
 
   /**
@@ -184,6 +192,9 @@ export function useRustFS() {
         targetType: targetType as 'collection' | 'raw_requirement' | 'project',
         targetId,
         displayName: file.name,
+        fileName: file.name,
+        contentType: file.type,
+        size: file.size,
       });
 
       const uploadSuccess = uploadingFiles.value.get(tempId);

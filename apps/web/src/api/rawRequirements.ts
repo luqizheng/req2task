@@ -52,7 +52,7 @@ export const rawRequirementsApi = {
     data: CreateRawRequirementDto,
   ): Promise<RawRequirementResponseDto> => {
     return api.post(
-      `/raw-requirements/${projectId}/raw-requirements`,
+      `/raw-requirements/${projectId}`,
       data,
     );
   },

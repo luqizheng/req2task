@@ -177,4 +177,80 @@ describe('ProjectAttachmentService', () => {
       expect(fileDataRepository.delete).not.toHaveBeenCalled();
     });
   });
+
+  describe('createByFileDataId', () => {
+    it('should use existing file data when found', async () => {
+      const dto = {
+        fileDataId: 'attachments/2024/01/01/test.txt',
+        targetType: 'project' as any,
+        targetId: '423e4567-e89b-12d3-a456-426614174003',
+        displayName: 'test.txt',
+        fileName: 'test.txt',
+        contentType: 'text/plain',
+        size: 100,
+      };
+
+      fileDataRepository.findOne.mockResolvedValue(mockFileData as FileData);
+      attachmentRepository.create.mockReturnValue(mockAttachment as ProjectAttachment);
+      attachmentRepository.save.mockResolvedValue(mockAttachment as ProjectAttachment);
+
+      const result = await service.createByFileDataId(dto, mockUserId);
+
+      expect(result).toBeDefined();
+      expect(result.fileDataId).toBe(mockFileDataId);
+      expect(fileDataRepository.create).not.toHaveBeenCalled();
+    });
+
+    it('should create new file data when not found', async () => {
+      const dto = {
+        fileDataId: 'attachments/2024/01/01/new-file.txt',
+        targetType: 'project' as any,
+        targetId: '423e4567-e89b-12d3-a456-426614174003',
+        displayName: 'new-file.txt',
+        fileName: 'new-file.txt',
+        contentType: 'text/plain',
+        size: 200,
+      };
+
+      const newFileData: Partial<FileData> = {
+        id: '523e4567-e89b-12d3-a456-426614174004',
+        fileHash: 'pending-attachments/2024/01/01/new-file.txt',
+        originalName: 'new-file.txt',
+        mimeType: 'text/plain',
+        size: 200,
+        storagePath: 'attachments/2024/01/01/new-file.txt',
+        createdAt: new Date(),
+      };
+
+      const newAttachment: Partial<ProjectAttachment> = {
+        id: '623e4567-e89b-12d3-a456-426614174005',
+        fileDataId: newFileData.id,
+        targetType: 'project' as any,
+        targetId: dto.targetId,
+        displayName: 'new-file.txt',
+        description: null,
+        createdById: mockUserId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        fileData: newFileData as FileData,
+      };
+
+      fileDataRepository.findOne.mockResolvedValue(null);
+      fileDataRepository.create.mockReturnValue(newFileData as FileData);
+      fileDataRepository.save.mockResolvedValue(newFileData as FileData);
+      attachmentRepository.create.mockReturnValue(newAttachment as ProjectAttachment);
+      attachmentRepository.save.mockResolvedValue(newAttachment as ProjectAttachment);
+
+      const result = await service.createByFileDataId(dto, mockUserId);
+
+      expect(result).toBeDefined();
+      expect(fileDataRepository.create).toHaveBeenCalledWith({
+        fileHash: 'pending-attachments/2024/01/01/new-file.txt',
+        originalName: 'new-file.txt',
+        mimeType: 'text/plain',
+        size: 200,
+        storagePath: 'attachments/2024/01/01/new-file.txt',
+      });
+    });
+  });
 });

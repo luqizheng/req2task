@@ -72,12 +72,20 @@ export class ProjectAttachmentService {
     dto: CreateAttachmentByFileDataIdDto,
     userId: string,
   ): Promise<AttachmentResponseDto> {
-    const fileData = await this.fileDataRepository.findOne({
+    let fileData = await this.fileDataRepository.findOne({
       where: { storagePath: dto.fileDataId },
     });
 
     if (!fileData) {
-      throw new NotFoundException('FileData not found');
+      const tempHash = `pending-${dto.fileDataId}`;
+      fileData = this.fileDataRepository.create({
+        fileHash: tempHash,
+        originalName: dto.fileName,
+        mimeType: dto.contentType,
+        size: dto.size,
+        storagePath: dto.fileDataId,
+      });
+      fileData = await this.fileDataRepository.save(fileData);
     }
 
     const attachment = this.attachmentRepository.create({

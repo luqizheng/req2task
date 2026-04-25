@@ -14,6 +14,7 @@ export interface UseAiSubmitOptions {
   onError?: (error: Error) => void;
   transRequest?: (data: AiSubmitRequestDto) => unknown;
   getRustfsIds?: () => string[];
+  hasExternalContent?: () => boolean;
 }
 
 export function useAiSubmit(options: UseAiSubmitOptions) {
@@ -44,9 +45,13 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   });
 
   const hasContent = computed(() => {
-    return (
-      message.value.trim() || audioFile.value || uploadedFiles.value.length > 0
-    );
+    const body = buildRequestBody();
+    const submit = !options.transRequest ? body : options.transRequest(body);
+
+    const internalContent =
+      submit || audioFile.value || uploadedFiles.value.length > 0;
+    const externalContent = options.hasExternalContent?.() ?? false;
+    return internalContent || externalContent;
   });
 
   const canSubmit = computed(() => {
@@ -70,12 +75,25 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     ],
   });
 
-  const submitStreamWithCallbacks = async (callbacks: StreamCallbacks) => {
+  const submitStreamWithCallbacks = async (
+    callbacks: StreamCallbacks,
+    userMessage?: string,
+  ) => {
     if (!canSubmit.value) return;
     isSubmitting.value = true;
 
+    const messageContent = userMessage ?? message.value.trim();
+
     try {
-      await submitStream(buildRequestBody(), callbacks);
+      const body: AiSubmitRequestDto = {
+        message: messageContent,
+        auditRustFSId: [],
+        attachmentsRustFSId: [
+          ...getSuccessFileIds(),
+          ...(options.getRustfsIds?.() || []),
+        ],
+      };
+      await submitStream(body, callbacks);
     } catch (error) {
       const err =
         error instanceof Error ? error : new Error("提交失败，请稍后重试");
@@ -87,16 +105,13 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   };
 
   const submit = async () => {
-    if (!canSubmit.value) return;
-    isSubmitting.value = true;
-
     try {
       const body = buildRequestBody();
-      const response = await axios.post<any>(
-        options.url,
-        !options.transRequest ? body : options.transRequest(body),
-      );
+      const submit = !options.transRequest ? body : options.transRequest(body);
 
+      if (!canSubmit.value && !submit) return;
+      isSubmitting.value = true;
+      const response = await axios.post<any>(options.url, submit);
       ElMessage.success("提交成功");
       options.onSuccess?.({ request: body, response: response });
       reset();

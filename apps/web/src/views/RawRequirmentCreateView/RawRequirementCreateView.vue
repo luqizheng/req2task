@@ -93,6 +93,10 @@ const collectionTypeOptions = [
           />
         </div>
       </div>
+      <div v-if="store.rawRequirement.content" class="raw-requirement-display">
+        <div class="display-label">原始需求内容</div>
+        <div class="display-content">{{ store.rawRequirement.content }}</div>
+      </div>
     </el-card>
 
     <el-card class="wizard-card" shadow="hover">
@@ -143,6 +147,31 @@ const collectionTypeOptions = [
 .meta-form {
   display: flex;
   gap: var(--spacing-compact, 8px);
+}
+
+.raw-requirement-display {
+  margin-top: var(--spacing-component, 12px);
+  padding-top: var(--spacing-component, 12px);
+  border-top: 1px solid var(--color-border, #e2e8f0);
+}
+
+.display-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-text-secondary, #64748b);
+  margin-bottom: 8px;
+}
+
+.display-content {
+  padding: 12px;
+  background: var(--color-bg-secondary, #f8fafc);
+  border-radius: 6px;
+  border: 1px solid var(--color-border, #e2e8f0);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-text-primary, #1e293b);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .meta-field {

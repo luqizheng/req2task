@@ -10,7 +10,7 @@ export interface UseAiSubmitOptions {
   url: string;
   uploadFile?: boolean;
   audit?: boolean;
-  onSuccess?: (data: unknown) => void;
+  onSuccess?: (data: { request: AiSubmitRequestDto; response: any }) => void;
   onError?: (error: Error) => void;
   transRequest?: (data: AiSubmitRequestDto) => unknown;
 }
@@ -19,16 +19,33 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   const message = ref("");
   const isSubmitting = ref(false);
 
-  const { audioFile, isRecording, startRecording, stopRecording, handleAudioFileSelect, clearAudio } =
-    useAudioRecorder();
+  const {
+    audioFile,
+    isRecording,
+    startRecording,
+    stopRecording,
+    handleAudioFileSelect,
+    clearAudio,
+  } = useAudioRecorder();
 
-  const { uploadedFiles, handleAttachmentSelect, removeUploadedFile, getSuccessFileIds } =
-    useFileUpload({ targetType: options.audit ? "raw_requirement" : "project" });
+  const {
+    uploadedFiles,
+    handleAttachmentSelect,
+    removeUploadedFile,
+    getSuccessFileIds,
+  } = useFileUpload({
+    targetType: options.audit ? "raw_requirement" : "project",
+  });
 
-  const { submitStream } = useSSEStream({ url: options.url, transRequest: options.transRequest });
+  const { submitStream } = useSSEStream({
+    url: options.url,
+    transRequest: options.transRequest,
+  });
 
   const hasContent = computed(() => {
-    return message.value.trim() || audioFile.value || uploadedFiles.value.length > 0;
+    return (
+      message.value.trim() || audioFile.value || uploadedFiles.value.length > 0
+    );
   });
 
   const canSubmit = computed(() => {
@@ -56,7 +73,8 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
     try {
       await submitStream(buildRequestBody(), callbacks);
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("提交失败，请稍后重试");
+      const err =
+        error instanceof Error ? error : new Error("提交失败，请稍后重试");
       ElMessage.error(err.message);
       callbacks.onError?.({ type: "error", message: err.message });
     } finally {
@@ -70,17 +88,18 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
 
     try {
       const body = buildRequestBody();
-      const response = await axios.post(
+      const response = await axios.post<any>(
         options.url,
         !options.transRequest ? body : options.transRequest(body),
       );
 
-      console.log(response);
+      console.log("提交成功后的response:", response);
       ElMessage.success("提交成功");
-      options.onSuccess?.(response);
+      options.onSuccess?.({ request: body, response: response });
       reset();
     } catch (error) {
-      const err = error instanceof Error ? error : new Error("提交失败，请稍后重试");
+      const err =
+        error instanceof Error ? error : new Error("提交失败，请稍后重试");
       ElMessage.error(err.message);
       options.onError?.(err);
     } finally {

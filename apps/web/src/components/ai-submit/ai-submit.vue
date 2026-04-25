@@ -12,7 +12,6 @@ import {
   useAiSubmit,
   type AnalyzeStartEvent,
   type ConversationStartEvent,
-  type MessageEvent,
   type DoneEvent,
   type ErrorEvent,
 } from "./composables/useAiSubmit";
@@ -40,12 +39,12 @@ const props = withDefaults(defineProps<Props>(), {
 });
 
 const emit = defineEmits<{
-  (e: "success", data: unknown): void;
+  (e: "success", data: { request: AiSubmitRequestDto; response: any }): void;
   (e: "error", error: Error): void;
   (e: "analyzeStart", event: AnalyzeStartEvent): void;
   (e: "conversationStart", event: ConversationStartEvent): void;
   (e: "content", content: string): void;
-  (e: "message", event: MessageEvent): void;
+  (e: "message", response: string): void;
   (e: "done", event: DoneEvent): void;
   (e: "streamError", error: ErrorEvent): void;
   (e: "uploadSuccess", attachmentIds: string[]): void;
@@ -75,7 +74,12 @@ const {
   transRequest: props.transRequest,
 });
 
-const { upload: rustfsUpload, uploadingFiles, removeFile, clearFiles } = useRustFS();
+const {
+  upload: rustfsUpload,
+  uploadingFiles,
+  removeFile,
+  clearFiles,
+} = useRustFS();
 
 const audioInputRef = ref<HTMLInputElement | null>(null);
 const attachmentInputRef = ref<HTMLInputElement | null>(null);
@@ -152,7 +156,6 @@ const hideOutput = () => {
 };
 
 const handleSubmit = () => {
-
   if (localUseStream.value) {
     submitStream();
   } else {
@@ -161,7 +164,6 @@ const handleSubmit = () => {
 };
 
 const submitStream = async () => {
-
   if (!canSubmit.value) return;
 
   showSseOutput.value = true;
@@ -185,7 +187,6 @@ const submitStream = async () => {
   const token = localStorage.getItem("accessToken");
 
   try {
-
     const response = await fetch(props.url, {
       method: "POST",
       headers: {
@@ -208,6 +209,7 @@ const submitStream = async () => {
 
     const decoder = new TextDecoder();
     let buffer = "";
+    let fullContent = "";
 
     while (true) {
       const { done, value } = await reader.read();
@@ -237,6 +239,7 @@ const submitStream = async () => {
                 break;
               case "content":
                 if (event.content) {
+                  fullContent += event.content;
                   sseOutputRef.value?.handleContent(event.content);
                   emit("content", event.content);
                 }
@@ -245,14 +248,15 @@ const submitStream = async () => {
                 if (event.message?.content) {
                   sseOutputRef.value?.handleMessage(event.message.content);
                 }
-                emit("message", event);
+                emit("message", event.message?.content);
                 break;
               case "done":
+                debugger;
                 sseOutputRef.value?.handleDone(event);
                 emit("done", event);
                 emit("success", {
-                  keyElements: event.keyElements,
-                  questions: event.questions || event.followUpQuestions?.map((q: string) => ({ question: q })) || [],
+                  request: body,
+                  response: fullContent,
                 });
                 break;
               case "error":
@@ -418,7 +422,11 @@ const submitStream = async () => {
       </div>
 
       <div class="actions">
-        <el-button size="default" @click="handleCancel" :disabled="isSubmitting">
+        <el-button
+          size="default"
+          @click="handleCancel"
+          :disabled="isSubmitting"
+        >
           取消
         </el-button>
         <el-button

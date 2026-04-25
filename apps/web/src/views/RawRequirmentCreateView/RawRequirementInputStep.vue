@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Plus } from "@element-plus/icons-vue";
+import { Plus, Refresh } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { useRequirementGenerate } from "./useRequirementGenerate";
+import { useReanalyze } from "./useReanalyze";
 import QuestionList from "./QuestionList.vue";
+import { AnalyzeStartEvent } from "@/components/ai-submit/composables/useSSEStream";
 
 interface Props {
   projectId: string;
@@ -41,6 +43,11 @@ const {
 } = useRequirementSubmit(props.store);
 
 const { handleGenerate } = useRequirementGenerate(props.store);
+const { handleReanalyze } = useReanalyze(props.store, props.projectId);
+
+const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
+  props.store.rawRequirement.conversationId = event.collectionId;
+};
 </script>
 
 <template>
@@ -62,6 +69,7 @@ const { handleGenerate } = useRequirementGenerate(props.store);
         @error="handleError"
         :trans-request="translRequestData"
         @content="handleData"
+        @analyzeStart="handleAnalyzeStart"
       />
     </div>
 
@@ -98,6 +106,18 @@ const { handleGenerate } = useRequirementGenerate(props.store);
           @click="showAddDialog = true"
         >
           添加新问题
+        </el-button>
+
+        <el-button
+          v-if="store.hasAnsweredQuestions"
+          type="success"
+          :icon="Refresh"
+          size="default"
+          :disabled="!store.canReanalyze"
+          :loading="store.isGenerating"
+          @click="handleReanalyze"
+        >
+          {{ store.isGenerating ? "分析中..." : "再次分析" }}
         </el-button>
 
         <QuestionList

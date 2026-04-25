@@ -74,6 +74,7 @@ export class RawRequirementController {
       dto.source,
       dto.collectionType,
       dto.collectTime,
+      dto.previousQuestions,
     );
 
     stream$.subscribe({

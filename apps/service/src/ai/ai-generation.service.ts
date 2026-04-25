@@ -118,6 +118,7 @@ export class AiGenerationService {
     source?: string,
     collectionType?: CollectionType,
     collectTime?: string,
+    previousQuestions?: Array<{ question: string; answer: string | null; purpose?: string }>,
   ): Observable<LLMStreamChunk> {
     const title = `RawReq_${projectId}_${Date.now()}`;
 
@@ -125,6 +126,7 @@ export class AiGenerationService {
       projectId,
       context,
       rawRequirement: conversationText,
+      previousQuestions,
     });
 
     return this.llmClient.streamGenerate({

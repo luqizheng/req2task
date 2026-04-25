@@ -45,6 +45,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
   const generatedRequirement = ref<GeneratedRequirement | null>(null);
   const isGenerating = ref(false);
   const questionFilter = ref<'all' | 'pending' | 'answered'>('all');
+  const isReanalyze = ref(false);
 
   const allVisibleQuestions = computed(() =>
     rawRequirement.value.questionAndAnswers.filter((q) => !deletedQuestionIds.value.has(q.id))
@@ -79,6 +80,10 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
   );
 
   const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
+
+  const hasAnsweredQuestions = computed(() => answeredQuestions.value.length > 0);
+
+  const canReanalyze = computed(() => hasAnsweredQuestions.value && !isGenerating.value);
 
   const goToStep = (step: 1 | 2) => {
     currentStep.value = step;
@@ -209,6 +214,10 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     rawRequirement.value.collectTime = value;
   };
 
+  const setIsReanalyze = (value: boolean) => {
+    isReanalyze.value = value;
+  };
+
   const reset = () => {
     currentStep.value = 1;
     rawRequirement.value = createDefaultRawRequirement();
@@ -216,6 +225,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     generatedRequirement.value = null;
     isGenerating.value = false;
     questionFilter.value = 'all';
+    isReanalyze.value = false;
   };
 
   return {
@@ -225,12 +235,15 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     generatedRequirement,
     isGenerating,
     questionFilter,
+    isReanalyze,
     visibleQuestions,
     pendingQuestions,
     answeredQuestions,
     deletedQuestions,
     canGenerate,
     hasQuestions,
+    hasAnsweredQuestions,
+    canReanalyze,
     goToStep,
     nextStep,
     prevStep,
@@ -248,6 +261,7 @@ export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', 
     setSource,
     setCollectionType,
     setCollectTime,
+    setIsReanalyze,
     reset,
   };
 });

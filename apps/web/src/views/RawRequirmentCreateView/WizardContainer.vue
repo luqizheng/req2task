@@ -28,20 +28,27 @@ const stepConfig = [
     </div>
 
     <div class="wizard-content" tabindex="-1" aria-live="polite">
-      <div v-if="store.currentStep === 1" class="step-content" role="tabpanel" aria-label="步骤1: 录入与澄清">
+      <div
+        v-if="store.currentStep === 1"
+        class="step-content"
+        role="tabpanel"
+        aria-label="步骤1: 录入与澄清"
+      >
         <slot name="step1" />
       </div>
 
-      <div v-else-if="store.currentStep === 2" class="step-content" role="tabpanel" aria-label="步骤2: 生成结果">
+      <div
+        v-else-if="store.currentStep === 2"
+        class="step-content"
+        role="tabpanel"
+        aria-label="步骤2: 生成结果"
+      >
         <slot name="step2" />
       </div>
     </div>
 
     <div class="wizard-footer">
-      <el-button
-        v-if="store.currentStep > 1"
-        @click="store.prevStep"
-      >
+      <el-button v-if="store.currentStep > 1" @click="store.prevStep">
         上一步
       </el-button>
     </div>

@@ -8,7 +8,7 @@ export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
 ) {
   const handleSuccess = (data: { request: AiSubmitRequestDto; response: string }) => {
-    const { request, response } = data;
+    const { request } = data;
     if (!data) {
       ElMessage.warning("未收到有效数据");
       return;

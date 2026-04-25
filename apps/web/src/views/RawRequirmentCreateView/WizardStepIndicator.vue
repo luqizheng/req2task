@@ -29,16 +29,25 @@ const getStepStatus = (step: number) => {
         :key="item.step"
         class="step-item"
         :class="getStepStatus(item.step)"
-        :aria-current="getStepStatus(item.step) === 'active' ? 'step' : undefined"
+        :aria-current="
+          getStepStatus(item.step) === 'active' ? 'step' : undefined
+        "
       >
-        <div class="step-circle" :aria-label="`步骤 ${item.step}: ${item.title}`">
+        <div
+          class="step-circle"
+          :aria-label="`步骤 ${item.step}: ${item.title}`"
+        >
           <el-icon v-if="getStepStatus(item.step) === 'completed'">
             <Check />
           </el-icon>
           <span v-else>{{ item.step }}</span>
         </div>
         <span class="step-title">{{ item.title }}</span>
-        <div v-if="index < steps.length - 1" class="step-line" aria-hidden="true" />
+        <div
+          v-if="index < steps.length - 1"
+          class="step-line"
+          aria-hidden="true"
+        />
       </li>
     </ol>
   </nav>
@@ -76,7 +85,10 @@ const getStepStatus = (step: number) => {
   justify-content: center;
   font-size: 14px;
   font-weight: 600;
-  transition: background 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .step-title {

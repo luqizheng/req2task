@@ -244,19 +244,31 @@ html.dark {
 
 ```vue
 <template>
-  <div class="page-name">
-    <div class="page-header">
-      <h2 class="page-title">页面标题</h2>
-      <div class="header-actions">
-        <!-- 操作按钮 -->
-      </div>
-    </div>
-    
+  <ViewContainer>
+    <ViewHeader title="页面标题" subtitle="可选副标题">
+      <template #actions>
+        <ViewToolbar>
+          <el-button type="primary">主要操作</el-button>
+          <el-button>次要操作</el-button>
+        </ViewToolbar>
+      </template>
+    </ViewHeader>
+
     <!-- 内容区 -->
     <el-card>...</el-card>
-  </div>
+  </ViewContainer>
 </template>
 ```
+
+### 布局组件
+
+| 组件 | 用途 |
+|------|------|
+| `ViewContainer` | 页面容器，统一内边距 |
+| `ViewHeader` | 页面头部，含标题、返回按钮、操作区 |
+| `ViewToolbar` | 工具栏，统一按钮间距 |
+
+**强制要求**：所有 View 必须使用 `ViewContainer` 包裹。
 
 ### 路由配置
 

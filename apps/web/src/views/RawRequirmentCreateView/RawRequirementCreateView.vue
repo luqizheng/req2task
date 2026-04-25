@@ -1,5 +1,5 @@
 <script setup lang="ts">
-
+import ViewContainer from "@/components/view-container.vue";
 import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
@@ -27,9 +27,12 @@ const formRef = ref<FormInstance>();
 const formRules = reactive<FormRules>({
   source: [{ required: true, message: "请输入需求来源", trigger: "blur" }],
   content: [{ required: true, message: "请输入原始需求内容", trigger: "blur" }],
-  collectionType: [{ required: true, message: "请选择采集方式", trigger: "change" }],
-  collectTime: [{ required: true, message: "请选择收集时间", trigger: "change" }],
-  
+  collectionType: [
+    { required: true, message: "请选择采集方式", trigger: "change" },
+  ],
+  collectTime: [
+    { required: true, message: "请选择收集时间", trigger: "change" },
+  ],
 });
 
 const handleBack = () => {
@@ -51,83 +54,84 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <div class="raw-requirement-create">
-    <div class="page-header">
-      <div class="header-left">
-        <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
-        <h1 class="page-title">录入原始需求</h1>
+  <ViewContainer>
+    <div class="raw-requirement-create">
+      <div class="page-header">
+        <div class="header-left">
+          <el-button :icon="ArrowLeft" @click="handleBack">返回</el-button>
+          <h1 class="page-title">录入原始需求</h1>
+        </div>
       </div>
-    </div>
 
-    <el-card class="meta-card" shadow="hover">
-      <el-form
-        ref="formRef"
-        :model="rawRequirement"
-        :rules="formRules"
-        label-position="top"
-        class="meta-form"
-      >
-        <el-form-item label="需求来源" prop="source" class="meta-field">
-          <el-input
-            v-model="rawRequirement.source"
-            placeholder="名字/职位/部门"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="采集方式" class="meta-field">
-          <el-select
-            v-model="rawRequirement.collectionType"
-            placeholder="选择采集方式"
-            clearable
-          >
-            <el-option
-              v-for="opt in collectionTypeOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
+      <el-card class="meta-card" shadow="hover">
+        <el-form
+          ref="formRef"
+          :model="rawRequirement"
+          :rules="formRules"
+          label-position="top"
+          class="meta-form"
+        >
+          <el-form-item label="需求来源" prop="source" class="meta-field">
+            <el-input
+              v-model="rawRequirement.source"
+              placeholder="名字/职位/部门"
+              clearable
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="收集时间" class="meta-field">
-          <el-date-picker
-            v-model="rawRequirement.collectTime"
-            type="datetime"
-            placeholder="选择收集时间"
-            value-format="YYYY-MM-DDTHH:mm:ssZ"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="原始需求内容" prop="content" class="meta-field">
-          <el-textarea
-            v-model="rawRequirement.content"
-            placeholder="请输入原始需求内容"
-            disabled
-          />
-        </el-form-item>
-        <el-form-item>
+          </el-form-item>
+          <el-form-item label="采集方式" class="meta-field">
+            <el-select
+              v-model="rawRequirement.collectionType"
+              placeholder="选择采集方式"
+              clearable
+            >
+              <el-option
+                v-for="opt in collectionTypeOptions"
+                :key="opt.value"
+                :label="opt.label"
+                :value="opt.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="收集时间" class="meta-field">
+            <el-date-picker
+              v-model="rawRequirement.collectTime"
+              type="datetime"
+              placeholder="选择收集时间"
+              value-format="YYYY-MM-DDTHH:mm:ssZ"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="原始需求内容" prop="content" class="meta-field">
+            <el-textarea
+              v-model="rawRequirement.content"
+              placeholder="请输入原始需求内容"
+              disabled
+            />
+          </el-form-item>
+          <el-form-item>
             <el-button type="primary" @click="handleSubmit">保存</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
+          </el-form-item>
+        </el-form>
+      </el-card>
 
-    <el-card class="wizard-card" shadow="hover">
-      <WizardContainer :store="store" title="需求录入向导">
-        <template #step1>
-          <RawRequirementInputStep :project-id="projectId" :store="store" />
-        </template>
+      <el-card class="wizard-card" shadow="hover">
+        <WizardContainer :store="store" title="需求录入向导">
+          <template #step1>
+            <RawRequirementInputStep :project-id="projectId" :store="store" />
+          </template>
 
-        <template #step2>
-          <RequirementResultStep :store="store" />
-        </template>
-      </WizardContainer>
-    </el-card>
-  </div>
+          <template #step2>
+            <RequirementResultStep :store="store" />
+          </template>
+        </WizardContainer>
+      </el-card>
+    </div>
+  </ViewContainer>
 </template>
 
 <style scoped>
 .raw-requirement-create {
-  padding: var(--spacing-page, 20px);
-  min-height: calc(100dvh - 100px);
+  width: 100%;
 }
 
 .page-header {
@@ -150,10 +154,6 @@ const handleSubmit = async () => {
   margin: 0;
 }
 
-.meta-card {
-  max-width: 1400px;
-  margin: 0 auto var(--spacing-card, 16px);
-}
 
 .meta-form {
   display: flex;

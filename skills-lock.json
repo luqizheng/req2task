@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "skills": {
+    "element-plus-skills": {
+      "source": "jiaiyan/element-plus-skills",
+      "sourceType": "github",
+      "computedHash": "3604c38953c20f99daef7200a0df2a552081e5c5d98f2878d95c41a24f66ed5a"
+    },
+    "impeccable": {
+      "source": "pbakaus/impeccable",
+      "sourceType": "github",
+      "computedHash": "b0e7591172750104fd9df64913b513e942bf78bd45814f2eeeb25c2aa47bd970"
+    }
+  }
+}

@@ -50,7 +50,7 @@ export class GenerateModulesDto {
   existingModulesTree?: string;
 }
 
-export class GenerateRawRequirementDto {
+export class GenerateRawRequirementByLLMDto {
   @IsString()
   conversationText!: string;
 
@@ -61,10 +61,6 @@ export class GenerateRawRequirementDto {
   @IsOptional()
   @IsEnum(CollectionType)
   collectionType?: CollectionType;
-
-  @IsOptional()
-  @IsDateString()
-  collectTime?: string;
 
   @IsOptional()
   @IsString()
@@ -107,6 +103,21 @@ export class CreateRawRequirementDto {
   @IsOptional()
   @IsString()
   source?: string;
+
+  @IsOptional()
+  @IsEnum(CollectionType)
+  collectionType?: CollectionType;
+
+  @IsOptional()
+  @IsDateString()
+  collectTime?: string;
+
+  /**
+   * 与项目线管的附件。关联到项目附件，它不属于 原始需求
+   */
+  @IsOptional()
+  @IsArray()
+  fileIds?: string[];
 }
 
 export class AnswerQuestionDto {

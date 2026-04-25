@@ -1,8 +1,9 @@
 import { ElMessage } from "element-plus";
 import { useRawRequirementCreateStore, type AiQuestion } from "./store";
-import type { RawRequirementResponseDto } from "@req2task/dto";
-import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
+import type { CreateRawRequirementDto, UpdateRawRequirementDto } from "@req2task/dto";
+import { AiSubmitRequestDto, GenerateRawRequirementByLLMDto } from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
+import { rawRequirementsApi } from "@/api/rawRequirements";
 
 export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
@@ -44,20 +45,10 @@ export function useRequirementSubmit(
 
   const translRequestData = (
     data: AiSubmitRequestDto,
-  ): GenerateRawRequirementDto => {
-    const dto: GenerateRawRequirementDto = {
+  ): GenerateRawRequirementByLLMDto => {
+    const dto: GenerateRawRequirementByLLMDto = {
       conversationText: [data.message, data.message.trim()].join("\n"),
     };
-    const source = store.rawRequirement.source?.trim();
-    if (source) {
-      dto.source = source;
-    }
-    if (store.rawRequirement.collectionType) {
-      dto.collectionType = store.rawRequirement.collectionType;
-    }
-    if (store.rawRequirement.collectTime) {
-      dto.collectTime = store.rawRequirement.collectTime;
-    }
     if (
       store.isReanalyze &&
       store.rawRequirement.questionAndAnswers.length > 0
@@ -83,10 +74,62 @@ export function useRequirementSubmit(
     jsonHelper.feed(data);
   };
 
+  const create = async (projectId: string): Promise<boolean> => {
+    const dto: CreateRawRequirementDto = {
+      content: store.rawRequirement.content,
+      source: store.rawRequirement.source || undefined,
+      collectionType: store.rawRequirement.collectionType,
+      collectTime: store.rawRequirement.collectTime || undefined,
+    };
+
+    try {
+      const result = await rawRequirementsApi.create(projectId, dto);
+      if (result.data) {
+        store.setRawRequirement(result.data);
+        ElMessage.success("创建成功");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : "创建失败");
+      return false;
+    }
+  };
+
+  const update = async (): Promise<boolean> => {
+    if (!store.rawRequirement.id) {
+      ElMessage.warning("需求ID不存在");
+      return false;
+    }
+
+    const dto: UpdateRawRequirementDto = {
+      questionAndAnswers: store.rawRequirement.questionAndAnswers,
+      keyElements: store.rawRequirement.keyElements,
+    };
+
+    try {
+      const result = await rawRequirementsApi.update(
+        store.rawRequirement.id,
+        dto,
+      );
+      if (result.data) {
+        store.setRawRequirement(result.data);
+        ElMessage.success("更新成功");
+        return true;
+      }
+      return false;
+    } catch (error) {
+      ElMessage.error(error instanceof Error ? error.message : "更新失败");
+      return false;
+    }
+  };
+
   return {
     handleSuccess,
     handleError,
     translRequestData,
     handleData,
+    create,
+    update,
   };
 }

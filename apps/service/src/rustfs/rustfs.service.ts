@@ -33,13 +33,14 @@ export class RustFSService {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
-    const ext = dto.fileName.split('.').pop() || '';
-    const fileDataId = `attachments/${year}/${month}/${day}/${uuidv4()}_${dto.fileName}`;
+    const fileName = dto.fileName || 'unknown';
+    const ext = fileName.includes('.') ? fileName.split('.').pop() : '';
+    const fileDataId = `attachments/${year}/${month}/${day}/${uuidv4()}_${fileName}`;
 
     const command = new PutObjectCommand({
       Bucket: this.bucket,
       Key: fileDataId,
-      ContentType: dto.contentType,
+      ContentType: dto.contentType || 'application/octet-stream',
     });
 
     const presignedUrl = await getSignedUrl(this.s3Client, command, {

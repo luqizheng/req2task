@@ -40,6 +40,9 @@ const collectionTypeOptions = [
   { label: '文档', value: CollectionType.DOCUMENT },
   { label: '其他', value: CollectionType.OTHER },
 ];
+const handleSubmit = async () => {
+  await store.setRawRequirement(projectId);
+};
 </script>
 
 <template>
@@ -97,6 +100,7 @@ const collectionTypeOptions = [
         <div class="display-label">原始需求内容</div>
         <div class="display-content">{{ store.rawRequirement.content }}</div>
       </div>
+      <el-button @click="handleSubmit">保存</el-button>
     </el-card>
 
     <el-card class="wizard-card" shadow="hover">

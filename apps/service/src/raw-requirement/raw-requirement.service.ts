@@ -14,6 +14,8 @@ import {
   RawRequirementStatus,
   QuestionAndAnswerDto,
   CollectionType,
+  CreateRawRequirementDto,
+  UpdateRawRequirementDto,
 } from "@req2task/dto";
 
 export interface AddRawRequirementDto {
@@ -27,6 +29,26 @@ export interface AddRawRequirementDto {
 
 @Injectable()
 export class RawRequirementService {
+  async create(
+    projectId: string,
+    dto: CreateRawRequirementDto,
+    userId: string,
+  ): Promise<RawRequirementResponseDto> {
+    const rawRequirement = this.rawRequirementRepository.create({
+      projectId,
+      collectionType: dto.collectionType || null,
+      originalContent: dto.content,
+      source: dto.source || null,
+      collectTime: dto.collectTime ? new Date(dto.collectTime) : null,
+      status: RawRequirementStatus.PENDING,
+      createdById: userId,
+      questionAndAnswers: [],
+      keyElements: [],
+    });
+
+    const saved = await this.rawRequirementRepository.save(rawRequirement);
+    return this.toRawRequirementResponseDto(saved);
+  }
   private readonly logger = new Logger(RawRequirementService.name);
 
   constructor(
@@ -86,14 +108,9 @@ export class RawRequirementService {
 
   async updateRawRequirement(
     rawRequirementId: string,
-    updates: {
-      status?: RawRequirementStatus;
-      generatedContent?: string;
-      questionAndAnswers?: QuestionAndAnswer[];
-      keyElements?: string[];
-    },
+    updates: UpdateRawRequirementDto,
   ): Promise<RawRequirementResponseDto> {
-    const rawRequirement = await this.rawRequirementRepository.findOne({
+    const rawRequirement = updates.id ? new RawRequirement() : await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
 
@@ -105,8 +122,7 @@ export class RawRequirementService {
 
     const updateData: Partial<RawRequirement> = {};
     if (updates.status !== undefined) updateData.status = updates.status;
-    if (updates.generatedContent !== undefined)
-      updateData.generatedContent = updates.generatedContent;
+   
     if (updates.questionAndAnswers !== undefined)
       updateData.questionAndAnswers = updates.questionAndAnswers;
     if (updates.keyElements !== undefined)

@@ -5,26 +5,20 @@ import {
   Post,
   Body,
   Param,
-  Query,
   Res,
   HttpCode,
   HttpStatus,
   Request,
   Logger,
   UseGuards,
+  Put,
 } from "@nestjs/common";
 import { Response } from "express";
 import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementService } from "./raw-requirement.service";
 import { AiGenerationService } from "src/ai/ai-generation.service";
 import { ProjectsService } from "src/projects/projects.service";
-import { GenerateRawRequirementDto } from "@req2task/dto";
-
-interface ApiResponse<T> {
-  code: number;
-  data?: T;
-  message?: string;
-}
+import { GenerateRawRequirementByLLMDto,CreateRawRequirementDto, RawRequirementResponseDto, ApiResponseDto, UpdateRawRequirementDto } from "@req2task/dto";
 
 @Controller("raw-requirements")
 @UseGuards(AuthGuard("jwt"))
@@ -40,7 +34,7 @@ export class RawRequirementController {
   @Get(":rawRequirementId")
   async getRawRequirement(
     @Param("rawRequirementId") rawRequirementId: string,
-  ): Promise<ApiResponse<unknown>> {
+  ): Promise<ApiResponseDto<unknown>> {
     const result =
       await this.rawRequirementService.getRawRequirementById(rawRequirementId);
     return { code: 0, data: result };
@@ -50,7 +44,7 @@ export class RawRequirementController {
   @HttpCode(HttpStatus.OK)
   async streamGenerateRawRequirement(
     @Param("projectId") projectId: string,
-    @Body() dto: GenerateRawRequirementDto,
+    @Body() dto: GenerateRawRequirementByLLMDto,
     @Request() req: any,
     @Res() res: Response,
   ) {
@@ -69,11 +63,7 @@ export class RawRequirementController {
     const stream$ = this.aiGenerationService.streamGenerateRawRequirement(
       projectId,
       dto.conversationText,
-      createdById,
       project.description,
-      dto.source,
-      dto.collectionType,
-      dto.collectTime,
       dto.previousQuestions,
     );
 
@@ -99,10 +89,33 @@ export class RawRequirementController {
     });
   }
 
+  @Post(":projectId")
+  async createRawRequirement(
+    @Param("projectId") projectId: string,
+    @Body() dto: CreateRawRequirementDto,
+    @Request() req: any,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
+    const userId = req.user?.id || "system";
+    const result =
+      await this.rawRequirementService.create(projectId, dto, userId);
+    return { code: 0, data: result, message: "创建成功"};
+  }
+
+  @Put(":rawRequirementId")
+  async updateRawRequirement(
+    @Param("rawRequirementId") rawRequirementId: string,
+    @Body() dto: UpdateRawRequirementDto,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
+    const result =
+      await this.rawRequirementService.updateRawRequirement(rawRequirementId, dto);
+    return { code: 0, data: result, message: "更新成功" };
+  }
+  
+
   @Delete(":rawRequirementId")
   async deleteRawRequirement(
     @Param("rawRequirementId") rawRequirementId: string,
-  ): Promise<ApiResponse<null>> {
+  ): Promise<ApiResponseDto<null>> {
     await this.rawRequirementService.deleteRawRequirement(rawRequirementId);
     return { code: 0, message: "删除成功" };
   }

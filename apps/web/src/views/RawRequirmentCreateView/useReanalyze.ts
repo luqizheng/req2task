@@ -1,6 +1,6 @@
 import { ElMessage } from "element-plus";
 import { useRawRequirementCreateStore } from "./store";
-import { AiSubmitRequestDto, GenerateRawRequirementDto } from "@req2task/dto";
+import { AiSubmitRequestDto, GenerateRawRequirementByLLMDto } from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
 import type { AiQuestion } from "./store";
 
@@ -39,7 +39,7 @@ export function useReanalyze(
         attachmentsRustFSId: [],
       };
 
-      const dto: GenerateRawRequirementDto = {
+      const dto: GenerateRawRequirementByLLMDto = {
         conversationText: body.message.trim(),
         source: store.rawRequirement.source,
         collectionType: store.rawRequirement.collectionType,

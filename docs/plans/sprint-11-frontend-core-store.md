@@ -377,13 +377,13 @@ export const llmApi = {
 
 ```typescript
 // src/api/rawRequirements.ts (新建)
-import type { CreateRawRequirementDto } from '@req2task/dto'
+import type { CreateOrUpdateRawRequirementDto } from '@req2task/dto'
 import api from './axios'
 import type { RawRequirementResponse } from './ai'
 
 export const rawRequirementsApi = {
   getByModule: (moduleId: string) => api.get<RawRequirementResponse[]>(`/modules/${moduleId}/raw-requirements`),
-  create: (moduleId: string, data: CreateRawRequirementDto) => 
+  create: (moduleId: string, data: CreateOrUpdateRawRequirementDto) => 
     api.post<RawRequirementResponse>(`/modules/${moduleId}/raw-requirements`, data),
   generate: (id: string, configId?: string) => 
     api.post(`/raw-requirements/${id}/generate`, { configId }),

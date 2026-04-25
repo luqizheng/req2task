@@ -1,9 +1,10 @@
 export interface ApiResponseDto<T = unknown> {
-  success: boolean
-  message: string
+  code?: number
+  success?: boolean
+  message?: string
   data?: T
-  time: string
-  url: string
+  time?: string
+  url?: string
   method?: string
   body?: Record<string, unknown>
 }

@@ -58,12 +58,6 @@ export class RawRequirement {
   @Column({ name: 'collect_time', type: 'timestamptz', nullable: true })
   collectTime!: Date | null;
 
-  @Column({ name: 'generated_content', type: 'text', nullable: true })
-  generatedContent!: string | null;
-
-  @Column({ name: 'error_message', type: 'text', nullable: true })
-  errorMessage!: string | null;
-
   @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
   conversationId!: string | null;
 

@@ -113,11 +113,7 @@ export class AiGenerationService {
   streamGenerateRawRequirement(
     projectId: string,
     conversationText: string,
-    createdById: string,
     context?: string,
-    source?: string,
-    collectionType?: CollectionType,
-    collectTime?: string,
     previousQuestions?: Array<{ question: string; answer: string | null; purpose?: string }>,
   ): Observable<LLMStreamChunk> {
     const title = `RawReq_${projectId}_${Date.now()}`;

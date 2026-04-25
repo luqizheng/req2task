@@ -16,7 +16,7 @@ import {
   GenerateUserStoriesDto,
   GenerateTasksDto,
   GenerateModulesDto,
-  GenerateRawRequirementDto,
+  GenerateRawRequirementByLLMDto,
 } from "@req2task/dto";
 import { ProjectsService } from "src/projects/projects.service";
 import { LLmClientService } from "./llm-client.service";
@@ -28,14 +28,13 @@ export class AiGenerationController {
   constructor(
     private readonly aiGenerationService: AiGenerationService,
     private readonly projectsService: ProjectsService,
-    private readonly llmClient: LLmClientService,
   ) {}
 
   @Post("raw-requirements/:projectId")
   @HttpCode(HttpStatus.CREATED)
   async generateRawRequirement(
     @Param("projectId") projectId: string,
-    @Body() dto: GenerateRawRequirementDto,
+    @Body() dto: GenerateRawRequirementByLLMDto,
     @Request() req: any,
   ) {
     const createdById = req.user?.id || "system";

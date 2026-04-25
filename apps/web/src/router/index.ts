@@ -102,11 +102,7 @@ const router = createRouter({
       name: 'aiConfigTest',
       component: () => import('@/views/AiConfig/AiConfigTestView.vue')
     },
-    {
-      path: '/ai/chat',
-      name: 'aiChat',
-      component: () => import('@/views/AiChatView.vue')
-    },
+   
     {
       path: '/ai/requirement-gen',
       name: 'aiRequirementGen',

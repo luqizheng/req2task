@@ -110,10 +110,6 @@ export function useSSEStream(options: UseSSEStreamOptions) {
       ? JSON.stringify(body)
       : JSON.stringify(options.transRequest(body));
 
-    console.log("[submitStream] 请求 URL:", options.url);
-    console.log("[submitStream] 请求 Body:", requestBody);
-    console.log("[submitStream] Token:", token ? "存在" : "不存在");
-
     const response = await fetch(options.url, {
       method: "POST",
       headers: {
@@ -122,8 +118,6 @@ export function useSSEStream(options: UseSSEStreamOptions) {
       },
       body: requestBody,
     });
-
-    console.log("[submitStream] 响应状态:", response.status);
 
     if (!response.ok) {
       throw new Error(`请求失败: ${response.status}`);
@@ -138,11 +132,9 @@ export function useSSEStream(options: UseSSEStreamOptions) {
     let buffer = "";
 
     try {
-      console.log("[submitStream] 开始读取流...");
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-          console.log("[submitStream] 流读取完成");
           break;
         }
 

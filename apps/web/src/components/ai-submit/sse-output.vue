@@ -62,8 +62,8 @@ const stopTyping = () => {
   isComplete.value = true;
 };
 
-const handleConversationStart = (event: ConversationStartEvent) => {
-  console.log("SSE conversation started:", event);
+const handleConversationStart = (_event: ConversationStartEvent) => {
+  // 会话开始，无需额外处理
 };
 
 const handleContent = (text: string) => {

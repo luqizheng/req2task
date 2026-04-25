@@ -39,7 +39,6 @@ export function useAudioRecorder(options: UseAudioRecorderOptions = {}) {
       ElMessage.info("开始录音...");
     } catch (error) {
       ElMessage.error("无法访问麦克风，请检查权限设置");
-      console.error("Recording error:", error);
     }
   };
 

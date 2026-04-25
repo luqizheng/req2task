@@ -9,6 +9,8 @@ import RequirementResultStep from "./RequirementResultStep.vue";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
+import { ref, reactive } from "vue";
+import type { FormInstance, FormRules } from "element-plus";
 
 const router = useRouter();
 const route = useRoute();
@@ -18,7 +20,18 @@ const projectId = route.params.id as string;
 const store = useRawRequirementCreateStore();
 store.projectId = projectId;
 const rawRequirementSubmitHelper = useRequirementSubmit(store);
-const {rawRequirement} = storeToRefs(store);
+const { rawRequirement } = storeToRefs(store);
+
+const formRef = ref<FormInstance>();
+
+const formRules = reactive<FormRules>({
+  source: [{ required: true, message: "请输入需求来源", trigger: "blur" }],
+  content: [{ required: true, message: "请输入原始需求内容", trigger: "blur" }],
+  collectionType: [{ required: true, message: "请选择采集方式", trigger: "change" }],
+  collectTime: [{ required: true, message: "请选择收集时间", trigger: "change" }],
+  
+});
+
 const handleBack = () => {
   router.back();
 };
@@ -29,7 +42,10 @@ const collectionTypeOptions = [
   { label: "文档", value: CollectionType.DOCUMENT },
   { label: "其他", value: CollectionType.OTHER },
 ];
+
 const handleSubmit = async () => {
+  const valid = await formRef.value?.validate().catch(() => false);
+  if (!valid) return;
   rawRequirementSubmitHelper.save();
 };
 </script>
@@ -44,26 +60,24 @@ const handleSubmit = async () => {
     </div>
 
     <el-card class="meta-card" shadow="hover">
-      <div class="meta-form">
-        <div class="meta-field">
-          <label class="form-label" for="source-input"
-            >需求来源 <span class="required">*</span></label
-          >
+      <el-form
+        ref="formRef"
+        :model="rawRequirement"
+        :rules="formRules"
+        label-position="top"
+        class="meta-form"
+      >
+        <el-form-item label="需求来源" prop="source" class="meta-field">
           <el-input
-            id="source-input"
             v-model="rawRequirement.source"
             placeholder="名字/职位/部门"
-            size="default"
             clearable
           />
-        </div>
-        <div class="meta-field">
-          <label class="form-label" for="collection-type-input">采集方式</label>
+        </el-form-item>
+        <el-form-item label="采集方式" class="meta-field">
           <el-select
-            id="collection-type-input"
             v-model="rawRequirement.collectionType"
             placeholder="选择采集方式"
-            size="default"
             clearable
           >
             <el-option
@@ -73,25 +87,27 @@ const handleSubmit = async () => {
               :value="opt.value"
             />
           </el-select>
-        </div>
-        <div class="meta-field">
-          <label class="form-label" for="collect-time-input">收集时间</label>
+        </el-form-item>
+        <el-form-item label="收集时间" class="meta-field">
           <el-date-picker
-            id="collect-time-input"
             v-model="rawRequirement.collectTime"
             type="datetime"
             placeholder="选择收集时间"
-            size="default"
             value-format="YYYY-MM-DDTHH:mm:ssZ"
             clearable
           />
-        </div>
-      </div>
-      <div v-if="store.rawRequirement.content" class="raw-requirement-display">
-        <div class="display-label">原始需求内容</div>
-        <div class="display-content">{{ store.rawRequirement.content }}</div>
-      </div>
-      <el-button @click="handleSubmit">保存</el-button>
+        </el-form-item>
+        <el-form-item label="原始需求内容" prop="content" class="meta-field">
+          <el-textarea
+            v-model="rawRequirement.content"
+            placeholder="请输入原始需求内容"
+            disabled
+          />
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click="handleSubmit">保存</el-button>
+        </el-form-item>
+      </el-form>
     </el-card>
 
     <el-card class="wizard-card" shadow="hover">
@@ -144,48 +160,12 @@ const handleSubmit = async () => {
   gap: var(--spacing-compact, 8px);
 }
 
-.raw-requirement-display {
-  margin-top: var(--spacing-component, 12px);
-  padding-top: var(--spacing-component, 12px);
-  border-top: 1px solid var(--color-border, #e2e8f0);
-}
-
-.display-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #64748b);
-  margin-bottom: 8px;
-}
-
-.display-content {
-  padding: 12px;
-  background: var(--color-bg-secondary, #f8fafc);
-  border-radius: 6px;
-  border: 1px solid var(--color-border, #e2e8f0);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--color-text-primary, #1e293b);
-  white-space: pre-wrap;
-  word-break: break-word;
+.meta-form :deep(.el-form-item) {
+  margin-bottom: 0;
 }
 
 .meta-field {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-label {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text-secondary, #64748b);
-  margin-bottom: 4px;
-  display: block;
-}
-
-.required {
-  color: var(--color-danger, #ef4444);
 }
 
 .wizard-card {

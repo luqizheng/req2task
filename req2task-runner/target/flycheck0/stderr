@@ -1,5 +1,5 @@
-   0.417143900s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint: fingerprint error for req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner)/Check { test: false }/TargetInner { name: "req2task-runner", doc: true, ..: with_path("D:\\projects\\req2task\\req2task-runner\\src\\main.rs", Edition2021) }
-   0.417251000s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\projects\req2task\req2task-runner\target\debug\.fingerprint\req2task-runner-3f58a29141f6985e\bin-req2task-runner`
+   0.724331400s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint: fingerprint error for req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner)/Check { test: false }/TargetInner { name: "req2task-runner", doc: true, ..: with_path("D:\\projects\\req2task\\req2task-runner\\src\\main.rs", Edition2021) }
+   0.724421400s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\projects\req2task\req2task-runner\target\debug\.fingerprint\req2task-runner-3f58a29141f6985e\bin-req2task-runner`
 
 Caused by:
     系统找不到指定的文件。 (os error 2)
@@ -26,8 +26,8 @@ Stack backtrace:
   18: git_midx_writer_dump
   19: BaseThreadInitThunk
   20: RtlUserThreadStart
-   0.495784500s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint: fingerprint error for req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner)/Check { test: true }/TargetInner { name: "req2task-runner", doc: true, ..: with_path("D:\\projects\\req2task\\req2task-runner\\src\\main.rs", Edition2021) }
-   0.495810300s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\projects\req2task\req2task-runner\target\debug\.fingerprint\req2task-runner-5ab8f52b511dc1ef\test-bin-req2task-runner`
+   0.863048100s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint: fingerprint error for req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner)/Check { test: true }/TargetInner { name: "req2task-runner", doc: true, ..: with_path("D:\\projects\\req2task\\req2task-runner\\src\\main.rs", Edition2021) }
+   0.863083600s  INFO prepare_target{force=false package_id=req2task-runner v0.1.0 (D:\projects\req2task\req2task-runner) target="req2task-runner"}: cargo::core::compiler::fingerprint:     err: failed to read `D:\projects\req2task\req2task-runner\target\debug\.fingerprint\req2task-runner-5ab8f52b511dc1ef\test-bin-req2task-runner`
 
 Caused by:
     系统找不到指定的文件。 (os error 2)

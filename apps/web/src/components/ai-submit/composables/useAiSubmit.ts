@@ -13,6 +13,7 @@ export interface UseAiSubmitOptions {
   onSuccess?: (data: { request: AiSubmitRequestDto; response: any }) => void;
   onError?: (error: Error) => void;
   transRequest?: (data: AiSubmitRequestDto) => unknown;
+  getRustfsIds?: () => string[];
 }
 
 export function useAiSubmit(options: UseAiSubmitOptions) {
@@ -63,7 +64,10 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
   const buildRequestBody = (): AiSubmitRequestDto => ({
     message: message.value.trim(),
     auditRustFSId: [],
-    attachmentsRustFSId: getSuccessFileIds(),
+    attachmentsRustFSId: [
+      ...getSuccessFileIds(),
+      ...(options.getRustfsIds?.() || []),
+    ],
   });
 
   const submitStreamWithCallbacks = async (callbacks: StreamCallbacks) => {
@@ -93,7 +97,6 @@ export function useAiSubmit(options: UseAiSubmitOptions) {
         !options.transRequest ? body : options.transRequest(body),
       );
 
-      console.log("提交成功后的response:", response);
       ElMessage.success("提交成功");
       options.onSuccess?.({ request: body, response: response });
       reset();

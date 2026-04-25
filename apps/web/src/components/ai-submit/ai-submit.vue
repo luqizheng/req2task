@@ -18,6 +18,7 @@ import {
 import { useRustFS } from "@/composables/useRustFS";
 import { AiSubmitRequestDto } from "@req2task/dto";
 import SseOutput from "./sse-output.vue";
+import "./ai-submit.css";
 
 interface Props {
   url: string;
@@ -54,6 +55,22 @@ const emit = defineEmits<{
 }>();
 
 const {
+  upload: rustfsUpload,
+  uploadingFiles,
+  removeFile,
+  clearFiles,
+} = useRustFS();
+
+const rustfsFiles = computed(() => {
+  return Array.from(uploadingFiles.value.values());
+});
+
+const getSuccessRustfsIds = () =>
+  rustfsFiles.value
+    .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
+    .map((f) => f.id);
+
+const {
   message,
   audioFile,
   uploadedFiles,
@@ -67,6 +84,7 @@ const {
   clearAudio,
   reset,
   submit,
+  submitStream: submitStreamBase,
 } = useAiSubmit({
   url: props.url,
   uploadFile: props.uploadFile,
@@ -74,14 +92,8 @@ const {
   onSuccess: (data) => emit("success", data),
   onError: (error) => emit("error", error),
   transRequest: props.transRequest,
+  getRustfsIds: getSuccessRustfsIds,
 });
-
-const {
-  upload: rustfsUpload,
-  uploadingFiles,
-  removeFile,
-  clearFiles,
-} = useRustFS();
 
 const audioInputRef = ref<HTMLInputElement | null>(null);
 const attachmentInputRef = ref<HTMLInputElement | null>(null);
@@ -95,11 +107,6 @@ const submittedMessage = ref("");
 const isStreaming = ref(false);
 const messageHistory = ref<Array<{ role: "user"; content: string }>>([]);
 
-const onUseStreamChange = (value: boolean) => {
-  localUseStream.value = value;
-  emit("update:useStream", value);
-};
-
 const formatSize = (bytes: number) => {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -107,10 +114,6 @@ const formatSize = (bytes: number) => {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 };
-
-const rustfsFiles = computed(() => {
-  return Array.from(uploadingFiles.value.values());
-});
 
 const allUploadedFiles = computed(() => {
   return [...uploadedFiles.value, ...rustfsFiles.value];
@@ -180,128 +183,57 @@ const submitStream = async () => {
   isStreaming.value = true;
   sseOutputRef.value?.reset();
 
-  const rustfsIds = rustfsFiles.value
-    .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
-    .map((f) => f.id);
+  const rustfsIds = getSuccessRustfsIds();
   if (rustfsIds.length > 0) {
     emit("uploadSuccess", rustfsIds);
   }
 
-  const body: AiSubmitRequestDto = {
-    message: userMessage,
-    auditRustFSId: [],
-    attachmentsRustFSId: uploadedFiles.value
-      .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
-      .map((f) => f.id),
-  };
+  let fullContent = "";
 
-  const token = localStorage.getItem("accessToken");
-
-  try {
-    const response = await fetch(props.url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: !props.transRequest
-        ? JSON.stringify(body)
-        : JSON.stringify(props.transRequest(body)),
-    });
-
-    if (!response.ok) {
-      throw new Error(`请求失败: ${response.status}`);
-    }
-
-    const reader = response.body?.getReader();
-    if (!reader) {
-      throw new Error("无法读取响应流");
-    }
-
-    const decoder = new TextDecoder();
-    let buffer = "";
-    let fullContent = "";
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
-
-      for (const line of lines) {
-        if (line.startsWith("data: ")) {
-          const data = line.slice(6);
-          if (data === "[DONE]") {
-            emit("done", { type: "done" });
-            break;
-          }
-
-          try {
-            const event = JSON.parse(data);
-
-            switch (event.type) {
-              case "conversation_start":
-                conversationId.value = event.conversationId;
-                isNewConversation.value = event.isNewConversation;
-                sseOutputRef.value?.handleConversationStart(event);
-                emit("conversationStart", event);
-                break;
-              case "content":
-                if (event.content) {
-                  fullContent += event.content;
-                  sseOutputRef.value?.handleContent(event.content);
-                  emit("content", event.content);
-                }
-                break;
-              case "message":
-                if (event.message?.content) {
-                  sseOutputRef.value?.handleMessage(event.message.content);
-                }
-                emit("message", event.message?.content);
-                break;
-              case "done":
-                sseOutputRef.value?.handleDone(event);
-                emit("done", event);
-                emit("success", {
-                  request: body,
-                  response: fullContent,
-                });
-                isStreaming.value = false;
-                break;
-              case "error":
-                sseOutputRef.value?.handleError(event);
-                emit("streamError", event);
-                break;
-            }
-          } catch {
-            console.warn("Failed to parse SSE event:", data);
-          }
-        }
+  await submitStreamBase({
+    onConversationStart: (event) => {
+      conversationId.value = event.conversationId;
+      isNewConversation.value = event.isNewConversation;
+      sseOutputRef.value?.handleConversationStart(event);
+      emit("conversationStart", event);
+    },
+    onContent: (content) => {
+      fullContent += content;
+      sseOutputRef.value?.handleContent(content);
+      emit("content", content);
+    },
+    onMessage: (event) => {
+      if (event.message?.content) {
+        sseOutputRef.value?.handleMessage(event.message.content);
       }
-    }
-
-    reset();
-    clearFiles();
-  } catch (error) {
-    isStreaming.value = false;
-    const err =
-      error instanceof Error ? error : new Error("提交失败，请稍后重试");
-    ElMessage.error(err.message);
-    sseOutputRef.value?.handleError({
-      type: "error",
-      message: err.message,
-    });
-    emit("streamError", {
-      type: "error",
-      message: err.message,
-    });
-  }
+      emit("message", event.message?.content);
+    },
+    onDone: (event) => {
+      sseOutputRef.value?.handleDone(event);
+      emit("done", event);
+      emit("success", {
+        request: {
+          message: userMessage,
+          auditRustFSId: [],
+          attachmentsRustFSId: rustfsIds,
+        },
+        response: fullContent,
+      });
+      isStreaming.value = false;
+      reset();
+      clearFiles();
+    },
+    onError: (error) => {
+      sseOutputRef.value?.handleError(error);
+      emit("streamError", error);
+      isStreaming.value = false;
+    },
+  });
 };
 
 defineExpose({
   submitStream,
+  handleCancel,
 });
 </script>
 
@@ -384,17 +316,6 @@ defineExpose({
             上传附件
           </el-button>
         </div>
-        <!-- 用户不能选择其他模式 -->
-        <div class="toolbar-right" v-if="false">
-          <el-switch
-            :model-value="localUseStream"
-            active-text="流式"
-            inactive-text="普通"
-            inline-prompt
-            style="--el-switch-on-color: #6366f1"
-            @update:model-value="onUseStreamChange"
-          />
-        </div>
       </div>
 
       <div v-if="audioFile" class="audio-preview">
@@ -459,22 +380,24 @@ defineExpose({
       </div>
 
       <div class="actions">
-        <el-button
-          size="default"
-          @click="handleCancel"
-          :disabled="isSubmitting"
-        >
-          取消
-        </el-button>
-        <el-button
-          type="primary"
-          :icon="Promotion"
-          :disabled="!canSubmit || isStreaming"
-          :loading="isSubmitting || isStreaming"
-          @click="handleSubmit"
-        >
-          {{ localUseStream ? "流式提交" : "提交" }}
-        </el-button>
+        <slot name="actions">
+          <el-button
+            size="default"
+            @click="handleCancel"
+            :disabled="isSubmitting"
+          >
+            取消
+          </el-button>
+          <el-button
+            type="primary"
+            :icon="Promotion"
+            :disabled="!canSubmit || isStreaming"
+            :loading="isSubmitting || isStreaming"
+            @click="handleSubmit"
+          >
+            {{ localUseStream ? "流式提交" : "提交" }}
+          </el-button>
+        </slot>
       </div>
     </div>
 
@@ -495,269 +418,3 @@ defineExpose({
     />
   </div>
 </template>
-
-<style scoped>
-.ai-submit-container {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.ai-submit {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5ff 100%);
-  border-radius: 12px;
-  border: 1px solid #e8e5ff;
-  box-shadow: 0 2px 12px rgba(99, 102, 241, 0.08);
-}
-
-.ai-submit.with-output {
-  border-radius: 12px 12px 0 0;
-}
-
-.input-section :deep(.el-textarea__inner) {
-  border: none;
-  padding: 0;
-  font-size: 14px;
-  background: transparent;
-}
-
-.input-section :deep(.el-textarea__inner:focus) {
-  box-shadow: none;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 0;
-  border-top: 1px solid rgba(99, 102, 241, 0.12);
-  border-bottom: 1px solid rgba(99, 102, 241, 0.12);
-}
-
-.toolbar-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.toolbar-right {
-  display: flex;
-  align-items: center;
-}
-
-.tool-icon {
-  margin-right: 4px;
-  color: #6366f1;
-}
-
-.audio-preview,
-.attachment-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.file-item {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 10px;
-  border: 1px solid rgba(99, 102, 241, 0.15);
-  transition: all 0.2s ease;
-}
-
-.file-item:hover {
-  border-color: rgba(99, 102, 241, 0.3);
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
-}
-
-.file-item.success {
-  border-color: #10b981;
-  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
-}
-
-.file-item.error {
-  border-color: #ef4444;
-  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
-}
-
-.file-item.uploading {
-  border-color: #6366f1;
-  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
-}
-
-.file-icon {
-  flex-shrink: 0;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  border-radius: 10px;
-  color: white;
-  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
-}
-
-.file-item.success .file-icon {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
-}
-
-.file-item.error .file-icon {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-}
-
-.file-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.file-name {
-  font-size: 13px;
-  font-weight: 600;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.file-meta {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-  font-size: 12px;
-  color: #64748b;
-}
-
-.file-type {
-  padding: 2px 8px;
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-  border-radius: 4px;
-  font-weight: 500;
-}
-
-.file-item.success .file-type {
-  background: rgba(16, 185, 129, 0.1);
-  color: #059669;
-}
-
-.file-item.error .file-type {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
-.remove-icon {
-  flex-shrink: 0;
-  cursor: pointer;
-  color: #94a3b8;
-  font-size: 16px;
-  transition: all 0.2s;
-  padding: 4px;
-  border-radius: 4px;
-}
-
-.remove-icon:hover {
-  color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.loading-icon {
-  flex-shrink: 0;
-  color: #6366f1;
-  font-size: 16px;
-  animation: rotate 1s linear infinite;
-}
-
-@keyframes rotate {
-  from {
-    transform: rotate(0deg);
-  }
-
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding-top: 8px;
-}
-
-.hidden-input {
-  display: none;
-}
-
-.message-history-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 16px;
-  background: linear-gradient(135deg, #fafafa 0%, #f5f5ff 100%);
-  border-radius: 12px 12px 0 0;
-  border: 1px solid #e8e5ff;
-  border-bottom: none;
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.history-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.history-content {
-  padding: 12px 16px;
-  background: rgba(255, 255, 255, 0.9);
-  border-radius: 8px;
-  font-size: 14px;
-  color: #1e293b;
-  white-space: pre-wrap;
-  word-break: break-word;
-}
-
-.loading-indicator {
-  display: flex;
-  gap: 6px;
-  padding-left: 16px;
-}
-
-.loading-dot {
-  width: 8px;
-  height: 8px;
-  background: #6366f1;
-  border-radius: 50%;
-  animation: bounce 1.4s infinite ease-in-out both;
-}
-
-.loading-dot:nth-child(1) {
-  animation-delay: -0.32s;
-}
-
-.loading-dot:nth-child(2) {
-  animation-delay: -0.16s;
-}
-
-@keyframes bounce {
-  0%,
-  80%,
-  100% {
-    transform: scale(0);
-  }
-  40% {
-    transform: scale(1);
-  }
-}
-</style>

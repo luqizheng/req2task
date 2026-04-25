@@ -61,7 +61,7 @@ export function useRequirementSubmit(
   const save = async (): Promise<boolean> => {
     try {
       debugger;
-      const result = !store.projectId
+      const result = !store.rawRequirement.id
         ? await rawRequirementsApi.create(store.projectId, {
             content: store.rawRequirement.content,
             source: store.rawRequirement.source || undefined,

@@ -347,8 +347,8 @@ const submitStream = async () => {
             上传附件
           </el-button>
         </div>
-
-        <div class="toolbar-right">
+        <!-- 用户不能选择其他模式 -->
+        <div class="toolbar-right" v-if="false">
           <el-switch
             :model-value="localUseStream"
             active-text="流式"

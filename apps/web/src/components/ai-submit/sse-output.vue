@@ -25,8 +25,6 @@ const displayedContent = ref("");
 const isTyping = ref(false);
 const isComplete = ref(false);
 const error = ref<string | null>(null);
-const followUpQuestions = ref<string[]>([]);
-const keyElements = ref<string[]>([]);
 
 let typingInterval: ReturnType<typeof setInterval> | null = null;
 let currentIndex = 0;
@@ -82,14 +80,8 @@ const handleMessage = (text: string) => {
   }
 };
 
-const handleDone = (event: DoneEvent) => {
+const handleDone = (_event: DoneEvent) => {
   stopTyping();
-  if (event.followUpQuestions) {
-    followUpQuestions.value = event.followUpQuestions;
-  }
-  if (event.keyElements) {
-    keyElements.value = event.keyElements;
-  }
 };
 
 const handleError = (event: ErrorEvent) => {
@@ -103,8 +95,6 @@ const reset = () => {
   displayedContent.value = "";
   isComplete.value = false;
   error.value = null;
-  followUpQuestions.value = [];
-  keyElements.value = [];
   currentIndex = 0;
 };
 
@@ -142,34 +132,6 @@ onMounted(() => {
             v-if="isTyping"
             class="cursor"
           >|</span></pre>
-      </div>
-
-      <div v-if="isComplete" class="meta-section">
-        <div v-if="keyElements.length > 0" class="key-elements">
-          <div class="section-title">关键要素</div>
-          <div class="tags">
-            <span
-              v-for="(element, index) in keyElements"
-              :key="index"
-              class="tag tag-element"
-            >
-              {{ element }}
-            </span>
-          </div>
-        </div>
-
-        <div v-if="followUpQuestions.length > 0" class="follow-up-questions">
-          <div class="section-title">追问建议</div>
-          <ul class="question-list">
-            <li
-              v-for="(question, index) in followUpQuestions"
-              :key="index"
-              class="question-item"
-            >
-              {{ question }}
-            </li>
-          </ul>
-        </div>
       </div>
     </div>
   </div>
@@ -301,26 +263,5 @@ onMounted(() => {
   border: 1px solid rgba(99, 102, 241, 0.2);
 }
 
-.question-list {
-  margin: 0;
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
 
-.question-item {
-  font-size: 14px;
-  color: #475569;
-  cursor: pointer;
-  padding: 8px 12px;
-  border-radius: 6px;
-  transition: all 0.2s ease;
-  list-style-type: disc;
-}
-
-.question-item:hover {
-  background: rgba(99, 102, 241, 0.08);
-  color: #6366f1;
-}
 </style>

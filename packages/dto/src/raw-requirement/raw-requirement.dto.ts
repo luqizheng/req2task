@@ -1,5 +1,11 @@
 import { CollectionType, RawRequirementStatus } from '../enums';
 
+export interface RawRequirementListParams {
+  page?: number;
+  limit?: number;
+  status?: RawRequirementStatus;
+}
+
 export interface RawRequirementQADto {
   id: string;
   question: string;
@@ -22,6 +28,7 @@ export interface RawRequirementResponseDto {
   keyElements: string[];
   createdAt: string;
   updatedAt: string;
+  fileIds?: string[];
 }
 
 export interface CreateRawRequirementInput {

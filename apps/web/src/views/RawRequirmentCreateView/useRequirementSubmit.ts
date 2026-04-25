@@ -1,7 +1,10 @@
 import { ElMessage } from "element-plus";
 import { useRawRequirementCreateStore, type AiQuestion } from "./store";
-import type { CreateRawRequirementDto, UpdateRawRequirementDto } from "@req2task/dto";
-import { AiSubmitRequestDto, GenerateRawRequirementByLLMDto } from "@req2task/dto";
+
+import {
+  AiSubmitRequestDto,
+  GenerateRawRequirementByLLMDto,
+} from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 
@@ -18,25 +21,10 @@ export function useRequirementSubmit(
       return;
     }
 
-    store.rawRequirement.content = request.message;
-
-    //   if (response?.id) {
-
-    //     const result = response as RawRequirementResponseDto;
-    //     store.setRawRequirement(result);
-    //     if (result.questionAndAnswers && result.questionAndAnswers.length > 0) {
-    //       ElMessage.success("需求已录入，发现追问问题");
-    //     } else {
-    //       ElMessage.success("需求已录入");
-    //     }
-    //   } else if ((data as { questions?: AiQuestion[] })?.questions) {
-    //     const sseData = data as {
-    //       keyElements?: string[];
-    //       questions?: AiQuestion[];
-    //     };
-    //     store.setQuestionsFromSSE(null, sseData);
-    //     ElMessage.success("需求已录入，发现追问问题");
-    //   }
+    store.rawRequirement.content = [
+      store.rawRequirement.content ?? "",
+      request.message,
+    ].join("\n");
   };
 
   const handleError = (error: Error) => {
@@ -49,15 +37,11 @@ export function useRequirementSubmit(
     const dto: GenerateRawRequirementByLLMDto = {
       conversationText: [data.message, data.message.trim()].join("\n"),
     };
-    if (
-      store.isReanalyze &&
-      store.rawRequirement.questionAndAnswers.length > 0
-    ) {
-      dto.previousQuestions = store.rawRequirement.questionAndAnswers.filter(
-        (qa) => qa.answer,
-      );
-    }
-    
+
+    dto.previousQuestions = store.rawRequirement.questionAndAnswers.filter(
+      (qa) => qa.answer,
+    );
+
     return dto;
   };
 
@@ -70,22 +54,29 @@ export function useRequirementSubmit(
     },
   ]);
 
-  const handleData = (data: string) => {
+  const handleSSEData = (data: string) => {
     jsonHelper.feed(data);
   };
 
-  const create = async (projectId: string): Promise<boolean> => {
-    const dto: CreateRawRequirementDto = {
-      content: store.rawRequirement.content,
-      source: store.rawRequirement.source || undefined,
-      collectionType: store.rawRequirement.collectionType,
-      collectTime: store.rawRequirement.collectTime || undefined,
-    };
-
+  const save = async (): Promise<boolean> => {
     try {
-      const result = await rawRequirementsApi.create(projectId, dto);
+      debugger;
+      const result = !store.projectId
+        ? await rawRequirementsApi.create(store.projectId, {
+            content: store.rawRequirement.content,
+            source: store.rawRequirement.source || undefined,
+            collectionType: store.rawRequirement.collectionType,
+            collectTime: store.rawRequirement.collectTime || undefined,
+            fileIds: store.rawRequirement.fileIds || undefined,
+          })
+        : await rawRequirementsApi.update(store.rawRequirement.id, {
+            questionAndAnswers: store.rawRequirement.questionAndAnswers,
+            keyElements: store.rawRequirement.keyElements,
+          });
       if (result.data) {
-        store.setRawRequirement(result.data);
+        if (store.rawRequirement.id) {
+          store.rawRequirement.id = result.data.id;
+        }
         ElMessage.success("创建成功");
         return true;
       }
@@ -96,40 +87,11 @@ export function useRequirementSubmit(
     }
   };
 
-  const update = async (): Promise<boolean> => {
-    if (!store.rawRequirement.id) {
-      ElMessage.warning("需求ID不存在");
-      return false;
-    }
-
-    const dto: UpdateRawRequirementDto = {
-      questionAndAnswers: store.rawRequirement.questionAndAnswers,
-      keyElements: store.rawRequirement.keyElements,
-    };
-
-    try {
-      const result = await rawRequirementsApi.update(
-        store.rawRequirement.id,
-        dto,
-      );
-      if (result.data) {
-        store.setRawRequirement(result.data);
-        ElMessage.success("更新成功");
-        return true;
-      }
-      return false;
-    } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : "更新失败");
-      return false;
-    }
-  };
-
   return {
     handleSuccess,
     handleError,
     translRequestData,
-    handleData,
-    create,
-    update,
+    handleSSEData,
+    save,
   };
 }

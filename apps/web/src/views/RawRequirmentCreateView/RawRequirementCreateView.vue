@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from "vue";
+
 import { useRouter, useRoute } from "vue-router";
 import { ArrowLeft } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
@@ -7,6 +7,8 @@ import WizardContainer from "./WizardContainer.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
 import RequirementResultStep from "./RequirementResultStep.vue";
 import { CollectionType } from "@req2task/dto";
+import { useRequirementSubmit } from "./useRequirementSubmit";
+import { storeToRefs } from "pinia";
 
 const router = useRouter();
 const route = useRoute();
@@ -14,34 +16,21 @@ const route = useRoute();
 const projectId = route.params.id as string;
 
 const store = useRawRequirementCreateStore();
-
+store.projectId = projectId;
+const rawRequirementSubmitHelper = useRequirementSubmit(store);
+const {rawRequirement} = storeToRefs(store);
 const handleBack = () => {
   router.back();
 };
 
-const source = computed({
-  get: () => store.rawRequirement.source,
-  set: (val: string) => store.setSource(val),
-});
-
-const collectionType = computed({
-  get: () => store.rawRequirement.collectionType,
-  set: (val) => store.setCollectionType(val),
-});
-
-const collectTime = computed({
-  get: () => store.rawRequirement.collectTime,
-  set: (val) => store.setCollectTime(val),
-});
-
 const collectionTypeOptions = [
-  { label: '会议', value: CollectionType.MEETING },
-  { label: '访谈', value: CollectionType.INTERVIEW },
-  { label: '文档', value: CollectionType.DOCUMENT },
-  { label: '其他', value: CollectionType.OTHER },
+  { label: "会议", value: CollectionType.MEETING },
+  { label: "访谈", value: CollectionType.INTERVIEW },
+  { label: "文档", value: CollectionType.DOCUMENT },
+  { label: "其他", value: CollectionType.OTHER },
 ];
 const handleSubmit = async () => {
-  await store.setRawRequirement(projectId);
+  rawRequirementSubmitHelper.save();
 };
 </script>
 
@@ -57,11 +46,13 @@ const handleSubmit = async () => {
     <el-card class="meta-card" shadow="hover">
       <div class="meta-form">
         <div class="meta-field">
-          <label class="form-label" for="source-input">需求来源 <span class="required">*</span></label>
+          <label class="form-label" for="source-input"
+            >需求来源 <span class="required">*</span></label
+          >
           <el-input
             id="source-input"
-            v-model="source"
-            placeholder="如：客户会议、产品文档等"
+            v-model="rawRequirement.source"
+            placeholder="名字/职位/部门"
             size="default"
             clearable
           />
@@ -70,7 +61,7 @@ const handleSubmit = async () => {
           <label class="form-label" for="collection-type-input">采集方式</label>
           <el-select
             id="collection-type-input"
-            v-model="collectionType"
+            v-model="rawRequirement.collectionType"
             placeholder="选择采集方式"
             size="default"
             clearable
@@ -87,7 +78,7 @@ const handleSubmit = async () => {
           <label class="form-label" for="collect-time-input">收集时间</label>
           <el-date-picker
             id="collect-time-input"
-            v-model="collectTime"
+            v-model="rawRequirement.collectTime"
             type="datetime"
             placeholder="选择收集时间"
             size="default"

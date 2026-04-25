@@ -5,6 +5,7 @@ import type {
   RawRequirementResponseDto,
   CreateRawRequirementDto,
   UpdateRawRequirementDto,
+  RawRequirementListParams,
 } from "@req2task/dto";
 import { RawRequirementStatus } from "@req2task/dto";
 
@@ -12,14 +13,9 @@ export type {
   CreateRawRequirementInput,
   CollectionType,
   RawRequirementResponseDto,
+  RawRequirementListParams,
 };
 export { RawRequirementStatus };
-
-export interface RawRequirementListParams {
-  page?: number;
-  limit?: number;
-  status?: string;
-}
 
 export interface ChatMessage {
   role: "user" | "assistant";
@@ -75,6 +71,19 @@ export const rawRequirementsApi = {
     return api.put(
       `/raw-requirements/${rawRequirementId}`,
       data,
+    );
+  },
+  getByProject: (
+    projectId: string,
+    params: RawRequirementListParams,
+  ): Promise<{
+    code: number;
+    success: boolean;
+    data?: RawRequirementResponseDto[];
+  }> => {
+    return api.get(
+      `/raw-requirements/${projectId}/raw-requirements`,
+      { params },
     );
   },
 };

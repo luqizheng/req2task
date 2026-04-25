@@ -5,6 +5,7 @@ import {
   Post,
   Body,
   Param,
+  Query,
   Res,
   HttpCode,
   HttpStatus,
@@ -18,7 +19,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementService } from "./raw-requirement.service";
 import { AiGenerationService } from "src/ai/ai-generation.service";
 import { ProjectsService } from "src/projects/projects.service";
-import { GenerateRawRequirementByLLMDto,CreateRawRequirementDto, RawRequirementResponseDto, ApiResponseDto, UpdateRawRequirementDto } from "@req2task/dto";
+import { GenerateRawRequirementByLLMDto,CreateRawRequirementDto, RawRequirementResponseDto, ApiResponseDto, UpdateRawRequirementDto, RawRequirementListParams } from "@req2task/dto";
 
 @Controller("raw-requirements")
 @UseGuards(AuthGuard("jwt"))
@@ -119,4 +120,18 @@ export class RawRequirementController {
     await this.rawRequirementService.deleteRawRequirement(rawRequirementId);
     return { code: 0, message: "删除成功" };
   }
+
+
+  @Get(":projectId/raw-requirements")
+  async getRawRequirementsByProject(
+    @Param("projectId") projectId: string,
+    @Query() params: RawRequirementListParams,
+    @Request() req: any,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto[]>> {
+    const userId = req.user?.id || "system";
+    const result =
+      await this.rawRequirementService.getRawRequirementsByProject(projectId, params);
+    return { code: 0, data: result };
+  }
+
 }

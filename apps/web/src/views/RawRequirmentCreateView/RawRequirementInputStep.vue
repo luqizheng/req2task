@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from "vue";
-import { Plus, Refresh } from "@element-plus/icons-vue";
+import { Plus } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { useRequirementGenerate } from "./useRequirementGenerate";
-import { useReanalyze } from "./useReanalyze";
+
 import QuestionList from "./QuestionList.vue";
 import { AnalyzeStartEvent } from "@/components/ai-submit/composables/useSSEStream";
 
@@ -19,7 +19,8 @@ const props = defineProps<Props>();
 
 const questionFilter = computed({
   get: () => props.store.questionFilter,
-  set: (val: 'all' | 'pending' | 'answered') => props.store.setQuestionFilter(val),
+  set: (val: "all" | "pending" | "answered") =>
+    props.store.setQuestionFilter(val),
 });
 
 const {
@@ -35,15 +36,10 @@ const {
   handleDeleteQuestion,
 } = useQuestionOperations(props.store);
 
-const {
-  handleSuccess,
-  handleError,
-  translRequestData,
-  handleData,
-} = useRequirementSubmit(props.store);
+const { handleSuccess, handleError, translRequestData, handleSSEData } =
+  useRequirementSubmit(props.store);
 
 const { handleGenerate } = useRequirementGenerate(props.store);
-const { handleReanalyze } = useReanalyze(props.store, props.projectId);
 
 const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
   props.store.rawRequirement.conversationId = event.collectionId;
@@ -68,7 +64,7 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
         @success="handleSuccess"
         @error="handleError"
         :trans-request="translRequestData"
-        @content="handleData"
+        @content="handleSSEData"
         @analyzeStart="handleAnalyzeStart"
         mode="input-only"
       />
@@ -90,7 +86,10 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
 
         <el-radio-group v-model="questionFilter" size="default">
           <el-radio-button value="all">
-            全部 ({{ props.store.pendingQuestions.length + props.store.answeredQuestions.length }})
+            全部 ({{
+              props.store.pendingQuestions.length +
+              props.store.answeredQuestions.length
+            }})
           </el-radio-button>
           <el-radio-button value="pending">
             未回答 ({{ props.store.pendingQuestions.length }})
@@ -107,18 +106,6 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
           @click="showAddDialog = true"
         >
           添加新问题
-        </el-button>
-
-        <el-button
-          v-if="store.hasAnsweredQuestions"
-          type="success"
-          :icon="Refresh"
-          size="default"
-          :disabled="!store.canReanalyze"
-          :loading="store.isGenerating"
-          @click="handleReanalyze"
-        >
-          {{ store.isGenerating ? "分析中..." : "再次分析" }}
         </el-button>
 
         <QuestionList
@@ -167,7 +154,10 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
 
       <template v-else>
         <div class="empty-questions">
-          <el-empty description="AI 将在分析需求后生成追问问题" :image-size="80" />
+          <el-empty
+            description="AI 将在分析需求后生成追问问题"
+            :image-size="80"
+          />
         </div>
       </template>
     </div>

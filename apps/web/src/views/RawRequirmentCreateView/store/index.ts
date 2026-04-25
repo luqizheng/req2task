@@ -1,9 +1,12 @@
-import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
-import type { RawRequirementResponseDto, RawRequirementQADto } from '@req2task/dto';
-import { RawRequirementStatus } from '@req2task/dto';
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import type {
+  RawRequirementResponseDto,
+  RawRequirementQADto,
+} from "@req2task/dto";
+import { RawRequirementStatus } from "@req2task/dto";
 
-export type AiQuestion = Pick<RawRequirementQADto, 'question' | 'purpose'>;
+export type AiQuestion = Pick<RawRequirementQADto, "question" | "purpose">;
 
 export interface GeneratedRequirement {
   id: string;
@@ -20,248 +23,254 @@ export interface GeneratedRequirement {
 
 function createDefaultRawRequirement(): RawRequirementResponseDto {
   return {
-    id: '',
-    projectId: '',
+    id: "",
+    projectId: "",
     collectionType: undefined,
-    content: '',
-    source: '',
+    content: "",
+    source: "",
     collectTime: null,
     status: RawRequirementStatus.PENDING,
     questionAndAnswers: [],
     keyElements: [],
-    createdAt: '',
-    updatedAt: '',
+    createdAt: "",
+    updatedAt: "",
   };
 }
 
 function isTemporaryId(id: string): boolean {
-  return id.startsWith('sse_') || id.startsWith('qa_');
+  return id.startsWith("sse_") || id.startsWith("qa_");
 }
 
-export const useRawRequirementCreateStore = defineStore('rawRequirementCreate', () => {
-  const currentStep = ref<1 | 2>(1);
-  const rawRequirement = ref<RawRequirementResponseDto>(createDefaultRawRequirement());
-  const deletedQuestionIds = ref<Set<string>>(new Set());
-  const generatedRequirement = ref<GeneratedRequirement | null>(null);
-  const isGenerating = ref(false);
-  const questionFilter = ref<'all' | 'pending' | 'answered'>('all');
-  const isReanalyze = ref(false);
+export const useRawRequirementCreateStore = defineStore(
+  "rawRequirementCreate",
+  () => {
+    const currentStep = ref<1 | 2>(1);
+    const rawRequirement = ref<RawRequirementResponseDto>(
+      createDefaultRawRequirement(),
+    );
+    const projectId = ref("");
+    const deletedQuestionIds = ref<Set<string>>(new Set());
+    const generatedRequirement = ref<GeneratedRequirement | null>(null);
+    const isGenerating = ref(false);
+    const questionFilter = ref<"all" | "pending" | "answered">("all");
 
-  const allVisibleQuestions = computed(() =>
-    rawRequirement.value.questionAndAnswers.filter((q) => !deletedQuestionIds.value.has(q.id))
-  );
+    const allVisibleQuestions = computed(() =>
+      rawRequirement.value.questionAndAnswers.filter(
+        (q) => !deletedQuestionIds.value.has(q.id),
+      ),
+    );
 
-  const visibleQuestions = computed(() => {
-    const questions = allVisibleQuestions.value;
-    switch (questionFilter.value) {
-      case 'pending':
-        return questions.filter((q) => !q.answer);
-      case 'answered':
-        return questions.filter((q) => !!q.answer);
-      default:
-        return questions;
-    }
-  });
+    const visibleQuestions = computed(() => {
+      const questions = allVisibleQuestions.value;
+      switch (questionFilter.value) {
+        case "pending":
+          return questions.filter((q) => !q.answer);
+        case "answered":
+          return questions.filter((q) => !!q.answer);
+        default:
+          return questions;
+      }
+    });
 
-  const pendingQuestions = computed(() =>
-    allVisibleQuestions.value.filter((q) => !q.answer)
-  );
+    const pendingQuestions = computed(() =>
+      allVisibleQuestions.value.filter((q) => !q.answer),
+    );
 
-  const answeredQuestions = computed(() =>
-    allVisibleQuestions.value.filter((q) => !!q.answer)
-  );
+    const answeredQuestions = computed(() =>
+      allVisibleQuestions.value.filter((q) => !!q.answer),
+    );
 
-  const deletedQuestions = computed(() =>
-    rawRequirement.value.questionAndAnswers.filter((q) => deletedQuestionIds.value.has(q.id))
-  );
+    const deletedQuestions = computed(() =>
+      rawRequirement.value.questionAndAnswers.filter((q) =>
+        deletedQuestionIds.value.has(q.id),
+      ),
+    );
 
-  const canGenerate = computed(
-    () => answeredQuestions.value.length > 0 && !isGenerating.value
-  );
+    const canGenerate = computed(
+      () => answeredQuestions.value.length > 0 && !isGenerating.value,
+    );
 
-  const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
+    const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
 
-  const hasAnsweredQuestions = computed(() => answeredQuestions.value.length > 0);
+    const hasAnsweredQuestions = computed(
+      () => answeredQuestions.value.length > 0,
+    );
 
-  const canReanalyze = computed(() => hasAnsweredQuestions.value && !isGenerating.value);
+    const canReanalyze = computed(
+      () => hasAnsweredQuestions.value && !isGenerating.value,
+    );
 
-  const goToStep = (step: 1 | 2) => {
-    currentStep.value = step;
-  };
+    const goToStep = (step: 1 | 2) => {
+      currentStep.value = step;
+    };
 
-  const nextStep = () => {
-    if (currentStep.value < 2) {
-      currentStep.value = 2;
-    }
-  };
+    const nextStep = () => {
+      if (currentStep.value < 2) {
+        currentStep.value = 2;
+      }
+    };
 
-  const prevStep = () => {
-    if (currentStep.value > 1) {
-      currentStep.value = 1;
-    }
-  };
+    const prevStep = () => {
+      if (currentStep.value > 1) {
+        currentStep.value = 1;
+      }
+    };
 
-  const setRawRequirement = (data: RawRequirementResponseDto) => {
-    rawRequirement.value = data;
-    deletedQuestionIds.value = new Set();
-  };
+    // const setRawRequirement = (data: RawRequirementResponseDto) => {
+    //   rawRequirement.value = data;
+    //   deletedQuestionIds.value = new Set();
+    // };
 
-  const setQuestionsFromSSE = (
-    data: RawRequirementResponseDto | null,
-    sseData?: { keyElements?: string[]; questions?: AiQuestion[] }
-  ) => {
-    if (data && data.id) {
-      rawRequirement.value = { ...rawRequirement.value, ...data };
-    }
+    const setQuestionsFromSSE = (
+      data: RawRequirementResponseDto | null,
+      sseData?: { keyElements?: string[]; questions?: AiQuestion[] },
+    ) => {
+      if (data && data.id) {
+        rawRequirement.value = { ...rawRequirement.value, ...data };
+      }
 
-    if (sseData?.questions && sseData.questions.length > 0) {
-      rawRequirement.value.questionAndAnswers = sseData.questions.map((q, index) => ({
-        id: `sse_q_${Date.now()}_${index}`,
+      if (sseData?.questions && sseData.questions.length > 0) {
+        rawRequirement.value.questionAndAnswers = sseData.questions.map(
+          (q, index) => ({
+            id: `sse_q_${Date.now()}_${index}`,
+            question: q.question,
+            answer: null,
+            purpose: q.purpose,
+            createdAt: new Date().toISOString(),
+            answeredAt: null,
+          }),
+        );
+      }
+      deletedQuestionIds.value = new Set();
+    };
+
+    const addQuestion = (
+      question: string,
+      answer: string = "",
+      purpose?: string,
+    ) => {
+      rawRequirement.value.questionAndAnswers.push({
+        id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        question,
+        answer: answer || null,
+        purpose,
+        createdAt: new Date().toISOString(),
+        answeredAt: answer ? new Date().toISOString() : null,
+      });
+    };
+
+    const addQuestionFromSSE = (q: AiQuestion) => {
+      const exists = rawRequirement.value.questionAndAnswers.some(
+        (item) => item.question === q.question,
+      );
+      if (exists) return;
+
+      rawRequirement.value.questionAndAnswers.push({
+        id: `sse_q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         question: q.question,
         answer: null,
         purpose: q.purpose,
         createdAt: new Date().toISOString(),
         answeredAt: null,
-      }));
-    }
-    deletedQuestionIds.value = new Set();
-  };
+      });
+    };
 
-  const addQuestion = (question: string, answer: string = '', purpose?: string) => {
-    rawRequirement.value.questionAndAnswers.push({
-      id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      question,
-      answer: answer || null,
-      purpose,
-      createdAt: new Date().toISOString(),
-      answeredAt: answer ? new Date().toISOString() : null,
-    });
-  };
-
-  const addQuestionFromSSE = (q: AiQuestion) => {
-    const exists = rawRequirement.value.questionAndAnswers.some(
-      (item) => item.question === q.question,
-    );
-    if (exists) return;
-
-    rawRequirement.value.questionAndAnswers.push({
-      id: `sse_q_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      question: q.question,
-      answer: null,
-      purpose: q.purpose,
-      createdAt: new Date().toISOString(),
-      answeredAt: null,
-    });
-  };
-
-  const updateQuestion = (id: string, updates: Partial<RawRequirementQADto>) => {
-    const index = rawRequirement.value.questionAndAnswers.findIndex((q) => q.id === id);
-    if (index !== -1) {
-      const updated = {
-        ...rawRequirement.value.questionAndAnswers[index],
-        ...updates,
-      };
-      rawRequirement.value.questionAndAnswers.splice(index, 1, updated);
-    }
-  };
-
-  const deleteQuestion = (id: string) => {
-    if (isTemporaryId(id)) {
-      const index = rawRequirement.value.questionAndAnswers.findIndex((q) => q.id === id);
+    const updateQuestion = (
+      id: string,
+      updates: Partial<RawRequirementQADto>,
+    ) => {
+      const index = rawRequirement.value.questionAndAnswers.findIndex(
+        (q) => q.id === id,
+      );
       if (index !== -1) {
-        rawRequirement.value.questionAndAnswers.splice(index, 1);
+        const updated = {
+          ...rawRequirement.value.questionAndAnswers[index],
+          ...updates,
+        };
+        rawRequirement.value.questionAndAnswers.splice(index, 1, updated);
       }
-      return;
-    }
-    deletedQuestionIds.value = new Set([...deletedQuestionIds.value, id]);
-  };
+    };
 
-  const restoreQuestion = (id: string) => {
-    const newSet = new Set(deletedQuestionIds.value);
-    newSet.delete(id);
-    deletedQuestionIds.value = newSet;
-  };
+    const deleteQuestion = (id: string) => {
+      if (isTemporaryId(id)) {
+        const index = rawRequirement.value.questionAndAnswers.findIndex(
+          (q) => q.id === id,
+        );
+        if (index !== -1) {
+          rawRequirement.value.questionAndAnswers.splice(index, 1);
+        }
+        return;
+      }
+      deletedQuestionIds.value = new Set([...deletedQuestionIds.value, id]);
+    };
 
-  const answerQuestion = (id: string, answer: string) => {
-    updateQuestion(id, {
-      answer,
-      answeredAt: new Date().toISOString(),
-    });
-  };
+    const restoreQuestion = (id: string) => {
+      const newSet = new Set(deletedQuestionIds.value);
+      newSet.delete(id);
+      deletedQuestionIds.value = newSet;
+    };
 
-  const setGeneratedRequirement = (data: GeneratedRequirement) => {
-    generatedRequirement.value = data;
-    goToStep(2);
-  };
+    const answerQuestion = (id: string, answer: string) => {
+      updateQuestion(id, {
+        answer,
+        answeredAt: new Date().toISOString(),
+      });
+    };
 
-  const setIsGenerating = (value: boolean) => {
-    isGenerating.value = value;
-  };
+    const setGeneratedRequirement = (data: GeneratedRequirement) => {
+      generatedRequirement.value = data;
+      goToStep(2);
+    };
 
-  const setQuestionFilter = (filter: 'all' | 'pending' | 'answered') => {
-    questionFilter.value = filter;
-  };
+    const setIsGenerating = (value: boolean) => {
+      isGenerating.value = value;
+    };
 
-  const setSource = (value: string) => {
-    rawRequirement.value.source = value;
-  };
+    const setQuestionFilter = (filter: "all" | "pending" | "answered") => {
+      questionFilter.value = filter;
+    };
 
-  const setCollectionType = (value: RawRequirementResponseDto['collectionType']) => {
-    rawRequirement.value.collectionType = value;
-  };
 
-  const setCollectTime = (value: RawRequirementResponseDto['collectTime']) => {
-    rawRequirement.value.collectTime = value;
-  };
+    const reset = () => {
+      currentStep.value = 1;
+      rawRequirement.value = createDefaultRawRequirement();
+      deletedQuestionIds.value = new Set();
+      generatedRequirement.value = null;
+      isGenerating.value = false;
+      questionFilter.value = "all";
+    };
 
-  const setIsReanalyze = (value: boolean) => {
-    isReanalyze.value = value;
-  };
+    return {
+      currentStep,
+      rawRequirement,
+      deletedQuestionIds,
+      generatedRequirement,
+      isGenerating,
+      questionFilter,
 
-  const reset = () => {
-    currentStep.value = 1;
-    rawRequirement.value = createDefaultRawRequirement();
-    deletedQuestionIds.value = new Set();
-    generatedRequirement.value = null;
-    isGenerating.value = false;
-    questionFilter.value = 'all';
-    isReanalyze.value = false;
-  };
-
-  return {
-    currentStep,
-    rawRequirement,
-    deletedQuestionIds,
-    generatedRequirement,
-    isGenerating,
-    questionFilter,
-    isReanalyze,
-    visibleQuestions,
-    pendingQuestions,
-    answeredQuestions,
-    deletedQuestions,
-    canGenerate,
-    hasQuestions,
-    hasAnsweredQuestions,
-    canReanalyze,
-    goToStep,
-    nextStep,
-    prevStep,
-    setRawRequirement,
-    setQuestionsFromSSE,
-    addQuestion,
-    addQuestionFromSSE,
-    updateQuestion,
-    deleteQuestion,
-    restoreQuestion,
-    answerQuestion,
-    setGeneratedRequirement,
-    setIsGenerating,
-    setQuestionFilter,
-    setSource,
-    setCollectionType,
-    setCollectTime,
-    setIsReanalyze,
-    reset,
-  };
-});
+      visibleQuestions,
+      pendingQuestions,
+      answeredQuestions,
+      deletedQuestions,
+      canGenerate,
+      hasQuestions,
+      hasAnsweredQuestions,
+      canReanalyze,
+      goToStep,
+      nextStep,
+      prevStep,
+      setQuestionsFromSSE,
+      addQuestion,
+      addQuestionFromSSE,
+      updateQuestion,
+      deleteQuestion,
+      restoreQuestion,
+      answerQuestion,
+      setGeneratedRequirement,
+      setIsGenerating,
+      setQuestionFilter,
+      reset,
+      projectId,
+    };
+  },
+);

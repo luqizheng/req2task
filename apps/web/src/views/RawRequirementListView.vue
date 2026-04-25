@@ -66,7 +66,7 @@ const loadRequirements = async () => {
     const params: RawRequirementListParams = {
       page: currentPage.value,
       limit: pageSize.value,
-      status: statusFilter.value.join(",") || undefined,
+      status: statusFilter.value.length > 0 ? statusFilter.value[0] as RawRequirementStatus : undefined,
     };
     const result = await rawRequirementsApi.getByProject(
       projectId.value,

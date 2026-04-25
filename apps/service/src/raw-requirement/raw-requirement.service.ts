@@ -16,6 +16,7 @@ import {
   CollectionType,
   CreateRawRequirementDto,
   UpdateRawRequirementDto,
+  RawRequirementListParams,
 } from "@req2task/dto";
 
 export interface AddRawRequirementDto {
@@ -110,7 +111,7 @@ export class RawRequirementService {
     rawRequirementId: string,
     updates: UpdateRawRequirementDto,
   ): Promise<RawRequirementResponseDto> {
-    const rawRequirement = updates.id ? new RawRequirement() : await this.rawRequirementRepository.findOne({
+    const rawRequirement = await this.rawRequirementRepository.findOne({
       where: { id: rawRequirementId },
     });
 
@@ -137,12 +138,25 @@ export class RawRequirementService {
     return this.toRawRequirementResponseDto(updated!);
   }
 
-  async getRawRequirementsByProject(projectId: string): Promise<RawRequirementResponseDto[]> {
-    const rawRequirements = await this.rawRequirementRepository.find({
-      where: { projectId },
-      relations: ["createdBy"],
-      order: { createdAt: "DESC" },
-    });
+  async getRawRequirementsByProject(
+    projectId: string,
+    params: RawRequirementListParams = {},
+  ): Promise<RawRequirementResponseDto[]> {
+    const { page = 1, limit = 10, status } = params;
+    const skip = (page - 1) * limit;
+
+    const queryBuilder = this.rawRequirementRepository
+      .createQueryBuilder("rawRequirement")
+      .where("rawRequirement.projectId = :projectId", { projectId })
+      .orderBy("rawRequirement.createdAt", "DESC")
+      .skip(skip)
+      .take(limit);
+
+    if (status) {
+      queryBuilder.andWhere("rawRequirement.status = :status", { status });
+    }
+
+    const rawRequirements = await queryBuilder.getMany();
     return rawRequirements.map((r) => this.toRawRequirementResponseDto(r));
   }
 

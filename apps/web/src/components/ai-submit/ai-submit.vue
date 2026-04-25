@@ -299,6 +299,10 @@ const submitStream = async () => {
     });
   }
 };
+
+defineExpose({
+  submitStream,
+});
 </script>
 
 <template>

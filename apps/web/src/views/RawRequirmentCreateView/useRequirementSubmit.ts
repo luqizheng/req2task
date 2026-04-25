@@ -60,7 +60,6 @@ export function useRequirementSubmit(
 
   const save = async (): Promise<boolean> => {
     try {
-      debugger;
       const result = !store.rawRequirement.id
         ? await rawRequirementsApi.create(store.projectId, {
             content: store.rawRequirement.content,
@@ -73,9 +72,9 @@ export function useRequirementSubmit(
             questionAndAnswers: store.rawRequirement.questionAndAnswers,
             keyElements: store.rawRequirement.keyElements,
           });
-      if (result.data) {
-        if (store.rawRequirement.id) {
-          store.rawRequirement.id = result.data.id;
+      if (result) {
+        if (!store.rawRequirement.id) {
+          store.rawRequirement.id = result.id;
         }
         ElMessage.success("创建成功");
         return true;

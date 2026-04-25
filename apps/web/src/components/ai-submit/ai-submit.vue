@@ -193,7 +193,7 @@ const submitStream = async () => {
   await submitStreamBase({
     onConversationStart: (event) => {
       conversationId.value = event.conversationId;
-      isNewConversation.value = event.isNewConversation;
+      isNewConversation.value = event.isNewConversation ?? false;
       sseOutputRef.value?.handleConversationStart(event);
       emit("conversationStart", event);
     },

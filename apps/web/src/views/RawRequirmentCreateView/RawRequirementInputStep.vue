@@ -5,10 +5,8 @@ import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
-import { useRequirementGenerate } from "./useRequirementGenerate";
 
 import QuestionList from "./QuestionList.vue";
-import { AnalyzeStartEvent } from "@/components/ai-submit/composables/useSSEStream";
 
 interface Props {
   projectId: string;
@@ -38,12 +36,6 @@ const {
 
 const { handleSuccess, handleError, translRequestData, handleSSEData } =
   useRequirementSubmit(props.store);
-
-const { handleGenerate } = useRequirementGenerate(props.store);
-
-const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
-  props.store.rawRequirement.conversationId = event.collectionId;
-};
 </script>
 
 <template>
@@ -65,7 +57,6 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
         @error="handleError"
         :trans-request="translRequestData"
         @content="handleSSEData"
-        @analyzeStart="handleAnalyzeStart"
         mode="input-only"
       />
     </div>
@@ -136,19 +127,6 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
               恢复
             </el-button>
           </div>
-        </div>
-
-        <div class="generate-section">
-          <el-button
-            type="primary"
-            size="large"
-            :disabled="!store.canGenerate"
-            :loading="store.isGenerating"
-            @click="handleGenerate"
-          >
-            {{ store.isGenerating ? "生成中..." : "生成需求" }}
-          </el-button>
-          <p class="generate-hint">至少回答一个问题后可以生成需求</p>
         </div>
       </template>
 
@@ -277,22 +255,6 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
   font-weight: 600;
   margin-right: 4px;
   color: var(--color-warning, #f59e0b);
-}
-
-.generate-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--spacing-compact, 8px);
-  margin-top: var(--spacing-component, 12px);
-  padding-top: var(--spacing-component, 12px);
-  border-top: 1px solid var(--color-border, #e2e8f0);
-}
-
-.generate-hint {
-  font-size: 13px;
-  color: var(--color-text-placeholder, #94a3b8);
-  margin: 0;
 }
 
 .empty-questions {

@@ -50,11 +50,7 @@ export const rawRequirementsApi = {
   create: (
     projectId: string,
     data: CreateRawRequirementDto,
-  ): Promise<{
-    code: number;
-    success: boolean;
-    data?: RawRequirementResponseDto;
-  }> => {
+  ): Promise<RawRequirementResponseDto> => {
     return api.post(
       `/raw-requirements/${projectId}/raw-requirements`,
       data,
@@ -63,11 +59,7 @@ export const rawRequirementsApi = {
   update: (
     rawRequirementId: string,
     data: UpdateRawRequirementDto,
-  ): Promise<{
-    code: number;
-    success: boolean;
-    data?: RawRequirementResponseDto;
-  }> => {
+  ): Promise<RawRequirementResponseDto> => {
     return api.put(
       `/raw-requirements/${rawRequirementId}`,
       data,
@@ -76,11 +68,7 @@ export const rawRequirementsApi = {
   getByProject: (
     projectId: string,
     params: RawRequirementListParams,
-  ): Promise<{
-    code: number;
-    success: boolean;
-    data?: RawRequirementResponseDto[];
-  }> => {
+  ): Promise<RawRequirementResponseDto[]> => {
     return api.get(
       `/raw-requirements/${projectId}/raw-requirements`,
       { params },

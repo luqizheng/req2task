@@ -5,7 +5,6 @@ import { ArrowLeft } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
 import WizardContainer from "./WizardContainer.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
-import RequirementResultStep from "./RequirementResultStep.vue";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
@@ -78,7 +77,11 @@ const handleSubmit = async () => {
               clearable
             />
           </el-form-item>
-          <el-form-item label="采集方式" class="meta-field">
+          <el-form-item
+            label="采集方式"
+            prop="collectionType"
+            class="meta-field"
+          >
             <el-select
               v-model="rawRequirement.collectionType"
               placeholder="选择采集方式"
@@ -92,7 +95,7 @@ const handleSubmit = async () => {
               />
             </el-select>
           </el-form-item>
-          <el-form-item label="收集时间" class="meta-field">
+          <el-form-item label="收集时间" prop="collectTime" class="meta-field">
             <el-date-picker
               v-model="rawRequirement.collectTime"
               type="datetime"
@@ -101,29 +104,15 @@ const handleSubmit = async () => {
               clearable
             />
           </el-form-item>
-          <el-form-item label="原始需求内容" prop="content" class="meta-field">
-            <el-textarea
-              v-model="rawRequirement.content"
-              placeholder="请输入原始需求内容"
-              disabled
-            />
-          </el-form-item>
+
           <el-form-item>
             <el-button type="primary" @click="handleSubmit">保存</el-button>
           </el-form-item>
         </el-form>
       </el-card>
 
-      <el-card class="wizard-card" shadow="hover">
-        <WizardContainer :store="store" title="需求录入向导">
-          <template #step1>
-            <RawRequirementInputStep :project-id="projectId" :store="store" />
-          </template>
-
-          <template #step2>
-            <RequirementResultStep :store="store" />
-          </template>
-        </WizardContainer>
+      <el-card class="meta-card" shadow="hover">
+        <RawRequirementInputStep :project-id="projectId" :store="store" />
       </el-card>
     </div>
   </ViewContainer>
@@ -154,7 +143,6 @@ const handleSubmit = async () => {
   margin: 0;
 }
 
-
 .meta-form {
   display: flex;
   gap: var(--spacing-compact, 8px);
@@ -169,8 +157,7 @@ const handleSubmit = async () => {
 }
 
 .wizard-card {
-  max-width: 1400px;
-  margin: 0 auto;
+  margin: 20px auto;
 }
 
 .wizard-card :deep(.el-card__body) {

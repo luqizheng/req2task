@@ -1,7 +1,4 @@
-import type {
-  ChatRequestDto,
-  CreateOrUpdateRawRequirementDto,
-} from '@req2task/dto';
+import type { ChatRequestDto, CreateRawRequirementDto } from '@req2task/dto';
 import api from './axios';
 
 export interface ChatResponse {
@@ -81,7 +78,7 @@ export const aiApi = {
     );
   },
 
-  createRawRequirement: (data: CreateOrUpdateRawRequirementDto) => {
+  createRawRequirement: (data: CreateRawRequirementDto) => {
     return api.post<RawRequirementResponse>(
       `/ai/raw-requirements`,
       data

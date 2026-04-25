@@ -8,19 +8,6 @@ import { RawRequirementStatus } from "@req2task/dto";
 
 export type AiQuestion = Pick<RawRequirementQADto, "question" | "purpose">;
 
-export interface GeneratedRequirement {
-  id: string;
-  title: string;
-  description: string;
-  priority: string;
-  acceptanceCriteria?: string[];
-  userStories?: Array<{
-    role: string;
-    goal: string;
-    benefit: string;
-  }>;
-}
-
 function createDefaultRawRequirement(): RawRequirementResponseDto {
   return {
     id: "",
@@ -44,14 +31,11 @@ function isTemporaryId(id: string): boolean {
 export const useRawRequirementCreateStore = defineStore(
   "rawRequirementCreate",
   () => {
-    const currentStep = ref<1 | 2>(1);
     const rawRequirement = ref<RawRequirementResponseDto>(
       createDefaultRawRequirement(),
     );
     const projectId = ref("");
     const deletedQuestionIds = ref<Set<string>>(new Set());
-    const generatedRequirement = ref<GeneratedRequirement | null>(null);
-    const isGenerating = ref(false);
     const questionFilter = ref<"all" | "pending" | "answered">("all");
 
     const allVisibleQuestions = computed(() =>
@@ -86,40 +70,11 @@ export const useRawRequirementCreateStore = defineStore(
       ),
     );
 
-    const canGenerate = computed(
-      () => answeredQuestions.value.length > 0 && !isGenerating.value,
-    );
-
     const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
 
     const hasAnsweredQuestions = computed(
       () => answeredQuestions.value.length > 0,
     );
-
-    const canReanalyze = computed(
-      () => hasAnsweredQuestions.value && !isGenerating.value,
-    );
-
-    const goToStep = (step: 1 | 2) => {
-      currentStep.value = step;
-    };
-
-    const nextStep = () => {
-      if (currentStep.value < 2) {
-        currentStep.value = 2;
-      }
-    };
-
-    const prevStep = () => {
-      if (currentStep.value > 1) {
-        currentStep.value = 1;
-      }
-    };
-
-    // const setRawRequirement = (data: RawRequirementResponseDto) => {
-    //   rawRequirement.value = data;
-    //   deletedQuestionIds.value = new Set();
-    // };
 
     const setQuestionsFromSSE = (
       data: RawRequirementResponseDto | null,
@@ -217,48 +172,28 @@ export const useRawRequirementCreateStore = defineStore(
       });
     };
 
-    const setGeneratedRequirement = (data: GeneratedRequirement) => {
-      generatedRequirement.value = data;
-      goToStep(2);
-    };
-
-    const setIsGenerating = (value: boolean) => {
-      isGenerating.value = value;
-    };
-
     const setQuestionFilter = (filter: "all" | "pending" | "answered") => {
       questionFilter.value = filter;
     };
 
-
     const reset = () => {
-      currentStep.value = 1;
       rawRequirement.value = createDefaultRawRequirement();
       deletedQuestionIds.value = new Set();
-      generatedRequirement.value = null;
-      isGenerating.value = false;
       questionFilter.value = "all";
     };
 
     return {
-      currentStep,
       rawRequirement,
       deletedQuestionIds,
-      generatedRequirement,
-      isGenerating,
       questionFilter,
+      projectId,
 
       visibleQuestions,
       pendingQuestions,
       answeredQuestions,
       deletedQuestions,
-      canGenerate,
       hasQuestions,
       hasAnsweredQuestions,
-      canReanalyze,
-      goToStep,
-      nextStep,
-      prevStep,
       setQuestionsFromSSE,
       addQuestion,
       addQuestionFromSSE,
@@ -266,11 +201,8 @@ export const useRawRequirementCreateStore = defineStore(
       deleteQuestion,
       restoreQuestion,
       answerQuestion,
-      setGeneratedRequirement,
-      setIsGenerating,
       setQuestionFilter,
       reset,
-      projectId,
     };
   },
 );

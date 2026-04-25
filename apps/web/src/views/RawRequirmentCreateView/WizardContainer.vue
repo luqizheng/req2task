@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { useRawRequirementCreateStore } from "./store";
-import WizardStepIndicator from "./WizardStepIndicator.vue";
 
 interface Props {
   store: ReturnType<typeof useRawRequirementCreateStore>;
@@ -10,47 +9,18 @@ interface Props {
 withDefaults(defineProps<Props>(), {
   title: "需求录入向导",
 });
-
-const stepConfig = [
-  { step: 1, title: "录入与澄清", icon: "Edit" },
-  { step: 2, title: "生成结果", icon: "DocumentChecked" },
-];
 </script>
 
 <template>
   <div class="wizard-container">
     <div class="wizard-header">
       <h2 class="wizard-title">{{ title }}</h2>
-      <WizardStepIndicator
-        :current-step="store.currentStep"
-        :steps="stepConfig"
-      />
     </div>
 
     <div class="wizard-content" tabindex="-1" aria-live="polite">
-      <div
-        v-if="store.currentStep === 1"
-        class="step-content"
-        role="tabpanel"
-        aria-label="步骤1: 录入与澄清"
-      >
+      <div class="step-content" role="tabpanel" aria-label="录入与澄清">
         <slot name="step1" />
       </div>
-
-      <div
-        v-else-if="store.currentStep === 2"
-        class="step-content"
-        role="tabpanel"
-        aria-label="步骤2: 生成结果"
-      >
-        <slot name="step2" />
-      </div>
-    </div>
-
-    <div class="wizard-footer">
-      <el-button v-if="store.currentStep > 1" @click="store.prevStep">
-        上一步
-      </el-button>
     </div>
   </div>
 </template>
@@ -75,7 +45,7 @@ const stepConfig = [
   font-size: 20px;
   font-weight: 600;
   color: var(--color-text-primary, #1e293b);
-  margin: 0 0 20px 0;
+  margin: 0;
 }
 
 .wizard-content {
@@ -101,15 +71,6 @@ const stepConfig = [
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-.wizard-footer {
-  display: flex;
-  justify-content: center;
-  gap: var(--spacing-component, 12px);
-  padding: 20px var(--spacing-card, 16px);
-  border-top: 1px solid var(--color-border, #e2e8f0);
-  background: var(--color-bg-secondary, #f8fafc);
 }
 
 @media (prefers-reduced-motion: reduce) {

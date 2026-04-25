@@ -28,6 +28,7 @@ interface Props {
   transRequest?: (data: AiSubmitRequestDto) => unknown;
   targetType?: "collection" | "raw_requirement" | "project";
   targetId?: string;
+  mode?: "full" | "input-only";
 }
 
 const props = withDefaults(defineProps<Props>(), {
@@ -36,6 +37,7 @@ const props = withDefaults(defineProps<Props>(), {
   placeholder: "描述您的需求或问题，AI 将为您分析和处理...",
   useStream: true,
   targetType: "project",
+  mode: "full",
 });
 
 const emit = defineEmits<{
@@ -89,6 +91,9 @@ const showSseOutput = ref(false);
 const conversationId = ref<string | undefined>();
 const isNewConversation = ref(false);
 const localUseStream = ref(props.useStream);
+const submittedMessage = ref("");
+const isStreaming = ref(false);
+const messageHistory = ref<Array<{ role: "user"; content: string }>>([]);
 
 const onUseStreamChange = (value: boolean) => {
   localUseStream.value = value;
@@ -153,6 +158,7 @@ const hideOutput = () => {
   sseOutputRef.value?.reset();
   conversationId.value = undefined;
   isNewConversation.value = false;
+  messageHistory.value = [];
 };
 
 const handleSubmit = () => {
@@ -166,7 +172,12 @@ const handleSubmit = () => {
 const submitStream = async () => {
   if (!canSubmit.value) return;
 
+  const userMessage = message.value.trim();
+  submittedMessage.value = userMessage;
+  messageHistory.value.push({ role: "user", content: userMessage });
+  message.value = "";
   showSseOutput.value = true;
+  isStreaming.value = true;
   sseOutputRef.value?.reset();
 
   const rustfsIds = rustfsFiles.value
@@ -177,7 +188,7 @@ const submitStream = async () => {
   }
 
   const body: AiSubmitRequestDto = {
-    message: message.value.trim(),
+    message: userMessage,
     auditRustFSId: [],
     attachmentsRustFSId: uploadedFiles.value
       .filter((f) => f.status === "success" && !f.id.startsWith("temp_"))
@@ -251,13 +262,13 @@ const submitStream = async () => {
                 emit("message", event.message?.content);
                 break;
               case "done":
-                debugger;
                 sseOutputRef.value?.handleDone(event);
                 emit("done", event);
                 emit("success", {
                   request: body,
                   response: fullContent,
                 });
+                isStreaming.value = false;
                 break;
               case "error":
                 sseOutputRef.value?.handleError(event);
@@ -274,6 +285,7 @@ const submitStream = async () => {
     reset();
     clearFiles();
   } catch (error) {
+    isStreaming.value = false;
     const err =
       error instanceof Error ? error : new Error("提交失败，请稍后重试");
     ElMessage.error(err.message);
@@ -292,11 +304,32 @@ const submitStream = async () => {
 <template>
   <div class="ai-submit-container">
     <SseOutput
-      v-if="showSseOutput"
+      v-if="showSseOutput && props.mode === 'full'"
       ref="sseOutputRef"
       :conversation-id="conversationId"
       :is-new-conversation="isNewConversation"
     />
+
+    <div
+      v-if="showSseOutput && props.mode === 'input-only'"
+      class="message-history-box"
+    >
+      <div
+        v-for="(msg, index) in messageHistory"
+        :key="index"
+        class="history-item"
+      >
+        <div class="history-content">{{ msg.content }}</div>
+        <div
+          v-if="isStreaming && index === messageHistory.length - 1"
+          class="loading-indicator"
+        >
+          <span class="loading-dot"></span>
+          <span class="loading-dot"></span>
+          <span class="loading-dot"></span>
+        </div>
+      </div>
+    </div>
 
     <div class="ai-submit" :class="{ 'with-output': showSseOutput }">
       <div class="input-section">
@@ -432,8 +465,8 @@ const submitStream = async () => {
         <el-button
           type="primary"
           :icon="Promotion"
-          :disabled="!canSubmit"
-          :loading="isSubmitting"
+          :disabled="!canSubmit || isStreaming"
+          :loading="isSubmitting || isStreaming"
           @click="handleSubmit"
         >
           {{ localUseStream ? "流式提交" : "提交" }}
@@ -660,5 +693,67 @@ const submitStream = async () => {
 
 .hidden-input {
   display: none;
+}
+
+.message-history-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  background: linear-gradient(135deg, #fafafa 0%, #f5f5ff 100%);
+  border-radius: 12px 12px 0 0;
+  border: 1px solid #e8e5ff;
+  border-bottom: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.history-content {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 8px;
+  font-size: 14px;
+  color: #1e293b;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.loading-indicator {
+  display: flex;
+  gap: 6px;
+  padding-left: 16px;
+}
+
+.loading-dot {
+  width: 8px;
+  height: 8px;
+  background: #6366f1;
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.loading-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.loading-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: scale(0);
+  }
+  40% {
+    transform: scale(1);
+  }
 }
 </style>

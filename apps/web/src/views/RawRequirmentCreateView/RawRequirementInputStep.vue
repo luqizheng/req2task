@@ -70,6 +70,7 @@ const handleAnalyzeStart = (event: AnalyzeStartEvent) => {
         :trans-request="translRequestData"
         @content="handleData"
         @analyzeStart="handleAnalyzeStart"
+        mode="input-only"
       />
     </div>
 

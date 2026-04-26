@@ -210,6 +210,7 @@ export class AiGenerationService {
     createdById: string,
     context?: string,
     moduleIds?: string[],
+    persist: boolean = true,
   ): Promise<{ requirements: Requirement[]; rawContent: string }> {
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
@@ -225,12 +226,41 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const requirements = await this.persistRequirements(
-      result.content,
-      projectId,
-      createdById,
-      moduleIds,
-    );
+    let requirements: Requirement[] = [];
+    if (persist) {
+      requirements = await this.persistRequirements(
+        result.content,
+        projectId,
+        createdById,
+        moduleIds,
+      );
+    } else {
+      // 不持久化，只解析 JSON 并返回 Requirement 对象
+      const data = this.extractJsonArray(result.content);
+      if (data && data.length > 0) {
+        requirements = data.map(item => ({
+          id: '', // 不持久化，ID 为空
+          moduleId: moduleIds?.[0] || null,
+          moduleIds: item.moduleIds || moduleIds || null,
+          title: item.title,
+          description: item.description || null,
+          priority: item.priority?.toUpperCase() || Priority.MEDIUM,
+          source: RequirementSource.AI_GENERATED,
+          status: RequirementStatus.DRAFT,
+          storyPoints: item.storyPoints || 0,
+          parentId: item.parentId || null,
+          createdById,
+          projectId,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          createdBy: null,
+          userStories: [],
+          children: [],
+          parent: null,
+          module: null,
+        }));
+      }
+    }
 
     return { requirements, rawContent: result.content };
   }

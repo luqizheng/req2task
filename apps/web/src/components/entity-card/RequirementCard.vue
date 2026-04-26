@@ -2,6 +2,9 @@
 import { computed } from 'vue';
 import { ElTag, ElAvatar, ElProgress, ElButton } from 'element-plus';
 import { Edit, FolderOpened } from '@element-plus/icons-vue';
+import type { RequirementResponseDto } from '@req2task/dto';
+
+
 
 const statusConfig: Record<string, { label: string; type: 'success' | 'warning' | 'info' | 'danger' }> = {
   draft: { label: '草稿', type: 'info' },
@@ -20,34 +23,8 @@ const priorityConfig: Record<string, { label: string; type: 'danger' | 'warning'
   low: { label: '低', type: 'success' },
 };
 
-export interface RequirementCardData {
-  id: string;
-  title: string;
-  priority: string;
-  status: string;
-  description?: string;
-  storyPoints?: number;
-  moduleName?: string;
-  moduleId?: string | null;
-  assignee?: {
-    id: string;
-    displayName: string;
-    username: string;
-  };
-  createdAt?: Date | string;
-  updatedAt?: Date | string;
-  userStoryCount?: number;
-  childCount?: number;
-  userStories?: Array<{
-    id: string;
-    storyPoints: number;
-    acceptanceCriteria?: Array<{ id: string }>;
-  }>;
-  children?: Array<{ id: string; title: string }>;
-}
-
 const props = defineProps<{
-  data: RequirementCardData;
+  data: RequirementResponseDto & { moduleName?: string };
   clickable?: boolean;
   showProgress?: boolean;
 }>();
@@ -57,19 +34,21 @@ const emit = defineEmits<{
   edit: [id: string];
 }>();
 
-const statusInfo = computed(() => statusConfig[props.data.status] || { label: props.data.status, type: 'info' as const });
-const priorityInfo = computed(() => priorityConfig[props.data.priority] || { label: props.data.priority, type: 'info' as const });
+const cardData = computed(() => props.data as any);
+
+const statusInfo = computed(() => statusConfig[cardData.value.status || ''] || { label: cardData.value.status || '', type: 'info' as const });
+const priorityInfo = computed(() => priorityConfig[cardData.value.priority || ''] || { label: cardData.value.priority || '', type: 'info' as const });
 
 const totalStoryPoints = computed(() => {
-  if (props.data.userStories?.length) {
-    return props.data.userStories.reduce((sum, us) => sum + us.storyPoints, 0);
+  if (cardData.value.userStories?.length) {
+    return cardData.value.userStories.reduce((sum: number, us: any) => sum + us.storyPoints, 0);
   }
-  return props.data.storyPoints || 0;
+  return cardData.value.storyPoints || 0;
 });
 
 const completedStoryPoints = computed(() => {
-  if (props.data.userStories?.length) {
-    return props.data.userStories.reduce((sum, us) => sum + (us.acceptanceCriteria?.length ? us.storyPoints : 0), 0);
+  if (cardData.value.userStories?.length) {
+    return cardData.value.userStories.reduce((sum: number, us: any) => sum + (us.acceptanceCriteria?.length ? us.storyPoints : 0), 0);
   }
   return 0;
 });
@@ -90,7 +69,7 @@ const handleEdit = (e: Event) => {
   emit('edit', props.data.id);
 };
 
-const formatDate = (date: Date | string | undefined) => {
+const formatDate = (date: any) => {
   if (!date) return '';
   const d = new Date(date);
   return d.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
@@ -125,22 +104,22 @@ const formatDate = (date: Date | string | undefined) => {
       </div>
     </div>
 
-    <h3 class="card-title">{{ data.title }}</h3>
+    <h3 class="card-title">{{ cardData.title }}</h3>
 
-    <div v-if="data.description" class="card-description">
-      {{ data.description?.substring(0, 100) }}{{ data.description?.length > 100 ? '...' : '' }}
+    <div v-if="cardData.description" class="card-description">
+      {{ cardData.description?.substring(0, 100) }}{{ cardData.description?.length > 100 ? '...' : '' }}
     </div>
 
     <div class="card-meta">
-      <div v-if="data.moduleName" class="meta-item">
+      <div v-if="cardData.moduleName" class="meta-item">
         <FolderOpened class="meta-icon" />
-        <span>{{ data.moduleName }}</span>
+        <span>{{ cardData.moduleName }}</span>
       </div>
-      <div v-if="data.assignee" class="meta-item">
+      <div v-if="cardData.assignee" class="meta-item">
         <el-avatar :size="20" class="assignee-avatar">
-          {{ data.assignee.displayName?.charAt(0) || data.assignee.username?.charAt(0) }}
+          {{ cardData.assignee.displayName?.charAt(0) || cardData.assignee.username?.charAt(0) }}
         </el-avatar>
-        <span>{{ data.assignee.displayName || data.assignee.username }}</span>
+        <span>{{ cardData.assignee.displayName || cardData.assignee.username }}</span>
       </div>
     </div>
 
@@ -159,19 +138,19 @@ const formatDate = (date: Date | string | undefined) => {
 
     <div class="card-footer">
       <div class="footer-left">
-        <span v-if="data.childCount" class="stat-badge">
-          {{ data.childCount }} 个子需求
+        <span v-if="cardData.childCount" class="stat-badge">
+          {{ cardData.childCount }} 个子需求
         </span>
-        <span v-if="data.userStoryCount" class="stat-badge">
-          {{ data.userStoryCount }} 个用户故事
+        <span v-if="cardData.userStoryCount" class="stat-badge">
+          {{ cardData.userStoryCount }} 个用户故事
         </span>
       </div>
       <div class="footer-right">
-        <span v-if="data.storyPoints" class="story-points">
-          {{ data.storyPoints }} SP
+        <span v-if="cardData.storyPoints" class="story-points">
+          {{ cardData.storyPoints }} SP
         </span>
-        <span v-if="data.updatedAt" class="time-label">
-          {{ formatDate(data.updatedAt) }}
+        <span v-if="cardData.updatedAt" class="time-label">
+          {{ formatDate(cardData.updatedAt) }}
         </span>
       </div>
     </div>

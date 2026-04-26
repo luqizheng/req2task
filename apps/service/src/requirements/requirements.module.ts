@@ -1,8 +1,12 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { RequirementsController } from './requirements.controller';
+import { UserStoriesController } from './user-stories.controller';
+import { AcceptanceCriteriaController } from './acceptance-criteria.controller';
 import { RequirementsService } from './requirements.service';
+import { UserStoriesService } from './user-stories.service';
+import { AcceptanceCriteriaService } from './acceptance-criteria.service';
 import { RequirementStateService } from '@req2task/core';
 import {
   Requirement,
@@ -12,6 +16,8 @@ import {
   FeatureModule,
 } from '@req2task/core';
 import { Repository } from 'typeorm';
+import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
+import { AiModule } from '../ai/ai.module';
 
 @Module({
   imports: [
@@ -22,10 +28,14 @@ import { Repository } from 'typeorm';
       RequirementChangeLog,
       FeatureModule,
     ]),
+    forwardRef(() => RawRequirementModule),
+    forwardRef(() => AiModule),
   ],
-  controllers: [RequirementsController],
+  controllers: [RequirementsController, UserStoriesController, AcceptanceCriteriaController],
   providers: [
     RequirementsService,
+    UserStoriesService,
+    AcceptanceCriteriaService,
     {
       provide: RequirementStateService,
       inject: [
@@ -40,6 +50,6 @@ import { Repository } from 'typeorm';
       },
     },
   ],
-  exports: [RequirementsService, RequirementStateService],
+  exports: [RequirementsService, UserStoriesService, AcceptanceCriteriaService, RequirementStateService],
 })
 export class RequirementsModule {}

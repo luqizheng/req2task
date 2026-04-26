@@ -101,46 +101,43 @@ export const requirementsApi = {
       approved,
       comment,
     }),
+};
 
-  createUserStory: (requirementId: string, data: CreateUserStoryDto) =>
+export const userStoriesApi = {
+  create: (requirementId: string, data: CreateUserStoryDto) =>
     api.post<UserStoryResponseDto>(
       `/user-stories/${requirementId}/user-stories`,
       data
     ),
 
-  getUserStories: (requirementId: string) =>
+  getByRequirement: (requirementId: string) =>
     api.get<UserStoryResponseDto[]>(
       `/user-stories/${requirementId}/user-stories`
     ),
 
-  updateUserStory: (id: string, data: UpdateUserStoryDto) =>
+  update: (id: string, data: UpdateUserStoryDto) =>
     api.put<UserStoryResponseDto>(`/user-stories/${id}`, data),
 
-  deleteUserStory: (id: string) => api.delete(`/user-stories/${id}`),
+  delete: (id: string) => api.delete(`/user-stories/${id}`),
+};
 
-  createAcceptanceCriteria: (
-    userStoryId: string,
-    data: CreateAcceptanceCriteriaDto
-  ) =>
+export const acceptanceCriteriaApi = {
+  create: (userStoryId: string, data: CreateAcceptanceCriteriaDto) =>
     api.post<AcceptanceCriteriaResponseDto>(
       `/acceptance-criteria/${userStoryId}/acceptance-criteria`,
       data
     ),
 
-  getAcceptanceCriteria: (userStoryId: string) =>
+  getByUserStory: (userStoryId: string) =>
     api.get<AcceptanceCriteriaResponseDto[]>(
       `/acceptance-criteria/${userStoryId}/acceptance-criteria`
     ),
 
-  updateAcceptanceCriteria: (
-    id: string,
-    data: UpdateAcceptanceCriteriaDto
-  ) =>
+  update: (id: string, data: UpdateAcceptanceCriteriaDto) =>
     api.put<AcceptanceCriteriaResponseDto>(
       `/acceptance-criteria/${id}`,
       data
     ),
 
-  deleteAcceptanceCriteria: (id: string) =>
-    api.delete(`/acceptance-criteria/${id}`),
+  delete: (id: string) => api.delete(`/acceptance-criteria/${id}`),
 };

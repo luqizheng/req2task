@@ -1,34 +1,19 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-  UseGuards,
-  Request,
-} from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequirementsService } from './requirements.service';
 import { RequirementStateService } from '@req2task/core';
 import {
   CreateRequirementDto,
   UpdateRequirementDto,
-  CreateUserStoryDto,
-  UpdateUserStoryDto,
-  CreateAcceptanceCriteriaDto,
-  UpdateAcceptanceCriteriaDto,
   TransitionStatusDto,
   ReviewRequirementDto,
   RequirementResponseDto,
   RequirementListResponseDto,
-  UserStoryResponseDto,
-  AcceptanceCriteriaResponseDto,
   ChangeHistoryResponseDto,
   AllowedTransitionsDto,
 } from '@req2task/dto';
+import { RawRequirementService } from '../raw-requirement/raw-requirement.service';
+import { AiGenerationService } from '../ai/ai-generation.service';
 
 interface ApiResponse<T> {
   code: number;
@@ -49,6 +34,8 @@ export class RequirementsController {
   constructor(
     private readonly requirementsService: RequirementsService,
     private readonly requirementStateService: RequirementStateService,
+    private readonly rawRequirementService: RawRequirementService,
+    private readonly aiGenerationService: AiGenerationService,
   ) {}
 
   @Post('requirements/modules/:moduleId/requirements')
@@ -187,69 +174,71 @@ export class RequirementsController {
     return { code: 0, data: result };
   }
 
-  @Post('user-stories/:requirementId/user-stories')
-  async createUserStory(
-    @Param('requirementId') requirementId: string,
-    @Body() createDto: CreateUserStoryDto,
-  ): Promise<ApiResponse<UserStoryResponseDto>> {
-    const result = await this.requirementsService.createUserStory(
-      requirementId,
-      createDto,
+  @Post('requirements/generate')
+  async generateRequirementsFromRaw(
+    @Body('rawRequirementId') rawRequirementId: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ApiResponse<RequirementResponseDto[]>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
+    
+    // 获取原始需求
+    const rawRequirement = await this.rawRequirementService.getRawRequirementById(rawRequirementId);
+    if (!rawRequirement) {
+      return { code: 404, message: '原始需求不存在' };
+    }
+    
+    // 调用 AI 服务生成结构化需求（不持久化）
+    const result = await this.aiGenerationService.generateRequirements(
+      rawRequirement.projectId,
+      rawRequirement.content,
+      userId!,
+      undefined, // context
+      undefined, // moduleIds
+      false, // 不持久化
     );
-    return { code: 0, data: result };
+    
+    // 转换为响应 DTO
+    const requirements = result.requirements.map(req => ({
+      id: req.id,
+      moduleId: req.moduleId,
+      moduleIds: req.moduleIds,
+      title: req.title,
+      description: req.description,
+      priority: req.priority,
+      source: req.source,
+      status: req.status,
+      storyPoints: req.storyPoints,
+      parentId: req.parentId,
+      createdById: req.createdById,
+      createdAt: req.createdAt,
+      updatedAt: req.updatedAt,
+    }));
+    
+    return { code: 0, data: requirements };
   }
 
-  @Get('user-stories/:requirementId/user-stories')
-  async findUserStories(@Param('requirementId') requirementId: string): Promise<ApiResponse<UserStoryResponseDto[]>> {
-    const result = await this.requirementsService.findUserStories(requirementId);
-    return { code: 0, data: result };
+  @Post('requirements/batch')
+  async batchCreateRequirements(
+    @Body('requirements') requirements: CreateRequirementDto[],
+    @Body('moduleId') moduleId: string,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ApiResponse<RequirementResponseDto[]>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
+    
+    // 批量创建需求
+    const createdRequirements = [];
+    for (const reqDto of requirements) {
+      const created = await this.requirementsService.create(
+        moduleId || null,
+        reqDto,
+        userId!,
+      );
+      createdRequirements.push(created);
+    }
+    
+    return { code: 0, data: createdRequirements };
   }
 
-  @Put('user-stories/:id')
-  async updateUserStory(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateUserStoryDto,
-  ): Promise<ApiResponse<UserStoryResponseDto>> {
-    const result = await this.requirementsService.updateUserStory(id, updateDto);
-    return { code: 0, data: result };
-  }
-
-  @Delete('user-stories/:id')
-  async deleteUserStory(@Param('id') id: string): Promise<ApiResponse<null>> {
-    await this.requirementsService.deleteUserStory(id);
-    return { code: 0, message: '删除成功' };
-  }
-
-  @Post('acceptance-criteria/:userStoryId/acceptance-criteria')
-  async createAcceptanceCriteria(
-    @Param('userStoryId') userStoryId: string,
-    @Body() createDto: CreateAcceptanceCriteriaDto,
-  ): Promise<ApiResponse<AcceptanceCriteriaResponseDto>> {
-    const result = await this.requirementsService.createAcceptanceCriteria(
-      userStoryId,
-      createDto,
-    );
-    return { code: 0, data: result };
-  }
-
-  @Get('acceptance-criteria/:userStoryId/acceptance-criteria')
-  async findAcceptanceCriteria(@Param('userStoryId') userStoryId: string): Promise<ApiResponse<AcceptanceCriteriaResponseDto[]>> {
-    const result = await this.requirementsService.findAcceptanceCriteria(userStoryId);
-    return { code: 0, data: result };
-  }
-
-  @Put('acceptance-criteria/:id')
-  async updateAcceptanceCriteria(
-    @Param('id') id: string,
-    @Body() updateDto: UpdateAcceptanceCriteriaDto,
-  ): Promise<ApiResponse<AcceptanceCriteriaResponseDto>> {
-    const result = await this.requirementsService.updateAcceptanceCriteria(id, updateDto);
-    return { code: 0, data: result };
-  }
-
-  @Delete('acceptance-criteria/:id')
-  async deleteAcceptanceCriteria(@Param('id') id: string): Promise<ApiResponse<null>> {
-    await this.requirementsService.deleteAcceptanceCriteria(id);
-    return { code: 0, message: '删除成功' };
-  }
 }

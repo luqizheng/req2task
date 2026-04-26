@@ -47,6 +47,10 @@ const handleSubmitAnswers = () => {
 const handleGenerateRequirement = async () => {
   await save();
 };
+
+const generalRequirementHandler = async ()=>{
+
+}
 watch(
   () => props.store.messageHistory,
   () => {
@@ -170,6 +174,7 @@ watch(
 
     <div class="panel panel-right-most">
       <h2 class="panel-title">生成的需求</h2>
+      <el-button @click="generalRequirementHandler">生成修改</el-button>
       <div class="requirement-card-container">
         <RequirementCard
           v-if="store.rawRequirement.id"

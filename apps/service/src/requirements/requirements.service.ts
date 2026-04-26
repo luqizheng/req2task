@@ -4,32 +4,24 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Requirement, UserStory, AcceptanceCriteria, FeatureModule } from '@req2task/core';
+import { Requirement, FeatureModule } from '@req2task/core';
 import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 import {
   CreateRequirementDto,
   UpdateRequirementDto,
   RequirementResponseDto,
   RequirementListResponseDto,
-  CreateUserStoryDto,
-  UpdateUserStoryDto,
-  UserStoryResponseDto,
-  CreateAcceptanceCriteriaDto,
-  UpdateAcceptanceCriteriaDto,
-  AcceptanceCriteriaResponseDto,
 } from '@req2task/dto';
+import { UserStoriesService } from './user-stories.service';
+import { AcceptanceCriteriaService } from './acceptance-criteria.service';
 
 @Injectable()
 export class RequirementsService {
   constructor(
-    @InjectRepository(Requirement)
-    private requirementRepository: Repository<Requirement>,
-    @InjectRepository(UserStory)
-    private userStoryRepository: Repository<UserStory>,
-    @InjectRepository(AcceptanceCriteria)
-    private acceptanceCriteriaRepository: Repository<AcceptanceCriteria>,
-    @InjectRepository(FeatureModule)
-    private featureModuleRepository: Repository<FeatureModule>,
+    @InjectRepository(Requirement) private requirementRepository: Repository<Requirement>,
+    @InjectRepository(FeatureModule) private featureModuleRepository: Repository<FeatureModule>,
+    private userStoriesService: UserStoriesService,
+    private acceptanceCriteriaService: AcceptanceCriteriaService,
   ) {}
 
   async create(
@@ -157,122 +149,6 @@ export class RequirementsService {
     await this.requirementRepository.remove(requirement);
   }
 
-  async createUserStory(
-    requirementId: string,
-    createDto: CreateUserStoryDto,
-  ): Promise<UserStoryResponseDto> {
-    const requirement = await this.requirementRepository.findOne({ where: { id: requirementId } });
-    if (!requirement) {
-      throw new NotFoundException(`Requirement with ID ${requirementId} not found`);
-    }
-
-    const userStory = this.userStoryRepository.create({
-      requirementId,
-      role: createDto.role,
-      goal: createDto.goal,
-      benefit: createDto.benefit,
-      storyPoints: createDto.storyPoints || 0,
-    });
-
-    const saved = await this.userStoryRepository.save(userStory);
-    return this.toUserStoryResponseDto(saved);
-  }
-
-  async findUserStories(requirementId: string): Promise<UserStoryResponseDto[]> {
-    const userStories = await this.userStoryRepository.find({
-      where: { requirementId },
-      relations: ['acceptanceCriteria'],
-      order: { createdAt: 'DESC' },
-    });
-
-    return userStories.map((us) => this.toUserStoryResponseDto(us));
-  }
-
-  async updateUserStory(
-    id: string,
-    updateDto: UpdateUserStoryDto,
-  ): Promise<UserStoryResponseDto> {
-    const userStory = await this.userStoryRepository.findOne({
-      where: { id },
-      relations: ['acceptanceCriteria'],
-    });
-
-    if (!userStory) {
-      throw new NotFoundException(`UserStory with ID ${id} not found`);
-    }
-
-    if (updateDto.role !== undefined) userStory.role = updateDto.role;
-    if (updateDto.goal !== undefined) userStory.goal = updateDto.goal;
-    if (updateDto.benefit !== undefined) userStory.benefit = updateDto.benefit;
-    if (updateDto.storyPoints !== undefined) userStory.storyPoints = updateDto.storyPoints;
-
-    const updated = await this.userStoryRepository.save(userStory);
-    return this.toUserStoryResponseDto(updated);
-  }
-
-  async deleteUserStory(id: string): Promise<void> {
-    const userStory = await this.userStoryRepository.findOne({ where: { id } });
-    if (!userStory) {
-      throw new NotFoundException(`UserStory with ID ${id} not found`);
-    }
-    await this.userStoryRepository.remove(userStory);
-  }
-
-  async createAcceptanceCriteria(
-    userStoryId: string,
-    createDto: CreateAcceptanceCriteriaDto,
-  ): Promise<AcceptanceCriteriaResponseDto> {
-    const userStory = await this.userStoryRepository.findOne({ where: { id: userStoryId } });
-    if (!userStory) {
-      throw new NotFoundException(`UserStory with ID ${userStoryId} not found`);
-    }
-
-    const criteria = this.acceptanceCriteriaRepository.create({
-      userStoryId,
-      criteriaType: createDto.criteriaType,
-      content: createDto.content,
-      testMethod: createDto.testMethod || null,
-    });
-
-    const saved = await this.acceptanceCriteriaRepository.save(criteria);
-    return this.toAcceptanceCriteriaResponseDto(saved);
-  }
-
-  async findAcceptanceCriteria(userStoryId: string): Promise<AcceptanceCriteriaResponseDto[]> {
-    const criteriaList = await this.acceptanceCriteriaRepository.find({
-      where: { userStoryId },
-      order: { createdAt: 'DESC' },
-    });
-
-    return criteriaList.map((c) => this.toAcceptanceCriteriaResponseDto(c));
-  }
-
-  async updateAcceptanceCriteria(
-    id: string,
-    updateDto: UpdateAcceptanceCriteriaDto,
-  ): Promise<AcceptanceCriteriaResponseDto> {
-    const criteria = await this.acceptanceCriteriaRepository.findOne({ where: { id } });
-
-    if (!criteria) {
-      throw new NotFoundException(`AcceptanceCriteria with ID ${id} not found`);
-    }
-
-    if (updateDto.criteriaType !== undefined) criteria.criteriaType = updateDto.criteriaType;
-    if (updateDto.content !== undefined) criteria.content = updateDto.content;
-    if (updateDto.testMethod !== undefined) criteria.testMethod = updateDto.testMethod;
-
-    const updated = await this.acceptanceCriteriaRepository.save(criteria);
-    return this.toAcceptanceCriteriaResponseDto(updated);
-  }
-
-  async deleteAcceptanceCriteria(id: string): Promise<void> {
-    const criteria = await this.acceptanceCriteriaRepository.findOne({ where: { id } });
-    if (!criteria) {
-      throw new NotFoundException(`AcceptanceCriteria with ID ${id} not found`);
-    }
-    await this.acceptanceCriteriaRepository.remove(criteria);
-  }
-
   private toResponseDto(requirement: Requirement): RequirementResponseDto {
     const dto: RequirementResponseDto = {
       id: requirement.id,
@@ -299,7 +175,19 @@ export class RequirementsService {
     }
 
     if (requirement.userStories) {
-      dto.userStories = requirement.userStories.map((us) => this.toUserStoryResponseDto(us));
+      dto.userStories = requirement.userStories.map((us) => ({
+        id: us.id,
+        requirementId: us.requirementId,
+        role: us.role,
+        goal: us.goal,
+        benefit: us.benefit,
+        storyPoints: us.storyPoints,
+        createdAt: us.createdAt,
+        updatedAt: us.updatedAt,
+        acceptanceCriteria: us.acceptanceCriteria?.map((c) =>
+          this.acceptanceCriteriaService.toResponseDto(c),
+        ),
+      }));
     }
 
     if (requirement.children) {
@@ -348,38 +236,5 @@ export class RequirementsService {
     }
 
     return dto;
-  }
-
-  private toUserStoryResponseDto(userStory: UserStory): UserStoryResponseDto {
-    const dto: UserStoryResponseDto = {
-      id: userStory.id,
-      requirementId: userStory.requirementId,
-      role: userStory.role,
-      goal: userStory.goal,
-      benefit: userStory.benefit,
-      storyPoints: userStory.storyPoints,
-      createdAt: userStory.createdAt,
-      updatedAt: userStory.updatedAt,
-    };
-
-    if (userStory.acceptanceCriteria) {
-      dto.acceptanceCriteria = userStory.acceptanceCriteria.map((c) =>
-        this.toAcceptanceCriteriaResponseDto(c),
-      );
-    }
-
-    return dto;
-  }
-
-  private toAcceptanceCriteriaResponseDto(criteria: AcceptanceCriteria): AcceptanceCriteriaResponseDto {
-    return {
-      id: criteria.id,
-      userStoryId: criteria.userStoryId,
-      criteriaType: criteria.criteriaType,
-      content: criteria.content,
-      testMethod: criteria.testMethod,
-      createdAt: criteria.createdAt,
-      updatedAt: criteria.updatedAt,
-    };
   }
 }

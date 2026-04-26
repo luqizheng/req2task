@@ -1,57 +1,66 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { Delete, ArrowLeft, Edit, Finished, Goods, Grid, Promotion } from '@element-plus/icons-vue';
-import { ElMessage, ElMessageBox } from 'element-plus';
-import type { FormInstance, FormRules } from 'element-plus';
-import { useProjectStore } from '@/stores/project';
-import { ProjectStatus } from '@req2task/dto';
-import type { UpdateProjectDto, FeatureModuleResponseDto } from '@req2task/dto';
-import ProjectStatsCard from './components/ProjectStatsCard.vue';
-import ProjectQuickActions from './components/ProjectQuickActions.vue';
-import ProjectMemberCard from './components/ProjectMemberCard.vue';
-import ProjectTaskBoard from './components/ProjectTaskBoard.vue';
-import ModuleTree from '@/components/common/ModuleTree.vue';
-import RequirementList from './components/RequirementList.vue';
+import ViewContainer from "@/components/view-container.vue";
+import { ref, computed, onMounted } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import {
+  Delete,
+  ArrowLeft,
+  Edit,
+  Finished,
+  Goods,
+  Grid,
+  Promotion,
+} from "@element-plus/icons-vue";
+import { ElMessage, ElMessageBox } from "element-plus";
+import type { FormInstance, FormRules } from "element-plus";
+import { useProjectStore } from "@/stores/project";
+import { ProjectStatus } from "@req2task/dto";
+import type { UpdateProjectDto, FeatureModuleResponseDto } from "@req2task/dto";
+import ProjectStatsCard from "./components/ProjectStatsCard.vue";
+import ProjectQuickActions from "./components/ProjectQuickActions.vue";
+import ProjectMemberCard from "./components/ProjectMemberCard.vue";
+import ProjectTaskBoard from "./components/ProjectTaskBoard.vue";
+import ModuleTree from "@/components/common/ModuleTree.vue";
+import RequirementList from "./components/RequirementList.vue";
 
-type ViewMode = 'admin' | 'developer' | 'tester' | 'product';
+type ViewMode = "admin" | "developer" | "tester" | "product";
 
 const route = useRoute();
 const router = useRouter();
 const projectStore = useProjectStore();
 
 const loading = ref(false);
-const viewMode = ref<ViewMode>('admin');
+const viewMode = ref<ViewMode>("admin");
 
 const dialogVisible = ref(false);
 const formRef = ref<FormInstance>();
 const formData = ref({
-  name: '',
-  description: '',
+  name: "",
+  description: "",
   status: ProjectStatus.ACTIVE,
 });
 
 const rules: FormRules = {
-  name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
+  name: [{ required: true, message: "请输入项目名称", trigger: "blur" }],
 };
 
 const statusOptions = [
-  { value: ProjectStatus.ACTIVE, label: '进行中', color: '#10b981' },
-  { value: ProjectStatus.PLANNING, label: '规划中', color: '#f59e0b' },
-  { value: ProjectStatus.COMPLETED, label: '已完成', color: '#3b82f6' },
-  { value: ProjectStatus.ARCHIVED, label: '已归档', color: '#94a3b8' },
+  { value: ProjectStatus.ACTIVE, label: "进行中", color: "#10b981" },
+  { value: ProjectStatus.PLANNING, label: "规划中", color: "#f59e0b" },
+  { value: ProjectStatus.COMPLETED, label: "已完成", color: "#3b82f6" },
+  { value: ProjectStatus.ARCHIVED, label: "已归档", color: "#94a3b8" },
 ];
 
 const getStatusStyle = (status: string) => {
-  const option = statusOptions.find(s => s.value === status);
+  const option = statusOptions.find((s) => s.value === status);
   return {
-    color: option?.color || '#94a3b8',
-    background: `${option?.color}15` || '#f1f5f9',
+    color: option?.color || "#94a3b8",
+    background: `${option?.color}15` || "#f1f5f9",
   };
 };
 
 const getStatusLabel = (status: string) => {
-  return statusOptions.find(s => s.value === status)?.label || status;
+  return statusOptions.find((s) => s.value === status)?.label || status;
 };
 
 const requirementCount = ref(0);
@@ -61,10 +70,10 @@ const completedTaskCount = ref(0);
 const projectId = computed(() => route.params.id as string);
 
 const viewModes = [
-  { key: 'admin' as ViewMode, label: '项目总览', icon: Grid },
-  { key: 'developer' as ViewMode, label: '开发视图', icon: Promotion },
-  { key: 'tester' as ViewMode, label: '测试视图', icon: Finished },
-  { key: 'product' as ViewMode, label: '产品视图', icon: Goods },
+  { key: "admin" as ViewMode, label: "项目总览", icon: Grid },
+  { key: "developer" as ViewMode, label: "开发视图", icon: Promotion },
+  { key: "tester" as ViewMode, label: "测试视图", icon: Finished },
+  { key: "product" as ViewMode, label: "产品视图", icon: Goods },
 ];
 
 const loadProject = async () => {
@@ -78,8 +87,10 @@ const loadProject = async () => {
 
 const loadStats = async () => {
   try {
-    const { requirementsApi } = await import('@/api/requirements');
-    const res = await requirementsApi.getListByProject(projectId.value, { limit: 1 });
+    const { requirementsApi } = await import("@/api/requirements");
+    const res = await requirementsApi.getListByProject(projectId.value, {
+      limit: 1,
+    });
     requirementCount.value = res?.total || 0;
   } catch {
     requirementCount.value = 0;
@@ -89,8 +100,9 @@ const loadStats = async () => {
 const handleEditProject = () => {
   if (!projectStore.currentProject) return;
   formData.value.name = projectStore.currentProject.name;
-  formData.value.description = projectStore.currentProject.description || '';
-  formData.value.status = projectStore.currentProject.status || ProjectStatus.ACTIVE;
+  formData.value.description = projectStore.currentProject.description || "";
+  formData.value.status =
+    projectStore.currentProject.status || ProjectStatus.ACTIVE;
   dialogVisible.value = true;
 };
 
@@ -111,16 +123,20 @@ const handleSubmitEdit = async () => {
 const handleDeleteProject = async () => {
   try {
     await ElMessageBox.confirm(
-      '确定删除此项目吗？此操作不可恢复。',
-      '危险操作',
-      { confirmButtonText: '确定删除', cancelButtonText: '取消', type: 'error' }
+      "确定删除此项目吗？此操作不可恢复。",
+      "危险操作",
+      {
+        confirmButtonText: "确定删除",
+        cancelButtonText: "取消",
+        type: "error",
+      },
     );
     await projectStore.deleteProject(projectId.value);
-    ElMessage.success('项目已删除');
-    router.push('/projects');
+    ElMessage.success("项目已删除");
+    router.push("/projects");
   } catch (error) {
-    if ((error as Error).message !== 'cancel') {
-      ElMessage.error((error as Error).message || '删除失败');
+    if ((error as Error).message !== "cancel") {
+      ElMessage.error((error as Error).message || "删除失败");
     }
   }
 };
@@ -128,30 +144,30 @@ const handleDeleteProject = async () => {
 const handleUpdateProject = async (data: UpdateProjectDto) => {
   try {
     await projectStore.updateProject(projectId.value, data);
-    ElMessage.success('项目信息已更新');
+    ElMessage.success("项目信息已更新");
     loadProject();
   } catch (error) {
-    ElMessage.error((error as Error).message || '更新失败');
+    ElMessage.error((error as Error).message || "更新失败");
   }
 };
 
 const handleAddMember = async (userId: string) => {
   try {
     await projectStore.addMember(projectId.value, { userId });
-    ElMessage.success('成员已添加');
+    ElMessage.success("成员已添加");
     loadProject();
   } catch (error) {
-    ElMessage.error((error as Error).message || '添加失败');
+    ElMessage.error((error as Error).message || "添加失败");
   }
 };
 
 const handleRemoveMember = async (userId: string) => {
   try {
     await projectStore.removeMember(projectId.value, userId);
-    ElMessage.success('成员已移除');
+    ElMessage.success("成员已移除");
     loadProject();
   } catch (error) {
-    ElMessage.error((error as Error).message || '移除失败');
+    ElMessage.error((error as Error).message || "移除失败");
   }
 };
 
@@ -160,7 +176,7 @@ const handleModuleClick = (module: FeatureModuleResponseDto) => {
 };
 
 const handleRequirementsClick = () => {
-  viewMode.value = 'product';
+  viewMode.value = "product";
 };
 
 onMounted(async () => {
@@ -170,186 +186,210 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="project-detail-view">
-    <header class="page-header">
-      <div class="header-left">
-        <el-button
-          :icon="ArrowLeft"
-          text
-          @click="router.push('/projects')"
-          class="back-btn"
-        >
-          返回
-        </el-button>
-        <div class="title-section">
-          <h1 class="page-title">{{ projectStore.currentProject?.name || '项目详情' }}</h1>
-          <div class="project-meta">
-            <el-tag
-              v-if="projectStore.currentProject?.projectKey"
-              size="small"
-              effect="plain"
-              class="project-key"
-            >
-              {{ projectStore.currentProject.projectKey }}
-            </el-tag>
-            <span
-              class="project-status"
-              :style="getStatusStyle(projectStore.currentProject?.status || '')"
-            >
-              {{ getStatusLabel(projectStore.currentProject?.status || '') }}
-            </span>
-          </div>
-        </div>
-      </div>
-
-      <div class="header-center">
-        <div class="view-mode-switcher">
-          <button
-            v-for="mode in viewModes"
-            :key="mode.key"
-            :class="['view-mode-btn', { active: viewMode === mode.key }]"
-            @click="viewMode = mode.key"
+  <view-container>
+    <div class="project-detail-view">
+      <header class="page-header">
+        <div class="header-left">
+          <el-button
+            :icon="ArrowLeft"
+            text
+            @click="router.push('/projects')"
+            class="back-btn"
           >
-            <el-icon><component :is="mode.icon" /></el-icon>
-            <span>{{ mode.label }}</span>
-          </button>
-        </div>
-      </div>
-
-      <div class="header-right">
-        <el-button :icon="Edit" @click="handleEditProject" class="edit-btn">
-          编辑
-        </el-button>
-        <el-dropdown trigger="click">
-          <el-button type="danger" plain>
-            <el-icon><Delete /></el-icon>
+            返回
           </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item @click="handleDeleteProject">
-                删除项目
-              </el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
-      </div>
-    </header>
-
-    <main class="main-content">
-      <ProjectStatsCard
-        :project="projectStore.currentProject"
-        :requirement-count="requirementCount"
-        :task-count="taskCount"
-        :completed-task-count="completedTaskCount"
-        :view-mode="viewMode"
-        @requirements-click="handleRequirementsClick"
-      />
-
-      <div class="content-grid" :class="`view-${viewMode}`">
-        <div class="main-area">
-          <ProjectTaskBoard
-            v-if="viewMode === 'developer' || viewMode === 'admin'"
-            :project-id="projectId"
-          />
-
-          <el-card
-            v-if="viewMode === 'tester'"
-            class="tester-view-card"
-          >
-            <template #header>
-              <div class="card-header">
-                <span class="card-title">待验证需求</span>
-              </div>
-            </template>
-            <div class="empty-state">
-              <el-icon size="48"><Finished /></el-icon>
-              <p>暂无待验证的需求</p>
+          <div class="title-section">
+            <h1 class="page-title">
+              {{ projectStore.currentProject?.name || "项目详情" }}
+            </h1>
+            <div class="project-meta">
+              <el-tag
+                v-if="projectStore.currentProject?.projectKey"
+                size="small"
+                effect="plain"
+                class="project-key"
+              >
+                {{ projectStore.currentProject.projectKey }}
+              </el-tag>
+              <span
+                class="project-status"
+                :style="
+                  getStatusStyle(projectStore.currentProject?.status || '')
+                "
+              >
+                {{ getStatusLabel(projectStore.currentProject?.status || "") }}
+              </span>
             </div>
-          </el-card>
-
-          <el-card
-            v-if="viewMode === 'product'"
-            class="product-view-card"
-          >
-            <template #header>
-              <div class="card-header">
-                <span class="card-title">需求列表</span>
-                <el-button type="primary" link @click="router.push(`/projects/${projectId}/raw-requirements`)">
-                  原始需求
-                </el-button>
-              </div>
-            </template>
-            <RequirementList :project-id="projectId" @requirement-created="loadStats" />
-          </el-card>
+          </div>
         </div>
 
-        <aside class="sidebar">
-          <ProjectQuickActions :project-id="projectId" :view-mode="viewMode" />
-
-          <ProjectMemberCard
-            v-if="viewMode === 'admin'"
-            :project="projectStore.currentProject"
-            :loading="loading"
-            @add-member="handleAddMember"
-            @remove-member="handleRemoveMember"
-          />
-
-          <el-card class="module-section" v-if="viewMode !== 'admin'">
-            <template #header>
-              <div class="section-header">
-                <span class="section-title">功能模块</span>
-              </div>
-            </template>
-            <ModuleTree
-              :project-id="projectId"
-              @node-click="handleModuleClick"
-            />
-          </el-card>
-        </aside>
-      </div>
-
-      <el-card
-        v-if="viewMode === 'admin'"
-        class="module-section admin-modules"
-      >
-        <template #header>
-          <div class="section-header">
-            <span class="section-title">功能模块</span>
-            <span class="section-hint">点击模块查看详情</span>
+        <div class="header-center">
+          <div class="view-mode-switcher">
+            <button
+              v-for="mode in viewModes"
+              :key="mode.key"
+              :class="['view-mode-btn', { active: viewMode === mode.key }]"
+              @click="viewMode = mode.key"
+            >
+              <el-icon><component :is="mode.icon" /></el-icon>
+              <span>{{ mode.label }}</span>
+            </button>
           </div>
-        </template>
-        <ModuleTree
-          :project-id="projectId"
-          @node-click="handleModuleClick"
-        />
-      </el-card>
-    </main>
+        </div>
 
-    <el-dialog v-model="dialogVisible" title="编辑项目" width="500px" destroy-on-close>
-      <el-form ref="formRef" :model="formData" :rules="rules" label-width="80">
-        <el-form-item label="项目名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入项目名称" />
-        </el-form-item>
-        <el-form-item label="状态">
-          <el-select v-model="formData.status" style="width: 100%">
-            <el-option
-              v-for="s in statusOptions"
-              :key="s.value"
-              :label="s.label"
-              :value="s.value"
+        <div class="header-right">
+          <el-button :icon="Edit" @click="handleEditProject" class="edit-btn">
+            编辑
+          </el-button>
+          <el-dropdown trigger="click">
+            <el-button type="danger" plain>
+              <el-icon><Delete /></el-icon>
+            </el-button>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item @click="handleDeleteProject">
+                  删除项目
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
+      </header>
+
+      <main class="main-content">
+        <ProjectStatsCard
+          :project="projectStore.currentProject"
+          :requirement-count="requirementCount"
+          :task-count="taskCount"
+          :completed-task-count="completedTaskCount"
+          :view-mode="viewMode"
+          @requirements-click="handleRequirementsClick"
+        />
+
+        <div class="content-grid" :class="`view-${viewMode}`">
+          <div class="main-area">
+            <ProjectTaskBoard
+              v-if="viewMode === 'developer' || viewMode === 'admin'"
+              :project-id="projectId"
             />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="formData.description" type="textarea" :rows="3" placeholder="请输入项目描述" />
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmitEdit">确定</el-button>
-      </template>
-    </el-dialog>
-  </div>
+
+            <el-card v-if="viewMode === 'tester'" class="tester-view-card">
+              <template #header>
+                <div class="card-header">
+                  <span class="card-title">待验证需求</span>
+                </div>
+              </template>
+              <div class="empty-state">
+                <el-icon size="48"><Finished /></el-icon>
+                <p>暂无待验证的需求</p>
+              </div>
+            </el-card>
+
+            <el-card v-if="viewMode === 'product'" class="product-view-card">
+              <template #header>
+                <div class="card-header">
+                  <span class="card-title">需求列表</span>
+                  <el-button
+                    type="primary"
+                    link
+                    @click="
+                      router.push(`/projects/${projectId}/raw-requirements`)
+                    "
+                  >
+                    原始需求
+                  </el-button>
+                </div>
+              </template>
+              <RequirementList
+                :project-id="projectId"
+                @requirement-created="loadStats"
+              />
+            </el-card>
+          </div>
+
+          <aside class="sidebar">
+            <ProjectQuickActions
+              :project-id="projectId"
+              :view-mode="viewMode"
+            />
+
+            <ProjectMemberCard
+              v-if="viewMode === 'admin'"
+              :project="projectStore.currentProject"
+              :loading="loading"
+              @add-member="handleAddMember"
+              @remove-member="handleRemoveMember"
+            />
+
+            <el-card class="module-section" v-if="viewMode !== 'admin'">
+              <template #header>
+                <div class="section-header">
+                  <span class="section-title">功能模块</span>
+                </div>
+              </template>
+              <ModuleTree
+                :project-id="projectId"
+                @node-click="handleModuleClick"
+              />
+            </el-card>
+          </aside>
+        </div>
+
+        <el-card
+          v-if="viewMode === 'admin'"
+          class="module-section admin-modules"
+        >
+          <template #header>
+            <div class="section-header">
+              <span class="section-title">功能模块</span>
+              <span class="section-hint">点击模块查看详情</span>
+            </div>
+          </template>
+          <ModuleTree :project-id="projectId" @node-click="handleModuleClick" />
+        </el-card>
+      </main>
+
+      <el-dialog
+        v-model="dialogVisible"
+        title="编辑项目"
+        width="500px"
+        destroy-on-close
+      >
+        <el-form
+          ref="formRef"
+          :model="formData"
+          :rules="rules"
+          label-width="80"
+        >
+          <el-form-item label="项目名称" prop="name">
+            <el-input v-model="formData.name" placeholder="请输入项目名称" />
+          </el-form-item>
+          <el-form-item label="状态">
+            <el-select v-model="formData.status" style="width: 100%">
+              <el-option
+                v-for="s in statusOptions"
+                :key="s.value"
+                :label="s.label"
+                :value="s.value"
+              />
+            </el-select>
+          </el-form-item>
+          <el-form-item label="描述">
+            <el-input
+              v-model="formData.description"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入项目描述"
+            />
+          </el-form-item>
+        </el-form>
+        <template #footer>
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmitEdit">确定</el-button>
+        </template>
+      </el-dialog>
+    </div>
+  </view-container>
 </template>
 
 <style scoped>
@@ -403,7 +443,7 @@ onMounted(async () => {
 }
 
 .project-key {
-  font-family: 'JetBrains Mono', monospace;
+  font-family: "JetBrains Mono", monospace;
   font-size: 12px;
 }
 

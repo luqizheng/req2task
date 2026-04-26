@@ -122,6 +122,18 @@ const router = createRouter({
       path: '/requirements/:requirementId/user-stories',
       name: 'userStoryManage',
       component: () => import('@/views/UserStoryManageView.vue')
+    },
+    {
+      path: '/demo/element-plus',
+      name: 'elementPlusDemo',
+      component: () => import('@/views/ElementPlusDemoView.vue'),
+      meta: { public: true }
+    },
+    {
+      path: '/demo/echarts',
+      name: 'echartsDemo',
+      component: () => import('@/views/EChartsDemoView.vue'),
+      meta: { public: true }
     }
   ]
 })

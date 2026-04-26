@@ -2,7 +2,6 @@
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import {
-  ArrowLeft,
   Plus,
   Document,
   Clock,
@@ -139,10 +138,6 @@ const handleSizeChange = (size: number) => {
   loadRequirements();
 };
 
-const handleBack = () => {
-  router.push(`/projects/${projectId.value}`);
-};
-
 const handleRowClick = (row: RawRequirementResponseDto) => {
   router.push(`/projects/${projectId.value}/raw-requirements/${row.id}/edit`);
 };
@@ -217,11 +212,8 @@ onMounted(() => {
 
                 <div class="item-meta">
                   <span
-                    :class="['status-dot', getStatusConfig(item.status).class]"
-                  ></span>
-                  <span class="status-label">{{
-                    getStatusConfig(item.status).label
-                  }}</span>
+                    :class="['status-badge', getStatusConfig(item.status).class]"
+                  >{{ getStatusConfig(item.status).label }}</span>
 
                   <template v-if="getCollectionTypeLabel(item.collectionType)">
                     <span class="meta-divider">·</span>
@@ -291,12 +283,12 @@ onMounted(() => {
 <style scoped>
 .raw-requirement-list {
   min-height: 100vh;
-  background: #fafbfc;
+  background: oklch(98.5% 0.004 250);
 }
 
 .list-header {
   background: white;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid oklch(92% 0.005 250);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -304,7 +296,7 @@ onMounted(() => {
 
 .header-nav {
   padding: 12px 24px;
-  border-bottom: 1px solid #f3f4f6;
+  border-bottom: 1px solid oklch(96% 0.004 250);
 }
 
 .back-button {
@@ -315,7 +307,7 @@ onMounted(() => {
   margin: -6px -10px;
   border: none;
   background: none;
-  color: #6b7280;
+  color: oklch(45% 0.01 250);
   font-size: 13px;
   cursor: pointer;
   border-radius: 6px;
@@ -323,8 +315,8 @@ onMounted(() => {
 }
 
 .back-button:hover {
-  color: #1e293b;
-  background: #f3f4f6;
+  color: oklch(25% 0.02 250);
+  background: oklch(96% 0.004 250);
 }
 
 .header-content {
@@ -343,7 +335,7 @@ onMounted(() => {
 .header-title h1 {
   font-size: 20px;
   font-weight: 600;
-  color: #111827;
+  color: oklch(20% 0.02 250);
   margin: 0;
 }
 
@@ -354,11 +346,11 @@ onMounted(() => {
   min-width: 24px;
   height: 22px;
   padding: 0 8px;
-  background: #f3f4f6;
+  background: oklch(96% 0.004 250);
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
-  color: #6b7280;
+  color: oklch(45% 0.01 250);
 }
 
 .header-actions {
@@ -373,20 +365,20 @@ onMounted(() => {
 
 .status-select :deep(.el-input__wrapper) {
   border-radius: 6px;
-  box-shadow: 0 0 0 1px #e5e7eb;
+  box-shadow: 0 0 0 1px oklch(88% 0.005 250);
 }
 
 .status-select :deep(.el-input__wrapper:hover) {
-  box-shadow: 0 0 0 1px #d1d5db;
+  box-shadow: 0 0 0 1px oklch(75% 0.01 250);
 }
 
 .reset-btn {
-  color: #6b7280;
+  color: oklch(45% 0.01 250);
   font-size: 13px;
 }
 
 .reset-btn:hover {
-  color: #374151;
+  color: oklch(30% 0.02 250);
 }
 
 .mr-1 {
@@ -394,7 +386,6 @@ onMounted(() => {
 }
 
 .list-body {
-
   margin: 0 auto;
   padding: 24px;
 }
@@ -406,7 +397,7 @@ onMounted(() => {
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px oklch(85% 0.005 250 / 0.05);
 }
 
 .skeleton-row {
@@ -418,7 +409,12 @@ onMounted(() => {
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%);
+  background: linear-gradient(
+    90deg,
+    oklch(96% 0.004 250) 25%,
+    oklch(92% 0.005 250) 50%,
+    oklch(96% 0.004 250) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-loading 1.5s infinite;
   border-radius: 4px;
@@ -449,7 +445,7 @@ onMounted(() => {
   background: white;
   border-radius: 8px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px oklch(85% 0.005 250 / 0.05);
 }
 
 .list-item {
@@ -478,7 +474,7 @@ onMounted(() => {
 .item-content {
   font-size: 14px;
   line-height: 1.6;
-  color: #1f2937;
+  color: oklch(25% 0.02 250);
   margin-bottom: 8px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -491,58 +487,62 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  color: #9ca3af;
+  color: oklch(55% 0.01 250);
 }
 
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  margin-right: 4px;
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-right: 8px;
 }
 
 .status-pending {
-  background: #9ca3af;
+  background: oklch(92% 0.01 250);
+  color: oklch(40% 0.02 250);
 }
 
 .status-processing {
-  background: #3b82f6;
-  animation: pulse 2s infinite;
+  background: oklch(88% 0.08 250);
+  color: oklch(35% 0.15 250);
+  animation: pulse-badge 2s infinite;
 }
 
 .status-completed {
-  background: #10b981;
+  background: oklch(90% 0.06 145);
+  color: oklch(35% 0.12 145);
 }
 
 .status-converted {
-  background: #8b5cf6;
+  background: oklch(90% 0.08 285);
+  color: oklch(35% 0.15 285);
 }
 
 .status-discarded {
-  background: #d1d5db;
+  background: oklch(94% 0.005 250);
+  color: oklch(50% 0.01 250);
 }
 
 .status-failed {
-  background: #ef4444;
+  background: oklch(90% 0.08 25);
+  color: oklch(35% 0.15 25);
 }
 
-@keyframes pulse {
+@keyframes pulse-badge {
   0%,
   100% {
     opacity: 1;
   }
   50% {
-    opacity: 0.5;
+    opacity: 0.7;
   }
 }
 
-.status-label {
-  color: #6b7280;
-  font-weight: 500;
-}
-
 .meta-divider {
-  color: #d1d5db;
+  color: oklch(80% 0.005 250);
 }
 
 .meta-item {
@@ -588,22 +588,22 @@ onMounted(() => {
   justify-content: center;
   width: 80px;
   height: 80px;
-  background: #f3f4f6;
+  background: oklch(96% 0.006 250);
   border-radius: 16px;
   margin-bottom: 20px;
-  color: #9ca3af;
+  color: oklch(55% 0.15 250);
 }
 
 .empty-state h3 {
   font-size: 16px;
   font-weight: 600;
-  color: #111827;
+  color: oklch(20% 0.02 250);
   margin: 0 0 8px;
 }
 
 .empty-state p {
   font-size: 14px;
-  color: #6b7280;
+  color: oklch(45% 0.01 250);
   margin: 0 0 24px;
 }
 

@@ -134,7 +134,13 @@ const router = createRouter({
       name: 'echartsDemo',
       component: () => import('@/views/EChartsDemoView.vue'),
       meta: { public: true }
-    }
+    },
+    {
+      path: '/demo/req2task',
+      name: 'req2taskDemo',
+      component: () => import('@/views/Req2TaskDemoView.vue'),
+      meta: { public: true }
+    },
   ]
 })
 

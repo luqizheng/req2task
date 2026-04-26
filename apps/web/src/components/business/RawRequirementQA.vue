@@ -60,12 +60,13 @@ const isAnswered = computed(() => props.qa.answer !== null);
 }
 
 .question-number {
-  background-color: #0d0d0d;
+  background-color: var(--color-info);
   color: white;
   padding: 2px 8px;
   font-size: 11px;
   font-weight: 600;
   white-space: pre;
+  border-radius: 4px;
 }
 
 .question-content {

@@ -3,13 +3,11 @@
     <template #header>
       <div style="display: flex; flex-direction: row; align-items: center">
         <h1 style="flex: 9">澄清问答</h1>
-        <span class="qa-count">
-          {{ qaList.length }}
-        </span>
+        <AppBadge :value="props.qaList.length" type="info" />
       </div>
     </template>
     <RawRequirementQA
-      v-for="(qa, index) in qaList"
+      v-for="(qa, index) in props.qaList"
       :key="index"
       :qa="qa"
       :index="index"
@@ -19,7 +17,7 @@
 <script setup lang="ts">
 import { RawRequirementQADto } from "@req2task/dto";
 import RawRequirementQA from "@/components/business/RawRequirementQA.vue";
-import { AppBadge } from '@/components/common';
+import { AppBadge } from "@/components/common";
 const props = defineProps<{
   qaList: RawRequirementQADto[];
 }>();

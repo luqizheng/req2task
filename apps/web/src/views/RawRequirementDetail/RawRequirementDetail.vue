@@ -5,9 +5,9 @@
         <template #header>
           <div style="display: flex; flex-direction: row; align-items: center">
             <h1 style="flex: 9">需求内容</h1>
-            <el-tag style="flex: 1" v-if="rawRequirement" effect="light">{{
+            <RawRequirementStatusTag :status="rawRequirement.status"  v-if="rawRequirement" effect="light">{{
               useRawRequirementStatus(rawRequirement.status)
-            }}</el-tag>
+            }}</RawRequirementStatusTag>
           </div>
         </template>
         {{ rawRequirement?.content || "-" }}
@@ -53,6 +53,7 @@
 <script setup lang="ts">
 import { useRawRequirement } from "./useRawRequirement";
 import QACardList from "./_QACardList.vue";
+import RawRequirementStatusTag from "@/components/business/RawRequirementStatusTag.vue";
 
 import InfoItem from "@/components/common/InfoItem.vue";
 import { useRawRequirementStatus } from "@/utils/useRawRequirement";

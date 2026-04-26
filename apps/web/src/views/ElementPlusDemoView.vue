@@ -135,6 +135,17 @@ const showLoading = () => {
                 <el-tag closable>可关闭</el-tag>
                 <el-tag size="small">小标签</el-tag>
                 <el-tag size="large">大标签</el-tag>
+                
+              </el-space>
+
+              <el-space>
+                <el-tag color="var(--color-primary)">Primary</el-tag>
+                <el-tag color="var(--color-success)">Success</el-tag>
+                <el-tag color="var(--color-warning)">Warning</el-tag>
+                <el-tag color="var(--color-danger)">Danger</el-tag>
+                <el-tag color="var(--color-info)">Info</el-tag>
+                <el-tag color="var(--color-secondary)">Secondary</el-tag>
+                <el-tag color="var(--color-accent)">Accent</el-tag>
               </el-space>
             </el-card>
           </el-col>

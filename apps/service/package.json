@@ -38,7 +38,7 @@
     "@req2task/core": "workspace:^",
     "@req2task/dto": "workspace:^",
     "axios": "catalog:",
-    "bcrypt": "catalog:",
+    "bcryptjs": "^3.0.3",
     "class-transformer": "catalog:",
     "class-validator": "catalog:",
     "dotenv": "catalog:",

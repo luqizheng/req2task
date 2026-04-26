@@ -249,6 +249,9 @@ export class AiGenerationService {
           status: RequirementStatus.DRAFT,
           storyPoints: item.storyPoints || 0,
           parentId: item.parentId || null,
+          sourceRawRequirementId: item.sourceRawRequirementId || null,
+          conversationId: null,
+          reviewChainId: null,
           createdById,
           projectId,
           createdAt: new Date(),
@@ -258,6 +261,8 @@ export class AiGenerationService {
           children: [],
           parent: null,
           module: null,
+          sourceRawRequirement: null,
+          followUpQuestions: item.followUpQuestions || [],
         }));
       }
     }

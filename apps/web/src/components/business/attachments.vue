@@ -7,7 +7,7 @@
             <AppBadge :value="props.attachments.length" type="info" />
         </template>
 
-        
+
     </el-card>
 </template>
 
@@ -16,3 +16,4 @@ import { AttachmentResponseDto } from "@req2task/dto";
 const props = defineProps<{
   attachments: AttachmentResponseDto[];
 }>();
+</script>

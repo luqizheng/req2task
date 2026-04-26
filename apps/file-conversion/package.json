@@ -26,6 +26,10 @@
     "@types/node": "^20.10.0",
     "@types/pdf-parse": "^1.1.5",
     "@types/uuid": "^9.0.7",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "catalog:",
+    "eslint-plugin-import": "^2.32.0",
     "tsx": "catalog:",
     "typescript": "catalog:"
   }

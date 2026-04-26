@@ -49,7 +49,6 @@ export function useRequirementSubmit(
     {
       trigger: "questions",
       onArrayItem(item) {
-        console.log("item", item, "addQuestionFromSSE");
         store.addQuestionFromSSE(item as AiQuestion);
       },
     },

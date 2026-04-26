@@ -10,7 +10,7 @@ module.exports = {
   parserOptions: {
     ecmaVersion: "latest",
     sourceType: "module",
-    project: "apps/ai-chat-service/tsconfig.json",
+    project: "./tsconfig.json",
   },
   plugins: ["@typescript-eslint", "import"],
   rules: {

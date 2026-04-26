@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { Plus, Promotion } from "@element-plus/icons-vue";
 import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
@@ -37,14 +37,23 @@ const {
   handleDeleteQuestion,
 } = useQuestionOperations(props.store);
 
-const { handleSuccess, handleError, translRequestData, handleSSEData } =
-  useRequirementSubmit(props.store);
+const { handleSuccess, handleError, translRequestData, handleSSEData, save } = useRequirementSubmit(props.store);
 
 const handleSubmitAnswers = () => {
-
   // emit("submit");
   aiSubmitRef.value?.submitStream();
 };
+
+const handleGenerateRequirement = async () => {
+  await save();
+};
+watch(
+  () => props.store.messageHistory,
+  () => {
+
+    aiSubmitRef.value?.setMessageHistory(props.store.messageHistory || []);
+  },
+);
 </script>
 
 <template>
@@ -166,11 +175,13 @@ const handleSubmitAnswers = () => {
           v-if="store.rawRequirement.id"
           :data="{
             id: store.rawRequirement.id,
-            title: store.rawRequirement.content.substring(0, 50) + (store.rawRequirement.content.length > 50 ? '...' : ''),
+            title:
+              store.rawRequirement.content.substring(0, 50) +
+              (store.rawRequirement.content.length > 50 ? '...' : ''),
             priority: 'medium',
             status: store.rawRequirement.status,
             description: store.rawRequirement.content,
-            createdAt: store.rawRequirement.createdAt
+            createdAt: store.rawRequirement.createdAt,
           }"
         />
         <div v-else class="empty-requirement">
@@ -180,8 +191,15 @@ const handleSubmitAnswers = () => {
           />
         </div>
       </div>
+      <el-button
+        v-if="store.rawRequirement.content && !store.rawRequirement.id"
+        type="primary"
+        :icon="Promotion"
+        @click="handleGenerateRequirement"
+      >
+        生成需求
+      </el-button>
     </div>
-
   </div>
 
   <el-dialog

@@ -144,7 +144,7 @@ const handleFileSelect = async (event: Event) => {
     try {
       await rustfsUpload(file, props.targetType, props.targetId);
     } catch (error) {
-      debugger
+
       ElMessage.error(`${file.name} 上传失败`);
     }
   }
@@ -173,6 +173,11 @@ const handleSubmit = () => {
   } else {
     submit();
   }
+};
+
+const setMessageHistory = (history: Array<{ role: "user"; content: string }>) => {
+  showSseOutput.value=true;
+  messageHistory.value = history;
 };
 
 const submitStream = async () => {
@@ -241,6 +246,7 @@ const submitStream = async () => {
 defineExpose({
   submitStream,
   handleCancel,
+  setMessageHistory,
 });
 </script>
 

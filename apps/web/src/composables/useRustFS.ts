@@ -126,7 +126,7 @@ export function useRustFS() {
         params: { fileName, contentType },
       },
     );
-    debugger
+
     return response;
   };
 

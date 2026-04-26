@@ -1,17 +1,30 @@
 <script setup lang="ts">
 import { ArrowLeft } from '@element-plus/icons-vue';
 import { useRouter } from 'vue-router';
+import { ElBreadcrumb, ElBreadcrumbItem } from 'element-plus';
+
+type BreadcrumbItem = {
+  label: string;
+  path?: string;
+};
 
 defineProps<{
   title: string;
   subtitle?: string;
   showBack?: boolean;
+  breadcrumb?: BreadcrumbItem[];
 }>();
 
 const router = useRouter();
 
 const handleBack = () => {
   router.back();
+};
+
+const handleBreadcrumbClick = (path: string) => {
+  if (path) {
+    router.push(path);
+  }
 };
 </script>
 
@@ -26,6 +39,18 @@ const handleBack = () => {
           class="back-button"
           @click="handleBack"
         />
+        <div class="breadcrumb-area" v-if="breadcrumb && breadcrumb.length">
+          <el-breadcrumb separator="/" class="breadcrumb">
+            <el-breadcrumb-item 
+              v-for="(item, index) in breadcrumb" 
+              :key="index"
+              @click="item.path && handleBreadcrumbClick(item.path)"
+              :class="{ 'breadcrumb-link': item.path }"
+            >
+              {{ item.label }}
+            </el-breadcrumb-item>
+          </el-breadcrumb>
+        </div>
         <div class="title-area">
           <h1 class="title">{{ title }}</h1>
           <span v-if="subtitle" class="subtitle">{{ subtitle }}</span>
@@ -107,6 +132,34 @@ const handleBack = () => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.breadcrumb-area {
+  margin-bottom: 4px;
+  min-width: 0;
+}
+
+.breadcrumb {
+  font-size: 12px;
+  color: #64748b;
+  line-height: 1.2;
+}
+
+.breadcrumb-link {
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.breadcrumb-link:hover {
+  color: #3b82f6;
+}
+
+html.dark .breadcrumb {
+  color: #94a3b8;
+}
+
+html.dark .breadcrumb-link:hover {
+  color: #60a5fa;
 }
 
 .header-right {

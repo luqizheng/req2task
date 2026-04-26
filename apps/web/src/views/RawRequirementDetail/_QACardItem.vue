@@ -14,7 +14,7 @@ const isAnswered = computed(() => props.qa.answer !== null);
   <div class="raw-requirement-qa">
     <div class="qa-header">
       <div class="question-section">
-        <div class="question-number">Q{{ index || 1 }}</div>
+        <div class="question-number" :class="{ 'question-number-answered': isAnswered }">Q{{ index || 1 }}</div>
         <div class="question-content">{{ qa.question }}</div>
       </div>
       <div class="status-tag" :class="{ answered: isAnswered }">
@@ -41,6 +41,7 @@ const isAnswered = computed(() => props.qa.answer !== null);
   display: flex;
   flex-direction: column;
   gap: 12px;
+  margin-bottom: 12px;
 }
 
 .qa-header {
@@ -60,7 +61,7 @@ const isAnswered = computed(() => props.qa.answer !== null);
 }
 
 .question-number {
-  background-color: var(--color-info);
+  background-color: var(--color-neutral-400);
   color: white;
   padding: 2px 8px;
   font-size: 11px;
@@ -68,6 +69,10 @@ const isAnswered = computed(() => props.qa.answer !== null);
   white-space: pre;
   border-radius: 4px;
 }
+.question-number-answered {
+  background-color: var(--color-success) !important;
+}
+
 
 .question-content {
   font-size: 14px;

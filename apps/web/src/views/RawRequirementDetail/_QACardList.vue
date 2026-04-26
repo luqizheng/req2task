@@ -16,7 +16,7 @@
 </template>
 <script setup lang="ts">
 import { RawRequirementQADto } from "@req2task/dto";
-import RawRequirementQA from "@/components/business/RawRequirementQA.vue";
+import RawRequirementQA from "./_QACardItem.vue";
 import { AppBadge } from "@/components/common";
 const props = defineProps<{
   qaList: RawRequirementQADto[];

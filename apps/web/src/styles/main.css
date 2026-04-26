@@ -28,3 +28,10 @@ body {
   /* font-family: 'Inter', 'Source Han Sans CN', system-ui, sans-serif; */
   font-family: 'Inter-Regular', 'Source Han Sans CN', system-ui, sans-serif;
 }
+.el-card__header{
+  h1{
+    font-size: 1.0rem;
+    font-weight: 500;
+    color:#000
+  }
+}

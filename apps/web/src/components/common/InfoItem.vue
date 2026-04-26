@@ -8,7 +8,7 @@
 </template>
 
 <script setup lang="ts">
-interface InfoItem {
+export interface InfoItem {
   title: string;
   content: string;
 }

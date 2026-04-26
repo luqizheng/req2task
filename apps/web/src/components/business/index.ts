@@ -4,6 +4,7 @@ export { default as ProgressBar } from './ProgressBar.vue';
 export { default as RequirementCard } from './RequirementCard.vue';
 export { default as TaskCard } from './TaskCard.vue';
 export { default as MemberSelect } from './MemberSelect.vue';
+export { default as RawRequirementQA } from './RawRequirementQA.vue';
 
 export type { Requirement } from './RequirementCard.vue';
 export type { Task } from './TaskCard.vue';

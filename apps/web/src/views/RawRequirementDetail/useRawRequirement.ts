@@ -1,13 +1,48 @@
-import { ref, onMounted } from 'vue';
-import { rawRequirementsApi, type RawRequirementResponseDto } from '@/api/rawRequirements';
+import { ref, onMounted, computed } from "vue";
+import dayjs from "dayjs";
 
-export const useRawRequirement = (id: string) => {
+import {
+  rawRequirementsApi,
+  type RawRequirementResponseDto,
+} from "@/api/rawRequirements";
+import { useRoute } from "vue-router";
+
+export const useRawRequirement = () => {
+  const router = useRoute();
+  const rawRequirementId = router.params.rawRequirementId as string;
   const rawRequirement = ref<RawRequirementResponseDto | null>(null);
   const loading = ref(true);
   const error = ref<string | null>(null);
+  const infoItems = computed<{ title: string; content: string }[]>(() => {
+    if (!rawRequirement.value) {
+      return [];
+    }
+    return [
+      {
+        title: "来源",
+        content: rawRequirement.value.source || "-",
+      },
+      {
+        title: "收集类型",
+        content: rawRequirement.value.collectionType || "-",
+      },
+      {
+        title: "收集时间",
+        content: dayjs(rawRequirement.value.collectTime).format("YYYY-M-D"),
+      },
+      {
+        title: "状态",
+        content: rawRequirement.value.status || "-",
+      },
+      {
+        title: "创建时间",
+        content: dayjs(rawRequirement.value.createdAt).format("YYYY-M-D"),
+      },
+    ];
+  });
 
   const fetchRawRequirement = async () => {
-    if (!id) {
+    if (!rawRequirementId) {
       loading.value = false;
       return;
     }
@@ -16,10 +51,11 @@ export const useRawRequirement = (id: string) => {
     error.value = null;
 
     try {
-      const data = await rawRequirementsApi.getRawRequirement(id);
+      const data = await rawRequirementsApi.getRawRequirement(rawRequirementId);
+
       rawRequirement.value = data;
     } catch (err) {
-      error.value = err instanceof Error ? err.message : '加载需求失败';
+      error.value = err instanceof Error ? err.message : "加载需求失败";
     } finally {
       loading.value = false;
     }
@@ -33,6 +69,7 @@ export const useRawRequirement = (id: string) => {
     rawRequirement,
     loading,
     error,
-    fetchRawRequirement
+    infoItems,
+    fetchRawRequirement,
   };
 };

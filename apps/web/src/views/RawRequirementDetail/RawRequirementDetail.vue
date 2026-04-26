@@ -1,10 +1,46 @@
 <template>
   <div class="raw-requirement-detail">
     <div class="main-column">
-      <div class="content-wrapper">
-        <h1>需求详情</h1>
-        <!-- 主要内容区域 -->
-      </div>
+      <el-card class="card">
+        <template #header>
+          <div style="display: flex; flex-direction: row; align-items: center">
+            <h1 style="flex: 9">需求内容</h1>
+            <el-tag style="flex: 1" v-if="rawRequirement" effect="light">{{
+              useRawRequirementStatus(rawRequirement.status)
+            }}</el-tag>
+          </div>
+        </template>
+        {{ rawRequirement?.content || "-" }}
+        <template #footer>
+          <InfoItem :items="infoItems"> </InfoItem>
+        </template>
+      </el-card>
+
+      <el-card class="card">
+        <template #header>
+          <div style="display: flex; flex-direction: row; align-items: center">
+            <h1 style="flex: 9">关键要素</h1>
+          </div>
+        </template>
+
+        <el-tag
+          v-for="(element, index) in rawRequirement?.keyElements"
+          :key="index"
+          type="info"
+          effect="light"
+          class="mr-2 mb-2"
+        >
+          {{ element }}
+        </el-tag>
+        <span
+          v-if="
+            !rawRequirement?.keyElements ||
+            rawRequirement.keyElements.length === 0
+          "
+          >无</span
+        >
+      </el-card>
+      <QACardList :qaList="rawRequirement?.questionAndAnswers || []" />
     </div>
     <div class="left-column">
       <div class="sidebar-wrapper">
@@ -15,21 +51,23 @@
   </div>
 </template>
 <script setup lang="ts">
-import { ref } from "vue";
-import { useRoute } from "vue-router";
 import { useRawRequirement } from "./useRawRequirement";
+import QACardList from "./_QACardList.vue";
 
-const router = useRoute();
+import InfoItem from "@/components/common/InfoItem.vue";
+import { useRawRequirementStatus } from "@/utils/useRawRequirement";
 
-const { rawRequirement, loading, error, fetchRawRequirement } =
-  useRawRequirement(router.params.id);
+const { rawRequirement, infoItems, loading, error, fetchRawRequirement } =
+  useRawRequirement();
 </script>
-
+<style></style>
 <style scoped>
+.card {
+  margin-bottom: 20px;
+}
 .raw-requirement-detail {
   display: flex;
   gap: 20px;
-  height: 100vh;
   padding: 20px;
   box-sizing: border-box;
 }

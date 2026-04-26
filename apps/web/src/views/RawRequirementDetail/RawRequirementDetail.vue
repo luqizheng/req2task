@@ -1,13 +1,18 @@
 <template>
   <div class="raw-requirement-detail">
     <div class="main-column">
-      <el-card class="card">
+      <el-card class="card" shadow="never">
         <template #header>
           <div style="display: flex; flex-direction: row; align-items: center">
             <h1 style="flex: 9">需求内容</h1>
-            <RawRequirementStatusTag :status="rawRequirement.status"  v-if="rawRequirement" effect="light">{{
-              useRawRequirementStatus(rawRequirement.status)
-            }}</RawRequirementStatusTag>
+            <RawRequirementStatusTag
+              :status="rawRequirement.status"
+              v-if="rawRequirement"
+              effect="light"
+              >{{
+                useRawRequirementStatus(rawRequirement.status)
+              }}</RawRequirementStatusTag
+            >
           </div>
         </template>
         {{ rawRequirement?.content || "-" }}
@@ -16,7 +21,7 @@
         </template>
       </el-card>
 
-      <el-card class="card">
+      <el-card class="card" shadow="never">
         <template #header>
           <div style="display: flex; flex-direction: row; align-items: center">
             <h1 style="flex: 9">关键要素</h1>
@@ -44,8 +49,21 @@
     </div>
     <div class="left-column">
       <div class="sidebar-wrapper">
-        <h2>需求信息</h2>
-        <!-- 侧边栏内容区域 -->
+        <el-card shadow="never">
+          <template #header>
+            <div
+              style="display: flex; flex-direction: row; align-items: center"
+            >
+              <h1 style="flex: 9">状态流转</h1>
+            </div>
+          </template>
+          <!-- 状态流转组件 -->
+          <RawRequirementStatusTimeline
+            v-if="rawRequirement"
+            :current-status="rawRequirement.status"
+            :created-at="rawRequirement.createdAt"
+          />
+        </el-card>
       </div>
     </div>
   </div>
@@ -54,6 +72,7 @@
 import { useRawRequirement } from "./useRawRequirement";
 import QACardList from "./_QACardList.vue";
 import RawRequirementStatusTag from "@/components/business/RawRequirementStatusTag.vue";
+import RawRequirementStatusTimeline from "@/components/business/RawRequirementStatusTimeline.vue";
 
 import InfoItem from "@/components/common/InfoItem.vue";
 import { useRawRequirementStatus } from "@/utils/useRawRequirement";
@@ -77,9 +96,10 @@ const { rawRequirement, infoItems, loading, error, fetchRawRequirement } =
   flex: 7;
   display: flex;
   flex-direction: column;
-  background-color: #f5f7fa;
+  /* background-color: #f5f7fa; */
   border-radius: 8px;
   overflow: hidden;
+  padding:4px;
 }
 
 .content-wrapper {
@@ -92,7 +112,7 @@ const { rawRequirement, infoItems, loading, error, fetchRawRequirement } =
   flex: 3;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  /* background-color: #ffffff; */
   border-radius: 8px;
   box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
   overflow: hidden;

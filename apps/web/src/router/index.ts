@@ -103,6 +103,12 @@ const router = createRouter({
       component: () => import('@/views/TaskDetailView.vue')
     },
     {
+      path: '/test-status-timeline',
+      name: 'testStatusTimeline',
+      component: () => import('@/views/TestStatusTimeline.vue'),
+      meta: { public: true }
+    },
+    {
       path: '/ai/config',
       name: 'aiConfig',
       component: () => import('@/views/AiConfig/AiConfigView.vue')

@@ -1,5 +1,5 @@
 <template>
-  <el-card class="qa-card">
+  <el-card class="qa-card" shadow="never">
     <template #header>
       <div style="display: flex; flex-direction: row; align-items: center">
         <h1 style="flex: 9">澄清问答</h1>

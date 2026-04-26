@@ -26,6 +26,7 @@ const menuItems: MenuItem[] = [
   { path: '/demo/element-plus', name: 'elementPlusDemo', label: 'Element Plus Demo', icon: 'Menu' },
   { path: '/demo/echarts', name: 'echartsDemo', label: 'ECharts Demo', icon: 'TrendCharts' },
   { path: '/demo/req2task', name: 'req2taskDemo', label: 'Req2Task Demo', icon: 'View' },
+  { path: '/demo', name: 'demo', label: '设计演示', icon: 'Document' },
 ];
 
 const bottomMenuItems: MenuItem[] = [

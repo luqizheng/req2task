@@ -7,6 +7,7 @@ import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 
 import QuestionList from "./QuestionList.vue";
+import { RequirementCard } from "@/components/entity-card";
 
 interface Props {
   projectId: string;
@@ -157,6 +158,30 @@ const handleSubmitAnswers = () => {
         </div>
       </template>
     </div>
+
+    <div class="panel panel-right-most">
+      <h2 class="panel-title">生成的需求</h2>
+      <div class="requirement-card-container">
+        <RequirementCard
+          v-if="store.rawRequirement.id"
+          :data="{
+            id: store.rawRequirement.id,
+            title: store.rawRequirement.content.substring(0, 50) + (store.rawRequirement.content.length > 50 ? '...' : ''),
+            priority: 'medium',
+            status: store.rawRequirement.status,
+            description: store.rawRequirement.content,
+            createdAt: store.rawRequirement.createdAt
+          }"
+        />
+        <div v-else class="empty-requirement">
+          <el-empty
+            description="提交需求后将在此显示生成的需求卡片"
+            :image-size="60"
+          />
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <el-dialog
@@ -203,7 +228,7 @@ const handleSubmitAnswers = () => {
 }
 
 .panel-left {
-  flex: 0 0 480px;
+  flex: 0 0 400px;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-component, 12px);
@@ -216,6 +241,29 @@ const handleSubmitAnswers = () => {
   gap: var(--spacing-component, 12px);
   padding-left: var(--spacing-card, 16px);
   border-left: 1px solid var(--color-border, #e2e8f0);
+}
+
+.panel-right-most {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-component, 12px);
+  padding-left: var(--spacing-card, 16px);
+  border-left: 1px solid var(--color-border, #e2e8f0);
+}
+
+.requirement-card-container {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.empty-requirement {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  background: var(--color-bg-secondary, #f8fafc);
+  border-radius: 8px;
 }
 
 .panel-title {
@@ -288,9 +336,17 @@ const handleSubmitAnswers = () => {
     min-height: auto;
   }
 
+  .panel-right-most,
   .panel-left {
     flex: none;
     width: 100%;
+  }
+
+  .panel-right-most {
+    padding-left: 0;
+    border-left: none;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    padding-top: var(--spacing-component, 12px);
   }
 
   .panel-right {

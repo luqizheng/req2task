@@ -18,8 +18,7 @@ import type {
   RawRequirementListParams,
 } from "@/api/rawRequirements";
 import { CollectionType } from "@req2task/dto";
-import ViewHeader from "@/components/view-header.vue";
-import viewContainer from "@/components/view-container.vue";
+import ViewContainer from "@/components/view-container.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -148,8 +147,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <view-container>
-    <view-header title="原始需求" subtitle="收集和管理项目需求" showBack>
+  <ViewContainer title="原始需求" subtitle="收集和管理项目需求" showBack>
       <template #actions>
         <el-select
           v-model="statusFilter"
@@ -181,13 +179,11 @@ onMounted(() => {
 
         <el-button
           type="primary"
-          @click="router.push(`/projects/${projectId}/raw-requirements/create`)"
-        >
+          @click="router.push(`/projects/${projectId}/raw-requirements/create`)">
           <el-icon :size="16" class="mr-1"><Plus /></el-icon>
           新增需求
         </el-button>
       </template>
-    </view-header>
     <div class="raw-requirement-list">
       <div class="list-body">
         <div v-if="loading" class="loading-state">

@@ -5,7 +5,7 @@ import {
   Plus, Download, Upload, Search, Edit, Delete, View, Setting, Bell, User, Star, Check, Close, ArrowDown,
 } from '@element-plus/icons-vue';
 import ViewContainer from '@/components/view-container.vue';
-import ViewHeader from '@/components/view-header.vue';
+
 import ViewToolbar from '@/components/view-toolbar.vue';
 
 const activeTab = ref('basic');
@@ -86,8 +86,7 @@ const showLoading = () => {
 </script>
 
 <template>
-  <ViewContainer>
-    <ViewHeader title="Element Plus 组件演示" subtitle="UI 组件评估页面" show-back>
+  <ViewContainer title="Element Plus 组件演示" subtitle="UI 组件评估页面" show-back>
       <template #toolbar>
         <ViewToolbar gap="small">
           <el-button :icon="Plus" text>新建</el-button>
@@ -98,7 +97,6 @@ const showLoading = () => {
       <template #actions>
         <el-button type="primary" :icon="Setting">设置</el-button>
       </template>
-    </ViewHeader>
 
     <el-tabs v-model="activeTab" class="demo-tabs">
       <el-tab-pane label="基础组件" name="basic">

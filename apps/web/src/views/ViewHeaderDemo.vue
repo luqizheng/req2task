@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { Plus, Download, Upload } from '@element-plus/icons-vue';
-import ViewHeader from '@/components/view-header.vue';
+import ViewContainer from '@/components/view-container.vue';
 import ViewToolbar from '@/components/view-toolbar.vue';
 import AppButton from '@/components/common/AppButton.vue';
 </script>
 
 <template>
   <div class="demo-page">
-    <ViewHeader
+    <ViewContainer
       title="需求详情"
       subtitle="REQ-2024-001 - 用户登录功能"
       show-back
@@ -31,11 +31,11 @@ import AppButton from '@/components/common/AppButton.vue';
           导出
         </el-button>
       </template>
-    </ViewHeader>
 
-    <div class="page-content">
-      <p>页面内容区域</p>
-    </div>
+      <div class="page-content">
+        <p>页面内容区域</p>
+      </div>
+    </ViewContainer>
   </div>
 </template>
 

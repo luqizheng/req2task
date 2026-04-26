@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ViewContainer from "@/components/view-container.vue";
 import { useRouter, useRoute } from "vue-router";
-import { ArrowLeft } from "@element-plus/icons-vue";
+
 import { useRawRequirementCreateStore } from "./store";
 
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
@@ -11,7 +11,7 @@ import { storeToRefs } from "pinia";
 import { ref, reactive, onMounted } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { rawRequirementsApi } from "@/api/rawRequirements";
-import ViewHeader from "@/components/view-header.vue";
+
 
 const router = useRouter();
 const route = useRoute();
@@ -38,9 +38,7 @@ const formRules = reactive<FormRules>({
   ],
 });
 
-const handleBack = () => {
-  router.back();
-};
+
 
 const collectionTypeOptions = [
   { label: "会议", value: CollectionType.MEETING },
@@ -71,11 +69,10 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <ViewContainer v-loading="loading">
-    <ViewHeader
-      :title="store.rawRequirement.id ? '更新原始需求' : '录入原始需求'"
-    >
-    </ViewHeader>
+  <ViewContainer 
+    v-loading="loading"
+    :title="store.rawRequirement.id ? '更新原始需求' : '录入原始需求'"
+  >
 
     <el-card class="meta-card" shadow="hover" style="margin-bottom: 20px;">
       <el-form

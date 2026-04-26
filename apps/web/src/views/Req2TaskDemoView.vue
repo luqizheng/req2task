@@ -6,7 +6,7 @@ import {
   Calendar, User 
 } from '@element-plus/icons-vue';
 import ViewContainer from '@/components/view-container.vue';
-import ViewHeader from '@/components/view-header.vue';
+
 import ViewToolbar from '@/components/view-toolbar.vue';
 
 // 类型定义
@@ -165,8 +165,7 @@ const saveItem = () => {
 </script>
 
 <template>
-  <ViewContainer>
-    <ViewHeader title="Req2Task 演示平台" />
+  <ViewContainer title="Req2Task 演示平台">
     <ViewToolbar>
       <div class="toolbar-actions">
         <el-button type="primary" :icon="Plus" @click="openEditDialog(activeTab)">

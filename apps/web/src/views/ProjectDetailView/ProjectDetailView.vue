@@ -186,7 +186,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <view-container>
+  <view-container :title="projectStore.currentProject?.name || '项目详情'">
     <div class="project-detail-view">
       <header class="page-header">
         <div class="header-left">

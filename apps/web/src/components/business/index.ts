@@ -5,6 +5,7 @@ export { default as RequirementCard } from './RequirementCard.vue';
 export { default as TaskCard } from './TaskCard.vue';
 export { default as MemberSelect } from './MemberSelect.vue';
 export { default as RawRequirementQA } from './RawRequirementQA.vue';
+export { default as AttachmentsList } from './AttachmentsList.vue';
 
 export type { Requirement } from './RequirementCard.vue';
 export type { Task } from './TaskCard.vue';

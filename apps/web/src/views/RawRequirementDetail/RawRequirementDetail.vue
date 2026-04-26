@@ -49,7 +49,7 @@
     </div>
     <div class="left-column">
       <div class="sidebar-wrapper">
-        <el-card shadow="never">
+        <el-card class="card" shadow="never">
           <template #header>
             <div
               style="display: flex; flex-direction: row; align-items: center"
@@ -64,6 +64,11 @@
             :created-at="rawRequirement.createdAt"
           />
         </el-card>
+
+     
+          <AttachmentsList :attachments="attachments" />
+   
+        
       </div>
     </div>
   </div>
@@ -73,9 +78,36 @@ import { useRawRequirement } from "./useRawRequirement";
 import QACardList from "./_QACardList.vue";
 import RawRequirementStatusTag from "@/components/business/RawRequirementStatusTag.vue";
 import RawRequirementStatusTimeline from "@/components/business/RawRequirementStatusTimeline.vue";
+import AttachmentsList from "@/components/business/AttachmentsList.vue";
 
 import InfoItem from "@/components/common/InfoItem.vue";
 import { useRawRequirementStatus } from "@/utils/useRawRequirement";
+import { ref } from "vue";
+import { AttachmentResponseDto, AttachmentTargetType } from "@req2task/dto";
+
+
+// 生成Attachment demo数据 (模拟AttachmentResponseDto结构)
+const generateDemoAttachments = () => {
+  const demoFiles = [
+    { name: '需求规格说明书.docx', size: 1024 * 1024 * 2, type: 'application/msword', url: '#', id: '1' },
+    { name: '系统架构设计图.png', size: 1024 * 500, type: 'image/png', url: '#', id: '2' },
+    { name: '用户故事列表.xlsx', size: 1024 * 1024 * 1.5, type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', url: '#', id: '3' }
+  ];
+  return demoFiles.map(file => ({
+    id: file.id,
+    displayName: file.name,
+    fileDataId: file.id,
+    targetType: AttachmentTargetType.REQUIREMENT,
+    targetId:'ll',
+    size: file.size,
+    mimeType: file.type,
+    storagePath: file.url,
+    createdAt: new Date(Date.now() - Math.floor(Math.random() * 30) * 24 * 60 * 60 * 1000).toISOString()
+  } as any as AttachmentResponseDto));
+};
+
+const attachments= ref(generateDemoAttachments())
+
 
 const { rawRequirement, infoItems, loading, error, fetchRawRequirement } =
   useRawRequirement();

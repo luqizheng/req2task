@@ -25,5 +25,6 @@
   --el-button-active-border-color: #1e40af;
 }
 body {
-  font-family: 'Inter', 'Source Han Sans CN', system-ui, sans-serif;
+  /* font-family: 'Inter', 'Source Han Sans CN', system-ui, sans-serif; */
+  font-family: 'Inter-Regular', 'Source Han Sans CN', system-ui, sans-serif;
 }

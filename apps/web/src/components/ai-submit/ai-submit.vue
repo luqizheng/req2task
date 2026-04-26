@@ -394,13 +394,13 @@ defineExpose({
 
       <div class="actions">
         <slot name="actions">
-          <el-button
+          <!-- <el-button
             size="default"
             @click="handleCancel"
             :disabled="isSubmitting"
           >
             取消
-          </el-button>
+          </el-button> -->
           <el-button
             type="primary"
             :icon="Promotion"

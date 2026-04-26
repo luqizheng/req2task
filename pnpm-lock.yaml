@@ -322,6 +322,9 @@ importers:
       bcrypt:
         specifier: 'catalog:'
         version: 5.1.1
+      bcryptjs:
+        specifier: ^3.0.3
+        version: 3.0.3
       class-transformer:
         specifier: 'catalog:'
         version: 0.5.1
@@ -430,7 +433,7 @@ importers:
         version: 6.3.4
       ts-jest:
         specifier: 'catalog:'
-        version: 29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5)
+        version: 29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5)
       ts-loader:
         specifier: ^9.5.1
         version: 9.5.7(typescript@5.4.5)(webpack@5.97.1(@swc/core@1.15.26))
@@ -579,7 +582,7 @@ importers:
         version: 29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5))
       ts-jest:
         specifier: 'catalog:'
-        version: 29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5)
+        version: 29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5)
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(@microsoft/api-extractor@7.58.5(@types/node@20.19.39))(@swc/core@1.15.26)(jiti@2.6.1)(postcss@8.5.10)(tsx@4.21.0)(typescript@5.4.5)(yaml@2.8.3)
@@ -3173,6 +3176,10 @@ packages:
   bcrypt@5.1.1:
     resolution: {integrity: sha512-AGBHOG5hPYZ5Xl9KXzU5iKq9516yEmvCKDg3ecP5kX2aB6UqTeXZxk2ELnDgDm6BQSMlLt9rDB4LoSMx0rYwww==}
     engines: {node: '>= 10.0.0'}
+
+  bcryptjs@3.0.3:
+    resolution: {integrity: sha512-GlF5wPWnSa/X5LKM1o0wz0suXIINz1iHRLvTS+sLyi7XPbe5ycmYI3DlZqVGZZtDgl4DmasFg7gOB3JYbphV5g==}
+    hasBin: true
 
   bidi-js@1.0.3:
     resolution: {integrity: sha512-RKshQI1R3YQ+n9YJz2QQ147P66ELpa1FQEg20Dk8oW9t2KgLbpDLLp9aGZ7y8WHSshDknG0bknqGw5/tyCs5tw==}
@@ -10246,6 +10253,8 @@ snapshots:
       - encoding
       - supports-color
 
+  bcryptjs@3.0.3: {}
+
   bidi-js@1.0.3:
     dependencies:
       require-from-string: 2.0.2
@@ -14102,7 +14111,7 @@ snapshots:
 
   ts-interface-checker@0.1.13: {}
 
-  ts-jest@29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(esbuild@0.27.7)(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5):
+  ts-jest@29.4.9(@babel/core@7.29.0)(@jest/transform@29.7.0)(@jest/types@29.6.3)(babel-jest@29.7.0(@babel/core@7.29.0))(jest-util@29.7.0)(jest@29.7.0(@types/node@20.19.39)(ts-node@10.9.2(@swc/core@1.15.26)(@types/node@20.19.39)(typescript@5.4.5)))(typescript@5.4.5):
     dependencies:
       bs-logger: 0.2.6
       fast-json-stable-stringify: 2.1.0
@@ -14120,7 +14129,6 @@ snapshots:
       '@jest/transform': 29.7.0
       '@jest/types': 29.6.3
       babel-jest: 29.7.0(@babel/core@7.29.0)
-      esbuild: 0.27.7
       jest-util: 29.7.0
 
   ts-loader@9.5.7(typescript@5.4.5)(webpack@5.97.1(@swc/core@1.15.26)):

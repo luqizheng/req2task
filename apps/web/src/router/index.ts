@@ -50,17 +50,22 @@ const router = createRouter({
     {
       path: '/projects/:id/raw-requirements',
       name: 'rawRequirementList',
-      component: () => import('@/views/RawRequirementListView.vue')
+      component: () => import('@/views/RawRequirementList/index.vue')
     },
     {
         path: '/projects/:id/raw-requirements/create',
         name: 'rawRequirementCreate',
-        component: () => import('@/views/RawRequirmentCreateView/RawRequirementCreateView.vue')
+       component: () => import('../views/RawRequirementEditor/RawRequirementCreateView.vue')
     },
     {
         path: '/projects/:id/raw-requirements/:rawRequirementId/edit',
         name: 'rawRequirementEdit',
-        component: () => import('@/views/RawRequirmentCreateView/RawRequirementCreateView.vue')
+        component: () => import('../views/RawRequirementEditor/RawRequirementCreateView.vue')
+    },
+    {
+        path: '/projects/:id/raw-requirements/:rawRequirementId',
+        name: 'rawRequirementDetail',
+        component: () => import('@/views/RawRequirementDetail/RawRequirementDetail.vue')
     },
     {
       path: '/projects/:id/modules',
@@ -124,6 +129,11 @@ const router = createRouter({
       component: () => import('@/views/UserStoryManageView.vue')
     },
     {
+      path: '/raw-requirements/analyze',
+      name: 'rawRequirementAnalyze',
+      component: () => import('@/views/RawRequirementAnalyzer/RawRequirementAnalyzer.vue')
+    },
+    {
       path: '/demo/element-plus',
       name: 'elementPlusDemo',
       component: () => import('@/views/ElementPlusDemoView.vue'),
@@ -145,6 +155,12 @@ const router = createRouter({
       path: '/demo',
       name: 'demo',
       component: () => import('@/views/demo.vue'),
+      meta: { public: true }
+    },
+    {
+      path: '/demo/info-item',
+      name: 'infoItemDemo',
+      component: () => import('@/views/InfoItemDemoView.vue'),
       meta: { public: true }
     },
   ]

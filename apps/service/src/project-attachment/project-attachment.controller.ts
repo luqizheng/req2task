@@ -21,7 +21,6 @@ import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
 import { ProjectAttachmentService } from './project-attachment.service';
 import {
-  UploadAttachmentDto,
   AttachmentQueryDto,
   BatchGetAttachmentsDto,
   CreateAttachmentByFileDataIdDto,
@@ -32,16 +31,7 @@ import {
 export class ProjectAttachmentController {
   constructor(private readonly attachmentService: ProjectAttachmentService) {}
 
-  @Post('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  async upload(
-    @Body() dto: UploadAttachmentDto,
-    @UploadedFile() file: Express.Multer.File,
-    @CurrentUser('id') userId: string,
-    @Res({ passthrough: true }) res: Response,
-  ) {
-    return this.attachmentService.upload(dto, file.buffer, file.originalname, file.mimetype, userId);
-  }
+
 
   @Post('create')
   async createByFileDataId(

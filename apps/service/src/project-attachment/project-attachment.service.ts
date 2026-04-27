@@ -1,10 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import * as crypto from 'crypto';
-import { FileData, ProjectAttachment } from '@req2task/core';
+import { FileData, ProjectAttachment, FileStatus } from '@req2task/core';
 import {
-  UploadAttachmentDto,
   AttachmentResponseDto,
   AttachmentQueryDto,
   BatchGetAttachmentsDto,
@@ -12,6 +10,7 @@ import {
 } from '@req2task/dto';
 import { StorageService } from '../common/services/storage.service';
 import { Readable } from 'stream';
+import { FileDataService } from '../file-data/file-data.service';
 
 @Injectable()
 export class ProjectAttachmentService {
@@ -23,71 +22,25 @@ export class ProjectAttachmentService {
     @InjectRepository(ProjectAttachment)
     private readonly attachmentRepository: Repository<ProjectAttachment>,
     private readonly storageService: StorageService,
+    private readonly fileDataService: FileDataService,
   ) {}
 
-  async upload(
-    dto: UploadAttachmentDto,
-    fileBuffer: Buffer,
-    fileName: string,
-    mimeType: string,
-    userId: string,
-  ): Promise<AttachmentResponseDto> {
-    const fileHash = crypto.createHash('sha256').update(fileBuffer).digest('hex');
-    
-    let fileData = await this.fileDataRepository.findOne({
-      where: { fileHash },
-    });
 
-    if (!fileData) {
-      const storagePath = await this.storageService.upload(
-        fileBuffer,
-        fileName,
-        mimeType,
-      );
-
-      fileData = this.fileDataRepository.create({
-        fileHash,
-        originalName: fileName,
-        mimeType,
-        size: fileBuffer.length,
-        storagePath,
-      });
-      fileData = await this.fileDataRepository.save(fileData);
-    }
-
-    const attachment = this.attachmentRepository.create({
-      fileDataId: fileData.id,
-      targetType: dto.targetType,
-      targetId: dto.targetId,
-      displayName: dto.displayName || fileName,
-      description: dto.description || null,
-      createdById: userId,
-    });
-    await this.attachmentRepository.save(attachment);
-
-    return this.toResponseDto(attachment, fileData);
-  }
 
   async createByFileDataId(
     dto: CreateAttachmentByFileDataIdDto,
     userId: string,
   ): Promise<AttachmentResponseDto> {
-    let fileData = await this.fileDataRepository.findOne({
-      where: { storagePath: dto.fileDataId },
-    });
-
+    // 查找已经上传的文件数据
+    const fileData = await this.fileDataService.findById(dto.fileDataId);
     if (!fileData) {
-      const tempHash = `pending-${dto.fileDataId}`;
-      fileData = this.fileDataRepository.create({
-        fileHash: tempHash,
-        originalName: dto.fileName,
-        mimeType: dto.contentType,
-        size: dto.size,
-        storagePath: dto.fileDataId,
-      });
-      fileData = await this.fileDataRepository.save(fileData);
+      throw new NotFoundException('File data not found');
     }
 
+    // 将文件状态从待删除更新为正常
+    await this.fileDataService.updateFileStatus(fileData.id, FileStatus.NORMAL);
+
+    // 创建附件关联
     const attachment = this.attachmentRepository.create({
       fileDataId: fileData.id,
       targetType: dto.targetType,

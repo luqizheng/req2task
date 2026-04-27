@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import ViewContainer from "@/components/view-container.vue";
 import { useRouter, useRoute } from "vue-router";
-
+import RustFSUploader from "@/components/common/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
@@ -133,7 +133,25 @@ const handleSubmit = async () => {
             </el-form-item>
           </el-col>
         </el-row>
+      
+        <el-form-item label="上传文件" prop="fileIds">
+          <RustFSUploader
+            v-model="rawRequirement.fileIds"
+            :target-type="raw_requirement' | 'project',
+  targetId?: string;"
+            :target-id="demoTargetId"
+            :accept="accept"
+            :max-size="maxSize"
+            :max-count="maxCount"
+            :disabled="disabled"
+            :tips="tips"
+            @upload-complete="handleUploadComplete"
+            @remove="handleRemoveFile"
+          />
+        </el-form-item>
+      
       </el-form>
+      
     </el-card>
 
     <el-card class="meta-card" shadow="hover">

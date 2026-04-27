@@ -85,55 +85,7 @@ describe('ProjectAttachmentService', () => {
     jest.clearAllMocks();
   });
 
-  describe('upload', () => {
-    it('should create new file data for new file', async () => {
-      const dto = {
-        targetType: 'project' as any,
-        targetId: '423e4567-e89b-12d3-a456-426614174003',
-        displayName: 'test.txt',
-        file: {
-          buffer: Buffer.from('test content'),
-          originalname: 'test.txt',
-          mimetype: 'text/plain',
-        },
-      };
 
-      fileDataRepository.findOne.mockResolvedValue(null);
-      fileDataRepository.create.mockReturnValue(mockFileData as FileData);
-      fileDataRepository.save.mockResolvedValue(mockFileData as FileData);
-      attachmentRepository.create.mockReturnValue(mockAttachment as ProjectAttachment);
-      attachmentRepository.save.mockResolvedValue(mockAttachment as ProjectAttachment);
-      storageService.upload.mockResolvedValue('attachments/2024/01/01/test.txt');
-
-      const result = await service.upload(dto, dto.file.buffer, dto.file.originalname, dto.file.mimetype, mockUserId);
-
-      expect(result).toBeDefined();
-      expect(result.fileDataId).toBe(mockFileDataId);
-      expect(storageService.upload).toHaveBeenCalled();
-    });
-
-    it('should reuse existing file data for duplicate file', async () => {
-      const dto = {
-        targetType: 'project' as any,
-        targetId: '423e4567-e89b-12d3-a456-426614174003',
-        displayName: 'test.txt',
-        file: {
-          buffer: Buffer.from('test content'),
-          originalname: 'test.txt',
-          mimetype: 'text/plain',
-        },
-      };
-
-      fileDataRepository.findOne.mockResolvedValue(mockFileData as FileData);
-      attachmentRepository.create.mockReturnValue(mockAttachment as ProjectAttachment);
-      attachmentRepository.save.mockResolvedValue(mockAttachment as ProjectAttachment);
-
-      await service.upload(dto, dto.file.buffer, dto.file.originalname, dto.file.mimetype, mockUserId);
-
-      expect(storageService.upload).not.toHaveBeenCalled();
-      expect(fileDataRepository.create).not.toHaveBeenCalled();
-    });
-  });
 
   describe('findById', () => {
     it('should return attachment when found', async () => {

@@ -1,6 +1,7 @@
 import { Module, OnModuleInit } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import { HttpModule } from "@nestjs/axios";
+import { ScheduleModule } from "@nestjs/schedule";
 import * as nacos from "nacos";
 import { AppController } from "./app.controller";
 import { AppService } from "./app.service";
@@ -33,6 +34,7 @@ import { SeedModule } from "./commands/seed/seed.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";
 import { AiModule } from "./ai/ai.module";
 import { RustFSModule } from "./rustfs/rustfs.module";
+import { FileDataModule } from "./file-data/file-data.module";
 import * as os from "os";
 
 const getIP = (): string => {
@@ -107,6 +109,8 @@ const nacosClient = new nacos.NacosNamingClient(nacosConfig );
     PromptModule,
     AiModule,
     RustFSModule,
+    ScheduleModule.forRoot(),
+    FileDataModule,
   ],
   controllers: [AppController],
   providers: [AppService],

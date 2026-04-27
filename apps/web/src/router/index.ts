@@ -152,15 +152,15 @@ const router = createRouter({
       meta: { public: true }
     },
     {
-      path: '/demo/req2task',
-      name: 'req2taskDemo',
+      path: '/demo',
+      name: 'demo',
       component: () => import('@/views/Req2TaskDemoView.vue'),
       meta: { public: true }
     },
     {
-      path: '/demo',
-      name: 'demo',
-      component: () => import('@/views/demo.vue'),
+      path: '/demo/req2task',
+      name: 'req2taskDemo',
+      component: () => import('@/views/Req2TaskDemoView.vue'),
       meta: { public: true }
     },
     {

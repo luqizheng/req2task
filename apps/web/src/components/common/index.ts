@@ -11,3 +11,5 @@ export { default as AppTable } from './AppTable.vue';
 export { default as AppForm } from './AppForm.vue';
 export { default as StatCard } from './StatCard.vue';
 export { default as InfoItem } from './InfoItem.vue';
+export { default as FileUploader } from './FileUploader.vue';
+export { default as RustFSUploader } from './RustFSUploader.vue';

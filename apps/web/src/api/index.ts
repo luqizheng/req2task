@@ -8,3 +8,4 @@ export { aiApi } from './ai';
 export { llmConfigApi } from './llm-config';
 export { conversationApi } from './ai';
 export { conversationApi as chatConversationApi } from './ai';
+export { fileDataApi } from './file-data';

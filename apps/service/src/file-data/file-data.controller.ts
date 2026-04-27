@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
@@ -20,5 +20,12 @@ export class FileDataController {
     console.log("上传文件", user);
     const fileData = await this.fileDataService.uploadFile(file.buffer, file.originalname, file.mimetype, user.id);
     return { fileDataId: fileData.id };
+  }
+
+  @Get('batch')
+  async getBatch(@Query('ids') ids: string) {
+    const idArray = ids ? ids.split(',') : [];
+    const fileDataList = await this.fileDataService.findByIds(idArray);
+    return { fileDataList };
   }
 }

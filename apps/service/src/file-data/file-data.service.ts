@@ -67,4 +67,8 @@ export class FileDataService {
   async findById(id: string): Promise<FileData | null> {
     return this.fileDataRepository.findOneBy({ id });
   }
+
+  async findByIds(ids: string[]): Promise<FileData[]> {
+    return this.fileDataRepository.findBy({ id: ids as any });
+  }
 }

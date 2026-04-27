@@ -1,16 +1,18 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
-import { ElMessage } from 'element-plus';
-import { useRustFS } from '@/composables/useRustFS';
+import { ref, computed, watch } from "vue";
+import { ElMessage } from "element-plus";
+import { useRustFS } from "@/composables/useRustFS";
+import { fileDataApi } from "@/api";
+
+type FileStatus = "uploading" | "success" | "error";
 
 interface FileItem {
   id: string;
   name: string;
   size: number;
   type: string;
-  status: 'uploading' | 'success' | 'error';
+  status: FileStatus;
   progress: number;
-  fileDataId?: string;
 }
 
 interface Props {
@@ -24,57 +26,118 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   modelValue: () => [],
-  accept: '.pdf,.docx,.doc,.mp3,.wav,.m4a,.mp4,.png,.jpg,.jpeg',
+  accept: ".pdf,.docx,.doc,.mp3,.wav,.m4a,.mp4,.png,.jpg,.jpeg",
   maxSize: 50 * 1024 * 1024,
   maxCount: 5,
   disabled: false,
-  tips: '支持 PDF、DOCX、音频、图片文件，单个文件不超过 50MB',
+  tips: "支持 PDF、DOCX、音频、图片文件，单个文件不超过 50MB",
 });
 
 const emit = defineEmits<{
-  (e: 'update:modelValue', value: string[]): void;
-  (e: 'upload-complete', fileIds: string[]): void;
-  (e: 'remove', fileId: string): void;
+  (e: "update:modelValue", value: string[]): void;
+  (e: "upload-complete", fileIds: string[]): void;
+  (e: "remove", fileId: string): void;
 }>();
 
 const { upload, removeFile } = useRustFS();
 
 const fileList = ref<FileItem[]>([]);
+const inputRef = ref<HTMLInputElement | null>(null);
 
-const canAddMore = computed(() => {
-  return fileList.value.length < props.maxCount;
-});
+const canAddMore = computed(() => fileList.value.length < props.maxCount);
+
+const generateTempId = () =>
+  `temp_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
+
+const updateFileItem = (id: string, updates: Partial<FileItem>) => {
+  const index = fileList.value.findIndex((f) => f.id === id);
+  if (index !== -1) {
+    fileList.value[index] = { ...fileList.value[index], ...updates };
+  }
+};
+
+const formatSize = (bytes: number): string => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+};
+
+const getFileIcon = (mimeType: string): string => {
+  if (mimeType.startsWith("image/")) return "picture";
+  if (mimeType.startsWith("audio/")) return "headset";
+  if (mimeType.includes("pdf")) return "document";
+  if (mimeType.includes("word") || mimeType.includes("document"))
+    return "document";
+  return "document";
+};
+
+const getFileTypeLabel = (mimeType: string): string => {
+  if (mimeType.includes("pdf")) return "PDF";
+  if (mimeType.includes("word") || mimeType.includes("document")) return "DOCX";
+  if (
+    mimeType.includes("audio") ||
+    mimeType.includes("mpeg") ||
+    mimeType.includes("mp3")
+  )
+    return "音频";
+  if (mimeType.startsWith("image/")) return "图片";
+  return "文件";
+};
 
 watch(
   () => props.modelValue,
-  (newFileIds) => {
-    if (newFileIds && newFileIds.length > 0) {
-      fileList.value = newFileIds.map(id => ({
-        id,
-        name: `文件 ${id.slice(-8)}`,
-        size: 0,
-        type: 'application/octet-stream',
-        status: 'success',
-        progress: 100,
-      }));
-    } else {
+  async (newFileIds) => {
+    if (!newFileIds || newFileIds.length === 0) {
       fileList.value = [];
+      return;
+    }
+
+    const existingFileIds = fileList.value.map((f) => f.id);
+    const newFileIdSet = new Set(newFileIds);
+
+    fileList.value = fileList.value.filter((f) => newFileIdSet.has(f.id));
+
+    const missingIds = newFileIds.filter((id) => !existingFileIds.includes(id));
+
+    if (missingIds.length > 0) {
+      try {
+        const { fileDataList } = await fileDataApi.getBatch(missingIds);
+        const newFiles = fileDataList.map((file) => ({
+          id: file.id,
+          name: file.originalName,
+          size: file.size,
+          type: file.mimeType,
+          status: "success" as FileStatus,
+          progress: 100,
+        }));
+        fileList.value = [...fileList.value, ...newFiles];
+      } catch (error) {
+        console.error("Failed to fetch file data:", error);
+      }
     }
   },
-  { immediate: true }
+  { immediate: true },
 );
-
-watch(
-  () => fileList.value,
-  (newList) => {
-    const fileIds = newList
-      .filter(file => file.status === 'success' && !file.id.startsWith('temp_'))
-      .map(file => file.id);
-    emit('update:modelValue', fileIds);
-    emit('upload-complete', fileIds);
-  },
-  { deep: true }
-);
+const syncToModelValue = () => {
+  const fileIds = fileList.value
+    .filter((file) => file.status === "success" && !file.id.startsWith("temp_"))
+    .map((file) => file.id);
+  emit("update:modelValue", fileIds);
+  emit("upload-complete", fileIds);
+};
+// watch(
+//   () => fileList.value,
+//   (newList) => {
+//     const fileIds = newList
+//       .filter(file => file.status === 'success' && !file.id.startsWith('temp_'))
+//       .map(file => file.id);
+//     emit('update:modelValue', fileIds);
+//     emit('upload-complete', fileIds);
+//   },
+//   { deep: true }
+// );
 
 const handleFileAdd = async (file: File) => {
   if (props.disabled) return;
@@ -85,46 +148,37 @@ const handleFileAdd = async (file: File) => {
   }
 
   if (file.size > props.maxSize) {
-    ElMessage.warning(`文件 ${file.name} 超过大小限制 (${formatSize(props.maxSize)})`);
+    ElMessage.warning(
+      `文件 ${file.name} 超过大小限制 (${formatSize(props.maxSize)})`,
+    );
     return;
   }
 
-  const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-
+  const tempId = generateTempId();
   const newFile: FileItem = {
     id: tempId,
     name: file.name,
     size: file.size,
-    type: file.type || 'application/octet-stream',
-    status: 'uploading',
+    type: file.type || "application/octet-stream",
+    status: "uploading",
     progress: 0,
   };
 
-  fileList.value = [...fileList.value, newFile];
+  fileList.value.push(newFile);
 
   try {
     const uploadedId = await upload(file, (progress) => {
-      const index = fileList.value.findIndex(f => f.id === tempId);
-      if (index !== -1) {
-        const newList = [...fileList.value];
-        newList[index] = { ...newList[index], progress };
-        fileList.value = newList;
-      }
+      updateFileItem(tempId, { progress });
     });
 
-    const index = fileList.value.findIndex(f => f.id === tempId);
-    if (index !== -1) {
-      const newList = [...fileList.value];
-      newList[index] = { ...newList[index], id: uploadedId, status: 'success', progress: 100 };
-      fileList.value = newList;
-    }
+    updateFileItem(tempId, {
+      id: uploadedId,
+      status: "success",
+      progress: 100,
+    });
+    syncToModelValue();
   } catch (error) {
-    const index = fileList.value.findIndex(f => f.id === tempId);
-    if (index !== -1) {
-      const newList = [...fileList.value];
-      newList[index] = { ...newList[index], status: 'error' };
-      fileList.value = newList;
-    }
+    updateFileItem(tempId, { status: "error" });
     ElMessage.error(`文件 ${file.name} 上传失败`);
   }
 };
@@ -132,36 +186,10 @@ const handleFileAdd = async (file: File) => {
 const handleRemove = (file: FileItem) => {
   if (props.disabled) return;
 
-  emit('remove', file.id);
+  emit("remove", file.id);
   removeFile(file.id);
-  fileList.value = fileList.value.filter(f => f.id !== file.id);
+  fileList.value = fileList.value.filter((f) => f.id !== file.id);
 };
-
-const formatSize = (bytes: number) => {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-};
-
-const getFileIcon = (mimeType: string) => {
-  if (mimeType.startsWith('image/')) return 'picture';
-  if (mimeType.startsWith('audio/')) return 'headset';
-  if (mimeType.includes('pdf')) return 'document';
-  if (mimeType.includes('word') || mimeType.includes('document')) return 'document';
-  return 'document';
-};
-
-const getFileTypeLabel = (mimeType: string) => {
-  if (mimeType.includes('pdf')) return 'PDF';
-  if (mimeType.includes('word') || mimeType.includes('document')) return 'DOCX';
-  if (mimeType.includes('audio') || mimeType.includes('mpeg') || mimeType.includes('mp3')) return '音频';
-  if (mimeType.startsWith('image/')) return '图片';
-  return '文件';
-};
-
-const inputRef = ref<HTMLInputElement | null>(null);
 
 const triggerUpload = () => {
   if (!props.disabled && canAddMore.value) {
@@ -173,9 +201,9 @@ const handleInputChange = (event: Event) => {
   const target = event.target as HTMLInputElement;
   const files = target.files;
   if (files && files.length > 0) {
-    Array.from(files).forEach(file => handleFileAdd(file));
+    Array.from(files).forEach((file) => handleFileAdd(file));
   }
-  target.value = '';
+  target.value = "";
 };
 </script>
 
@@ -188,13 +216,19 @@ const handleInputChange = (event: Event) => {
         :class="['file-item', file.status]"
       >
         <div class="file-icon">
-          <el-icon :size="20"><component :is="getFileIcon(file.type)" /></el-icon>
+          <el-icon :size="20"
+            ><component :is="getFileIcon(file.type)"
+          /></el-icon>
         </div>
         <div class="file-info">
           <div class="file-name">{{ file.name }}</div>
           <div class="file-meta">
-            <span v-if="file.size > 0" class="file-type">{{ getFileTypeLabel(file.type) }}</span>
-            <span v-if="file.size > 0" class="file-size">{{ formatSize(file.size) }}</span>
+            <span v-if="file.size > 0" class="file-type">{{
+              getFileTypeLabel(file.type)
+            }}</span>
+            <span v-if="file.size > 0" class="file-size">{{
+              formatSize(file.size)
+            }}</span>
           </div>
           <el-progress
             v-if="file.status === 'uploading'"
@@ -212,11 +246,7 @@ const handleInputChange = (event: Event) => {
             size="small"
             circle
           />
-          <el-icon
-            v-else
-            class="remove-icon"
-            @click="handleRemove(file)"
-          >
+          <el-icon v-else class="remove-icon" @click="handleRemove(file)">
             <Close />
           </el-icon>
         </div>

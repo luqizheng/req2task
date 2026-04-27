@@ -106,18 +106,24 @@ const handleFileAdd = async (file: File) => {
     const uploadedId = await upload(file, (progress) => {
       const index = fileList.value.findIndex(f => f.id === tempId);
       if (index !== -1) {
-        fileList.value[index] = { ...fileList.value[index], progress };
+        const newList = [...fileList.value];
+        newList[index] = { ...newList[index], progress };
+        fileList.value = newList;
       }
     });
 
     const index = fileList.value.findIndex(f => f.id === tempId);
     if (index !== -1) {
-      fileList.value[index] = { ...fileList.value[index], id: uploadedId, status: 'success', progress: 100 };
+      const newList = [...fileList.value];
+      newList[index] = { ...newList[index], id: uploadedId, status: 'success', progress: 100 };
+      fileList.value = newList;
     }
   } catch (error) {
     const index = fileList.value.findIndex(f => f.id === tempId);
     if (index !== -1) {
-      fileList.value[index] = { ...fileList.value[index], status: 'error' };
+      const newList = [...fileList.value];
+      newList[index] = { ...newList[index], status: 'error' };
+      fileList.value = newList;
     }
     ElMessage.error(`文件 ${file.name} 上传失败`);
   }

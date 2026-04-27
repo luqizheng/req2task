@@ -3,6 +3,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
 import { FileDataService } from './file-data.service';
+import { User } from '@req2task/core';
 
 @Controller('file-data')
 @UseGuards(JwtAuthGuard)
@@ -14,9 +15,10 @@ export class FileDataController {
   @HttpCode(HttpStatus.OK)
   async upload(
     @UploadedFile() file: Express.Multer.File,
-    @CurrentUser('id') userId: string,
+    @CurrentUser() user: User,
   ) {
-    const fileData = await this.fileDataService.uploadFile(file.buffer, file.originalname, file.mimetype, userId);
+    console.log("上传文件", user);
+    const fileData = await this.fileDataService.uploadFile(file.buffer, file.originalname, file.mimetype, user.id);
     return { fileDataId: fileData.id };
   }
 }

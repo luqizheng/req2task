@@ -1,8 +1,13 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
-import { v4 as uuidv4 } from 'uuid';
-import { Readable } from 'stream';
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+} from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { v4 as uuidv4 } from "uuid";
+import { Readable } from "stream";
 
 @Injectable()
 export class StorageService {
@@ -11,16 +16,18 @@ export class StorageService {
   private readonly bucket: string;
 
   constructor() {
-    this.bucket = process.env.MINIO_BUCKET || 'req2task';
-    this.s3Client = new S3Client({
-      endpoint: `http://${process.env.MINIO_ENDPOINT || 'localhost:9000'}`,
-      region: 'us-east-1',
+    this.bucket = process.env.RUSTFS_BUCKET || "req2task";
+    const cfg = {
+      endpoint: `http://${process.env.RUSTFS_ENDPOINT || "localhost:9000"}`,
+      region: "us-east-1",
       credentials: {
-        accessKeyId: process.env.MINIO_ACCESS_KEY || '',
-        secretAccessKey: process.env.MINIO_SECRET_KEY || '',
+        accessKeyId: process.env.RUSTFS_ACCESS_KEY || "",
+        secretAccessKey: process.env.RUSTFS_SECRET_KEY || "",
       },
       forcePathStyle: true,
-    });
+    };
+    console.log("----", cfg);
+    this.s3Client = new S3Client(cfg);
   }
 
   async upload(
@@ -30,9 +37,9 @@ export class StorageService {
   ): Promise<string> {
     const now = new Date();
     const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    const day = String(now.getDate()).padStart(2, '0');
-    const ext = originalName.split('.').pop() || '';
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const ext = originalName.split(".").pop() || "";
     const storagePath = `attachments/${year}/${month}/${day}/${uuidv4()}_${originalName}`;
 
     await this.s3Client.send(

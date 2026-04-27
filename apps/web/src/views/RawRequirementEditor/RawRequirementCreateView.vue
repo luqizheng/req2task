@@ -61,6 +61,10 @@ const handleSubmit = async () => {
   if (!valid) return;
   rawRequirementSubmitHelper.save();
 };
+// const handleUploadSuccess = (fileDataId: string) => {
+//   store.rawRequirement.fileIds = store.rawRequirement.fileIds || [];
+//   store.rawRequirement.fileIds.push(fileDataId);
+// };
 </script>
 
 <template>
@@ -133,15 +137,27 @@ const handleSubmit = async () => {
             </el-form-item>
           </el-col>
         </el-row>
-      
+
         <el-form-item label="上传文件" prop="fileIds">
+          {{ rawRequirement.fileIds }}
           <RustFSUploader
             v-model="rawRequirement.fileIds"
+          
           />
         </el-form-item>
-      
       </el-form>
-      
+
+      <el-form label-position="top">
+        <el-form-item label="原始需求内容" prop="content">
+          <el-input
+            v-model="rawRequirement.content"
+            type="textarea"
+            placeholder="请输入原始需求内容"
+            rows="4"
+            clearable
+          />
+        </el-form-item>
+      </el-form>
     </el-card>
 
     <el-card class="meta-card" shadow="hover">

@@ -21,8 +21,8 @@ export class RustFSService {
       endpoint: `http://${process.env.RUSTFS_ENDPOINT || 'localhost:9000'}`,
       region: 'us-east-1',
       credentials: {
-        accessKeyId: 'asdfasdf',//process.env.RUSTFS_ACCESS_KEY || '',
-        secretAccessKey: 'asdfasdf',// process.env.RUSTFS_SECRET_KEY || '',
+        accessKeyId: process.env.RUSTFS_ACCESS_KEY || '',
+        secretAccessKey: process.env.RUSTFS_SECRET_KEY || '',
       },
       forcePathStyle: true,
     });

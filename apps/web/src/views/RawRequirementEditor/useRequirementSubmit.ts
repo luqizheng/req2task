@@ -4,11 +4,11 @@ import { useRawRequirementCreateStore, type AiQuestion } from "./store";
 import {
   AiSubmitRequestDto,
   GenerateRawRequirementByLLMDto,
-  CreateAttachmentByFileDataIdDto,
+
 } from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
-import { attachmentsApi } from "@/api/attachment";
+import { attachmentApi } from "@/api/attachment";
 
 export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
@@ -93,7 +93,7 @@ export function useRequirementSubmit(
         if (fileIds.length > 0 && requirementId) {
           for (const fileDataId of fileIds) {
             try {
-              await attachmentsApi.create({
+              await attachmentApi.create({
                 fileDataId,
                 targetType: 'raw_requirement',
                 targetId: requirementId,

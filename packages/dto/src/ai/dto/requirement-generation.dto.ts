@@ -69,6 +69,10 @@ export class GenerateRawRequirementByLLMDto {
   @IsOptional()
   @IsArray()
   previousQuestions?: RawRequirementQADto[];
+
+  @IsOptional()
+  @IsArray()
+  keyElements?: string[];
 }
 
 export class GenerateRequirementResultDto {

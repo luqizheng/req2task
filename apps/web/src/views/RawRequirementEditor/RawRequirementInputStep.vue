@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, ref, watch } from "vue";
+import { computed, ref } from "vue";
 import { Plus, Promotion } from "@element-plus/icons-vue";
-import { AiSubmit } from "@/components/ai-submit";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 
 import QuestionList from "./QuestionList.vue";
+import RawRequirementAISubmit from "./components/RawRequirementAISubmit.vue";
 import { RequirementCard } from "@/components/entity-card";
 
 interface Props {
@@ -16,7 +16,7 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const aiSubmitRef = ref<InstanceType<typeof AiSubmit> | null>(null);
+const aiSubmitRef = ref<InstanceType<typeof RawRequirementAISubmit> | null>(null);
 
 const questionFilter = computed({
   get: () => props.store.questionFilter,
@@ -51,36 +51,25 @@ const handleGenerateRequirement = async () => {
 const generalRequirementHandler = async ()=>{
 
 }
-watch(
-  () => props.store.messageHistory,
-  () => {
-
-    aiSubmitRef.value?.setMessageHistory(props.store.messageHistory || []);
-  },
-);
 </script>
 
 <template>
   <div class="input-and-questions">
-    <div class="panel panel-left">
+    <div class="panel panel-left" style="display:none">
       <h2 class="panel-title">录入原始需求</h2>
       <p class="panel-desc">
         描述您的需求或问题，AI 将为您分析和处理。如果需要，AI
         会生成追问问题帮助澄清需求。
       </p>
 
-      <AiSubmit
+      <RawRequirementAISubmit
         ref="aiSubmitRef"
-        :url="`/api/raw-requirements/${projectId}/stream`"
-        :upload-file="true"
-        :use-stream="true"
-        message-key="conversationText"
-        placeholder="描述您的需求或问题，AI 将为您分析和处理..."
+        :project-id="projectId"
+        :message-history="store.messageHistory"
         @success="handleSuccess"
         @error="handleError"
-        :trans-request="translRequestData"
+        :transl-request-data="translRequestData"
         @content="handleSSEData"
-        mode="input-only"
       />
 
       <el-button

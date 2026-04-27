@@ -52,6 +52,14 @@ export function useRequirementSubmit(
         store.addQuestionFromSSE(item as AiQuestion);
       },
     },
+    {
+      trigger: "keyElements",
+      onArrayItem(item) {
+        if(!store.rawRequirement.keyElements)
+          store.rawRequirement.keyElements=[];
+        store.rawRequirement.keyElements.push(item);
+      },
+    },
   ]);
 
   const handleSSEData = (data: string) => {

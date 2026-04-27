@@ -8,11 +8,12 @@ type BreadcrumbItem = {
   path?: string;
 };
 
-defineProps<{
+const props = defineProps<{
   title: string;
   subtitle?: string;
   showBack?: boolean;
   breadcrumb?: BreadcrumbItem[];
+  contentClass?:any
 }>();
 
 const router = useRouter();
@@ -63,7 +64,7 @@ const handleBreadcrumbClick = (path: string) => {
       </div>
     </header>
     
-    <div class="container-content">
+    <div class="container-content" :class="props.contentClass">
       <slot></slot>
     </div>
   </div>
@@ -171,6 +172,7 @@ html.dark .breadcrumb-link:hover {
 
 .container-content {
   padding: 20px;
+
 }
 
 html.dark .view-header {

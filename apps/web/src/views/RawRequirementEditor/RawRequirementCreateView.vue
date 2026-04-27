@@ -12,10 +12,7 @@ import { ref, reactive, onMounted } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 
-
-const router = useRouter();
 const route = useRoute();
-
 const projectId = route.params.id as string;
 const rawRequirementId = route.params.rawRequirementId as string | undefined;
 
@@ -37,8 +34,6 @@ const formRules = reactive<FormRules>({
     { required: true, message: "请选择收集时间", trigger: "change" },
   ],
 });
-
-
 
 const collectionTypeOptions = [
   { label: "会议", value: CollectionType.MEETING },
@@ -69,53 +64,75 @@ const handleSubmit = async () => {
 </script>
 
 <template>
-  <ViewContainer 
+  <ViewContainer
     v-loading="loading"
     :title="store.rawRequirement.id ? '更新原始需求' : '录入原始需求'"
+    contentClass="rq-edit-view-container "
   >
+    <template #actions>
+      <el-button type="primary" @click="handleSubmit">保存</el-button>
+    </template>
 
-    <el-card class="meta-card" shadow="hover" style="margin-bottom: 20px;">
+    <el-card
+      class="meta-card"
+      shadow="hover"
+      style="margin-bottom: 20px; flex: 1"
+    >
       <el-form
         ref="formRef"
         :model="rawRequirement"
         :rules="formRules"
         label-position="top"
-        class="meta-form"
       >
-        <el-form-item label="需求来源" prop="source" class="meta-field">
-          <el-input
-            v-model="rawRequirement.source"
-            placeholder="名字/职位/部门"
-            clearable
-          />
-        </el-form-item>
-        <el-form-item label="采集方式" prop="collectionType" class="meta-field">
-          <el-select
-            v-model="rawRequirement.collectionType"
-            placeholder="选择采集方式"
-            clearable
-          >
-            <el-option
-              v-for="opt in collectionTypeOptions"
-              :key="opt.value"
-              :label="opt.label"
-              :value="opt.value"
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="收集时间" prop="collectTime" class="meta-field">
-          <el-date-picker
-            v-model="rawRequirement.collectTime"
-            type="datetime"
-            placeholder="选择收集时间"
-            value-format="YYYY-MM-DDTHH:mm:ssZ"
-            clearable
-          />
-        </el-form-item>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item label="需求来源" prop="source">
+              <el-input
+                v-model="rawRequirement.source"
+                placeholder="名字/职位/部门"
+                clearable
+              />
+            </el-form-item>
+          </el-col>
 
-        <el-form-item>
-          <el-button type="primary" @click="handleSubmit">保存</el-button>
-        </el-form-item>
+          <el-col :span="12">
+            <el-form-item
+              label="采集方式"
+              prop="collectionType"
+              class="meta-field"
+            >
+              <el-select
+                v-model="rawRequirement.collectionType"
+                placeholder="选择采集方式"
+                clearable
+              >
+                <el-option
+                  v-for="opt in collectionTypeOptions"
+                  :key="opt.value"
+                  :label="opt.label"
+                  :value="opt.value"
+                />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <el-form-item
+              label="收集时间"
+              prop="collectTime"
+              class="meta-field"
+            >
+              <el-date-picker
+                v-model="rawRequirement.collectTime"
+                type="datetime"
+                placeholder="选择收集时间"
+                value-format="YYYY-MM-DDTHH:mm:ssZ"
+                clearable
+              />
+            </el-form-item>
+          </el-col>
+        </el-row>
       </el-form>
     </el-card>
 
@@ -124,7 +141,12 @@ const handleSubmit = async () => {
     </el-card>
   </ViewContainer>
 </template>
-
+<style>
+.rq-edit-view-container {
+  display: flex;
+  flex-direction: row;
+}
+</style>
 <style scoped>
 .raw-requirement-create {
   width: 100%;

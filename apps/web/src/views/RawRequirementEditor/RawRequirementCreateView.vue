@@ -3,7 +3,7 @@ import ViewContainer from "@/components/view-container.vue";
 import { useRouter, useRoute } from "vue-router";
 import RustFSUploader from "@/components/common/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
-
+import QuestionPanel from "./components/QuestionPanel.vue";
 import RawRequirementInputStep from "./RawRequirementInputStep.vue";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
@@ -86,7 +86,7 @@ const handleAnalyze = async () => {
     <el-card
       class="meta-card"
       shadow="hover"
-      style="margin-bottom: 20px; flex: 1"
+    
     >
       <el-form
         ref="formRef"
@@ -171,7 +171,10 @@ const handleAnalyze = async () => {
     </el-card>
 
     <el-card class="meta-card" shadow="hover">
-      <RawRequirementInputStep :project-id="projectId" :store="store" />
+      <QuestionPanel
+        :projectId="projectId"
+        :store="store"  
+      />
     </el-card>
   </ViewContainer>
 </template>
@@ -184,6 +187,10 @@ const handleAnalyze = async () => {
 <style scoped>
 .raw-requirement-create {
   width: 100%;
+}
+
+.meta-card{
+  flex: 1;
 }
 
 .page-header {

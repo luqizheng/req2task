@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { Plus, Promotion } from "@element-plus/icons-vue";
+import { Promotion } from "@element-plus/icons-vue";
 import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 
 import QuestionList from "./QuestionList.vue";
+import QuestionPanel from "./QuestionPanel.vue";
 import RawRequirementAISubmit from "./components/RawRequirementAISubmit.vue";
 import { RequirementCard } from "@/components/entity-card";
 
@@ -16,7 +17,9 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const aiSubmitRef = ref<InstanceType<typeof RawRequirementAISubmit> | null>(null);
+const aiSubmitRef = ref<InstanceType<typeof RawRequirementAISubmit> | null>(
+  null,
+);
 
 const questionFilter = computed({
   get: () => props.store.questionFilter,
@@ -37,7 +40,8 @@ const {
   handleDeleteQuestion,
 } = useQuestionOperations(props.store);
 
-const { handleSuccess, handleError, translRequestData, handleSSEData, save } = useRequirementSubmit(props.store);
+const { handleSuccess, handleError, translRequestData, handleSSEData, save } =
+  useRequirementSubmit(props.store);
 
 const handleSubmitAnswers = () => {
   // emit("submit");
@@ -48,118 +52,22 @@ const handleGenerateRequirement = async () => {
   await save();
 };
 
-const generalRequirementHandler = async ()=>{
-
-}
+const generalRequirementHandler = async () => {};
 </script>
 
 <template>
   <div class="input-and-questions">
-    <div class="panel panel-left" style="display:none">
-      <h2 class="panel-title">录入原始需求</h2>
-      <p class="panel-desc">
-        描述您的需求或问题，AI 将为您分析和处理。如果需要，AI
-        会生成追问问题帮助澄清需求。
-      </p>
-
-      <RawRequirementAISubmit
-        ref="aiSubmitRef"
-        :project-id="projectId"
-        :message-history="store.messageHistory"
-        @success="handleSuccess"
-        @error="handleError"
-        :transl-request-data="translRequestData"
-        @content="handleSSEData"
-      />
-
-      <el-button
-        v-if="store.hasAnsweredQuestions"
-        type="primary"
-        :icon="Promotion"
-        @click="handleSubmitAnswers"
-      >
-        提交答案
-      </el-button>
-    </div>
-
-    <div class="panel panel-right">
-      <template v-if="store.hasQuestions">
-        <div class="panel-header">
-          <h2 class="panel-title">问题澄清</h2>
-          <div class="question-stats">
-            <el-tag type="warning" size="small">
-              {{ store.pendingQuestions.length }} 待回答
-            </el-tag>
-            <el-tag type="success" size="small">
-              {{ store.answeredQuestions.length }} 已回答
-            </el-tag>
-          </div>
-        </div>
-
-        <el-radio-group v-model="questionFilter" size="default">
-          <el-radio-button value="all">
-            全部 ({{
-              props.store.pendingQuestions.length +
-              props.store.answeredQuestions.length
-            }})
-          </el-radio-button>
-          <el-radio-button value="pending">
-            未回答 ({{ props.store.pendingQuestions.length }})
-          </el-radio-button>
-          <el-radio-button value="answered">
-            已回答 ({{ props.store.answeredQuestions.length }})
-          </el-radio-button>
-        </el-radio-group>
-
-        <el-button
-          type="primary"
-          :icon="Plus"
-          size="default"
-          @click="showAddDialog = true"
-        >
-          添加新问题
-        </el-button>
-
-        <QuestionList
-          :store="store"
-          :editing-id="editingId"
-          v-model:editing-answer="editingAnswer"
-          @edit-answer="handleEditAnswer"
-          @save-answer="handleSaveAnswer"
-          @cancel-edit="handleCancelEdit"
-          @delete-question="handleDeleteQuestion"
-        />
-
-        <div v-if="store.deletedQuestions.length > 0" class="skipped-section">
-          <div class="section-title">已跳过的问题</div>
-          <div
-            v-for="qa in store.deletedQuestions"
-            :key="qa.id"
-            class="skipped-item"
-          >
-            <span class="q-label" aria-hidden="true">Q:</span>
-            {{ qa.question }}
-            <el-button
-              type="primary"
-              link
-              size="small"
-              @click="store.restoreQuestion(qa.id)"
-            >
-              恢复
-            </el-button>
-          </div>
-        </div>
-      </template>
-
-      <template v-else>
-        <div class="empty-questions">
-          <el-empty
-            description="AI 将在分析需求后生成追问问题"
-            :image-size="80"
-          />
-        </div>
-      </template>
-    </div>
+    <QuestionPanel
+      :store="store"
+      v-model:question-filter="questionFilter"
+      :editing-id="editingId"
+      v-model:editing-answer="editingAnswer"
+      v-model:show-add-dialog="showAddDialog"
+      @edit-answer="handleEditAnswer"
+      @save-answer="handleSaveAnswer"
+      @cancel-edit="handleCancelEdit"
+      @delete-question="handleDeleteQuestion"
+    />
 
     <div class="panel panel-right-most">
       <h2 class="panel-title">生成的需求</h2>
@@ -292,56 +200,6 @@ const generalRequirementHandler = async ()=>{
   line-height: 1.6;
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.question-stats {
-  display: flex;
-  gap: var(--spacing-compact, 8px);
-}
-
-.skipped-section {
-  margin-top: var(--spacing-component, 12px);
-  padding-top: var(--spacing-component, 12px);
-  border-top: 1px dashed var(--color-border, #e2e8f0);
-}
-
-.section-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-placeholder, #94a3b8);
-  margin-bottom: var(--spacing-compact, 8px);
-}
-
-.skipped-item {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-compact, 8px);
-  padding: 6px 10px;
-  background: var(--color-bg-secondary, #f8fafc);
-  border-radius: 6px;
-  margin-bottom: 6px;
-  color: var(--color-text-placeholder, #94a3b8);
-  text-decoration: line-through;
-  font-size: 13px;
-}
-
-.q-label {
-  font-weight: 600;
-  margin-right: 4px;
-  color: var(--color-warning, #f59e0b);
-}
-
-.empty-questions {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-}
-
 @media (max-width: 768px) {
   .input-and-questions {
     flex-direction: column;
@@ -355,13 +213,6 @@ const generalRequirementHandler = async ()=>{
   }
 
   .panel-right-most {
-    padding-left: 0;
-    border-left: none;
-    border-top: 1px solid var(--color-border, #e2e8f0);
-    padding-top: var(--spacing-component, 12px);
-  }
-
-  .panel-right {
     padding-left: 0;
     border-left: none;
     border-top: 1px solid var(--color-border, #e2e8f0);

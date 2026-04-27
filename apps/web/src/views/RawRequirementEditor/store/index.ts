@@ -21,6 +21,7 @@ function createDefaultRawRequirement(): RawRequirementResponseDto {
     keyElements: [],
     createdAt: "",
     updatedAt: "",
+    fileIds: [],
   };
 }
 

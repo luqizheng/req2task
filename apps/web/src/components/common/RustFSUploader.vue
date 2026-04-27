@@ -15,8 +15,6 @@ interface FileItem {
 
 interface Props {
   modelValue?: string[];
-  targetType: 'collection' | 'raw_requirement' | 'project';
-  targetId?: string;
   accept?: string;
   maxSize?: number;
   maxCount?: number;
@@ -105,7 +103,7 @@ const handleFileAdd = async (file: File) => {
   fileList.value = [...fileList.value, newFile];
 
   try {
-    const uploadedId = await upload(file, props.targetType, props.targetId, (progress) => {
+    const uploadedId = await upload(file, (progress) => {
       const index = fileList.value.findIndex(f => f.id === tempId);
       if (index !== -1) {
         fileList.value[index] = { ...fileList.value[index], progress };

@@ -1,8 +1,8 @@
 /**
- * RustFS 文件直传 Composable
+ * 文件上传 Composable
  * @description
- * 提供客户端直传 RustFS (S3 兼容对象存储) 的能力，文件直接上传到对象存储，
- * 后端仅管理元数据和附件关联。
+ * 提供文件上传功能，先上传文件到后端服务，获取fileDataId，
+ * 然后在业务提交时创建附件关联。
  *
  * @example
  * ```typescript
@@ -51,9 +51,8 @@
  *
  * @remarks
  * 上传流程：
- * 1. 调用后端接口获取 presigned URL
- * 2. 使用 fetch PUT 直接上传到 RustFS
- * 3. 上传成功后调用附件创建接口
+ * 1. 调用后端 /file-data/upload 接口上传文件
+ * 2. 上传成功后调用附件创建接口
  *
  * 支持的 targetType: 'collection' | 'raw_requirement' | 'project'
  */
@@ -74,21 +73,12 @@ export interface UploadedFile {
   status: 'uploading' | 'success' | 'error';
   /** 上传进度 0-100 */
   progress: number;
-  /** RustFS 存储路径 */
+  /** 文件数据 ID */
   fileDataId?: string;
 }
 
-export interface PresignPutResponse {
-  /** 预签名上传 URL */
-  presignedUrl: string;
-  /** RustFS 存储路径 */
-  fileDataId: string;
-  /** URL 过期时间（秒） */
-  expiresIn: number;
-}
-
 export interface CreateAttachmentByFileDataIdDto {
-  /** RustFS 存储路径 */
+  /** 文件数据 ID */
   fileDataId: string;
   /** 关联目标类型 */
   targetType: 'collection' | 'raw_requirement' | 'project';
@@ -110,38 +100,13 @@ export function useRustFS() {
   const uploadingFiles = ref<Map<string, UploadedFile>>(new Map());
 
   /**
-   * 获取预签名上传 URL
-   * @param fileName - 文件名
-   * @param contentType - MIME 类型
-   * @returns 包含 presignedUrl、fileDataId、expiresIn 的响应
-   */
-  const getPresignedUrl = async (
-    fileName: string,
-    contentType: string,
-  ): Promise<PresignPutResponse> => {
-
-    const response = await api.get<PresignPutResponse>(
-      '/rustfs/presign-put',
-      {
-        params: { fileName, contentType },
-      },
-    );
-
-    return response;
-  };
-
-  /**
-   * 上传文件到 RustFS
+   * 上传文件到后端服务
    * @param file - 要上传的文件
-   * @param targetType - 关联目标类型 ('collection' | 'raw_requirement' | 'project')
-   * @param targetId - 关联目标 ID
    * @param onProgress - 进度回调函数 (0-100)
-   * @returns 附件 ID
+   * @returns 文件数据 ID
    */
   const upload = async (
     file: File,
-    targetType: string,
-    targetId?: string,
     onProgress?: (progress: number) => void,
   ): Promise<string> => {
     const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -156,50 +121,37 @@ export function useRustFS() {
     });
 
     try {
-      const { presignedUrl, fileDataId } = await getPresignedUrl(
-        file.name,
-        file.type,
+      // 上传文件到 file-data/upload 接口
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const uploadResponse = await api.post<{ fileDataId: string }>(
+        '/file-data/upload',
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+          onUploadProgress: (progressEvent) => {
+            if (progressEvent.total) {
+              const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+              onProgress?.(progress);
+              
+              const uploadFile = uploadingFiles.value.get(tempId);
+              if (uploadFile) {
+                uploadFile.progress = progress;
+                uploadingFiles.value.set(tempId, uploadFile);
+              }
+            }
+          },
+        }
       );
 
-      const upload30 = uploadingFiles.value.get(tempId);
-      if (upload30) {
-        upload30.progress = 30;
-        uploadingFiles.value.set(tempId, upload30);
-      }
-      onProgress?.(30);
-
-      const uploadResponse = await fetch(presignedUrl, {
-        method: 'PUT',
-        body: file,
-        headers: {
-          'Content-Type': file.type,
-        },
-      });
-
-      if (!uploadResponse.ok) {
-        throw new Error(`Upload failed: ${uploadResponse.status}`);
-      }
-
-      const upload70 = uploadingFiles.value.get(tempId);
-      if (upload70) {
-        upload70.progress = 70;
-        uploadingFiles.value.set(tempId, upload70);
-      }
-      onProgress?.(70);
-
-      const attachment = await createAttachment({
-        fileDataId,
-        targetType: targetType as 'collection' | 'raw_requirement' | 'project',
-        targetId,
-        displayName: file.name,
-        fileName: file.name,
-        contentType: file.type,
-        size: file.size,
-      });
+      const { fileDataId } = uploadResponse;
 
       const uploadSuccess = uploadingFiles.value.get(tempId);
       if (uploadSuccess) {
-        uploadSuccess.id = attachment.id;
+        uploadSuccess.id = fileDataId;
         uploadSuccess.fileDataId = fileDataId;
         uploadSuccess.status = 'success';
         uploadSuccess.progress = 100;
@@ -207,7 +159,7 @@ export function useRustFS() {
       }
       onProgress?.(100);
 
-      return attachment.id;
+      return fileDataId;
     } catch (error) {
       const uploadError = uploadingFiles.value.get(tempId);
       if (uploadError) {
@@ -235,7 +187,7 @@ export function useRustFS() {
 
   /**
    * 获取文件下载 URL
-   * @param fileDataId - RustFS 存储路径
+   * @param fileDataId - 文件数据 ID
    * @returns 预签名下载 URL
    */
   const getDownloadUrl = async (fileDataId: string): Promise<string> => {
@@ -248,31 +200,16 @@ export function useRustFS() {
 
   /**
    * 移除上传状态跟踪
-   * @param id - 临时 ID 或附件 ID
+   * @param fileId - 文件 ID
    */
-  const removeFile = (id: string) => {
-    uploadingFiles.value.delete(id);
-  };
-
-  /** 清空所有上传状态 */
-  const clearFiles = () => {
-    uploadingFiles.value.clear();
+  const removeFile = (fileId: string): void => {
+    uploadingFiles.value.delete(fileId);
   };
 
   return {
-    /** 当前上传中的文件 Map */
-    uploadingFiles,
-    /** 获取预签名上传 URL */
-    getPresignedUrl,
-    /** 上传文件 */
     upload,
-    /** 创建附件关联 */
-    createAttachment,
-    /** 获取下载 URL */
     getDownloadUrl,
-    /** 移除文件 */
+    uploadingFiles,
     removeFile,
-    /** 清空所有文件 */
-    clearFiles,
   };
 }

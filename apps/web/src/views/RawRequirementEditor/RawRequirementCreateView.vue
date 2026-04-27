@@ -137,16 +137,6 @@ const handleSubmit = async () => {
         <el-form-item label="上传文件" prop="fileIds">
           <RustFSUploader
             v-model="rawRequirement.fileIds"
-            :target-type="raw_requirement' | 'project',
-  targetId?: string;"
-            :target-id="demoTargetId"
-            :accept="accept"
-            :max-size="maxSize"
-            :max-count="maxCount"
-            :disabled="disabled"
-            :tips="tips"
-            @upload-complete="handleUploadComplete"
-            @remove="handleRemoveFile"
           />
         </el-form-item>
       

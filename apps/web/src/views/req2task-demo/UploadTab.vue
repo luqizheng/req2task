@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ref } from 'vue';
 import { RustFSUploader } from '@/components/common';
 
 const props = defineProps<{
@@ -14,6 +15,25 @@ const emit = defineEmits<{
   handleUploadComplete: [fileIds: string[]];
   handleRemoveFile: [fileId: string];
 }>();
+
+const localTargetType = ref(props.demoTargetType);
+const localTargetId = ref(props.demoTargetId);
+const localFileIds = ref([...props.demoFileIds]);
+
+const handleTargetTypeChange = (value: 'collection' | 'raw_requirement' | 'project') => {
+  localTargetType.value = value;
+  emit('update:demoTargetType', value);
+};
+
+const handleTargetIdInput = (value: string) => {
+  localTargetId.value = value;
+  emit('update:demoTargetId', value);
+};
+
+const handleFileIdsChange = (value: string[]) => {
+  localFileIds.value = value;
+  emit('update:demoFileIds', value);
+};
 </script>
 
 <template>
@@ -31,31 +51,32 @@ const emit = defineEmits<{
         <div class="demo-config">
           <el-form :inline="true" label-position="top">
             <el-form-item label="关联类型">
-              <el-select v-model="demoTargetType" style="width: 180px;" @change="emit('update:demoTargetType', $event)">
+              <el-select v-model="localTargetType" style="width: 180px;" @change="handleTargetTypeChange">
                 <el-option label="项目" value="project" />
                 <el-option label="原始需求" value="raw_requirement" />
                 <el-option label="集合" value="collection" />
               </el-select>
             </el-form-item>
             <el-form-item label="关联ID">
-              <el-input v-model="demoTargetId" placeholder="请输入关联ID" style="width: 200px;" @input="emit('update:demoTargetId', $event)">
+              <el-input v-model="localTargetId" placeholder="请输入关联ID" style="width: 200px;" @input="handleTargetIdInput">
                 <template #prepend>ID:</template>
               </el-input>
             </el-form-item>
             <el-form-item label="已上传文件ID">
-              <el-tag v-for="id in demoFileIds" :key="id" size="small" class="file-id-tag">
+              <el-tag v-for="id in localFileIds" :key="id" size="small" class="file-id-tag">
                 {{ id }}
               </el-tag>
-              <span v-if="demoFileIds.length === 0" class="empty-tags">无</span>
+              <span v-if="localFileIds.length === 0" class="empty-tags">无</span>
             </el-form-item>
           </el-form>
         </div>
 
         <div class="upload-component-container">
           <RustFSUploader
-            v-model="demoFileIds"
-            :target-type="demoTargetType"
-            :target-id="demoTargetId"
+            v-model="localFileIds"
+            :target-type="localTargetType"
+            :target-id="localTargetId"
+            @update:model-value="handleFileIdsChange"
             @upload-complete="emit('handleUploadComplete', $event)"
             @remove="emit('handleRemoveFile', $event)"
             max-count="5"

@@ -10,13 +10,22 @@ import {
 } from 'typeorm';
 import { FileData } from './file-data.entity';
 import { User } from './user.entity';
+import { Project } from './project.entity';
 import { AttachmentTargetType } from '@req2task/dto';
 
 @Entity('project_attachments')
 @Index(['targetType', 'targetId'])
+@Index(['projectId'])
 export class ProjectAttachment {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
+
+  @Column({ name: 'project_id', type: 'uuid' })
+  projectId!: string;
+
+  @ManyToOne(() => Project, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'project_id' })
+  project!: Project;
 
   @Column({ name: 'file_data_id', type: 'uuid' })
   fileDataId!: string;

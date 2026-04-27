@@ -36,8 +36,7 @@ export const fileDataApi = {
 
   getBatch: async (ids: string[]): Promise<{ fileDataList: FileDataResponse[] }> => {
     const response = await api.get<{ fileDataList: FileDataResponse[] }>(
-      '/file-data/batch',
-      { params: { ids: ids.join(',') } }
+      `/file-data/batch?ids=${ids.join(',')}`
     );
     return response;
   },

@@ -38,7 +38,7 @@ export class ProjectAttachmentController {
     @Body() dto: CreateAttachmentByFileDataIdDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.attachmentService.createByFileDataId(dto, userId);
+    return this.attachmentService.createByFileDataId(dto.projectId, dto, userId);
   }
 
   @Get(':id')

@@ -9,6 +9,8 @@ import type {
   RequirementAnalysis 
 } from './types';
 
+type EditableItem = Project | RawRequirement | Requirement | Module | Task;
+
 export function useReq2TaskDemo() {
   // 活跃标签页
   const activeTab = ref('project');
@@ -87,10 +89,10 @@ export function useReq2TaskDemo() {
 
   // 编辑状态
   const editDialogVisible = ref(false);
-  const currentItem = ref<any>(null);
+  const currentItem = ref<EditableItem | null>(null);
   const editType = ref<string>('');
 
-  const openEditDialog = (type: string, item?: any) => {
+  const openEditDialog = (type: string, item?: EditableItem) => {
     editType.value = type;
     currentItem.value = item ? { ...item } : null;
     editDialogVisible.value = true;

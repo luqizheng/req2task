@@ -2,7 +2,7 @@
 import { View, Edit, Delete } from '@element-plus/icons-vue';
 import type { RawRequirement } from './types';
 
-const props = defineProps<{
+defineProps<{
   rawRequirements: RawRequirement[];
 }>();
 

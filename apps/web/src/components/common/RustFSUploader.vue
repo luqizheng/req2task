@@ -183,11 +183,20 @@ const handleFileAdd = async (file: File) => {
   }
 };
 
-const handleRemove = (file: FileItem) => {
+const handleRemove = async (file: FileItem) => {
   if (props.disabled) return;
 
   emit("remove", file.id);
   removeFile(file.id);
+  
+  if (!file.id.startsWith("temp_")) {
+    try {
+      await fileDataApi.delete(file.id);
+    } catch (error) {
+      console.error("Failed to delete file:", error);
+    }
+  }
+  
   fileList.value = fileList.value.filter((f) => f.id !== file.id);
 };
 

@@ -2,7 +2,7 @@
 import { Download } from '@element-plus/icons-vue';
 import type { RequirementAnalysis } from './types';
 
-const props = defineProps<{
+defineProps<{
   requirementAnalysis: RequirementAnalysis;
 }>();
 </script>

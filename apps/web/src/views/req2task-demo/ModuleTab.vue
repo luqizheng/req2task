@@ -2,7 +2,7 @@
 import { View, Edit, Delete } from '@element-plus/icons-vue';
 import type { Module } from './types';
 
-const props = defineProps<{
+defineProps<{
   modules: Module[];
 }>();
 

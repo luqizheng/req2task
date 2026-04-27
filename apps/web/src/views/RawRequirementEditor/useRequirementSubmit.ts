@@ -8,7 +8,6 @@ import {
 } from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
-import { attachmentApi } from "@/api/attachment";
 
 export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
@@ -70,13 +69,12 @@ export function useRequirementSubmit(
 
   const save = async (): Promise<boolean> => {
     try {
-      const fileIds = store.rawRequirement.fileIds || [];
       const requirementDto = {
         content: store.rawRequirement.content,
         source: store.rawRequirement.source || undefined,
         collectionType: store.rawRequirement.collectionType,
         collectTime: store.rawRequirement.collectTime || undefined,
-        // fileIds 参数已移除，改为单独创建附件
+        fileIds: store.rawRequirement.fileIds
       };
 
       const result = !store.rawRequirement.id
@@ -87,28 +85,6 @@ export function useRequirementSubmit(
           });
 
       if (result) {
-        const requirementId = result.id || store.rawRequirement.id;
-        
-        // 为每个 fileDataId 创建附件关联
-        if (fileIds.length > 0 && requirementId) {
-          for (const fileDataId of fileIds) {
-            try {
-              await attachmentApi.create({
-                fileDataId,
-                targetType: 'raw_requirement',
-                targetId: requirementId,
-                // 其他必填字段将在后端处理
-                fileName: '',
-                contentType: '',
-                size: 0,
-              });
-            } catch (error) {
-              console.error(`创建附件失败: ${fileDataId}`, error);
-              ElMessage.warning(`部分附件关联失败`);
-            }
-          }
-        }
-
         if (!store.rawRequirement.id) {
           ElMessage.success("创建成功");
           store.rawRequirement.id = result.id;

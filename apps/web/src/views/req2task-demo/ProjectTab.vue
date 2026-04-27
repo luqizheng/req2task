@@ -2,7 +2,7 @@
 import { View, Edit, Delete } from '@element-plus/icons-vue';
 import type { Project } from './types';
 
-const props = defineProps<{
+defineProps<{
   projects: Project[];
 }>();
 

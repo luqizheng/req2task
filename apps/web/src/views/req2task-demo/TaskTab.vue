@@ -2,7 +2,7 @@
 import { View, Edit, Delete, User, Calendar } from '@element-plus/icons-vue';
 import type { Task } from './types';
 
-const props = defineProps<{
+defineProps<{
   tasks: Task[];
 }>();
 

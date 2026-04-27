@@ -146,7 +146,7 @@ describe('ProjectAttachmentService', () => {
       attachmentRepository.create.mockReturnValue(mockAttachment as ProjectAttachment);
       attachmentRepository.save.mockResolvedValue(mockAttachment as ProjectAttachment);
 
-      const result = await service.createByFileDataId(dto, mockUserId);
+      const result = await service.createByFileDataId('123e4567-e89b-12d3-a456-426614174000', { ...dto, projectId: dto.targetId }, mockUserId);
 
       expect(result).toBeDefined();
       expect(result.fileDataId).toBe(mockFileDataId);
@@ -193,7 +193,7 @@ describe('ProjectAttachmentService', () => {
       attachmentRepository.create.mockReturnValue(newAttachment as ProjectAttachment);
       attachmentRepository.save.mockResolvedValue(newAttachment as ProjectAttachment);
 
-      const result = await service.createByFileDataId(dto, mockUserId);
+const result = await service.createByFileDataId('123e4567-e89b-12d3-a456-426614174000', { ...dto, projectId: dto.targetId }, mockUserId);
 
       expect(result).toBeDefined();
       expect(fileDataRepository.create).toHaveBeenCalledWith({

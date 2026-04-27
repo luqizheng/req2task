@@ -1,14 +1,7 @@
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from "@nestjs/common";
+import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import {
-  RawRequirement,
-  QuestionAndAnswer,
-} from "@req2task/core";
+import { RawRequirement, QuestionAndAnswer } from "@req2task/core";
 import {
   RawRequirementResponseDto,
   RawRequirementStatus,
@@ -17,7 +10,9 @@ import {
   CreateRawRequirementDto,
   UpdateRawRequirementDto,
   RawRequirementListParams,
+  AttachmentTargetType,
 } from "@req2task/dto";
+import { ProjectAttachmentService } from "../project-attachment/project-attachment.service";
 
 export interface AddRawRequirementDto {
   projectId: string;
@@ -48,6 +43,32 @@ export class RawRequirementService {
     });
 
     const saved = await this.rawRequirementRepository.save(rawRequirement);
+
+    if (dto.fileIds && dto.fileIds.length > 0) {
+      for (const fileDataId of dto.fileIds) {
+        try {
+          await this.projectAttachmentService.createByFileDataId(
+            projectId,
+            {
+              fileDataId,
+              targetType: AttachmentTargetType.PROJECT,
+              targetId: saved.id,
+              fileName: "",
+              contentType: "",
+              size: 0,
+              projectId: projectId,
+            },
+            userId,
+          );
+        } catch (error) {
+          this.logger.error(
+            `Failed to create attachment for file ${fileDataId}:`,
+            error,
+          );
+        }
+      }
+    }
+
     return this.toRawRequirementResponseDto(saved);
   }
   private readonly logger = new Logger(RawRequirementService.name);
@@ -55,6 +76,7 @@ export class RawRequirementService {
   constructor(
     @InjectRepository(RawRequirement)
     private readonly rawRequirementRepository: Repository<RawRequirement>,
+    private readonly projectAttachmentService: ProjectAttachmentService,
   ) {}
 
   private toQuestionAndAnswerDtos(
@@ -83,14 +105,18 @@ export class RawRequirementService {
       source: entity.source || "",
       collectTime: entity.collectTime ? entity.collectTime.toISOString() : null,
       status: entity.status,
-      questionAndAnswers: this.toQuestionAndAnswerDtos(entity.questionAndAnswers),
+      questionAndAnswers: this.toQuestionAndAnswerDtos(
+        entity.questionAndAnswers,
+      ),
       keyElements: entity.keyElements || [],
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };
   }
 
-  async addRawRequirement(dto: AddRawRequirementDto): Promise<RawRequirementResponseDto> {
+  async addRawRequirement(
+    dto: AddRawRequirementDto,
+  ): Promise<RawRequirementResponseDto> {
     const rawRequirement = this.rawRequirementRepository.create({
       projectId: dto.projectId,
       collectionType: dto.collectionType || null,
@@ -123,7 +149,7 @@ export class RawRequirementService {
 
     const updateData: Partial<RawRequirement> = {};
     if (updates.status !== undefined) updateData.status = updates.status;
-   
+
     if (updates.questionAndAnswers !== undefined)
       updateData.questionAndAnswers = updates.questionAndAnswers;
     if (updates.keyElements !== undefined)

@@ -28,6 +28,8 @@ export class ProjectAttachmentService {
 
 
   async createByFileDataId(
+    // 确保 fileDataId 存在
+    projectId: string,
     dto: CreateAttachmentByFileDataIdDto,
     userId: string,
   ): Promise<AttachmentResponseDto> {
@@ -48,6 +50,7 @@ export class ProjectAttachmentService {
       displayName: dto.displayName || fileData.originalName,
       description: dto.description || null,
       createdById: userId,
+      projectId: projectId,
     });
     await this.attachmentRepository.save(attachment);
 

@@ -29,6 +29,7 @@ export class PresignGetResponseDto {
  * @public
  */
 export class CreateAttachmentByFileDataIdDto {
+  projectId!: string;
   fileDataId!: string;
   targetType!: AttachmentTargetType;
   targetId?: string;

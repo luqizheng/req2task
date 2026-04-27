@@ -1,7 +1,7 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { FileData, FileStatus } from '@req2task/core';
+import { FileData, FileStatus, ProjectAttachment } from '@req2task/core';
 import { StorageService } from '../common/services/storage.service';
 
 @Injectable()
@@ -11,6 +11,8 @@ export class FileDataService {
   constructor(
     @InjectRepository(FileData)
     private readonly fileDataRepository: Repository<FileData>,
+    @InjectRepository(ProjectAttachment)
+    private readonly attachmentRepository: Repository<ProjectAttachment>,
     private readonly storageService: StorageService,
   ) {}
 
@@ -70,5 +72,24 @@ export class FileDataService {
 
   async findByIds(ids: string[]): Promise<FileData[]> {
     return this.fileDataRepository.findBy({ id: ids as any });
+  }
+
+  async delete(id: string): Promise<void> {
+    const fileData = await this.fileDataRepository.findOneBy({ id });
+    if (!fileData) {
+      throw new NotFoundException('FileData not found');
+    }
+
+    const attachmentCount = await this.attachmentRepository.count({
+      where: { fileDataId: id },
+    });
+
+    if (attachmentCount > 0) {
+      throw new BadRequestException('File is referenced by attachments');
+    }
+
+    await this.storageService.delete(fileData.storagePath);
+    await this.fileDataRepository.delete(id);
+    this.logger.log(`File deleted: ${id} (${fileData.originalName})`);
   }
 }

@@ -41,4 +41,8 @@ export const fileDataApi = {
     );
     return response;
   },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/file-data/${id}`);
+  },
 };

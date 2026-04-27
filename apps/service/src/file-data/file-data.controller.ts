@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, HttpCode, HttpStatus, Get, Query } from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, HttpCode, HttpStatus, Get, Query, Delete, Param, ParseUUIDPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
@@ -27,5 +27,11 @@ export class FileDataController {
     const idArray = ids ? ids.split(',') : [];
     const fileDataList = await this.fileDataService.findByIds(idArray);
     return { fileDataList };
+  }
+
+  @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async delete(@Param('id', ParseUUIDPipe) id: string) {
+    await this.fileDataService.delete(id);
   }
 }

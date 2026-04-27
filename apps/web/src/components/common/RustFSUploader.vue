@@ -3,6 +3,7 @@ import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useRustFS } from "@/composables/useRustFS";
 import { fileDataApi } from "@/api";
+import { Close } from "@element-plus/icons-vue";
 
 type FileStatus = "uploading" | "success" | "error";
 
@@ -140,6 +141,8 @@ const syncToModelValue = () => {
 // );
 
 const handleFileAdd = async (file: File) => {
+
+
   if (props.disabled) return;
 
   if (!canAddMore.value) {
@@ -155,6 +158,7 @@ const handleFileAdd = async (file: File) => {
   }
 
   const tempId = generateTempId();
+
   const newFile: FileItem = {
     id: tempId,
     name: file.name,
@@ -255,9 +259,16 @@ const handleInputChange = (event: Event) => {
             size="small"
             circle
           />
-          <el-icon v-else class="remove-icon" @click="handleRemove(file)">
-            <Close />
-          </el-icon>
+          <el-button
+            v-else
+            type="danger"
+            size="small"
+            circle
+            @click="handleRemove(file)"
+            :icon="Close"
+          >
+            
+          </el-button>
         </div>
       </div>
 

@@ -6,9 +6,10 @@ import { RawRequirementController } from "./raw-requirement.controller";
 import { StorageService } from "../common/services/storage.service";
 import { AiModule } from "../ai/ai.module";
 import { ProjectsModule } from "../projects/projects.module";
+import { ProjectAttachmentModule } from "../project-attachment/project-attachment.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RawRequirement, FileData, ProjectAttachment]), forwardRef(() => AiModule), forwardRef(() => ProjectsModule)],
+  imports: [TypeOrmModule.forFeature([RawRequirement, FileData, ProjectAttachment]), forwardRef(() => AiModule), forwardRef(() => ProjectsModule), ProjectAttachmentModule],
   controllers: [RawRequirementController],
   providers: [
     RawRequirementService,

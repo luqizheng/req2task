@@ -202,6 +202,8 @@ const handleRemove = async (file: FileItem) => {
   }
   
   fileList.value = fileList.value.filter((f) => f.id !== file.id);
+
+  syncToModelValue();
 };
 
 const triggerUpload = () => {

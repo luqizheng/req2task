@@ -1,0 +1,178 @@
+.demo-container {
+  padding: 16px;
+}
+
+.demo-tabs {
+  background: #fff;
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.demo-card {
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.demo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-content {
+  padding: 8px 0;
+}
+
+.card-description {
+  color: #666;
+  margin-bottom: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: #666;
+}
+
+.list-card {
+  margin-top: 20px;
+}
+
+.analysis-card {
+  margin-bottom: 20px;
+}
+
+.analysis-content {
+  padding: 16px;
+}
+
+.analysis-header {
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.analysis-header h2 {
+  margin: 0 0 12px;
+  color: #333;
+}
+
+.analysis-meta {
+  display: flex;
+  gap: 24px;
+  color: #666;
+  font-size: 14px;
+}
+
+.analysis-section {
+  margin-bottom: 24px;
+}
+
+.analysis-section h3 {
+  margin: 0 0 12px;
+  color: #333;
+  font-size: 16px;
+}
+
+.upload-demo-card {
+  margin-bottom: 20px;
+}
+
+.upload-demo-content {
+  padding: 16px;
+}
+
+.demo-section {
+  margin-bottom: 24px;
+}
+
+.demo-section h3 {
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.demo-description {
+  color: #666;
+  margin-bottom: 16px;
+}
+
+.demo-config {
+  margin-bottom: 16px;
+  padding: 16px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.file-id-tag {
+  margin-right: 8px;
+  margin-bottom: 4px;
+}
+
+.empty-tags {
+  color: #999;
+  font-size: 13px;
+}
+
+.upload-component-container {
+  margin: 16px 0;
+  padding: 16px;
+  border: 1px dashed #dcdfe6;
+  border-radius: 4px;
+}
+
+.demo-info {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f0f9eb;
+  border-radius: 4px;
+}
+
+.demo-info h4 {
+  margin: 0 0 8px;
+  color: #67c23a;
+}
+
+.demo-code {
+  margin-top: 16px;
+  padding: 12px;
+  background: #f5f7fa;
+  border-radius: 4px;
+}
+
+.demo-code h4 {
+  margin: 0 0 8px;
+  color: #333;
+}
+
+.demo-code pre {
+  margin: 8px 0;
+  padding: 12px;
+  background: #fff;
+  border-radius: 4px;
+  overflow-x: auto;
+}

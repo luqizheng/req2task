@@ -59,18 +59,8 @@ export const useRawRequirementCreateStore = defineStore(
       }
     });
 
-    const pendingQuestions = computed(() =>
-      allVisibleQuestions.value.filter((q) => !q.answer),
-    );
-
     const answeredQuestions = computed(() =>
       allVisibleQuestions.value.filter((q) => !!q.answer),
-    );
-
-    const deletedQuestions = computed(() =>
-      rawRequirement.value.questionAndAnswers.filter((q) =>
-        deletedQuestionIds.value.has(q.id),
-      ),
     );
 
     const hasQuestions = computed(() => allVisibleQuestions.value.length > 0);
@@ -190,12 +180,13 @@ export const useRawRequirementCreateStore = defineStore(
       projectId.value = data.projectId;
       deletedQuestionIds.value = new Set();
 
-      messageHistory.value =  data.content.split("\n")
-      .filter((line) => line.trim().length > 0)
-      .map((line) => ({
-        role: "user",
-        content: line,
-      }))
+      messageHistory.value = data.content
+        .split("\n")
+        .filter((line) => line.trim().length > 0)
+        .map((line) => ({
+          role: "user",
+          content: line,
+        }));
     };
 
     return {
@@ -205,9 +196,9 @@ export const useRawRequirementCreateStore = defineStore(
       questionFilter,
       projectId,
       visibleQuestions,
-      pendingQuestions,
+
       answeredQuestions,
-      deletedQuestions,
+
       hasQuestions,
       hasAnsweredQuestions,
       setQuestionsFromSSE,

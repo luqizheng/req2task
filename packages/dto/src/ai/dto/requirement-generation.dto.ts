@@ -1,7 +1,13 @@
-import { IsString, IsOptional, IsArray, IsEnum, IsDateString } from 'class-validator';
-import { Priority, CollectionType } from '../../enums';
-import { QuestionAndAnswerDto } from '../../conversation/dto';
-import { RawRequirementQADto } from '../../raw-requirement';
+import {
+  IsString,
+  IsOptional,
+  IsArray,
+  IsEnum,
+  IsDateString,
+} from "class-validator";
+import { Priority, CollectionType } from "../../enums";
+import { QuestionAndAnswerDto } from "../../conversation/dto";
+import { RawRequirementQADto } from "../../raw-requirement";
 
 export class GenerateRequirementsDto {
   @IsString()
@@ -55,24 +61,8 @@ export class GenerateRawRequirementByLLMDto {
   conversationText!: string;
 
   @IsOptional()
-  @IsString()
-  source?: string;
-
-  @IsOptional()
-  @IsEnum(CollectionType)
-  collectionType?: CollectionType;
-
-  @IsOptional()
-  @IsString()
-  context?: string;
-
-  @IsOptional()
   @IsArray()
   previousQuestions?: RawRequirementQADto[];
-
-  @IsOptional()
-  @IsArray()
-  keyElements?: string[];
 }
 
 export class GenerateRequirementResultDto {

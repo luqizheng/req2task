@@ -123,10 +123,10 @@ const getPurposeClass = (qa: RawRequirementQADto) => {
 };
 
 const getStatusText = (qa: RawRequirementQADto) => {
-  if (isSelected(qa)) return "待回答";
+  if (isSelected(qa)) return !qa.answer ? "待回答" : "已回答";
   if (isSkipped(qa)) return "已跳过";
   if (isAnswered(qa)) return "已回答";
-  return "";
+  return !qa.answer ? "待回答" : "已回答";
 };
 
 const handleCardClick = (qa: RawRequirementQADto) => {

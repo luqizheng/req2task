@@ -141,6 +141,8 @@ const progressPercent = computed(() => {
 }
 
 .card-content {
+  flex: 1;
+  overflow: auto;
   font-size: 14px;
   color: #18181b;
 }

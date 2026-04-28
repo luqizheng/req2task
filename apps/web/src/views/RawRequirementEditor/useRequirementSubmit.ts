@@ -4,14 +4,18 @@ import { useRawRequirementCreateStore, type AiQuestion } from "./store";
 import {
   AiSubmitRequestDto,
   GenerateRawRequirementByLLMDto,
-
 } from "@req2task/dto";
 import { useJsonStream } from "@/utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
+import { useSSEStream } from "@/utils/useSSEStream";
 
 export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
 ) {
+  const sseStream = useSSEStream({
+    url: `/api/raw-requirements/${store.projectId}/stream`,
+  });
+
   const handleSuccess = (data: {
     request: AiSubmitRequestDto;
     response: string;
@@ -56,16 +60,12 @@ export function useRequirementSubmit(
     {
       trigger: "keyElements",
       onArrayItem(item) {
-        if(!store.rawRequirement.keyElements)
-          store.rawRequirement.keyElements=[];
+        if (!store.rawRequirement.keyElements)
+          store.rawRequirement.keyElements = [];
         store.rawRequirement.keyElements.push(item);
       },
     },
   ]);
-
-  const handleSSEData = (data: string) => {
-    jsonHelper.feed(data);
-  };
 
   const save = async (): Promise<boolean> => {
     try {
@@ -74,7 +74,7 @@ export function useRequirementSubmit(
         source: store.rawRequirement.source || undefined,
         collectionType: store.rawRequirement.collectionType,
         collectTime: store.rawRequirement.collectTime || undefined,
-        fileIds: store.rawRequirement.fileIds
+        fileIds: store.rawRequirement.fileIds,
       };
 
       const result = !store.rawRequirement.id
@@ -101,11 +101,40 @@ export function useRequirementSubmit(
     }
   };
 
+  const rawRequirementAnalyze = () => {
+    const analyzerData = {
+      conversationText: store.rawRequirement.content,
+      previousQuestions: store.rawRequirement.questionAndAnswers,
+    } as GenerateRawRequirementByLLMDto;
+
+    sseStream.submitStream(analyzerData, {
+      onAnalyzeStart: (event) => {
+        store.rawRequirement.conversationId = event.collectionId;
+        console.log("开始分析...");
+      },
+      onConversationStart: (cc) => {
+        console.log("开始对话...", cc);
+      },
+      onContent: (content) => {
+        jsonHelper.feed(content);
+      },
+      onMessage: (message) => {
+        //console.log("sse", message);
+      },
+      onDone: () => {
+        ElMessage.success("分析完成");
+      },
+      onError: (error) => {
+        ElMessage.error(error.message || "分析失败");
+      },
+    });
+  };
+
   return {
     handleSuccess,
     handleError,
     translRequestData,
-    handleSSEData,
     save,
+    rawRequirementAnalyze,
   };
 }

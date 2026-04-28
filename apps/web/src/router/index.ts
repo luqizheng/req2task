@@ -55,12 +55,12 @@ const router = createRouter({
     {
         path: '/projects/:id/raw-requirements/create',
         name: 'rawRequirementCreate',
-       component: () => import('../views/RawRequirementEditor/RawRequirementCreateView.vue')
+       component: () => import('../views/RawRequirementEditor/RawRequirementEditor.vue')
     },
     {
         path: '/projects/:id/raw-requirements/:rawRequirementId/edit',
         name: 'rawRequirementEdit',
-        component: () => import('../views/RawRequirementEditor/RawRequirementCreateView.vue')
+        component: () => import('@/views/RawRequirementEditor/RawRequirementEditor.vue')
     },
     {
         path: '/projects/:id/raw-requirements/:rawRequirementId',

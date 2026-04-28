@@ -11,6 +11,7 @@ import { storeToRefs } from "pinia";
 import { ref, reactive, onMounted, computed } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { rawRequirementsApi } from "@/api/rawRequirements";
+import RequirementList from "./components/RequirementList.vue";
 
 const route = useRoute();
 const projectId = route.params.id as string;
@@ -70,13 +71,14 @@ const handleAnalyze = async () => {
   const valid = await formRef.value?.validate().catch(() => false);
   if (!valid) return;
   //rawRequirementSubmitHelper.analyze();
+  rawRequirementSubmitHelper.rawRequirementAnalyze();
 };
 
 const questionCount = computed(() => {
   return store.rawRequirement.questionAndAnswers.length;
 });
 const doneQuestionCount = computed(() => {
-  return store.rawRequirement.questionAndAnswers.filter((item) => !item.answer)
+  return store.rawRequirement.questionAndAnswers.filter((item) => item.answer)
     .length;
 });
 </script>
@@ -181,8 +183,25 @@ const doneQuestionCount = computed(() => {
           >问题: {{ doneQuestionCount }}/{{ questionCount }}</span
         >
       </template>
-      
+
       <QuestionPanel :projectId="projectId" :store="store" />
+    </AppCard>
+    <AppCard
+      class="meta-card"
+      title="追问与澄清"
+      :current-step="doneQuestionCount"
+      :total-steps="questionCount"
+    >
+      <template #extra>
+        <span class="step-indicator"
+          >问题: {{ doneQuestionCount }}/{{ questionCount }}</span
+        >
+      </template>
+      <RequirementList
+        class="meta-card"
+        :projectId="projectId"
+        :store="store"
+      />
     </AppCard>
   </ViewContainer>
 </template>
@@ -191,8 +210,7 @@ const doneQuestionCount = computed(() => {
   display: flex;
   flex-direction: row;
   gap: 20px;
-  align-items: flex-start;
-  
+  height: calc(100vh - 60px - 40px);
 }
 </style>
 <style scoped>

@@ -1,4 +1,5 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Request, Logger, HttpCode, HttpStatus, Res } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { RequirementsService } from './requirements.service';
 import { RequirementStateService } from '@req2task/core';
@@ -14,6 +15,7 @@ import {
 } from '@req2task/dto';
 import { RawRequirementService } from '../raw-requirement/raw-requirement.service';
 import { AiGenerationService } from '../ai/ai-generation.service';
+import { ProjectsService } from 'src/projects/projects.service';
 
 interface ApiResponse<T> {
   code: number;
@@ -31,11 +33,14 @@ interface AuthenticatedRequest {
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class RequirementsController {
+  private readonly logger = new Logger(RequirementsController.name);
+
   constructor(
     private readonly requirementsService: RequirementsService,
     private readonly requirementStateService: RequirementStateService,
     private readonly rawRequirementService: RawRequirementService,
     private readonly aiGenerationService: AiGenerationService,
+    private readonly projectsService: ProjectsService,
   ) {}
 
   @Post('requirements/modules/:moduleId/requirements')
@@ -174,48 +179,61 @@ export class RequirementsController {
     return { code: 0, data: result };
   }
 
-  @Post('requirements/generate')
-  async generateRequirementsFromRaw(
+  @Post('requirements/generate/stream')
+  @HttpCode(HttpStatus.OK)
+  async streamGenerateRequirements(
     @Body('rawRequirementId') rawRequirementId: string,
     @Request() req: AuthenticatedRequest,
-  ): Promise<ApiResponse<RequirementResponseDto[]>> {
+    @Res() res: Response,
+  ) {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
-    
-    // 获取原始需求
+
     const rawRequirement = await this.rawRequirementService.getRawRequirementById(rawRequirementId);
     if (!rawRequirement) {
-      return { code: 404, message: '原始需求不存在' };
+      res.write(`data: ${JSON.stringify({ type: 'error', message: '原始需求不存在' })}\n\n`);
+      res.end();
+      return;
     }
-    
-    // 调用 AI 服务生成结构化需求（不持久化）
-    const result = await this.aiGenerationService.generateRequirements(
+
+    const project = await this.projectsService.findById(rawRequirement.projectId);
+
+    this.logger.log(
+      `开始流式生成需求 | 原始需求: ${rawRequirementId} | 用户: ${userId}`,
+    );
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const stream$ = this.aiGenerationService.streamGenerateRequirements(
       rawRequirement.projectId,
       rawRequirement.content,
-      userId!,
-      undefined, // context
-      undefined, // moduleIds
-      false, // 不持久化
+      project.description,
+      undefined,
     );
-    
-    // 转换为响应 DTO
-    const requirements = result.requirements.map(req => ({
-      id: req.id,
-      moduleId: req.moduleId,
-      moduleIds: req.moduleIds,
-      title: req.title,
-      description: req.description,
-      priority: req.priority,
-      source: req.source,
-      status: req.status,
-      storyPoints: req.storyPoints,
-      parentId: req.parentId,
-      createdById: req.createdById,
-      createdAt: req.createdAt,
-      updatedAt: req.updatedAt,
-    }));
-    
-    return { code: 0, data: requirements };
+
+    stream$.subscribe({
+      next: (chunk) => {
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      },
+      error: (error: Error) => {
+        this.logger.error({ error }, 'SSE stream error');
+        res.write(
+          `data: ${JSON.stringify({
+            type: 'error',
+            message: error.message,
+          })}\n\n`,
+        );
+        res.end();
+      },
+      complete: () => {
+        this.logger.log(`流式生成完成 | 原始需求: ${rawRequirementId}`);
+        res.write('data: [DONE]\n\n');
+        res.end();
+      },
+    });
   }
 
   @Post('requirements/batch')

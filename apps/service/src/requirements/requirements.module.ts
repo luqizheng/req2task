@@ -18,6 +18,7 @@ import {
 import { Repository } from 'typeorm';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 import { AiModule } from '../ai/ai.module';
+import { ProjectsModule } from 'src/projects/projects.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AiModule } from '../ai/ai.module';
     ]),
     forwardRef(() => RawRequirementModule),
     forwardRef(() => AiModule),
+    forwardRef(() => ProjectsModule),
   ],
   controllers: [RequirementsController, UserStoriesController, AcceptanceCriteriaController],
   providers: [

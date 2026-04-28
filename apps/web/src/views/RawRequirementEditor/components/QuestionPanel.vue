@@ -110,18 +110,6 @@ const getCardStatus = (
   return "default";
 };
 
-const getAppInfoType = (qa: RawRequirementQADto) => {
-  if (isSelected(qa)) return "info";
-  if (isSkipped(qa)) return "warning";
-  if (isAnswered(qa)) return "success";
-  return "default";
-};
-
-const getPurposeClass = (qa: RawRequirementQADto) => {
-  if (isSelected(qa)) return "purpose-selected";
-  return "purpose-default";
-};
-
 const getStatusText = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return !qa.answer ? "待回答" : "已回答";
   if (isSkipped(qa)) return "已跳过";

@@ -13,6 +13,7 @@ function createDefaultRawRequirement(): RawRequirementResponseDto {
     id: "",
     projectId: "",
     collectionType: undefined,
+    title: null,
     content: "",
     source: "",
     collectTime: null,

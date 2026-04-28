@@ -271,11 +271,12 @@ export class AiGenerationService {
       const data = this.extractJsonArray(result.content);
       if (data && data.length > 0) {
         requirements = data.map((item) => ({
-          id: "", // 不持久化，ID 为空
+          id: "",
           moduleId: moduleIds?.[0] || null,
           moduleIds: item.moduleIds || moduleIds || null,
           title: item.title,
           description: item.description || null,
+          keyElements: item.keyElements || null,
           priority: item.priority?.toUpperCase() || Priority.MEDIUM,
           source: RequirementSource.AI_GENERATED,
           status: RequirementStatus.DRAFT,

@@ -175,16 +175,6 @@ export function useRustFS() {
    * @param dto - 附件创建参数
    * @returns 包含附件 ID 的响应
    */
-  const createAttachment = async (
-    dto: CreateAttachmentByFileDataIdDto,
-  ): Promise<{ id: string }> => {
-    const response = await api.post<{ code: number; data: { id: string } }>(
-      '/attachments/create',
-      dto,
-    );
-    return response.data as { id: string };
-  };
-
   /**
    * 获取文件下载 URL
    * @param fileDataId - 文件数据 ID

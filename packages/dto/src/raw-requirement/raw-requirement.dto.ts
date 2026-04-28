@@ -1,4 +1,4 @@
-import { CollectionType, RawRequirementStatus } from '../enums';
+import { CollectionType, Priority, RawRequirementStatus } from '../enums';
 
 export interface RawRequirementListParams {
   page?: number;
@@ -20,6 +20,7 @@ export interface RawRequirementResponseDto {
   projectId: string;
   collectionType?: CollectionType;
   conversationId?: string;
+  title: string | null;
   content: string;
   source: string;
   collectTime: string | null;
@@ -29,6 +30,7 @@ export interface RawRequirementResponseDto {
   createdAt: string;
   updatedAt: string;
   fileIds?: string[];
+  priority?: Priority;
 }
 
 export interface CreateRawRequirementInput {

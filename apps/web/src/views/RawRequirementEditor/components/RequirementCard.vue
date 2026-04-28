@@ -3,15 +3,15 @@
     <div class="card-header">
       <div class="header-left">
         <span class="card-index">{{ props.index }}</span>
-        <h3 class="card-title">{{ props.equipment.title }}</h3>
+        <h3 class="card-title">{{ props.requirement.title }}</h3>
       </div>
       <el-tag :type="priorityType" size="small">
-        {{ props.equipment.priority }}
+        {{ props.requirement.priority }}
       </el-tag>
     </div>
 
     <p class="card-description">
-      {{ props.equipment.description }}
+      {{ props.requirement.content }}
     </p>
 
     <div class="card-tags">
@@ -29,35 +29,28 @@
 </template>
 
 <script lang="ts" setup>
-import { computed } from 'vue';
-import { ElTag } from 'element-plus';
-import { Priority, RequirementSource, RequirementStatus } from '@req2task/dto';
+import { computed } from "vue";
+import { ElTag } from "element-plus";
+import { Priority, RawRequirementResponseDto } from "@req2task/dto";
 
 interface Props {
-  equipment: {
-    id: string;
-    status: RequirementStatus;
-    source: RequirementSource;
-    description: string;
-    title: string;
-    priority: Priority;
-  };
+  requirement: RawRequirementResponseDto;
   index: number;
   tags?: string[];
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  tags: () => ['导入', '数据管理', '文件处理'],
+  tags: () => ["导入", "数据管理", "文件处理"],
 });
 
 const priorityType = computed(() => {
-  const typeMap: Record<Priority, 'danger' | 'warning' | 'info' | 'success'> = {
-    critical: 'danger',
-    high: 'warning',
-    medium: 'info',
-    low: 'success',
+  const typeMap: Record<Priority, "danger" | "warning" | "info" | "success"> = {
+    critical: "danger",
+    high: "warning",
+    medium: "info",
+    low: "success",
   };
-  return typeMap[props.equipment.priority] || 'info';
+  return typeMap[(props.requirement.priority as Priority) || Priority.LOW];
 });
 </script>
 

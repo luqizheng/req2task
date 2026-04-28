@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute, useRouter } from "vue-router";
+import { useRouter } from "vue-router";
 import {
   Plus,
   Document,
@@ -148,7 +148,7 @@ const formatDate = (dateStr: string) => {
           <el-table-column prop="content" label="需求内容" min-width="400">
             <template #default="scope">
               <div class="content-cell">
-                <a :href="`/projects/${projectId.value}/raw-requirements/${scope.row.id}`" class="content-link">
+                <a :href="`/projects/${projectId}/raw-requirements/${scope.row.id}`" class="content-link">
                   {{ scope.row.content }}
                 </a>
               </div>

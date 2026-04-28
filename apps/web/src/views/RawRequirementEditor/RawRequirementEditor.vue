@@ -164,7 +164,7 @@ const handlerGenerateRequirements=async () => {
             v-model="rawRequirement.content"
             type="textarea"
             placeholder="请输入原始需求内容"
-            rows="4"
+            :rows="4"
             clearable
           />
         </el-form-item>

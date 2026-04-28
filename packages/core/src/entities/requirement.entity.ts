@@ -35,6 +35,9 @@ export class Requirement {
   @Column({ type: 'text', nullable: true })
   description!: string | null;
 
+  @Column({ name: 'key_elements', type: 'simple-array', nullable: true })
+  keyElements!: string[] | null;
+
   @Column({
     type: 'enum',
     enum: Priority,

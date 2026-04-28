@@ -41,16 +41,17 @@ export const requirementPrompts: PromptTemplate[] = [
 5. type只允许使用指定的类型
 6. storyPoints为数字，建议范围: 1,2,3,5,8,13
 7. moduleIds可以是空数组[]
-8. 只返回JSON数组格式，不要其他内容
+8. keyElements从原始需求中提取关键要素
+9. 只返回JSON数组格式，不要其他内容
 
 JSON格式：
 {
   "projectId": "{{projectId}}",
-  "keyElements": [],
   "requirements": [
     {
       "title": "需求标题",
       "description": "需求详细描述",
+      "keyElements": ["关键要素1", "关键要素2"],
       "priority": "high",
       "source": "ai_generated",
       "status": "draft",

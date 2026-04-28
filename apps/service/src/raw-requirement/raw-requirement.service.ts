@@ -101,6 +101,7 @@ export class RawRequirementService {
       projectId: entity.projectId,
       collectionType: entity.collectionType || undefined,
       conversationId: entity.conversationId || undefined,
+      title: null,
       content: entity.originalContent,
       source: entity.source || "",
       collectTime: entity.collectTime ? entity.collectTime.toISOString() : null,

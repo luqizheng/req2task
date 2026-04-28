@@ -173,7 +173,8 @@ const handleAnalyze = async () => {
     <el-card class="meta-card" shadow="hover">
       <QuestionPanel
         :projectId="projectId"
-        :store="store"  
+        :store="store"
+        
       />
     </el-card>
   </ViewContainer>

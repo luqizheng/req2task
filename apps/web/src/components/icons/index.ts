@@ -1,0 +1,5 @@
+export { default as CheckIcon } from './CheckIcon.vue'
+export { default as ChevronDownIcon } from './ChevronDownIcon.vue'
+export { default as MinusIcon } from './MinusIcon.vue'
+export { default as QuestionIcon } from './QuestionIcon.vue'
+export { default as SkipIcon } from './SkipIcon.vue'

@@ -4,129 +4,145 @@
       <h2 class="panel-title">问题列表</h2>
     </div>
     <div class="questions-scroll-area">
-      <div
+      <AppStatusCard
         v-for="(qa, index) in questions"
         :key="qa.id"
-        class="qa-card"
-        :class="getCardClass(qa)"
+        :status="getCardStatus(qa)"
+        :title="`Q${index + 1}`"
+        :status-text="getStatusText(qa)"
+        show-status-dot
+        :clickable="!isAnswered(qa) && !isSkipped(qa)"
         @click="handleCardClick(qa)"
       >
-        <div class="qa-header">
-          <div class="header-left">
-            <div class="active-dot" :class="{ 'is-active': isSelected(qa) }">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-                <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                <circle cx="12" cy="17" r="0.5" fill="currentColor"/>
-              </svg>
-            </div>
-            <span class="question-number">{{ index + 1 }}</span>
-            <div class="divider-line"></div>
-          </div>
-          <div v-if="isSelected(qa)" class="status-tag answering">回答中</div>
-          <div v-else-if="isAnswered(qa)" class="status-tag answered">已回答</div>
-        </div>
-
         <div class="question-text">{{ qa.question }}</div>
+        <AppInfo v-if="qa.purpose" type="default">
+          目的: {{ qa.purpose }}
+        </AppInfo>
 
-        <div v-if="qa.purpose && isSelected(qa)" class="purpose-tag">
-          <span class="purpose-label">目的：</span>
-          <span class="purpose-content">{{ qa.purpose }}</span>
-        </div>
-
-        <div v-if="isSelected(qa)" class="answer-section">
+        <div v-if="isSelected(qa)" class="answer-section" @click.stop>
           <el-input
             v-model="currentAnswer"
             type="textarea"
             :rows="3"
             placeholder="请输入您的回答..."
             class="answer-input"
-            @click.stop
           />
           <div class="action-buttons">
-            <el-button class="cancel-btn" @click.stop="handleCancel">取消</el-button>
-            <el-button type="primary" class="submit-btn" @click.stop="handleSubmit">提交回答</el-button>
+            <el-button class="skip-btn" @click.stop="handleSkip"
+              >跳过</el-button
+            >
+            <el-button
+              type="primary"
+              class="submit-btn"
+              @click.stop="handleSubmit"
+              >提交回答</el-button
+            >
           </div>
         </div>
 
-        <div v-else-if="!isAnswered(qa)" class="hint-section">
-          <svg class="hint-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 16V12M12 8H12.01M22 12C22 17.5228 17.5228 22 12 22C6.47715 22 2 17.5228 2 12C2 6.47715 6.47715 2 12 2C17.5228 2 22 6.47715 22 12Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-          <span class="hint-text">点击卡片开始回答问题</span>
+        <div v-else-if="isSkipped(qa)" class="hint-section skipped">
+          <SkipIcon class="hint-icon" />
+          <span class="hint-text">此问题已跳过，将在下次提交时保留</span>
         </div>
 
-        <div v-else class="answer-display">
-          <div class="answer-label">回答：</div>
+        <div v-else-if="isAnswered(qa)" class="answer-display">
           <div class="answer-content">{{ qa.answer }}</div>
         </div>
-      </div>
+      </AppStatusCard>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import type { RawRequirementQADto } from '@req2task/dto'
-import { useRawRequirementCreateStore } from '../store';
+import { computed, ref } from "vue";
+import type { RawRequirementQADto } from "@req2task/dto";
+import { useRawRequirementCreateStore } from "../store";
+import { AppStatusCard, AppInfo } from "@/components/common";
+import { SkipIcon } from "@/components/icons";
 
 interface Props {
   projectId: string;
   store: ReturnType<typeof useRawRequirementCreateStore>;
 }
 
-const questions = computed(() => props.store.rawRequirement.questionAndAnswers || [])
- 
 const props = defineProps<Props>();
 
-const emit = defineEmits<{
-  select: [id: string]
-  cancel: []
-  submit: [id: string, answer: string]
-}>()
+const questions = computed(
+  () => props.store.rawRequirement.questionAndAnswers || [],
+);
 
-const selectedId = ref<string | null>(null)
-const currentAnswer = ref('')
+const selectedId = ref<string | null>(null);
+const currentAnswer = ref("");
 
 const isAnswered = (qa: RawRequirementQADto) => {
-  return qa.answer !== null && qa.answer !== '' && qa.answer !== undefined
-}
+  return qa.answer !== null && qa.answer !== "" && qa.answer !== undefined;
+};
+
+const isSkipped = (qa: RawRequirementQADto) => {
+  return props.store.deletedQuestionIds.has(qa.id);
+};
 
 const isSelected = (qa: RawRequirementQADto) => {
-  return selectedId.value === qa.id
-}
+  return selectedId.value === qa.id;
+};
 
-const getCardClass = (qa: RawRequirementQADto) => {
-  if (isSelected(qa)) {
-    return 'is-selected'
-  }
-  if (isAnswered(qa)) {
-    return 'is-answered'
-  }
-  return ''
-}
+const getCardStatus = (
+  qa: RawRequirementQADto,
+): "default" | "success" | "warning" | "selected" => {
+  if (isSelected(qa)) return "selected";
+  if (isSkipped(qa)) return "warning";
+  if (isAnswered(qa)) return "success";
+  return "default";
+};
+
+const getAppInfoType = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "info";
+  if (isSkipped(qa)) return "warning";
+  if (isAnswered(qa)) return "success";
+  return "default";
+};
+
+const getPurposeClass = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "purpose-selected";
+  return "purpose-default";
+};
+
+const getStatusText = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "待回答";
+  if (isSkipped(qa)) return "已跳过";
+  if (isAnswered(qa)) return "已回答";
+  return "";
+};
 
 const handleCardClick = (qa: RawRequirementQADto) => {
-  if (!isAnswered(qa)) {
-    selectedId.value = qa.id
-    currentAnswer.value = ''
-    emit('select', qa.id)
+  if (!isAnswered(qa) && !isSkipped(qa)) {
+    selectedId.value = qa.id;
+    currentAnswer.value = "";
   }
-}
+};
 
-const handleCancel = () => {
-  selectedId.value = null
-  currentAnswer.value = ''
-  emit('cancel')
-}
+const handleSkip = () => {
+  if (selectedId.value) {
+    selectedId.value = null;
+    currentAnswer.value = "";
+  }
+};
 
 const handleSubmit = () => {
   if (selectedId.value && currentAnswer.value.trim()) {
-    emit('submit', selectedId.value, currentAnswer.value.trim())
-    selectedId.value = null
-    currentAnswer.value = ''
+    const currentAnswerIndex =
+      props.store.rawRequirement.questionAndAnswers.findIndex(
+        (qa) => qa.id === selectedId.value,
+      );
+    if (currentAnswerIndex !== -1) {
+      props.store.rawRequirement.questionAndAnswers[currentAnswerIndex].answer =
+        currentAnswer.value.trim();
+    }
+
+    selectedId.value = null;
+    currentAnswer.value = "";
   }
-}
+};
 </script>
 
 <style scoped>
@@ -158,121 +174,46 @@ const handleSubmit = () => {
   gap: 12px;
 }
 
-.qa-card {
-  padding: 14px 16px;
-  border-radius: 12px;
-  background: #ffffff;
-  border: 1px solid #e4e4e4;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.qa-card:hover {
-  border-color: #cbd5e1;
-}
-
-.qa-card.is-selected {
-  background: #eff6ff;
-  border: 1.5px solid #2563eb;
-  cursor: default;
-}
-
-.qa-card.is-answered {
-  background: #f0fdf4;
-  border-color: #10b981;
-}
-
-.qa-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.active-dot {
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  background: #f3f4f6;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #9ca3af;
-}
-
-.active-dot.is-active {
-  background: #fdeadb;
-  color: #2563eb;
-}
-
-.active-dot svg {
-  width: 11px;
-  height: 11px;
-}
-
-.question-number {
-  font-size: 12px;
-  font-weight: 600;
-  color: #1b1818;
-}
-
-.divider-line {
-  flex: 1;
-  height: 1px;
-  background: #e4e4e4;
-  min-width: 20px;
-}
-
-.status-tag {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 11px;
-  font-weight: 500;
-}
-
-.status-tag.answering {
-  background: #fdeadb;
-  color: #2563eb;
-}
-
-.status-tag.answered {
-  background: #dcfce7;
-  color: #10b981;
-}
-
 .question-text {
   font-size: 13px;
   font-weight: 500;
-  color: #1b1818;
-  line-height: 1.5;
+  color: #18181b;
+  line-height: 150%;
 }
 
 .purpose-tag {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 4px;
   padding: 8px 10px;
-  background: #fdeadb;
   border-radius: 6px;
   align-self: flex-start;
+}
+
+.purpose-tag.purpose-default {
+  background: #f8f8fa;
+}
+
+.purpose-tag.purpose-selected {
+  background: #dbeafe;
 }
 
 .purpose-label {
   font-size: 12px;
   font-weight: 500;
-  color: #faa560;
+  color: #a1a1aa;
 }
 
 .purpose-content {
   font-size: 12px;
+  color: #71717a;
+}
+
+.purpose-selected .purpose-label {
+  color: #60a5fa;
+}
+
+.purpose-selected .purpose-content {
   color: #2563eb;
 }
 
@@ -305,18 +246,18 @@ const handleSubmit = () => {
   justify-content: flex-end;
 }
 
-.cancel-btn {
+.skip-btn {
   padding: 0 14px;
   height: 32px;
   border-radius: 6px;
   border: 1px solid #e4e4e4;
   background: #fff;
-  color: #716f71;
+  color: #71717a;
   font-size: 13px;
   font-weight: 500;
 }
 
-.cancel-btn:hover {
+.skip-btn:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
 }
@@ -337,42 +278,41 @@ const handleSubmit = () => {
 
 .hint-section {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   padding: 10px 12px;
-  background: #fffbf0;
-  border: 1px solid #fde68a;
   border-radius: 8px;
 }
 
+.hint-section.skipped {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+}
+
 .hint-icon {
-  width: 16px;
-  height: 16px;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 2px;
   color: #d97706;
 }
 
 .hint-text {
   font-size: 12px;
+  line-height: 150%;
   color: #d97706;
 }
 
 .answer-display {
   padding: 10px 12px;
-  background: #f8fafc;
+  background: #f0fdf4;
   border-radius: 8px;
-  border-left: 3px solid #10b981;
-}
-
-.answer-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #64748b;
-  margin-bottom: 4px;
+  border: 1px solid #bbf7d0;
 }
 
 .answer-content {
   font-size: 13px;
-  color: #1e293b;
-  line-height: 1.5;
+  line-height: 150%;
+  color: #15803d;
 }
 </style>

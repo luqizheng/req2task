@@ -1,5 +1,5 @@
 export { default as AppButton } from './AppButton.vue';
-export { default as AppCard } from './AppCard.vue';
+export { default as AppStatusCard } from './AppStatusCard.vue';
 export { default as AppTag } from './AppTag.vue';
 export { default as AppBadge } from './AppBadge.vue';
 export { default as AppAvatar } from './AppAvatar.vue';
@@ -13,3 +13,4 @@ export { default as StatCard } from './StatCard.vue';
 export { default as InfoItem } from './InfoItem.vue';
 export { default as FileUploader } from './FileUploader.vue';
 export { default as RustFSUploader } from './RustFSUploader.vue';
+export {default as AppInfo} from './AppInfo.vue'

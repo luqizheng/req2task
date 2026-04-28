@@ -81,6 +81,9 @@ const doneQuestionCount = computed(() => {
   return store.rawRequirement.questionAndAnswers.filter((item) => item.answer)
     .length;
 });
+const handlerGenerateRequirements=async () => {
+  rawRequirementSubmitHelper.generateRequirements();
+}
 </script>
 
 <template>
@@ -178,6 +181,7 @@ const doneQuestionCount = computed(() => {
       :current-step="doneQuestionCount"
       :total-steps="questionCount"
     >
+     <el-button type="primary" @click="handlerGenerateRequirements">生成需求</el-button>
       <template #extra>
         <span class="step-indicator"
           >问题: {{ doneQuestionCount }}/{{ questionCount }}</span

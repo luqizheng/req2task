@@ -23,10 +23,6 @@ const menuItems: MenuItem[] = [
   { path: '/ai/requirement-gen', name: 'aiRequirementGen', label: 'AI 需求生成', icon: 'MagicStick' },
   { path: '/ai/config', name: 'aiConfig', label: 'AI 配置', icon: 'Tools' },
   { path: '/users', name: 'users', label: '用户管理', icon: 'User' },
-  { path: '/demo/element-plus', name: 'elementPlusDemo', label: 'Element Plus Demo', icon: 'Menu' },
-  { path: '/demo/echarts', name: 'echartsDemo', label: 'ECharts Demo', icon: 'TrendCharts' },
-  { path: '/demo/req2task', name: 'req2taskDemo', label: 'Req2Task Demo', icon: 'View' },
-  { path: '/demo', name: 'demo', label: '设计演示', icon: 'Document' },
 ];
 
 const bottomMenuItems: MenuItem[] = [

@@ -12,8 +12,11 @@ import { useSSEStream } from "@/utils/useSSEStream";
 export function useRequirementSubmit(
   store: ReturnType<typeof useRawRequirementCreateStore>,
 ) {
-  const sseStream = useSSEStream({
+  const sseGenerateQuestionStream = useSSEStream({
     url: `/api/raw-requirements/${store.projectId}/stream`,
+  });
+  const sseGenerateRequirementsStream = useSSEStream({
+    url: `/api/requirements/generate/stream`,
   });
 
   const handleSuccess = (data: {
@@ -36,21 +39,7 @@ export function useRequirementSubmit(
     ElMessage.error(error.message || "提交失败");
   };
 
-  const translRequestData = (
-    data: AiSubmitRequestDto,
-  ): GenerateRawRequirementByLLMDto => {
-    const dto: GenerateRawRequirementByLLMDto = {
-      conversationText: [data.message, data.message.trim()].join("\n"),
-    };
-
-    dto.previousQuestions = store.rawRequirement.questionAndAnswers.filter(
-      (qa) => qa.answer,
-    );
-
-    return dto;
-  };
-
-  const jsonHelper = useJsonStream([
+  const jsonHelperQuestAndAnswer = useJsonStream([
     {
       trigger: "questions",
       onArrayItem(item) {
@@ -63,6 +52,19 @@ export function useRequirementSubmit(
         if (!store.rawRequirement.keyElements)
           store.rawRequirement.keyElements = [];
         store.rawRequirement.keyElements.push(item);
+      },
+    },
+  ]);
+
+  const jsonHelperRequirements = useJsonStream([
+    {
+      trigger: "requirements",
+      onArrayItem(item) {
+        console.log("需求", item);
+        //store.addQuestionFromSSE(item as Requirement);
+      },
+      onObject(obj) {
+        console.log('sdfsdf', obj)
       },
     },
   ]);
@@ -107,20 +109,15 @@ export function useRequirementSubmit(
       previousQuestions: store.rawRequirement.questionAndAnswers,
     } as GenerateRawRequirementByLLMDto;
 
-    sseStream.submitStream(analyzerData, {
+    sseGenerateQuestionStream.submitStream(analyzerData, {
       onAnalyzeStart: (event) => {
         store.rawRequirement.conversationId = event.collectionId;
-        console.log("开始分析...");
       },
-      onConversationStart: (cc) => {
-        console.log("开始对话...", cc);
-      },
+      onConversationStart: (cc) => {},
       onContent: (content) => {
-        jsonHelper.feed(content);
+        jsonHelperQuestAndAnswer.feed(content);
       },
-      onMessage: (message) => {
-        //console.log("sse", message);
-      },
+      onMessage: (message) => {},
       onDone: () => {
         ElMessage.success("分析完成");
       },
@@ -129,12 +126,41 @@ export function useRequirementSubmit(
       },
     });
   };
+  let a="";
+  const generateRequirements = () => {
+    const data = {
+      rawRequirementId: store.rawRequirement.id,
+    };
+    sseGenerateRequirementsStream.submitStream(data, {
+      onAnalyzeStart: (event) => {
+        store.rawRequirement.conversationId = event.collectionId;
+        console.log("开始生成需求...");
+      },
+      onConversationStart: (cc) => {
+        console.log("开始对话...", cc);
+      },
+      onContent: (content) => {
+        a+=content;
+        console.log("content", a);
+        jsonHelperRequirements.feed(content);
+      },
+      onMessage: (message) => {
+        console.log("message", message);
+      },
+      onDone: () => {
+        ElMessage.success("生成需求完成");
+      },
+      onError: (error) => {
+        ElMessage.error(error.message || "生成需求失败");
+      },
+    });
+  };
 
   return {
     handleSuccess,
     handleError,
-    translRequestData,
     save,
     rawRequirementAnalyze,
+    generateRequirements,
   };
 }

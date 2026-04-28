@@ -139,36 +139,6 @@ const router = createRouter({
       name: 'rawRequirementAnalyze',
       component: () => import('@/views/RawRequirementAnalyzer/RawRequirementAnalyzer.vue')
     },
-    {
-      path: '/demo/element-plus',
-      name: 'elementPlusDemo',
-      component: () => import('@/views/ElementPlusDemoView.vue'),
-      meta: { public: true }
-    },
-    {
-      path: '/demo/echarts',
-      name: 'echartsDemo',
-      component: () => import('@/views/EChartsDemoView.vue'),
-      meta: { public: true }
-    },
-    {
-      path: '/demo',
-      name: 'demo',
-      component: () => import('@/views/Req2TaskDemoView.vue'),
-      meta: { public: true }
-    },
-    {
-      path: '/demo/req2task',
-      name: 'req2taskDemo',
-      component: () => import('@/views/Req2TaskDemoView.vue'),
-      meta: { public: true }
-    },
-    {
-      path: '/demo/info-item',
-      name: 'infoItemDemo',
-      component: () => import('@/views/InfoItemDemoView.vue'),
-      meta: { public: true }
-    },
   ]
 })
 

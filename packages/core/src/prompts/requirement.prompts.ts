@@ -44,19 +44,23 @@ export const requirementPrompts: PromptTemplate[] = [
 8. 只返回JSON数组格式，不要其他内容
 
 JSON格式：
-[
-  {
-    "title": "需求标题",
-    "description": "需求详细描述",
-    "priority": "high",
-    "source": "ai_generated",
-    "status": "draft",
-    "type": "功能需求",
-    "storyPoints": 3,
-    "moduleIds": [],
-    "parentId": null
-  }
-]`,
+{
+  "projectId": "{{projectId}}",
+  "keyElements": [],
+  "requirements": [
+    {
+      "title": "需求标题",
+      "description": "需求详细描述",
+      "priority": "high",
+      "source": "ai_generated",
+      "status": "draft",
+      "type": "功能需求",
+      "storyPoints": 3,
+      "moduleIds": [],
+      "parentId": null
+    }
+  ]
+}`,
     temperature: 0.3,
     maxTokens: 3000,
     isActive: true,
@@ -343,8 +347,17 @@ JSON格式：
       { name: "projectId", type: "string", description: "项目ID" },
       { name: "context", type: "string", description: "上下文信息" },
       { name: "requirementTitle", type: "string", description: "需求标题" },
-      { name: "requirementDescription", type: "string", description: "需求描述" },
-      { name: "featurePoints", type: "string", required: true, description: "功能点列表" },
+      {
+        name: "requirementDescription",
+        type: "string",
+        description: "需求描述",
+      },
+      {
+        name: "featurePoints",
+        type: "string",
+        required: true,
+        description: "功能点列表",
+      },
     ],
   },
   {
@@ -387,7 +400,12 @@ JSON格式：
     parameters: [
       { name: "projectId", type: "string", description: "项目ID" },
       { name: "context", type: "string", description: "上下文信息" },
-      { name: "userStory", type: "string", required: true, description: "用户故事" },
+      {
+        name: "userStory",
+        type: "string",
+        required: true,
+        description: "用户故事",
+      },
     ],
   },
   {
@@ -440,7 +458,12 @@ JSON格式：
       { name: "projectId", type: "string", description: "项目ID" },
       { name: "requirementId", type: "string", description: "需求ID" },
       { name: "context", type: "string", description: "上下文信息" },
-      { name: "featurePoints", type: "string", required: true, description: "功能点列表" },
+      {
+        name: "featurePoints",
+        type: "string",
+        required: true,
+        description: "功能点列表",
+      },
       { name: "userStory", type: "string", description: "用户故事" },
       { name: "acceptanceCriteria", type: "string", description: "验收条件" },
     ],

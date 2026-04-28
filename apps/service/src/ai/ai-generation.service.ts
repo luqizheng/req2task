@@ -93,7 +93,9 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const { questions, keyElements } = this.extractAnalysisResult(result.content);
+    const { questions, keyElements } = this.extractAnalysisResult(
+      result.content,
+    );
     const rawRequirement = await this.persistRawRequirementWithAnalysis(
       result.content,
       projectId,
@@ -114,7 +116,11 @@ export class AiGenerationService {
     projectId: string,
     conversationText: string,
     context?: string,
-    previousQuestions?: Array<{ question: string; answer: string | null; purpose?: string }>,
+    previousQuestions?: Array<{
+      question: string;
+      answer: string | null;
+      purpose?: string;
+    }>,
   ): Observable<LLMStreamChunk> {
     const title = `RawReq_${projectId}_${Date.now()}`;
 
@@ -124,6 +130,32 @@ export class AiGenerationService {
       rawRequirement: conversationText,
       previousQuestions,
     });
+
+    return this.llmClient.streamGenerate({
+      title,
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
+  }
+
+  streamGenerateRequirements(
+    projectId: string,
+    rawRequirement: string,
+    context?: string,
+    moduleIds?: string[],
+  ): Observable<LLMStreamChunk> {
+    const title = `ReqGen_${projectId}_${Date.now()}`;
+
+    const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
+      projectId,
+      context,
+      moduleIds,
+      rawRequirement,
+    });
+
+    console.log('-------------------------------------------\n', rendered.systemPrompt, '\n', rendered.userPrompt)
 
     return this.llmClient.streamGenerate({
       title,
@@ -238,8 +270,8 @@ export class AiGenerationService {
       // 不持久化，只解析 JSON 并返回 Requirement 对象
       const data = this.extractJsonArray(result.content);
       if (data && data.length > 0) {
-        requirements = data.map(item => ({
-          id: '', // 不持久化，ID 为空
+        requirements = data.map((item) => ({
+          id: "", // 不持久化，ID 为空
           moduleId: moduleIds?.[0] || null,
           moduleIds: item.moduleIds || moduleIds || null,
           title: item.title,
@@ -300,7 +332,10 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const userStories = await this.persistUserStories(result.content, requirementId);
+    const userStories = await this.persistUserStories(
+      result.content,
+      requirementId,
+    );
 
     return { userStories, rawContent: result.content };
   }
@@ -335,7 +370,11 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const tasks = await this.persistTasks(result.content, requirementId, createdById);
+    const tasks = await this.persistTasks(
+      result.content,
+      requirementId,
+      createdById,
+    );
 
     return { tasks, rawContent: result.content };
   }
@@ -645,92 +684,6 @@ export class AiGenerationService {
       low: TaskPriority.LOW,
     };
     return mapping[priority?.toLowerCase()] || TaskPriority.MEDIUM;
-  }
-
-  private async persistRawRequirement(
-    content: string,
-    projectId: string,
-    createdById: string,
-  ): Promise<RawRequirement | null> {
-    try {
-      const data = this.extractRawRequirementJson(content);
-      if (!data) {
-        this.logger.warn("No raw requirement data found in AI response");
-        return null;
-      }
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const collectionTypeMap: Record<string, CollectionType> = {
-          text: CollectionType.OTHER,
-          audio: CollectionType.OTHER,
-          document: CollectionType.DOCUMENT,
-          meeting: CollectionType.MEETING,
-          interview: CollectionType.INTERVIEW,
-          other: CollectionType.OTHER,
-        };
-
-        const collectionType =
-          collectionTypeMap[data.collectionType?.toLowerCase()] ||
-          CollectionType.OTHER;
-
-        const questionAndAnswers = (data.questionAndAnswers || []).map(
-          (qa: any) => ({
-            id: `qa_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            question: qa.question || "",
-            answer: qa.answer || null,
-            purpose: qa.purpose || undefined,
-            createdAt: new Date().toISOString(),
-            answeredAt: qa.answeredAt || null,
-          }),
-        );
-
-        const rawRequirement = queryRunner.manager.create(RawRequirement, {
-          projectId,
-          originalContent: data.originalContent || content,
-          collectionType,
-          source: data.source || null,
-          collectTime: data.collectTime ? new Date(data.collectTime) : null,
-          keyElements: data.keyElements || [],
-          status: RawRequirementStatus.PENDING,
-          questionAndAnswers,
-          createdById,
-        });
-
-        const saved = await queryRunner.manager.save(rawRequirement);
-
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created raw requirement ${saved.id} for project ${projectId}`,
-        );
-
-        return saved;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist raw requirement");
-      return null;
-    }
-  }
-
-  private extractRawRequirementJson(content: string): any | null {
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-      return null;
-    } catch (error) {
-      this.logger.error({ error }, "Failed to extract JSON from content");
-      return null;
-    }
   }
 
   private extractJsonArray(content: string): any[] {

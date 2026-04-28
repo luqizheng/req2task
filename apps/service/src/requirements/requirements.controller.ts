@@ -235,7 +235,8 @@ export class RequirementsController {
     res.setHeader("Connection", "keep-alive");
     res.setHeader("X-Accel-Buffering", "no");
 
-    const requirementPrompt = `原始需求内容: \`\`\`text 
+    const requirementPrompt = `原始需求内容: 
+    \`\`\`text 
     ${rawRequirement.content}
     \`\`\`
     问答记录: ${JSON.stringify(rawRequirement.questionAndAnswers || [])}`;

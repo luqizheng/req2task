@@ -192,17 +192,9 @@ const handlerGenerateRequirements=async () => {
     </AppCard>
     <AppCard
       class="meta-card"
-      title="追问与澄清"
-      :current-step="doneQuestionCount"
-      :total-steps="questionCount"
+      title="需求列表"
     >
-      <template #extra>
-        <span class="step-indicator"
-          >问题: {{ doneQuestionCount }}/{{ questionCount }}</span
-        >
-      </template>
       <RequirementList
-        class="meta-card"
         :projectId="projectId"
         :store="store"
       />

@@ -60,11 +60,17 @@ export function useRequirementSubmit(
     {
       trigger: "requirements",
       onArrayItem(item) {
-        store.addRequirement(item);
+        //console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',item);
+     
+        store.addRequirement({
+          id: `rq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          ...item,
+          projectId: store.projectId,
+        });
         //store.addQuestionFromSSE(item as Requirement);
       },
-      onObject(obj) {
-        console.log("sdfsdf", obj);
+      onObject() {
+        //console.log(obj);
       },
     },
   ]);
@@ -134,18 +140,18 @@ export function useRequirementSubmit(
     sseGenerateRequirementsStream.submitStream(data, {
       onAnalyzeStart: (event) => {
         store.rawRequirement.conversationId = event.collectionId;
-        console.log("开始生成需求...");
+        // console.log("开始生成需求...");
       },
-      onConversationStart: (cc) => {
-        console.log("开始对话...", cc);
+      onConversationStart: () => {
+        //   console.log("开始对话...", cc);
       },
       onContent: (content) => {
-        a += content;
-        console.log("content", a);
+         a += content;
+         //console.log("content", a);
         jsonHelperRequirements.feed(content);
       },
-      onMessage: (message) => {
-        console.log("message", message);
+      onMessage: () => {
+        //   console.log("message", message);
       },
       onDone: () => {
         ElMessage.success("生成需求完成");

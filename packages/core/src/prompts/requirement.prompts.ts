@@ -42,16 +42,16 @@ export const requirementPrompts: PromptTemplate[] = [
 6. storyPoints为数字，建议范围: 1,2,3,5,8,13
 7. moduleIds可以是空数组[]
 8. keyElements从原始需求中提取关键要素
-9. 只返回JSON数组格式，不要其他内容
+9. 请严格遵守json格式，只返回JSON数组格式，不要其他内容
 
 JSON格式：
+\`\`\`json
 {
   "projectId": "{{projectId}}",
-  "rawRequirement": "{{rawRequirement}}",
   "requirements": [
     {
       "title": "需求标题",
-      "description": "需求详细描述",
+      "content": "需求详细描述",
       "keyElements": ["关键要素1", "关键要素2"],
       "priority": "high",
       "source": "ai_generated",
@@ -62,7 +62,9 @@ JSON格式：
       "parentId": null
     }
   ]
-}`,
+}
+\`\`\`
+`,
     temperature: 0.3,
     maxTokens: 3000,
     isActive: true,

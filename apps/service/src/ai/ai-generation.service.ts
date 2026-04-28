@@ -155,8 +155,6 @@ export class AiGenerationService {
       rawRequirement,
     });
 
-    console.log('-------------------------------------------\n', rendered.systemPrompt, '\n', rendered.userPrompt)
-
     return this.llmClient.streamGenerate({
       title,
       systemPrompt: rendered.systemPrompt,

@@ -1,5 +1,6 @@
 <template>
   <div class="requirement-card">
+    {{ requirement }}
     <div class="card-header">
       <div class="header-left">
         <span class="card-index">{{ props.index }}</span>

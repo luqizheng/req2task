@@ -87,6 +87,11 @@ JSON格式：
   - question: string (问题内容)
   - purpose: string (问这个问题的目的)
 
+核心原则：
+- 绝对不要重复已经问过的问题
+- 如果之前的追问已经得到回答，不要再生成相同或相似的问题
+- 只生成新的、未涉及的问题
+
 后续整合时，生成的requirements格式：
 - title: string
 - description: string
@@ -102,7 +107,7 @@ JSON格式：
 {{/if}}{{#if context}}## 上下文信息
 {{context}}
 
-{{/if}}{{#if previousQuestions}}## 之前的追问问题和回答
+{{/if}}{{#if previousQuestions}}## 之前的追问问题和回答（已回答，请勿重复）
 {{#each previousQuestions}}
 问题：{{this.question}}
 回答：{{this.answer}}
@@ -112,6 +117,11 @@ JSON格式：
 项目背景：{{projectContext}}
 
 请分析这个需求，提取关键要素并生成追问问题。
+
+重要提醒：
+1. 检查"之前的追问问题和回答"部分，避免重复已问过的问题
+2. 只生成新的、未涉及的问题
+3. 如果所有关键问题都已问过，questions数组可以为空[]
 
 JSON格式：
 {

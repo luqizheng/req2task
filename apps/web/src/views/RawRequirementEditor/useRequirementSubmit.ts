@@ -64,7 +64,7 @@ export function useRequirementSubmit(
         //store.addQuestionFromSSE(item as Requirement);
       },
       onObject(obj) {
-        console.log('sdfsdf', obj)
+        console.log("sdfsdf", obj);
       },
     },
   ]);
@@ -102,7 +102,7 @@ export function useRequirementSubmit(
       return false;
     }
   };
-
+  let a = "";
   const rawRequirementAnalyze = () => {
     const analyzerData = {
       conversationText: store.rawRequirement.content,
@@ -115,6 +115,8 @@ export function useRequirementSubmit(
       },
       onConversationStart: (cc) => {},
       onContent: (content) => {
+        // a += content;
+        // console.log("content", a);
         jsonHelperQuestAndAnswer.feed(content);
       },
       onMessage: (message) => {},
@@ -126,7 +128,7 @@ export function useRequirementSubmit(
       },
     });
   };
-  let a="";
+
   const generateRequirements = () => {
     const data = {
       rawRequirementId: store.rawRequirement.id,
@@ -140,7 +142,7 @@ export function useRequirementSubmit(
         console.log("开始对话...", cc);
       },
       onContent: (content) => {
-        a+=content;
+        a += content;
         console.log("content", a);
         jsonHelperRequirements.feed(content);
       },

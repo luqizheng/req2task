@@ -171,6 +171,7 @@ const doneQuestionCount = computed(() => {
     </el-card>
 
     <AppCard
+      class="meta-card"
       title="追问与澄清"
       :current-step="doneQuestionCount"
       :total-steps="questionCount"
@@ -180,6 +181,7 @@ const doneQuestionCount = computed(() => {
           >问题: {{ doneQuestionCount }}/{{ questionCount }}</span
         >
       </template>
+      
       <QuestionPanel :projectId="projectId" :store="store" />
     </AppCard>
   </ViewContainer>
@@ -188,6 +190,9 @@ const doneQuestionCount = computed(() => {
 .rq-edit-view-container {
   display: flex;
   flex-direction: row;
+  gap: 20px;
+  align-items: flex-start;
+  
 }
 </style>
 <style scoped>

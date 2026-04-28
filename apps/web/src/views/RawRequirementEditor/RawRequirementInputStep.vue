@@ -5,7 +5,6 @@ import { useRawRequirementCreateStore } from "./store";
 import { useQuestionOperations } from "./useQuestionOperations";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 
-import QuestionList from "./QuestionList.vue";
 import QuestionPanel from "./QuestionPanel.vue";
 import RawRequirementAISubmit from "./components/RawRequirementAISubmit.vue";
 import { RequirementCard } from "@/components/entity-card";

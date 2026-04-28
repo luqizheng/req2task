@@ -39,6 +39,7 @@ export const useRawRequirementCreateStore = defineStore(
     const deletedQuestionIds = ref<Set<string>>(new Set());
     const questionFilter = ref<"all" | "pending" | "answered">("all");
     const messageHistory = ref<Array<{ role: "user"; content: string }>>([]);
+    const requirements = ref<RawRequirementResponseDto[]>([]);
 
     const allVisibleQuestions = computed(() =>
       rawRequirement.value.questionAndAnswers.filter(
@@ -198,6 +199,7 @@ export const useRawRequirementCreateStore = defineStore(
     };
 
     return {
+      requirements,
       rawRequirement,
       deletedQuestionIds,
       questionFilter,

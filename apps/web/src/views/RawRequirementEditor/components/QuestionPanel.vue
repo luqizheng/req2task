@@ -1,60 +1,63 @@
 <template>
-  <div class="question-panel">
-    <div class="panel-header">
-      <h2 class="panel-title">问题列表</h2>
-    </div>
-    <div class="questions-scroll-area">
-      <AppStatusCard
-        v-for="(qa, index) in questions"
-        :key="qa.id"
-        :status="getCardStatus(qa)"
-        :title="`Q${index + 1}`"
-        :status-text="getStatusText(qa)"
-        show-status-dot
-        :clickable="!isAnswered(qa) && !isSkipped(qa)"
-        @click="handleCardClick(qa)"
+  <div>
+    <el-radio-group v-model="filter" style="margin-bottom: 12px">
+      <el-radio-button value="all">所有</el-radio-button>
+      <el-radio-button value="answered">已回答</el-radio-button>
+      <el-radio-button value="pending">未回答</el-radio-button>
+    </el-radio-group>
+
+    <AppStatusCard
+      v-for="(qa, index) in questions"
+      :key="qa.id"
+      :status="getCardStatus(qa)"
+      :title="`Q${index + 1}`"
+      :status-text="getStatusText(qa)"
+      show-status-dot
+      :clickable="!isAnswered(qa) && !isSkipped(qa)"
+      @click="handleCardClick(qa)"
+    >
+      <div class="question-text">{{ qa.question }}</div>
+      <AppInfo
+        v-if="qa.purpose"
+        :type="!qa.answer && !isSelected(qa) ? 'warning' : 'default'"
       >
-        <div class="question-text">{{ qa.question }}</div>
-        <AppInfo v-if="qa.purpose" :type="(!qa.answer && !isSelected(qa)) ? 'warning' : 'default'">
-          目的: {{ qa.purpose }}
-        </AppInfo>
+        目的: {{ qa.purpose }}
+      </AppInfo>
 
-        <div v-if="isSelected(qa)" class="answer-section" @click.stop>
-          <el-input
-            v-model="currentAnswer"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入您的回答..."
-            class="answer-input"
-          />
-          <div class="action-buttons">
-            <el-button class="skip-btn" @click.stop="handleSkip"
-              >跳过</el-button
-            >
-            <el-button
-              type="primary"
-              class="submit-btn"
-              @click.stop="handleSubmit"
-              >提交回答</el-button
-            >
-          </div>
+      <div v-if="isSelected(qa)" class="answer-section" @click.stop>
+        <el-input
+          v-model="currentAnswer"
+          type="textarea"
+          :rows="3"
+          placeholder="请输入您的回答..."
+          class="answer-input"
+        />
+        <div class="action-buttons">
+          <el-button class="skip-btn" @click.stop="handleSkip">跳过</el-button>
+          <el-button
+            type="primary"
+            class="submit-btn"
+            @click.stop="handleSubmit"
+            >提交回答</el-button
+          >
         </div>
+      </div>
 
-        <div v-else-if="isSkipped(qa)" class="hint-section skipped">
-          <SkipIcon class="hint-icon" />
-          <span class="hint-text">此问题已跳过，将在下次提交时保留</span>
-        </div>
+      <div v-else-if="isSkipped(qa)" class="hint-section skipped">
+        <SkipIcon class="hint-icon" />
+        <span class="hint-text">此问题已跳过，将在下次提交时保留</span>
+      </div>
 
-        <div v-else-if="isAnswered(qa)" class="answer-display">
-          <div class="answer-content">{{ qa.answer }}</div>
-        </div>
-      </AppStatusCard>
-    </div>
+      <div v-else-if="isAnswered(qa)" class="answer-display">
+        <div class="answer-content">{{ qa.answer }}</div>
+      </div>
+    </AppStatusCard>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
+import { onClickOutside } from "@vueuse/core";
 import type { RawRequirementQADto } from "@req2task/dto";
 import { useRawRequirementCreateStore } from "../store";
 import { AppStatusCard, AppInfo } from "@/components/common";
@@ -67,12 +70,24 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const questions = computed(
-  () => props.store.rawRequirement.questionAndAnswers || [],
-);
+const panelRef = ref<HTMLElement | null>(null);
+const questions = computed(() => props.store.visibleQuestions || []);
 
 const selectedId = ref<string | null>(null);
 const currentAnswer = ref("");
+const filter = computed({
+  get: () => props.store.questionFilter || "all",
+  set: (value) => {
+    props.store.questionFilter = value;
+  },
+});
+
+onClickOutside(panelRef, () => {
+  if (selectedId.value) {
+    selectedId.value = null;
+    currentAnswer.value = "";
+  }
+});
 
 const isAnswered = (qa: RawRequirementQADto) => {
   return qa.answer !== null && qa.answer !== "" && qa.answer !== undefined;

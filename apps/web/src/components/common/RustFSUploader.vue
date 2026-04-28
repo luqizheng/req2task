@@ -3,7 +3,7 @@ import { ref, computed, watch } from "vue";
 import { ElMessage } from "element-plus";
 import { useRustFS } from "@/composables/useRustFS";
 import { fileDataApi } from "@/api";
-import { Close } from "@element-plus/icons-vue";
+import { Close, Plus } from "@element-plus/icons-vue";
 
 type FileStatus = "uploading" | "success" | "error";
 

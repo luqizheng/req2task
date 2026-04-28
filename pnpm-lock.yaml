@@ -449,6 +449,9 @@ importers:
       '@element-plus/icons-vue':
         specifier: ^2.3.2
         version: 2.3.2(vue@3.5.32(typescript@5.4.5))
+      '@lucide/vue':
+        specifier: ^1.11.0
+        version: 1.11.0(vue@3.5.32(typescript@5.4.5))
       '@req2task/dto':
         specifier: workspace:^
         version: link:../../packages/dto
@@ -1594,6 +1597,11 @@ packages:
   '@ljharb/through@2.3.14':
     resolution: {integrity: sha512-ajBvlKpWucBB17FuQYUShqpqy8GRgYEpJW0vWJbUu1CV9lWyrDCapy0lScU8T8Z6qn49sSwJB3+M+evYIdGg+A==}
     engines: {node: '>= 0.4'}
+
+  '@lucide/vue@1.11.0':
+    resolution: {integrity: sha512-ISNBw5Xm7cwfwMQ/sEYelzBCpBnpIcAJUUfIBV62Q6fL10WIEZBrVho1tjragziFTVImDupJYzWozxRn55Fc1g==}
+    peerDependencies:
+      vue: '>=3.0.1'
 
   '@lukeed/csprng@1.1.0':
     resolution: {integrity: sha512-Z7C/xXCiGWsg0KuKsHTKJxbWhpI3Vs5GwLfOean7MGyVFGqdRgBbAjOCh6u4bbjPc/8MJ2pZmK/0DLdCbivLDA==}
@@ -8326,6 +8334,10 @@ snapshots:
   '@ljharb/through@2.3.14':
     dependencies:
       call-bind: 1.0.9
+
+  '@lucide/vue@1.11.0(vue@3.5.32(typescript@5.4.5))':
+    dependencies:
+      vue: 3.5.32(typescript@5.4.5)
 
   '@lukeed/csprng@1.1.0': {}
 

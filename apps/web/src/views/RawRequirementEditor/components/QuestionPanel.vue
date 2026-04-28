@@ -15,7 +15,7 @@
         @click="handleCardClick(qa)"
       >
         <div class="question-text">{{ qa.question }}</div>
-        <AppInfo v-if="qa.purpose" type="default">
+        <AppInfo v-if="qa.purpose" :type="(!qa.answer && !isSelected(qa)) ? 'warning' : 'default'">
           目的: {{ qa.purpose }}
         </AppInfo>
 
@@ -90,7 +90,7 @@ const getCardStatus = (
   qa: RawRequirementQADto,
 ): "default" | "success" | "warning" | "selected" => {
   if (isSelected(qa)) return "selected";
-  if (isSkipped(qa)) return "warning";
+  if (isSkipped(qa) || !qa.answer) return "warning";
   if (isAnswered(qa)) return "success";
   return "default";
 };

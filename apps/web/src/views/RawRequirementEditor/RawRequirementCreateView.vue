@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import ViewContainer from "@/components/view-container.vue";
-import { useRouter, useRoute } from "vue-router";
+import { useRoute } from "vue-router";
 import RustFSUploader from "@/components/common/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 import QuestionPanel from "./components/QuestionPanel.vue";
-import RawRequirementInputStep from "./RawRequirementInputStep.vue";
+import { AppCard } from "@/components/common";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
-import { ref, reactive, onMounted } from "vue";
+import { ref, reactive, onMounted, computed } from "vue";
 import type { FormInstance, FormRules } from "element-plus";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 
@@ -71,6 +71,14 @@ const handleAnalyze = async () => {
   if (!valid) return;
   //rawRequirementSubmitHelper.analyze();
 };
+
+const questionCount = computed(() => {
+  return store.rawRequirement.questionAndAnswers.length;
+});
+const doneQuestionCount = computed(() => {
+  return store.rawRequirement.questionAndAnswers.filter((item) => !item.answer)
+    .length;
+});
 </script>
 
 <template>
@@ -83,11 +91,7 @@ const handleAnalyze = async () => {
       <el-button type="primary" @click="handleSubmit">保存</el-button>
     </template>
 
-    <el-card
-      class="meta-card"
-      shadow="hover"
-    
-    >
+    <el-card class="meta-card" shadow="hover">
       <el-form
         ref="formRef"
         :model="rawRequirement"
@@ -145,11 +149,7 @@ const handleAnalyze = async () => {
         </el-row>
 
         <el-form-item label="上传文件" prop="fileIds">
-        
-          <RustFSUploader
-            v-model="rawRequirement.fileIds"
-          
-          />
+          <RustFSUploader v-model="rawRequirement.fileIds" />
         </el-form-item>
       </el-form>
 
@@ -170,13 +170,18 @@ const handleAnalyze = async () => {
       </template>
     </el-card>
 
-    <el-card class="meta-card" shadow="hover">
-      <QuestionPanel
-        :projectId="projectId"
-        :store="store"
-        
-      />
-    </el-card>
+    <AppCard
+      title="追问与澄清"
+      :current-step="doneQuestionCount"
+      :total-steps="questionCount"
+    >
+      <template #extra>
+        <span class="step-indicator"
+          >问题: {{ doneQuestionCount }}/{{ questionCount }}</span
+        >
+      </template>
+      <QuestionPanel :projectId="projectId" :store="store" />
+    </AppCard>
   </ViewContainer>
 </template>
 <style>
@@ -186,11 +191,17 @@ const handleAnalyze = async () => {
 }
 </style>
 <style scoped>
+.step-indicator {
+  font-size: 12px;
+  font-weight: 500;
+  color: #a1a1aa;
+}
+
 .raw-requirement-create {
   width: 100%;
 }
 
-.meta-card{
+.meta-card {
   flex: 1;
 }
 

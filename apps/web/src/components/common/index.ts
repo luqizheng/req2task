@@ -1,4 +1,5 @@
 export { default as AppButton } from './AppButton.vue';
+export { default as AppCard } from './AppCard.vue';
 export { default as AppStatusCard } from './AppStatusCard.vue';
 export { default as AppTag } from './AppTag.vue';
 export { default as AppBadge } from './AppBadge.vue';

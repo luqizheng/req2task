@@ -15,7 +15,7 @@ function parsePath(path: string): Array<{ key: string; index?: number }> {
   });
 }
 
-function stackToPath(stack: Array<{ type: 'object' | 'array'; key?: string; index?: number }>, currentKey: string | null): string {
+function stackToPath(stack: Array<{ type: 'object' | 'array'; key?: string; index?: number; isArrayElement?: boolean }>, currentKey: string | null): string {
   const parts: string[] = [];
   for (const frame of stack) {
     if (frame.type === 'object' && frame.key !== undefined) {
@@ -29,6 +29,8 @@ function stackToPath(stack: Array<{ type: 'object' | 'array'; key?: string; inde
 }
 
 export function useJsonStream(triggers: PathTrigger[]) {
+  console.log('[useJsonStream] init with triggers:', triggers.map(t => t.trigger));
+
   const triggerInfos = triggers.map(tr => ({
     trigger: tr,
     segments: parsePath(tr.trigger),
@@ -44,22 +46,56 @@ export function useJsonStream(triggers: PathTrigger[]) {
   let stack: Array<{
     type: 'object' | 'array';
     key?: string;
-    index?: number;       // 下一个元素的索引
+    index?: number;
     startPos?: number;
+    isArrayElement?: boolean;
   }> = [];
   let currentKey: string | null = null;
   let expectingValue = false;
 
+  // 判断当前解析的简单值是否为数组的直接元素（不在数组元素对象内部）
+  function isDirectArrayElement(): boolean {
+    if (!expectingValue) return false;
+    // 如果栈顶是对象且标记为数组元素，说明当前在数组元素对象内部，简单值不是数组元素
+    if (stack.length > 0 && stack[stack.length-1].type === 'object' && stack[stack.length-1].isArrayElement === true) {
+      console.log('[isDirectArrayElement] false: inside array element object');
+      return false;
+    }
+    // 查找数组帧
+    let arrayIndex = -1;
+    for (let i = stack.length - 1; i >= 0; i--) {
+      if (stack[i].type === 'array') {
+        arrayIndex = i;
+        break;
+      }
+    }
+    if (arrayIndex === -1) return false;
+    // 检查数组上方到栈顶之间是否有带 key 的对象（非数组元素对象）
+    for (let i = stack.length - 1; i > arrayIndex; i--) {
+      const frame = stack[i];
+      if (frame.type === 'object' && frame.key !== undefined && frame.isArrayElement !== true) {
+        console.log(`[isDirectArrayElement] false: inside object property "${frame.key}"`);
+        return false;
+      }
+    }
+    console.log('[isDirectArrayElement] true: direct array element');
+    return true;
+  }
+
   function checkAndTrigger(value: any, valuePath: string) {
+    console.log(`[checkAndTrigger] path="${valuePath}"`, value);
     for (const info of triggerInfos) {
       const triggerPath = info.segments.map(seg => seg.index !== undefined ? `${seg.key}[${seg.index}]` : seg.key).join('.');
+      console.log(`  compare with trigger="${triggerPath}"`);
       if (valuePath !== triggerPath) continue;
       if (info.trigger.onObject && typeof value === 'object' && value !== null && !Array.isArray(value)) {
         if (!info.triggeredObject && !info.triggeredValue) {
+          console.log(`  ✅ triggering onObject`);
           info.triggeredObject = true;
           info.trigger.onObject(value);
         }
       } else if (info.trigger.onValue && !info.triggeredObject && !info.triggeredValue) {
+        console.log(`  ✅ triggering onValue`);
         info.triggeredValue = true;
         info.trigger.onValue(value);
       }
@@ -67,56 +103,26 @@ export function useJsonStream(triggers: PathTrigger[]) {
   }
 
   function triggerArrayItem(item: any, arrayPath: string, index: number) {
+    console.log(`[triggerArrayItem] arrayPath="${arrayPath}", index=${index}`, item);
     for (const info of triggerInfos) {
       const triggerPath = info.segments.map(seg => seg.index !== undefined ? `${seg.key}[${seg.index}]` : seg.key).join('.');
+      console.log(`  compare with trigger="${triggerPath}"`);
       if (triggerPath !== arrayPath) continue;
       if (!info.trigger.onArrayItem) continue;
       if (!info.triggeredArrayItems.has(index)) {
+        console.log(`  ✅ triggering onArrayItem`);
         info.triggeredArrayItems.add(index);
         info.trigger.onArrayItem(item, index);
+      } else {
+        console.log(`  already triggered, skip`);
       }
     }
-  }
-
-  // 通用值完成处理：根据上下文决定触发 onArrayItem 还是 checkAndTrigger
-  function onValueCompleted(value: any, _startPos: number, endPos: number) {
-    // 检查当前栈中是否有数组帧，并且该值属于该数组的下一个元素
-    // 如果栈顶是对象帧，且对象帧的 key 为 null（表示匿名对象，在数组内），或者上一个帧是数组
-    let isArrayElement = false;
-    let arrayFrameIndex = -1;
-    for (let i = stack.length - 1; i >= 0; i--) {
-      if (stack[i].type === 'array') {
-        arrayFrameIndex = i;
-        isArrayElement = true;
-        break;
-      }
-      // 如果遇到对象且 key 存在（即普通对象属性），则跳出，不属于数组元素
-      if (stack[i].type === 'object' && stack[i].key !== undefined) break;
-    }
-
-    if (isArrayElement && arrayFrameIndex !== -1) {
-      const arrFrame = stack[arrayFrameIndex];
-      const idx = arrFrame.index ?? 0;
-      // 构建数组路径（父栈 + 数组的 key）
-      const parentStack = stack.slice(0, arrayFrameIndex);
-      const arrayPath = stackToPath(parentStack, arrFrame.key ?? null);
-      triggerArrayItem(value, arrayPath, idx);
-      // 递增数组索引，准备下一个元素
-      arrFrame.index = idx + 1;
-    } else {
-      // 普通对象属性或根值
-      const path = stackToPath(stack, currentKey);
-      checkAndTrigger(value, path);
-    }
-    // 重要：值完成后，重置 expectingValue 和 currentKey
-    expectingValue = false;
-    currentKey = null;
-    pos = endPos;
   }
 
   function tryParseValue(start: number): { value: any; end: number } | null {
     if (start >= buffer.length) return null;
     const ch = buffer[start];
+    console.log(`[tryParseValue] start=${start}, char="${ch}"`);
 
     if (ch === '"') {
       let i = start + 1;
@@ -124,10 +130,13 @@ export function useJsonStream(triggers: PathTrigger[]) {
         if (buffer[i] === '\\') { i += 2; continue; }
         if (buffer[i] === '"') {
           const raw = buffer.slice(start, i + 1);
-          return { value: JSON.parse(raw), end: i + 1 };
+          const value = JSON.parse(raw);
+          console.log(`  parsed string: ${raw} -> ${value}`);
+          return { value, end: i + 1 };
         }
         i++;
       }
+      console.log(`  incomplete string`);
       return null;
     }
 
@@ -139,6 +148,7 @@ export function useJsonStream(triggers: PathTrigger[]) {
       else if (raw === 'false') value = false;
       else if (raw === 'null') value = null;
       else value = parseFloat(raw);
+      console.log(`  parsed literal: ${raw} -> ${value}`);
       return { value, end: start + raw.length };
     }
 
@@ -160,23 +170,31 @@ export function useJsonStream(triggers: PathTrigger[]) {
               const raw = buffer.slice(start, i + 1);
               try {
                 const value = JSON.parse(raw);
+                console.log(`  parsed object/array (len=${raw.length})`);
                 return { value, end: i + 1 };
-              } catch { return null; }
+              } catch (e) {
+                console.log(`  parse error`, e);
+                return null;
+              }
             }
           }
         }
         i++;
       }
+      console.log(`  incomplete object/array`);
       return null;
     }
+    console.log(`  unknown start char`);
     return null;
   }
 
   function feed(chunk: string) {
+    console.log(`[feed] chunk:`, chunk);
     buffer += chunk;
 
     while (pos < buffer.length) {
       const ch = buffer[pos];
+      console.log(`[feed] pos=${pos}, char="${ch}", expectingValue=${expectingValue}, stackDepth=${stack.length}, stack=${JSON.stringify(stack.map(f => ({ type: f.type, key: f.key, idx: f.index, isArrayElem: f.isArrayElement })))}`);
 
       if (inString) {
         if (escape) escape = false;
@@ -186,56 +204,78 @@ export function useJsonStream(triggers: PathTrigger[]) {
         continue;
       }
 
-      // 跳过空白字符
       if (ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t') {
         pos++;
         continue;
       }
 
-      // 对象开始
       if (ch === '{') {
-        stack.push({ type: 'object', key: currentKey ?? undefined, startPos: pos });
+        const isArrayElem = (expectingValue && stack.length > 0 && stack[stack.length - 1].type === 'array');
+        console.log(`[feed] push OBJECT, key=${currentKey ?? 'null'}, isArrayElement=${isArrayElem}`);
+        stack.push({ type: 'object', key: currentKey ?? undefined, startPos: pos, isArrayElement: isArrayElem });
         currentKey = null;
         expectingValue = false;
         pos++;
         continue;
       }
 
-      // 数组开始
       if (ch === '[') {
+        console.log(`[feed] push ARRAY, key=${currentKey ?? 'null'}, index=0`);
         stack.push({ type: 'array', key: currentKey ?? undefined, index: 0, startPos: pos });
         currentKey = null;
-        expectingValue = true;   // 数组开始后立刻期待第一个元素
+        expectingValue = true;
         pos++;
         continue;
       }
 
-      // 对象结束
       if (ch === '}') {
         if (stack.length > 0 && stack[stack.length - 1].type === 'object') {
-          const objStart = stack[stack.length - 1].startPos!;
+          const objFrame = stack[stack.length - 1];
+          const objStart = objFrame.startPos!;
           const parsed = tryParseValue(objStart);
           if (parsed) {
-            // 对象值已完成，通知完成处理
-            onValueCompleted(parsed.value, objStart, parsed.end);
+            const isArrayElem = objFrame.isArrayElement === true;
+            console.log(`[feed] object completed, isArrayElem=${isArrayElem}, parsed value=`, parsed.value);
+            if (isArrayElem) {
+              // 该对象是数组元素，触发 onArrayItem
+              let arrIdx = -1;
+              for (let i = stack.length - 1; i >= 0; i--) {
+                if (stack[i].type === 'array') { arrIdx = i; break; }
+              }
+              if (arrIdx !== -1) {
+                const arrFrame = stack[arrIdx];
+                const idx = arrFrame.index ?? 0;
+                const parentStack = stack.slice(0, arrIdx);
+                const arrayPath = stackToPath(parentStack, arrFrame.key);
+                triggerArrayItem(parsed.value, arrayPath, idx);
+                arrFrame.index = idx + 1;
+              }
+            } else {
+              const path = stackToPath(stack.slice(0, -1), currentKey);
+              console.log(`[feed] object path = "${path}"`);
+              checkAndTrigger(parsed.value, path);
+            }
+            pos = parsed.end;
             stack.pop();
+            currentKey = null;
+            expectingValue = false;
             continue;
           }
         }
-        // 如果解析失败，跳过此字符
         pos++;
         continue;
       }
 
-      // 数组结束
       if (ch === ']') {
         if (stack.length > 0 && stack[stack.length - 1].type === 'array') {
           const arrStart = stack[stack.length - 1].startPos!;
           const parsed = tryParseValue(arrStart);
           if (parsed) {
-            // 数组整体作为一个值，通知完成处理
-            onValueCompleted(parsed.value, arrStart, parsed.end);
+            console.log(`[feed] array completed, ignoring trigger`);
+            pos = parsed.end;
             stack.pop();
+            currentKey = null;
+            expectingValue = false;
             continue;
           }
         }
@@ -243,7 +283,6 @@ export function useJsonStream(triggers: PathTrigger[]) {
         continue;
       }
 
-      // 读取对象键名
       if (!expectingValue && stack.length > 0 && stack[stack.length - 1].type === 'object' && currentKey === null) {
         if (ch === '"') {
           const keyStart = pos;
@@ -254,12 +293,13 @@ export function useJsonStream(triggers: PathTrigger[]) {
             else i++;
           }
           if (i < buffer.length && buffer[i] === '"') {
-            const rawKey = buffer.slice(keyStart, i + 1);
-            currentKey = JSON.parse(rawKey);
+            currentKey = JSON.parse(buffer.slice(keyStart, i + 1));
+            console.log(`[feed] read object key: ${currentKey}`);
             pos = i + 1;
             continue;
           } else {
-            break; // 键名不完整
+            console.log(`[feed] incomplete key, waiting`);
+            break;
           }
         } else {
           pos++;
@@ -267,14 +307,13 @@ export function useJsonStream(triggers: PathTrigger[]) {
         }
       }
 
-      // 冒号
       if (ch === ':') {
         expectingValue = true;
+        console.log(`[feed] colon, expectingValue=true`);
         pos++;
         continue;
       }
 
-      // 逗号
       if (ch === ',') {
         if (stack.length > 0) {
           const top = stack[stack.length - 1];
@@ -282,29 +321,56 @@ export function useJsonStream(triggers: PathTrigger[]) {
             currentKey = null;
             expectingValue = false;
           } else if (top.type === 'array') {
-            // 逗号表示下一个元素即将出现
             expectingValue = true;
           }
         }
+        console.log(`[feed] comma, expectingValue=${expectingValue}`);
         pos++;
         continue;
       }
 
-      // 期望一个值（简单值、对象或数组）
       if (expectingValue) {
         const parsed = tryParseValue(pos);
         if (parsed) {
-          onValueCompleted(parsed.value, pos, parsed.end);
-          continue; // onValueCompleted 已经更新 pos
+          const isArrayElem = isDirectArrayElement();
+          console.log(`[feed] value parsed, isArrayElem=${isArrayElem}, value=`, parsed.value);
+          if (isArrayElem) {
+            // 简单值或 null 作为数组元素
+            let arrIdx = -1;
+            for (let i = stack.length - 1; i >= 0; i--) {
+              if (stack[i].type === 'array') { arrIdx = i; break; }
+            }
+            if (arrIdx !== -1) {
+              const arrFrame = stack[arrIdx];
+              const idx = arrFrame.index ?? 0;
+              const parentStack = stack.slice(0, arrIdx);
+              const arrayPath = stackToPath(parentStack, arrFrame.key);
+              if (typeof parsed.value !== 'object' || parsed.value === null) {
+                triggerArrayItem(parsed.value, arrayPath, idx);
+                arrFrame.index = idx + 1;
+              } else {
+                console.log(`[feed] value is object/array, will be triggered in its own closing brace`);
+              }
+            }
+          } else {
+            const path = stackToPath(stack, currentKey);
+            console.log(`[feed] value path = "${path}"`);
+            checkAndTrigger(parsed.value, path);
+          }
+          pos = parsed.end;
+          expectingValue = false;
+          currentKey = null;
+          continue;
         } else {
-          // 值不完整，等待更多数据
+          console.log(`[feed] value incomplete, break`);
           break;
         }
       }
 
-      // 其他字符（垃圾数据）跳过
+      console.log(`[feed] skipping unknown char: "${ch}"`);
       pos++;
     }
+    console.log(`[feed] end while, pos=${pos}, bufferLen=${buffer.length}`);
   }
 
   function getBuffer() { return buffer; }
@@ -321,6 +387,7 @@ export function useJsonStream(triggers: PathTrigger[]) {
       info.triggeredObject = false;
       info.triggeredValue = false;
     }
+    console.log('[reset]');
   }
 
   return { feed, reset, getBuffer };

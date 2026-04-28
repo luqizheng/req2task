@@ -12,13 +12,14 @@ export const requirementPrompts: PromptTemplate[] = [
 
 业务对象字段（必须严格遵守）：
 - title: string (需求标题，不超过100字)
-- description: string (详细描述)
+- content: string (详细描述)
 - priority: "critical" | "high" | "medium" | "low" (优先级)
 - source: "ai_generated" (固定值，因为是AI生成)
 - status: "draft" (固定值，初始状态)
 - type: "功能需求" | "性能需求" | "安全需求" | "接口需求" | "数据需求" | "用户体验需求"
 - storyPoints: number (故事点，数字)
 - moduleIds: string[] (关联的模块ID列表)
+- keyElements: string[] (需求摘要列表，4-12字，不超过10个)。从content提炼的关键要素，每个摘要4-12字。
 - parentId: string | null (父需求ID，可为空)`,
     userPromptTemplate: `{{#if projectId}}项目ID: {{projectId}}
 
@@ -43,6 +44,7 @@ export const requirementPrompts: PromptTemplate[] = [
 7. moduleIds可以是空数组[]
 8. keyElements从原始需求中提取关键要素
 9. 请严格遵守json格式，只返回JSON数组格式，不要其他内容
+10. keyElements 蓄意摘要，4-12字，不超过10个。
 
 JSON格式：
 \`\`\`json
@@ -52,7 +54,7 @@ JSON格式：
     {
       "title": "需求标题",
       "content": "需求详细描述",
-      "keyElements": ["关键要素1", "关键要素2"],
+      "keyElements": ["需求摘要1", "需求摘要2"],
       "priority": "high",
       "source": "ai_generated",
       "status": "draft",

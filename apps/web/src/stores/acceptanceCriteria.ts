@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { AcceptanceCriteriaResponseDto } from '@req2task/dto';
-import { requirementsApi } from '@/api/requirements';
+import { acceptanceCriteriaApi } from '@/api/requirements';
 import type { CreateAcceptanceCriteriaDto, UpdateAcceptanceCriteriaDto } from '@req2task/dto';
 
 export const useAcceptanceCriteriaStore = defineStore('acceptanceCriteria', () => {
@@ -14,7 +14,7 @@ export const useAcceptanceCriteriaStore = defineStore('acceptanceCriteria', () =
     isLoading.value = true;
     error.value = null;
     try {
-      criteriaList.value = await requirementsApi.getAcceptanceCriteria(userStoryId);
+      criteriaList.value = await acceptanceCriteriaApi.getByUserStory(userStoryId);
       return criteriaList.value;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch acceptance criteria';
@@ -28,7 +28,7 @@ export const useAcceptanceCriteriaStore = defineStore('acceptanceCriteria', () =
     isLoading.value = true;
     error.value = null;
     try {
-      const criteria = await requirementsApi.createAcceptanceCriteria(userStoryId, data);
+      const criteria = await acceptanceCriteriaApi.create(userStoryId, data);
       criteriaList.value.push(criteria);
       return criteria;
     } catch (err) {
@@ -43,7 +43,7 @@ export const useAcceptanceCriteriaStore = defineStore('acceptanceCriteria', () =
     isLoading.value = true;
     error.value = null;
     try {
-      const criteria = await requirementsApi.updateAcceptanceCriteria(id, data);
+      const criteria = await acceptanceCriteriaApi.update(id, data);
       const index = criteriaList.value.findIndex(c => c.id === id);
       if (index !== -1) {
         criteriaList.value[index] = criteria;
@@ -64,7 +64,7 @@ export const useAcceptanceCriteriaStore = defineStore('acceptanceCriteria', () =
     isLoading.value = true;
     error.value = null;
     try {
-      await requirementsApi.deleteAcceptanceCriteria(id);
+      await acceptanceCriteriaApi.delete(id);
       criteriaList.value = criteriaList.value.filter(c => c.id !== id);
       if (currentCriteria.value?.id === id) {
         currentCriteria.value = null;

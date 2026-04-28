@@ -109,7 +109,7 @@ const generateDemoAttachments = () => {
 const attachments= ref(generateDemoAttachments())
 
 
-const { rawRequirement, infoItems, loading, error, fetchRawRequirement } =
+const { rawRequirement, infoItems } =
   useRawRequirement();
 </script>
 <style></style>

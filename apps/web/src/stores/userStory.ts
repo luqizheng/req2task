@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import type { UserStoryResponseDto } from '@req2task/dto';
-import { requirementsApi } from '@/api/requirements';
+import { userStoriesApi } from '@/api/requirements';
 import type { CreateUserStoryDto, UpdateUserStoryDto } from '@req2task/dto';
 
 export const useUserStoryStore = defineStore('userStory', () => {
@@ -14,7 +14,7 @@ export const useUserStoryStore = defineStore('userStory', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      userStories.value = await requirementsApi.getUserStories(requirementId);
+      userStories.value = await userStoriesApi.getByRequirement(requirementId);
       return userStories.value;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to fetch user stories';
@@ -28,7 +28,7 @@ export const useUserStoryStore = defineStore('userStory', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const story = await requirementsApi.createUserStory(requirementId, data);
+      const story = await userStoriesApi.create(requirementId, data);
       userStories.value.push(story);
       return story;
     } catch (err) {
@@ -43,7 +43,7 @@ export const useUserStoryStore = defineStore('userStory', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const story = await requirementsApi.updateUserStory(id, data);
+      const story = await userStoriesApi.update(id, data);
       const index = userStories.value.findIndex(s => s.id === id);
       if (index !== -1) {
         userStories.value[index] = story;
@@ -64,7 +64,7 @@ export const useUserStoryStore = defineStore('userStory', () => {
     isLoading.value = true;
     error.value = null;
     try {
-      await requirementsApi.deleteUserStory(id);
+      await userStoriesApi.delete(id);
       userStories.value = userStories.value.filter(s => s.id !== id);
       if (currentStory.value?.id === id) {
         currentStory.value = null;

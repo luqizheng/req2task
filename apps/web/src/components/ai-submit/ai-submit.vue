@@ -142,7 +142,7 @@ const handleFileSelect = async (event: Event) => {
 
   for (const file of files) {
     try {
-      await rustfsUpload(file, props.targetType, props.targetId);
+      await rustfsUpload(file);
     } catch (error) {
 
       ElMessage.error(`${file.name} 上传失败`);

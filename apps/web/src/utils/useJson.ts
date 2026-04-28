@@ -79,7 +79,7 @@ export function useJsonStream(triggers: PathTrigger[]) {
   }
 
   // 通用值完成处理：根据上下文决定触发 onArrayItem 还是 checkAndTrigger
-  function onValueCompleted(value: any, startPos: number, endPos: number) {
+  function onValueCompleted(value: any, _startPos: number, endPos: number) {
     // 检查当前栈中是否有数组帧，并且该值属于该数组的下一个元素
     // 如果栈顶是对象帧，且对象帧的 key 为 null（表示匿名对象，在数组内），或者上一个帧是数组
     let isArrayElement = false;
@@ -99,7 +99,7 @@ export function useJsonStream(triggers: PathTrigger[]) {
       const idx = arrFrame.index ?? 0;
       // 构建数组路径（父栈 + 数组的 key）
       const parentStack = stack.slice(0, arrayFrameIndex);
-      const arrayPath = stackToPath(parentStack, arrFrame.key);
+      const arrayPath = stackToPath(parentStack, arrFrame.key ?? null);
       triggerArrayItem(value, arrayPath, idx);
       // 递增数组索引，准备下一个元素
       arrFrame.index = idx + 1;

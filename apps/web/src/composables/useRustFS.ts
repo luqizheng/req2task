@@ -196,10 +196,18 @@ export function useRustFS() {
     uploadingFiles.value.delete(fileId);
   };
 
+  /**
+   * 清空所有上传状态
+   */
+  const clearFiles = (): void => {
+    uploadingFiles.value.clear();
+  };
+
   return {
     upload,
     getDownloadUrl,
     uploadingFiles,
     removeFile,
+    clearFiles,
   };
 }

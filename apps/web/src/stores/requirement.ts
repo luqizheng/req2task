@@ -10,7 +10,7 @@ import type {
   CreateAcceptanceCriteriaDto,
   UpdateAcceptanceCriteriaDto,
 } from '@req2task/dto';
-import { requirementsApi } from '@/api/requirements';
+import { requirementsApi, userStoriesApi, acceptanceCriteriaApi } from '@/api/requirements';
 import type {
   RequirementListParams,
   ChangeLogItem,
@@ -136,7 +136,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const fetchUserStories = async (requirementId: string) => {
     loading.value = true;
     try {
-      currentUserStories.value = await requirementsApi.getUserStories(requirementId);
+      currentUserStories.value = await userStoriesApi.getByRequirement(requirementId);
     } finally {
       loading.value = false;
     }
@@ -148,7 +148,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const result = await requirementsApi.createUserStory(
+      const result = await userStoriesApi.create(
         requirementId,
         data
       );
@@ -161,7 +161,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const updateUserStory = async (id: string, data: UpdateUserStoryDto) => {
     loading.value = true;
     try {
-      const result = await requirementsApi.updateUserStory(id, data);
+      const result = await userStoriesApi.update(id, data);
       return result;
     } finally {
       loading.value = false;
@@ -171,7 +171,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const deleteUserStory = async (id: string) => {
     loading.value = true;
     try {
-      await requirementsApi.deleteUserStory(id);
+      await userStoriesApi.delete(id);
     } finally {
       loading.value = false;
     }
@@ -183,7 +183,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      return await requirementsApi.createAcceptanceCriteria(
+      return await acceptanceCriteriaApi.create(
         userStoryId,
         data
       );
@@ -198,7 +198,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   ) => {
     loading.value = true;
     try {
-      const result = await requirementsApi.updateAcceptanceCriteria(
+      const result = await acceptanceCriteriaApi.update(
         id,
         data
       );
@@ -211,7 +211,7 @@ export const useRequirementStore = defineStore('requirement', () => {
   const deleteAcceptanceCriteria = async (id: string) => {
     loading.value = true;
     try {
-      await requirementsApi.deleteAcceptanceCriteria(id);
+      await acceptanceCriteriaApi.delete(id);
     } finally {
       loading.value = false;
     }

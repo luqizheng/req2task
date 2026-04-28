@@ -47,6 +47,7 @@ export const requirementPrompts: PromptTemplate[] = [
 JSON格式：
 {
   "projectId": "{{projectId}}",
+  "rawRequirement": "{{rawRequirement}}",
   "requirements": [
     {
       "title": "需求标题",

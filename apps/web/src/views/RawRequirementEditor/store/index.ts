@@ -190,6 +190,45 @@ export const useRawRequirementCreateStore = defineStore(
         }));
     };
 
+    const setRequirements = (data: RawRequirementResponseDto[]) => {
+      requirements.value = data;
+    };
+
+    const addRequirement = (requirement: RawRequirementResponseDto) => {
+      const exists = requirements.value.some((r) => r.id === requirement.id);
+      if (!exists) {
+        requirements.value.push(requirement);
+      }
+    };
+
+    const updateRequirement = (
+      id: string,
+      updates: Partial<RawRequirementResponseDto>,
+    ) => {
+      const index = requirements.value.findIndex((r) => r.id === id);
+      if (index !== -1) {
+        requirements.value[index] = {
+          ...requirements.value[index],
+          ...updates,
+        };
+      }
+    };
+
+    const deleteRequirement = (id: string) => {
+      const index = requirements.value.findIndex((r) => r.id === id);
+      if (index !== -1) {
+        requirements.value.splice(index, 1);
+      }
+    };
+
+    const getRequirementById = (id: string) => {
+      return requirements.value.find((r) => r.id === id);
+    };
+
+    const clearRequirements = () => {
+      requirements.value = [];
+    };
+
     return {
       requirements,
       rawRequirement,
@@ -213,6 +252,12 @@ export const useRawRequirementCreateStore = defineStore(
       reset,
       messageHistory,
       loadRawRequirement,
+      setRequirements,
+      addRequirement,
+      updateRequirement,
+      deleteRequirement,
+      getRequirementById,
+      clearRequirements,
     };
   },
 );

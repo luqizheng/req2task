@@ -60,7 +60,7 @@ export function useRequirementSubmit(
     {
       trigger: "requirements",
       onArrayItem(item) {
-        console.log("需求", item);
+        store.addRequirement(item);
         //store.addQuestionFromSSE(item as Requirement);
       },
       onObject(obj) {
@@ -113,13 +113,11 @@ export function useRequirementSubmit(
       onAnalyzeStart: (event) => {
         store.rawRequirement.conversationId = event.collectionId;
       },
-      onConversationStart: (cc) => {},
+      onConversationStart: () => {},
       onContent: (content) => {
-        // a += content;
-        // console.log("content", a);
         jsonHelperQuestAndAnswer.feed(content);
       },
-      onMessage: (message) => {},
+      onMessage: () => {},
       onDone: () => {
         ElMessage.success("分析完成");
       },

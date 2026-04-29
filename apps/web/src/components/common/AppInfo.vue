@@ -28,7 +28,7 @@ const typeClass = computed(() => ({
   padding: 8px 10px 8px 10px;
   color: #71717a;
   background-color: rgba(248, 248, 250, 1);
-  border: 1px solid #a1a1aa;
+  border: 1px solid rgba(248, 248, 250, 1);
 }
 
 .default {

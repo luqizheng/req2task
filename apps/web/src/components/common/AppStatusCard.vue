@@ -22,7 +22,7 @@
       </div>
     </div>
 
-    <div v-if="title" class="divider-line"></div>
+    <div v-if="title && dividerLine" class="divider-line"></div>
 
     <div v-if="$slots.default" class="card-content">
       <slot></slot>
@@ -52,12 +52,14 @@ interface Props {
   statusText?: string;
   showStatusDot?: boolean;
   clickable?: boolean;
+  dividerLine?: boolean;
 }
 
 const props = withDefaults(defineProps<Props>(), {
   status: "default",
   showStatusDot: false,
   clickable: true,
+  dividerLine: false,
 });
 
 const emit = defineEmits<{
@@ -203,7 +205,7 @@ const handleClick = () => {
   height: 1px;
   background: #e4e4e4;
   min-width: 20px;
-  margin: 12px;
+  margin: 0
 }
 
 .status-tag {

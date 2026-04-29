@@ -1,11 +1,11 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Init1776838591231 implements MigrationInterface {
-    name = 'Init1776838591231'
+export class Init1777450609835 implements MigrationInterface {
+    name = 'Init1777450609835'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "public"."conversations_status_enum" AS ENUM('active', 'archived')`);
-        await queryRunner.query(`CREATE TABLE "conversations" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "next_conversation_id" uuid, "title" character varying(255), "collection_id" character varying(36), "raw_requirement_id" character varying(36), "status" "public"."conversations_status_enum" NOT NULL DEFAULT 'active', "system_prompt" text NOT NULL DEFAULT '', "message_count" integer NOT NULL DEFAULT '0', "summary" text, "conversation_type" character varying(50) NOT NULL DEFAULT 'general', "metadata" json, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_ee34f4f7ced4ec8681f26bf04ef" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "conversations" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "title" character varying(255), "status" "public"."conversations_status_enum" NOT NULL DEFAULT 'active', "system_prompt" text NOT NULL DEFAULT '', "message_count" integer NOT NULL DEFAULT '0', "summary" text, "metadata" json, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_ee34f4f7ced4ec8681f26bf04ef" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."conversation_messages_role_enum" AS ENUM('user', 'assistant', 'system')`);
         await queryRunner.query(`CREATE TABLE "conversation_messages" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "conversation_id" uuid NOT NULL, "role" "public"."conversation_messages_role_enum" NOT NULL DEFAULT 'user', "content" text NOT NULL, "metadata" json, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_113248f25c4c0a7c179b3f5a609" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."llm_configs_provider_enum" AS ENUM('deepseek', 'openai', 'ollama')`);

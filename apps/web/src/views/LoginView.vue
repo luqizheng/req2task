@@ -1,270 +1,140 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { User, Lock, MagicStick } from '@element-plus/icons-vue'
-import type { FormInstance, FormRules } from 'element-plus'
-import { authApi } from '@/api'
+import { useForm, useField } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import { z } from 'zod'
+import { Wand2, User, Lock } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 import { useUserStore } from '@/stores/user'
+import { authApi } from '@/api'
 
 const router = useRouter()
 const userStore = useUserStore()
-const loginFormRef = ref<FormInstance>()
 const loading = ref(false)
-const loginForm = ref({
-  username: '',
-  password: '',
-  remember: false
+
+const loginSchema = toTypedSchema(z.object({
+  username: z.string().min(1, '请输入用户名'),
+  password: z.string().min(6, '密码长度至少6位'),
+  remember: z.boolean().optional()
+}))
+
+const { handleSubmit } = useForm({
+  validationSchema: loginSchema,
+  initialValues: {
+    username: '',
+    password: '',
+    remember: false
+  }
 })
 
-const rules: FormRules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
-  password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度至少6位', trigger: 'blur' }
-  ]
-}
+const { value: username, errorMessage: usernameError } = useField<string>('username')
+const { value: password, errorMessage: passwordError } = useField<string>('password')
+const { value: remember } = useField<boolean>('remember')
 
-const handleLogin = async () => {
-  if (!loginFormRef.value) return
-  await loginFormRef.value.validate(async (valid) => {
-    if (valid) {
-      loading.value = true
-      try {
-        const data = await authApi.login({
-          username: loginForm.value.username,
-          password: loginForm.value.password
-        })
-        userStore.setToken(data.accessToken)
-        userStore.setUserInfo(data.user)
-        ElMessage.success('登录成功')
-        router.push('/dashboard')
-      } catch (error) {
-        const message = (error as { message?: string })?.message || '登录失败';
-        ElMessage.error(message);
-      } finally {
-        loading.value = false
-      }
-    }
-  })
-}
-
-const handleForgot = () => {
-  console.log('forgot password')
-}
-
-const goToRegister = () => {
-  router.push('/register')
-}
+const onSubmit = handleSubmit(async (values) => {
+  loading.value = true
+  try {
+    const response = await authApi.login({
+       username: values.username,
+       password: values.password
+     })
+     userStore.setToken(response.accessToken)
+     userStore.setUserInfo(response.user)
+    toast.success('登录成功')
+    router.push('/dashboard')
+  } catch (error) {
+    toast.error('登录失败')
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <div class="login-container">
-    <div class="login-bg">
-      <div class="login-decoration">
-        <div class="circle circle-1"></div>
-        <div class="circle circle-2"></div>
-        <div class="circle circle-3"></div>
-      </div>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 relative overflow-hidden">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-500 to-purple-600 opacity-60 blur-[80px]" />
+      <div class="absolute bottom-[-150px] left-[-100px] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 opacity-50 blur-[80px]" />
+      <div class="absolute top-1/2 left-1/4 w-[300px] h-[300px] rounded-full bg-gradient-to-br from-amber-500 to-red-500 opacity-25 blur-[80px]" />
     </div>
-    
-    <div class="login-card">
-      <div class="login-header">
-        <div class="logo">
-          <el-icon :size="40" class="logo-icon"><MagicStick /></el-icon>
-          <span class="logo-text">req2task</span>
+
+    <Card class="w-[420px] shadow-xl border-0">
+      <CardHeader class="text-center space-y-4 pb-2">
+        <div class="flex items-center justify-center gap-3">
+          <div class="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <Wand2 class="w-8 h-8 text-white" />
+          </div>
+          <span class="text-3xl font-bold text-slate-800 tracking-tight">req2task</span>
         </div>
-        <p class="subtitle">需求管理系统</p>
-      </div>
+        <CardDescription class="text-slate-500">需求管理系统</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form @submit="onSubmit" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="username" class="text-slate-700">用户名</Label>
+            <div class="relative">
+              <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="username"
+                v-model="username"
+                placeholder="请输入用户名"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': usernameError }"
+              />
+            </div>
+            <p v-if="usernameError" class="text-sm text-red-500">{{ usernameError }}</p>
+          </div>
 
-      <el-form
-        ref="loginFormRef"
-        :model="loginForm"
-        :rules="rules"
-        class="login-form"
-        @submit.prevent="handleLogin"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="loginForm.username"
-            placeholder="用户名"
-            size="large"
-            :prefix-icon="User"
-          />
-        </el-form-item>
+          <div class="space-y-2">
+            <Label for="password" class="text-slate-700">密码</Label>
+            <div class="relative">
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="password"
+                v-model="password"
+                type="password"
+                placeholder="请输入密码"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': passwordError }"
+              />
+            </div>
+            <p v-if="passwordError" class="text-sm text-red-500">{{ passwordError }}</p>
+          </div>
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="loginForm.password"
-            type="password"
-            placeholder="密码"
-            size="large"
-            :prefix-icon="Lock"
-            show-password
-          />
-        </el-form-item>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <Checkbox id="remember" v-model="remember" />
+              <Label for="remember" class="text-sm text-slate-600 cursor-pointer">记住我</Label>
+            </div>
+            <Button variant="link" class="text-sm text-blue-600 hover:text-blue-700 p-0 h-auto">
+              忘记密码？
+            </Button>
+          </div>
 
-        <div class="form-options">
-          <el-checkbox v-model="loginForm.remember">记住我</el-checkbox>
-          <el-link type="primary" @click="handleForgot">忘记密码？</el-link>
-        </div>
-
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            class="login-btn"
-            native-type="submit"
-          >
+          <Button type="submit" class="w-full h-12 text-base font-medium" :disabled="loading">
             {{ loading ? '登录中...' : '登 录' }}
-          </el-button>
-        </el-form-item>
-      </el-form>
+          </Button>
+        </form>
 
-      <div class="login-footer">
-        <span class="ai-badge">
-          <el-icon><MagicStick /></el-icon>
-          AI 智能辅助
-        </span>
-        <div class="register-link">
-          还没有账号？
-          <el-link type="primary" @click="goToRegister">立即注册</el-link>
+        <div class="mt-6 text-center space-y-3">
+          <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white text-xs font-medium">
+            <Wand2 class="w-3 h-3" />
+            AI 智能辅助
+          </div>
+          <p class="text-sm text-slate-500">
+            还没有账号？
+            <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm">
+              立即注册
+            </Button>
+          </p>
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   </div>
 </template>
-
-<style scoped>
-.login-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.login-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.login-decoration .circle {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(40px);
-}
-
-.circle-1 {
-  width: 500px;
-  height: 500px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  top: -200px;
-  right: -100px;
-  opacity: 0.6;
-}
-
-.circle-2 {
-  width: 400px;
-  height: 400px;
-  background: linear-gradient(135deg, #10b981, #06b6d4);
-  bottom: -150px;
-  left: -100px;
-  opacity: 0.5;
-}
-
-.circle-3 {
-  width: 300px;
-  height: 300px;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  top: 50%;
-  left: 25%;
-  opacity: 0.25;
-}
-
-.login-card {
-  width: 420px;
-  padding: 48px 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1;
-}
-
-.login-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.logo-icon {
-  color: #2563eb;
-}
-
-.logo-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  margin-top: 8px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.login-form {
-  margin-top: 24px;
-}
-
-.form-options {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24px;
-}
-
-.login-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.login-footer {
-  margin-top: 24px;
-  text-align: center;
-}
-
-.ai-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  background: linear-gradient(135deg, #6366f1, #8b5cf6);
-  color: white;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.register-link {
-  margin-top: 16px;
-  color: #64748b;
-  font-size: 14px;
-}
-</style>

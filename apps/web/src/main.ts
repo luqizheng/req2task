@@ -1,18 +1,15 @@
-import 'reflect-metadata'
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import '@/styles/main.css'
-import '@/styles/globals.css'
-import '@/styles/font.css'
 import App from './App.vue'
 import router from './router'
 
-const app = createApp(App)
-const pinia = createPinia()
+import './assets/index.css'
+import { Toaster } from 'vue-sonner'
 
-app.use(pinia)
-app.use(ElementPlus)
+const app = createApp(App)
+
+app.use(createPinia())
 app.use(router)
+app.component('Toaster', Toaster)
+
 app.mount('#app')

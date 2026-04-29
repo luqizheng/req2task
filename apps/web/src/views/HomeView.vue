@@ -1,51 +1,52 @@
 <script setup lang="ts">
-import { ref, markRaw } from 'vue'
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import {
-  Document,
-  MagicStick,
+  FileText,
+  Wand2,
   ArrowRight,
-  Check,
+  CheckCircle2,
   User,
-  Setting,
-  Connection
-} from '@element-plus/icons-vue'
+  Network,
+  LayoutDashboard
+} from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 
 const features = ref([
   {
-    icon: markRaw(Document),
+    icon: FileText,
     title: '需求管理',
     desc: '完整的需求生命周期管理，支持层级嵌套和状态流转',
     color: '#2563eb'
   },
   {
-    icon: markRaw(MagicStick),
+    icon: Wand2,
     title: 'AI 智能辅助',
     desc: 'AI 自动生成需求、拆分任务、检测冲突',
     color: '#6366f1'
   },
   {
-    icon: markRaw(Check),
+    icon: CheckCircle2,
     title: '变更追溯',
     desc: '完整的变更历史记录，支持版本对比',
     color: '#10b981'
   },
   {
-    icon: markRaw(User),
+    icon: User,
     title: '团队协作',
     desc: '多角色权限管理，项目成员协同工作',
     color: '#f59e0b'
   },
   {
-    icon: markRaw(Connection),
+    icon: Network,
     title: '知识库构建',
     desc: 'RAG 向量检索，构建项目知识图谱',
     color: '#ec4899'
   },
   {
-    icon: markRaw(Setting),
+    icon: LayoutDashboard,
     title: '可视化看板',
     desc: '任务看板、燃尽图、进度统计一览无余',
     color: '#8b5cf6'
@@ -66,12 +67,12 @@ const goToRegister = () => {
     <header class="header">
       <div class="header-content">
         <div class="logo">
-          <el-icon :size="28" class="logo-icon"><MagicStick /></el-icon>
+          <Wand2 class="w-7 h-7 text-blue-600" />
           <span class="logo-text">req2task</span>
         </div>
         <nav class="nav">
-          <el-button text @click="goToLogin">登录</el-button>
-          <el-button type="primary" @click="goToRegister">立即开始</el-button>
+          <Button variant="ghost" @click="goToLogin">登录</Button>
+          <Button @click="goToRegister">立即开始</Button>
         </nav>
       </div>
     </header>
@@ -93,11 +94,11 @@ const goToRegister = () => {
             多维度信息关联、智能变更检测和可视化进度追踪
           </p>
           <div class="hero-actions">
-            <el-button type="primary" size="large" @click="goToRegister">
+            <Button size="lg" @click="goToRegister">
               免费开始
-              <el-icon class="ml-2"><ArrowRight /></el-icon>
-            </el-button>
-            <el-button size="large" @click="goToLogin">了解更多</el-button>
+              <ArrowRight class="ml-2 w-4 h-4" />
+            </Button>
+            <Button size="lg" variant="outline" @click="goToLogin">了解更多</Button>
           </div>
         </div>
       </section>
@@ -117,7 +118,7 @@ const goToRegister = () => {
               class="feature-icon"
               :style="{ backgroundColor: feature.color + '15', color: feature.color }"
             >
-              <el-icon :size="24"><component :is="feature.icon" /></el-icon>
+              <component :is="feature.icon" class="w-6 h-6" />
             </div>
             <h3 class="feature-title">{{ feature.title }}</h3>
             <p class="feature-desc">{{ feature.desc }}</p>
@@ -179,10 +180,6 @@ const goToRegister = () => {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.logo-icon {
-  color: #2563eb;
 }
 
 .logo-text {
@@ -278,12 +275,6 @@ const goToRegister = () => {
   display: flex;
   gap: 16px;
   justify-content: center;
-}
-
-.hero-actions :deep(.el-button) {
-  padding: 12px 32px;
-  font-size: 16px;
-  height: auto;
 }
 
 .ml-2 {

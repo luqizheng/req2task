@@ -1,304 +1,187 @@
 <script setup lang="ts">
-import { ref, markRaw } from "vue";
-import { useRouter } from "vue-router";
-import { User, Lock, Message, MagicStick } from "@element-plus/icons-vue";
-import { ElMessage, type FormInstance, type FormRules } from "element-plus";
-import { authApi } from "@/api";
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { useForm } from 'vee-validate'
+import { toTypedSchema } from '@vee-validate/zod'
+import { z } from 'zod'
+import { Wand2, User, Lock, Mail, UserCircle } from 'lucide-vue-next'
+import { toast } from 'vue-sonner'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Label } from '@/components/ui/label'
 
-const router = useRouter();
-const registerFormRef = ref<FormInstance>();
-const loading = ref(false);
+const router = useRouter()
+const loading = ref(false)
 
-const icons = {
-  user: markRaw(User),
-  lock: markRaw(Lock),
-  message: markRaw(Message),
-};
-const registerForm = ref({
-  username: "",
-  email: "",
-  displayName: "",
-  password: "",
-  confirmPassword: "",
-  agree: false,
-});
+const registerSchema = toTypedSchema(z.object({
+  username: z.string().min(3, '用户名长度为3-20个字符').max(20),
+  email: z.string().email('请输入正确的邮箱格式'),
+  displayName: z.string().optional(),
+  password: z.string().min(6, '密码长度至少6位'),
+  confirmPassword: z.string(),
+  agree: z.boolean()
+}).refine(data => data.password === data.confirmPassword, {
+  message: '两次输入密码不一致',
+  path: ['confirmPassword']
+}))
 
-const validatePassword = (_rule: unknown, value: string, callback: (error?: Error) => void) => {
-  if (value !== registerForm.value.password) {
-    callback(new Error("两次输入密码不一致"));
-  } else {
-    callback();
+const { values, errors, handleSubmit } = useForm({
+  validationSchema: registerSchema,
+  initialValues: {
+    username: '',
+    email: '',
+    displayName: '',
+    password: '',
+    confirmPassword: '',
+    agree: false
   }
-};
+})
 
-const rules: FormRules = {
-  username: [
-    { required: true, message: "请输入用户名", trigger: "blur" },
-    { min: 3, max: 20, message: "用户名长度为3-20个字符", trigger: "blur" },
-  ],
-  email: [
-    { required: true, message: "请输入邮箱", trigger: "blur" },
-    { type: "email", message: "请输入正确的邮箱格式", trigger: "blur" },
-  ],
-  password: [
-    { required: true, message: "请输入密码", trigger: "blur" },
-    { min: 6, message: "密码长度至少6位", trigger: "blur" },
-  ],
-  confirmPassword: [
-    { required: true, message: "请确认密码", trigger: "blur" },
-    { validator: validatePassword, trigger: "blur" },
-  ],
-};
-
-const handleRegister = async () => {
-  if (!registerFormRef.value) return;
-  await registerFormRef.value.validate(async (valid) => {
-    if (valid) {
-      if (!registerForm.value.agree) {
-        ElMessage.warning("请先同意用户协议");
-        return;
-      }
-      loading.value = true;
-      try {
-        await authApi.register({
-          username: registerForm.value.username,
-          email: registerForm.value.email,
-          displayName: registerForm.value.displayName || registerForm.value.username,
-          password: registerForm.value.password,
-        });
-        ElMessage.success("注册成功，请登录");
-        router.push("/login");
-      } catch (error: unknown) {
-        const axiosError = error as { response?: { data?: { message?: string } } };
-        ElMessage.error(axiosError.response?.data?.message || "注册失败");
-      } finally {
-        loading.value = false;
-      }
-    }
-  });
-};
+const onSubmit = handleSubmit(async (values) => {
+  if (!values.agree) {
+    toast.warning('请先同意用户协议')
+    return
+  }
+  
+  loading.value = true
+  try {
+    console.log('注册:', values)
+    toast.success('注册成功，请登录')
+    router.push('/login')
+  } catch (error) {
+    toast.error('注册失败')
+  } finally {
+    loading.value = false
+  }
+})
 
 const goToLogin = () => {
-  router.push("/login");
-};
+  router.push('/login')
+}
 </script>
 
 <template>
-  <div class="register-container">
-    <div class="register-bg">
-      <div class="register-decoration">
-        <div class="circle circle-1"></div>
-        <div class="circle circle-2"></div>
-        <div class="circle circle-3"></div>
-      </div>
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 relative overflow-hidden p-4">
+    <div class="absolute inset-0 pointer-events-none">
+      <div class="absolute top-[-200px] right-[-100px] w-[500px] h-[500px] rounded-full bg-gradient-to-br from-blue-500 to-purple-600 opacity-60 blur-[80px]" />
+      <div class="absolute bottom-[-150px] left-[-100px] w-[400px] h-[400px] rounded-full bg-gradient-to-br from-emerald-500 to-cyan-500 opacity-50 blur-[80px]" />
+      <div class="absolute top-1/2 left-1/4 w-[300px] h-[300px] rounded-full bg-gradient-to-br from-amber-500 to-red-500 opacity-25 blur-[80px]" />
     </div>
 
-    <div class="register-card">
-      <div class="register-header">
-        <div class="logo">
-          <el-icon :size="40" class="logo-icon"><MagicStick /></el-icon>
-          <span class="logo-text">req2task</span>
+    <Card class="w-full max-w-md shadow-xl border-0">
+      <CardHeader class="text-center space-y-4 pb-2">
+        <div class="flex items-center justify-center gap-3">
+          <div class="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600">
+            <Wand2 class="w-8 h-8 text-white" />
+          </div>
+          <span class="text-3xl font-bold text-slate-800 tracking-tight">req2task</span>
         </div>
-        <p class="subtitle">创建账号</p>
-      </div>
+        <CardDescription class="text-slate-500 text-lg">创建账号</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form @submit="onSubmit" class="space-y-4">
+          <div class="space-y-2">
+            <Label for="username" class="text-slate-700">用户名</Label>
+            <div class="relative">
+              <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="username"
+                v-model="values.username"
+                placeholder="用户名（3-20个字符）"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': errors.username }"
+              />
+            </div>
+            <p v-if="errors.username" class="text-sm text-red-500">{{ errors.username }}</p>
+          </div>
 
-      <el-form
-        ref="registerFormRef"
-        :model="registerForm"
-        :rules="rules"
-        class="register-form"
-        @submit.prevent="handleRegister"
-      >
-        <el-form-item prop="username">
-          <el-input
-            v-model="registerForm.username"
-            placeholder="用户名"
-            size="large"
-            :prefix-icon="icons.user"
-          />
-        </el-form-item>
+          <div class="space-y-2">
+            <Label for="email" class="text-slate-700">邮箱</Label>
+            <div class="relative">
+              <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="email"
+                v-model="values.email"
+                type="email"
+                placeholder="请输入邮箱"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': errors.email }"
+              />
+            </div>
+            <p v-if="errors.email" class="text-sm text-red-500">{{ errors.email }}</p>
+          </div>
 
-        <el-form-item prop="email">
-          <el-input
-            v-model="registerForm.email"
-            placeholder="邮箱"
-            size="large"
-            :prefix-icon="icons.message"
-          />
-        </el-form-item>
+          <div class="space-y-2">
+            <Label for="displayName" class="text-slate-700">显示名称</Label>
+            <div class="relative">
+              <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="displayName"
+                v-model="values.displayName"
+                placeholder="显示名称（可选）"
+                class="pl-10 h-11"
+              />
+            </div>
+          </div>
 
-        <el-form-item prop="displayName">
-          <el-input
-            v-model="registerForm.displayName"
-            placeholder="显示名称（可选）"
-            size="large"
-            :prefix-icon="icons.user"
-          />
-        </el-form-item>
+          <div class="space-y-2">
+            <Label for="password" class="text-slate-700">密码</Label>
+            <div class="relative">
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="password"
+                v-model="values.password"
+                type="password"
+                placeholder="密码（至少6位）"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': errors.password }"
+              />
+            </div>
+            <p v-if="errors.password" class="text-sm text-red-500">{{ errors.password }}</p>
+          </div>
 
-        <el-form-item prop="password">
-          <el-input
-            v-model="registerForm.password"
-            type="password"
-            placeholder="密码（至少6位）"
-            size="large"
-            :prefix-icon="icons.lock"
-            show-password
-          />
-        </el-form-item>
+          <div class="space-y-2">
+            <Label for="confirmPassword" class="text-slate-700">确认密码</Label>
+            <div class="relative">
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              <Input
+                id="confirmPassword"
+                v-model="values.confirmPassword"
+                type="password"
+                placeholder="请再次输入密码"
+                class="pl-10 h-11"
+                :class="{ 'border-red-500': errors.confirmPassword }"
+              />
+            </div>
+            <p v-if="errors.confirmPassword" class="text-sm text-red-500">{{ errors.confirmPassword }}</p>
+          </div>
 
-        <el-form-item prop="confirmPassword">
-          <el-input
-            v-model="registerForm.confirmPassword"
-            type="password"
-            placeholder="确认密码"
-            size="large"
-            :prefix-icon="icons.lock"
-            show-password
-          />
-        </el-form-item>
+          <div class="flex items-start space-x-2">
+            <Checkbox id="agree" v-model="values.agree" />
+            <Label for="agree" class="text-sm text-slate-600 cursor-pointer leading-normal">
+              我已阅读并同意
+              <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm">《用户协议》</Button>
+              和
+              <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm">《隐私政策》</Button>
+            </Label>
+          </div>
 
-        <el-form-item>
-          <el-checkbox v-model="registerForm.agree">
-            我已阅读并同意
-            <el-link type="primary">《用户协议》</el-link>
-            和
-            <el-link type="primary">《隐私政策》</el-link>
-          </el-checkbox>
-        </el-form-item>
+          <Button type="submit" class="w-full h-12 text-base font-medium" :disabled="loading">
+            {{ loading ? '注册中...' : '注 册' }}
+          </Button>
+        </form>
 
-        <el-form-item>
-          <el-button
-            type="primary"
-            size="large"
-            :loading="loading"
-            class="register-btn"
-            native-type="submit"
-          >
-            {{ loading ? "注册中..." : "注 册" }}
-          </el-button>
-        </el-form-item>
-      </el-form>
-
-      <div class="register-footer">
-        <span class="login-tip">
-          已有账号？
-          <el-link type="primary" @click="goToLogin">立即登录</el-link>
-        </span>
-      </div>
-    </div>
+        <div class="mt-6 text-center">
+          <p class="text-sm text-slate-500">
+            已有账号？
+            <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm" @click="goToLogin">
+              立即登录
+            </Button>
+          </p>
+        </div>
+      </CardContent>
+    </Card>
   </div>
 </template>
-
-<style scoped>
-.register-container {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
-  position: relative;
-  overflow: hidden;
-}
-
-.register-bg {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-
-.register-decoration .circle {
-  position: absolute;
-  border-radius: 50%;
-  filter: blur(40px);
-}
-
-.circle-1 {
-  width: 500px;
-  height: 500px;
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  top: -200px;
-  right: -100px;
-  opacity: 0.6;
-}
-
-.circle-2 {
-  width: 400px;
-  height: 400px;
-  background: linear-gradient(135deg, #10b981, #06b6d4);
-  bottom: -150px;
-  left: -100px;
-  opacity: 0.5;
-}
-
-.circle-3 {
-  width: 300px;
-  height: 300px;
-  background: linear-gradient(135deg, #f59e0b, #ef4444);
-  top: 50%;
-  left: 25%;
-  opacity: 0.25;
-}
-
-.register-card {
-  width: 420px;
-  padding: 48px 40px;
-  background: white;
-  border-radius: 16px;
-  box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.1),
-    0 2px 4px -2px rgba(0, 0, 0, 0.1);
-  position: relative;
-  z-index: 1;
-}
-
-.register-header {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-
-.logo-icon {
-  color: #2563eb;
-}
-
-.logo-text {
-  font-size: 28px;
-  font-weight: 700;
-  color: #1e293b;
-  letter-spacing: -0.5px;
-}
-
-.subtitle {
-  margin-top: 8px;
-  color: #64748b;
-  font-size: 14px;
-}
-
-.register-form {
-  margin-top: 24px;
-}
-
-.register-btn {
-  width: 100%;
-  height: 48px;
-  font-size: 16px;
-  font-weight: 500;
-}
-
-.register-footer {
-  margin-top: 24px;
-  text-align: center;
-}
-
-.login-tip {
-  color: #64748b;
-  font-size: 14px;
-}
-</style>

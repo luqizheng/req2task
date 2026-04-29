@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -10,12 +11,14 @@ import {
   User,
 } from "lucide-vue-next";
 import { projectsApi } from "@/api/projects";
+import { formatDateTime } from "@/lib/utils";
 import type { BaselineDto } from "@/api/projects";
 
 const props = defineProps<{
   projectId: string;
 }>();
 
+const router = useRouter();
 const baselines = ref<BaselineDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -32,14 +35,8 @@ const fetchBaselines = async () => {
   }
 };
 
-const formatDate = (date: string) => {
-  return new Date(date).toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
+const goToBaseline = (baselineId: string) => {
+  router.push(`/projects/${props.projectId}/baselines/${baselineId}`);
 };
 
 onMounted(() => {
@@ -81,6 +78,7 @@ onMounted(() => {
           v-for="baseline in baselines"
           :key="baseline.id"
           class="p-4 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          @click="goToBaseline(baseline.id)"
         >
           <div class="flex items-start justify-between">
             <div class="flex-1">
@@ -98,7 +96,7 @@ onMounted(() => {
                 </span>
                 <span class="flex items-center gap-1">
                   <Clock class="w-3 h-3" />
-                  {{ formatDate(baseline.createdAt) }}
+                  {{ formatDateTime(baseline.createdAt) }}
                 </span>
               </div>
             </div>

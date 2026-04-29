@@ -106,7 +106,6 @@ onMounted(() => {
             <ProjectInfoCard
               :project="project"
               :is-settings="true"
-              @refresh="fetchProjectData"
             />
           </TabsContent>
         </Tabs>

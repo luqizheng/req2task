@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ref } from "vue";
 import { useRouter } from "vue-router";
 import type { ProjectResponseDto } from "@req2task/dto";
 import { ProjectStatus } from "@req2task/dto";
@@ -10,21 +9,16 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Calendar,
   Users,
-  Edit2,
   ArrowLeft,
 } from "lucide-vue-next";
+import { formatDate, getInitials } from "@/lib/utils";
 
 defineProps<{
   project: ProjectResponseDto;
   isSettings?: boolean;
 }>();
 
-const emit = defineEmits<{
-  refresh: [];
-}>();
-
 const router = useRouter();
-const isEditing = ref(false);
 
 const statusConfig: Record<ProjectStatus, { label: string; class: string }> = {
   [ProjectStatus.PLANNING]: {
@@ -49,35 +43,8 @@ const statusConfig: Record<ProjectStatus, { label: string; class: string }> = {
   },
 };
 
-const formatDate = (date: Date | null) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleDateString("zh-CN", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-};
-
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 const goBack = () => {
   router.push("/projects");
-};
-
-const handleEdit = () => {
-  isEditing.value = true;
-};
-
-const handleSave = () => {
-  isEditing.value = false;
-  emit("refresh");
 };
 </script>
 
@@ -91,23 +58,12 @@ const handleSave = () => {
           </Button>
           <CardTitle>{{ isSettings ? "项目设置" : "项目信息" }}</CardTitle>
         </div>
-        <div class="flex items-center gap-2">
-          <Badge
-            :class="statusConfig[project.status]?.class"
-            variant="outline"
-          >
-            {{ statusConfig[project.status]?.label || project.status }}
-          </Badge>
-          <template v-if="isSettings">
-            <Button v-if="!isEditing" variant="outline" size="sm" @click="handleEdit">
-              <Edit2 class="w-4 h-4 mr-2" />
-              编辑
-            </Button>
-            <Button v-else size="sm" @click="handleSave">
-              保存
-            </Button>
-          </template>
-        </div>
+        <Badge
+          :class="statusConfig[project.status]?.class"
+          variant="outline"
+        >
+          {{ statusConfig[project.status]?.label || project.status }}
+        </Badge>
       </div>
     </CardHeader>
     <CardContent class="space-y-6">

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import type { RawRequirementResponseDto } from "@req2task/dto";
 import { RawRequirementStatus } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ const props = defineProps<{
   projectId: string;
 }>();
 
+const router = useRouter();
 const rawRequirements = ref<RawRequirementResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -43,9 +45,8 @@ const fetchRawRequirements = async () => {
   }
 };
 
-const truncate = (text: string, length: number) => {
-  if (!text) return "";
-  return text.length > length ? text.substring(0, length) + "..." : text;
+const goToRawRequirement = (rawRequirementId: string) => {
+  router.push(`/projects/${props.projectId}/raw-requirements/${rawRequirementId}`);
 };
 
 onMounted(() => {
@@ -87,6 +88,7 @@ onMounted(() => {
           v-for="raw in rawRequirements"
           :key="raw.id"
           class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          @click="goToRawRequirement(raw.id)"
         >
           <div class="flex items-center gap-3 flex-1">
             <FileQuestion class="w-4 h-4 text-slate-400" />
@@ -94,8 +96,8 @@ onMounted(() => {
               <p class="font-medium text-slate-800">
                 {{ raw.title || "未命名需求" }}
               </p>
-              <p class="text-xs text-slate-500 mt-1">
-                {{ truncate(raw.content, 80) }}
+              <p class="text-xs text-slate-500 mt-1 line-clamp-1">
+                {{ raw.content }}
               </p>
             </div>
           </div>

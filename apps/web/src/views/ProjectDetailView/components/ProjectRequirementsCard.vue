@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import type { RequirementResponseDto } from "@req2task/dto";
 import { RequirementStatus, Priority } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +18,7 @@ const props = defineProps<{
   projectId: string;
 }>();
 
+const router = useRouter();
 const requirements = ref<RequirementResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -48,6 +50,10 @@ const fetchRequirements = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const goToRequirement = (requirementId: string) => {
+  router.push(`/projects/${props.projectId}/requirements/${requirementId}`);
 };
 
 onMounted(() => {
@@ -89,6 +95,7 @@ onMounted(() => {
           v-for="req in requirements"
           :key="req.id"
           class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          @click="goToRequirement(req.id)"
         >
           <div class="flex items-center gap-3 flex-1">
             <FileText class="w-4 h-4 text-slate-400" />

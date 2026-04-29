@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,6 +25,7 @@ const props = defineProps<{
   projectId: string;
 }>();
 
+const router = useRouter();
 const modules = ref<FeatureModule[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -38,6 +40,10 @@ const fetchModules = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const goToModule = (moduleId: string) => {
+  router.push(`/projects/${props.projectId}/modules/${moduleId}`);
 };
 
 onMounted(() => {
@@ -79,6 +85,7 @@ onMounted(() => {
           v-for="module in modules"
           :key="module.id"
           class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          @click="goToModule(module.id)"
         >
           <div class="flex items-center gap-3">
             <FolderTree class="w-4 h-4 text-slate-400" />

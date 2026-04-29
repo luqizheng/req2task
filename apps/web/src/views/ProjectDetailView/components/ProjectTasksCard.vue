@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
 import type { TaskResponseDto } from "@req2task/dto";
 import { TaskStatus, TaskPriority } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +14,13 @@ import {
   ChevronRight,
 } from "lucide-vue-next";
 import api from "@/api/axios";
+import { getInitials } from "@/lib/utils";
 
 const props = defineProps<{
   projectId: string;
 }>();
 
+const router = useRouter();
 const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
@@ -38,15 +41,6 @@ const priorityConfig: Record<TaskPriority, { label: string; class: string }> = {
   [TaskPriority.LOW]: { label: "低", class: "bg-slate-500 text-white" },
 };
 
-const getInitials = (name: string) => {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
-
 const fetchTasks = async () => {
   try {
     loading.value = true;
@@ -57,6 +51,10 @@ const fetchTasks = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const goToTask = (taskId: string) => {
+  router.push(`/projects/${props.projectId}/tasks/${taskId}`);
 };
 
 onMounted(() => {
@@ -98,6 +96,7 @@ onMounted(() => {
           v-for="task in tasks"
           :key="task.id"
           class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          @click="goToTask(task.id)"
         >
           <div class="flex items-center gap-3 flex-1">
             <CheckSquare class="w-4 h-4 text-slate-400" />

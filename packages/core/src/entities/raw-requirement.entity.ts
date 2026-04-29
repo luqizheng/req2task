@@ -27,6 +27,9 @@ export class RawRequirement {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'entity_key' })
+  entityKey!: string;
+
   @Column({ name: 'project_id' })
   projectId!: string;
 

@@ -21,6 +21,9 @@ export class Task {
   @Column({ name: 'task_no', unique: true })
   taskNo!: string;
 
+  @Column({ name: 'entity_key' })
+  entityKey!: string;
+
   @Column()
   title!: string;
 

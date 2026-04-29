@@ -19,6 +19,7 @@ import { Repository } from 'typeorm';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 import { AiModule } from '../ai/ai.module';
 import { ProjectsModule } from 'src/projects/projects.module';
+import { EntityKeyModule } from '../common/entity-key.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ProjectsModule } from 'src/projects/projects.module';
     forwardRef(() => RawRequirementModule),
     forwardRef(() => AiModule),
     forwardRef(() => ProjectsModule),
+    EntityKeyModule,
   ],
   controllers: [RequirementsController, UserStoriesController, AcceptanceCriteriaController],
   providers: [

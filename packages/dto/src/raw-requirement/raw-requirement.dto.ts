@@ -17,6 +17,7 @@ export interface RawRequirementQADto {
 
 export interface RawRequirementResponseDto {
   id: string;
+  entityKey: string;
   projectId: string;
   collectionType?: CollectionType;
   conversationId?: string;

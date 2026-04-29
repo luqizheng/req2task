@@ -76,6 +76,7 @@ export class UpdateTaskDto {
 export class TaskResponseDto {
   id!: string;
   taskNo!: string;
+  entityKey!: string;
   title!: string;
   description!: string | null;
   requirementId!: string;

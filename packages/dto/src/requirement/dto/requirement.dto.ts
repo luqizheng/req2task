@@ -86,6 +86,7 @@ export class ChildRequirementSummaryDto {
 
 export class RequirementResponseDto {
   id!: string;
+  entityKey!: string;
   moduleId!: string | null;
   moduleIds!: string[] | null;
   title!: string;

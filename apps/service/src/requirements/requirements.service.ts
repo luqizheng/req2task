@@ -5,6 +5,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Requirement, FeatureModule } from '@req2task/core';
+import { EntityKeyService, EntityKeyType } from '../common/services/entity-key.service';
 import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 import {
   CreateRequirementDto,
@@ -22,6 +23,7 @@ export class RequirementsService {
     @InjectRepository(FeatureModule) private featureModuleRepository: Repository<FeatureModule>,
     private userStoriesService: UserStoriesService,
     private acceptanceCriteriaService: AcceptanceCriteriaService,
+    private entityKeyService: EntityKeyService,
   ) {}
 
   async create(
@@ -29,6 +31,20 @@ export class RequirementsService {
     createDto: CreateRequirementDto,
     createdById: string,
   ): Promise<RequirementResponseDto> {
+    let projectId: string | null = null;
+    
+    if (moduleId) {
+      const module = await this.featureModuleRepository.findOne({
+        where: { id: moduleId },
+        select: ['projectId'],
+      });
+      projectId = module?.projectId || null;
+    }
+
+    const entityKey = projectId 
+      ? await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.REQ)
+      : null;
+
     const requirement = this.requirementRepository.create({
       moduleId,
       moduleIds: createDto.moduleIds || null,
@@ -40,6 +56,7 @@ export class RequirementsService {
       parentId: createDto.parentRequirementId || null,
       createdById,
       storyPoints: 0,
+      entityKey: entityKey || '',
     });
 
     const saved = await this.requirementRepository.save(requirement);
@@ -152,6 +169,7 @@ export class RequirementsService {
   private toResponseDto(requirement: Requirement): RequirementResponseDto {
     const dto: RequirementResponseDto = {
       id: requirement.id,
+      entityKey: requirement.entityKey,
       moduleId: requirement.moduleId,
       moduleIds: requirement.moduleIds,
       title: requirement.title,
@@ -205,6 +223,7 @@ export class RequirementsService {
   private toListItemDto(requirement: Requirement): RequirementResponseDto {
     const dto: RequirementResponseDto = {
       id: requirement.id,
+      entityKey: requirement.entityKey,
       moduleId: requirement.moduleId,
       moduleIds: requirement.moduleIds,
       title: requirement.title,

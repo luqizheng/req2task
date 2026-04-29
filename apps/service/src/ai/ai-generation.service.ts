@@ -270,6 +270,7 @@ export class AiGenerationService {
       if (data && data.length > 0) {
         requirements = data.map((item) => ({
           id: "",
+          entityKey: "",
           moduleId: moduleIds?.[0] || null,
           moduleIds: item.moduleIds || moduleIds || null,
           title: item.title,

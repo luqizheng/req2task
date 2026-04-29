@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
 import { RawRequirement, QuestionAndAnswer } from "@req2task/core";
+import { EntityKeyService, EntityKeyType } from "../common/services/entity-key.service";
 import {
   RawRequirementResponseDto,
   RawRequirementStatus,
@@ -25,13 +26,25 @@ export interface AddRawRequirementDto {
 
 @Injectable()
 export class RawRequirementService {
+  private readonly logger = new Logger(RawRequirementService.name);
+
+  constructor(
+    @InjectRepository(RawRequirement)
+    private readonly rawRequirementRepository: Repository<RawRequirement>,
+    private readonly projectAttachmentService: ProjectAttachmentService,
+    private readonly entityKeyService: EntityKeyService,
+  ) {}
+
   async create(
     projectId: string,
     dto: CreateRawRequirementDto,
     userId: string,
   ): Promise<RawRequirementResponseDto> {
+    const entityKey = await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.RAW);
+
     const rawRequirement = this.rawRequirementRepository.create({
       projectId,
+      entityKey,
       collectionType: dto.collectionType || null,
       originalContent: dto.content,
       source: dto.source || null,
@@ -71,13 +84,6 @@ export class RawRequirementService {
 
     return this.toRawRequirementResponseDto(saved);
   }
-  private readonly logger = new Logger(RawRequirementService.name);
-
-  constructor(
-    @InjectRepository(RawRequirement)
-    private readonly rawRequirementRepository: Repository<RawRequirement>,
-    private readonly projectAttachmentService: ProjectAttachmentService,
-  ) {}
 
   private toQuestionAndAnswerDtos(
     questionAndAnswers: QuestionAndAnswer[] | null,
@@ -98,6 +104,7 @@ export class RawRequirementService {
   ): RawRequirementResponseDto {
     return {
       id: entity.id,
+      entityKey: entity.entityKey,
       projectId: entity.projectId,
       collectionType: entity.collectionType || undefined,
       conversationId: entity.conversationId || undefined,
@@ -118,8 +125,11 @@ export class RawRequirementService {
   async addRawRequirement(
     dto: AddRawRequirementDto,
   ): Promise<RawRequirementResponseDto> {
+    const entityKey = await this.entityKeyService.generateEntityKey(dto.projectId, EntityKeyType.RAW);
+
     const rawRequirement = this.rawRequirementRepository.create({
       projectId: dto.projectId,
+      entityKey,
       collectionType: dto.collectionType || null,
       originalContent: dto.content,
       source: dto.source || null,

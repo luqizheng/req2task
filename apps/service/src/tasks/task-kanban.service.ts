@@ -34,6 +34,7 @@ export class TaskKanbanService {
     const dto: TaskResponseDto = {
       id: task.id,
       taskNo: task.taskNo,
+      entityKey: task.entityKey,
       title: task.title,
       description: task.description,
       requirementId: task.requirementId,

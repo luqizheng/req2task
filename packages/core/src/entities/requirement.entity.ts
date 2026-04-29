@@ -19,6 +19,9 @@ export class Requirement {
   @PrimaryGeneratedColumn('uuid')
   id!: string;
 
+  @Column({ name: 'entity_key', unique: true })
+  entityKey!: string;
+
   @Column({ name: 'module_id', nullable: true })
   moduleId!: string | null;
 

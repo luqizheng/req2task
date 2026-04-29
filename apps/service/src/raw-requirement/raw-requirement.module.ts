@@ -7,9 +7,16 @@ import { StorageService } from "../common/services/storage.service";
 import { AiModule } from "../ai/ai.module";
 import { ProjectsModule } from "../projects/projects.module";
 import { ProjectAttachmentModule } from "../project-attachment/project-attachment.module";
+import { EntityKeyModule } from "../common/entity-key.module";
 
 @Module({
-  imports: [TypeOrmModule.forFeature([RawRequirement, FileData, ProjectAttachment]), forwardRef(() => AiModule), forwardRef(() => ProjectsModule), ProjectAttachmentModule],
+  imports: [
+    TypeOrmModule.forFeature([RawRequirement, FileData, ProjectAttachment]),
+    forwardRef(() => AiModule),
+    forwardRef(() => ProjectsModule),
+    ProjectAttachmentModule,
+    EntityKeyModule,
+  ],
   controllers: [RawRequirementController],
   providers: [
     RawRequirementService,

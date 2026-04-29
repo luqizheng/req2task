@@ -8,6 +8,7 @@ import { Repository} from 'typeorm';
 import { Task, Requirement, FeatureModule } from '@req2task/core';
 import { TaskStatus, TaskPriority } from '@req2task/dto';
 import { CreateTaskDto, UpdateTaskDto, TaskResponseDto, TaskListResponseDto, WorkloadStatsDto } from '@req2task/dto';
+import { EntityKeyService, EntityKeyType } from '../common/services/entity-key.service';
 
 export interface MarkReplacedDto {
   replacedByTaskId: string;
@@ -21,8 +22,6 @@ export interface MarkCancelledDto {
 
 @Injectable()
 export class TasksService {
-  private taskCounter = 0;
-
   constructor(
     @InjectRepository(Task)
     private taskRepository: Repository<Task>,
@@ -30,29 +29,37 @@ export class TasksService {
     private requirementRepository: Repository<Requirement>,
     @InjectRepository(FeatureModule)
     private featureModuleRepository: Repository<FeatureModule>,
+    private entityKeyService: EntityKeyService,
   ) {}
-
-  private generateTaskNo(): string {
-    const date = new Date();
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    this.taskCounter++;
-    return `TASK-${year}${month}${day}-${String(this.taskCounter).padStart(4, '0')}`;
-  }
 
   async create(
     requirementId: string,
     createDto: CreateTaskDto,
     createdById: string,
   ): Promise<TaskResponseDto> {
+    const requirement = await this.requirementRepository.findOne({
+      where: { id: requirementId },
+      relations: ['module'],
+    });
+
+    if (!requirement) {
+      throw new NotFoundException(`Requirement with ID ${requirementId} not found`);
+    }
+
+    const projectId = requirement.module?.projectId;
+    if (!projectId) {
+      throw new BadRequestException('Requirement has no associated project');
+    }
+
+    const entityKey = await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.TSK);
+
     const task = this.taskRepository.create({
       requirementId,
       title: createDto.title,
       description: createDto.description || null,
       priority: createDto.priority || TaskPriority.MEDIUM,
       status: TaskStatus.TODO,
-      taskNo: this.generateTaskNo(),
+      taskNo: entityKey,
       assignedToId: createDto.assignedToId || null,
       estimatedHours: createDto.estimatedHours || null,
       dueDate: createDto.dueDate ? new Date(createDto.dueDate) : null,
@@ -380,6 +387,7 @@ export class TasksService {
     const dto: TaskResponseDto = {
       id: task.id,
       taskNo: task.taskNo,
+      entityKey: task.taskNo,
       title: task.title,
       description: task.description,
       requirementId: task.requirementId,

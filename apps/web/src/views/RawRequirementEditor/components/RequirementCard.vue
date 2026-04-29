@@ -1,6 +1,6 @@
 <template>
   <div class="requirement-card">
-    {{ requirement }}
+
     <div class="card-header">
       <div class="header-left">
         <span class="card-index">{{ props.index }}</span>
@@ -16,13 +16,7 @@
     </p>
 
     <div class="card-tags">
-      <el-tag
-        v-for="tag in tags"
-        :key="tag"
-        size="small"
-        type="info"
-        effect="plain"
-      >
+      <el-tag v-for="tag in tags" :key="tag" size="small" type="info" effect="plain">
         {{ tag }}
       </el-tag>
     </div>

@@ -6,40 +6,18 @@
       <el-radio-button value="pending">未回答</el-radio-button>
     </el-radio-group>
 
-    <AppStatusCard
-      v-for="(qa, index) in questions"
-      :key="qa.id"
-      :status="getCardStatus(qa)"
-      :title="`Q${index + 1}`"
-      :status-text="getStatusText(qa)"
-      show-status-dot
-      :clickable="!isAnswered(qa) && !isSkipped(qa)"
-      @click="handleCardClick(qa)"
-    >
+    <AppStatusCard v-for="(qa, index) in questions" :key="qa.id" :status="getCardStatus(qa)" :title="`Q${index + 1}`"
+      :status-text="getStatusText(qa)" show-status-dot @click="handleCardClick(qa)">
       <div class="question-text">{{ qa.question }}</div>
-      <AppInfo
-        v-if="qa.purpose"
-        :type="!qa.answer && !isSelected(qa) ? 'warning' : 'default'"
-      >
+      <AppInfo v-if="qa.purpose" :type="!qa.answer && !isSelected(qa) ? 'warning' : 'default'">
         目的: {{ qa.purpose }}
       </AppInfo>
 
       <div v-if="isSelected(qa)" class="answer-section" @click.stop>
-        <el-input
-          v-model="currentAnswer"
-          type="textarea"
-          :rows="3"
-          placeholder="请输入您的回答..."
-          class="answer-input"
-        />
+        <el-input v-model="currentAnswer" type="textarea" :rows="3" placeholder="请输入您的回答..." class="answer-input" />
         <div class="action-buttons">
           <el-button class="skip-btn" @click.stop="handleSkip">跳过</el-button>
-          <el-button
-            type="primary"
-            class="submit-btn"
-            @click.stop="handleSubmit"
-            >提交回答</el-button
-          >
+          <el-button type="primary" class="submit-btn" @click.stop="handleSubmit">提交回答</el-button>
         </div>
       </div>
 
@@ -47,10 +25,12 @@
         <SkipIcon class="hint-icon" />
         <span class="hint-text">此问题已跳过，将在下次提交时保留</span>
       </div>
-
-      <div v-else-if="isAnswered(qa)" class="answer-display">
+      <AppInfo v-else-if="isAnswered(qa)" type="success">
+        {{ qa.answer }}
+      </AppInfo>
+      <!-- <div v-else-if="isAnswered(qa)" class="answer-display">
         <div class="answer-content">{{ qa.answer }}</div>
-      </div>
+      </div> -->
     </AppStatusCard>
   </div>
 </template>
@@ -118,10 +98,8 @@ const getStatusText = (qa: RawRequirementQADto) => {
 };
 
 const handleCardClick = (qa: RawRequirementQADto) => {
-  if (!isAnswered(qa) && !isSkipped(qa)) {
-    selectedId.value = qa.id;
-    currentAnswer.value = "";
-  }
+  selectedId.value = qa.id;
+  currentAnswer.value = qa.answer || "";
 };
 
 const handleSkip = () => {

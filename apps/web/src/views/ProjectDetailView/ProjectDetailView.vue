@@ -60,7 +60,9 @@ onMounted(() => {
       <template v-else-if="project">
         <div class="flex items-center justify-between">
           <div>
-            <h1 class="text-3xl font-bold text-slate-800">{{ project.name }}</h1>
+            <h1 class="text-3xl font-bold text-slate-800">
+              {{ project.name }}
+            </h1>
             <p class="text-slate-500 mt-1">{{ project.projectKey }}</p>
           </div>
         </div>
@@ -77,7 +79,6 @@ onMounted(() => {
           </TabsList>
 
           <TabsContent value="overview" class="mt-6 space-y-6">
-            <ProjectInfoCard :project="project" @refresh="fetchProjectData" />
             <ProjectProgressCard v-if="progress" :progress="progress" />
           </TabsContent>
 
@@ -102,7 +103,11 @@ onMounted(() => {
           </TabsContent>
 
           <TabsContent value="settings" class="mt-6">
-            <ProjectInfoCard :project="project" :is-settings="true" @refresh="fetchProjectData" />
+            <ProjectInfoCard
+              :project="project"
+              :is-settings="true"
+              @refresh="fetchProjectData"
+            />
           </TabsContent>
         </Tabs>
       </template>

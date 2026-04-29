@@ -10,6 +10,12 @@
       "source": "pbakaus/impeccable",
       "sourceType": "github",
       "computedHash": "b0e7591172750104fd9df64913b513e942bf78bd45814f2eeeb25c2aa47bd970"
+    },
+    "shadcn-vue": {
+      "source": "ycs77/skills",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn-vue/SKILL.md",
+      "computedHash": "9c666f18949089c9f067220d357266a69ac4b5898c50df3e15f037c8a81479a6"
     }
   }
 }

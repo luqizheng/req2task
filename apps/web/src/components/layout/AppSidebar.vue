@@ -1,6 +1,19 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { Home, FolderKanban, FileText, LayoutDashboard, BookOpen, Settings } from 'lucide-vue-next'
+import { Home, FolderKanban, FileText, LayoutDashboard, BookOpen, Settings, Command } from 'lucide-vue-next'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from '@/components/ui/sidebar'
 
 const route = useRoute()
 
@@ -50,48 +63,53 @@ const isActive = (name: string) => route.name === name
 </script>
 
 <template>
-  <aside class="w-64 h-screen bg-sidebar border-r border-sidebar-border flex flex-col">
-    <div class="p-4 border-b border-sidebar-border">
-      <RouterLink to="/dashboard" class="flex items-center gap-2">
-        <div class="w-8 h-8 rounded-lg bg-sidebar-primary flex items-center justify-center">
-          <span class="text-sidebar-primary-foreground font-bold text-sm">R2T</span>
-        </div>
-        <span class="font-semibold text-sidebar-foreground">需求转任务</span>
-      </RouterLink>
-    </div>
-
-    <nav class="flex-1 p-3 space-y-1">
-      <RouterLink
-        v-for="item in navItems"
-        :key="item.name"
-        :to="item.path"
-        :class="[
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-          isActive(item.name)
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-        ]"
-      >
-        <component :is="item.icon" class="w-5 h-5" />
-        {{ item.title }}
-      </RouterLink>
-    </nav>
-
-    <div class="p-3 border-t border-sidebar-border space-y-1">
-      <RouterLink
-        v-for="item in bottomItems"
-        :key="item.name"
-        :to="item.path"
-        :class="[
-          'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-          isActive(item.name)
-            ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-            : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
-        ]"
-      >
-        <component :is="item.icon" class="w-5 h-5" />
-        {{ item.title }}
-      </RouterLink>
-    </div>
-  </aside>
+  <Sidebar collapsible="icon">
+    <SidebarHeader>
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size="lg" as-child>
+            <RouterLink to="/dashboard">
+              <div class="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                <Command class="size-4" />
+              </div>
+              <div class="grid flex-1 text-left text-sm leading-tight">
+                <span class="truncate font-semibold">需求转任务</span>
+                <span class="truncate text-xs text-muted-foreground">Req2Task</span>
+              </div>
+            </RouterLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarHeader>
+    <SidebarContent>
+      <SidebarGroup>
+        <SidebarGroupLabel>导航菜单</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuItem v-for="item in navItems" :key="item.name">
+              <SidebarMenuButton as-child :is-active="isActive(item.name)">
+                <RouterLink :to="item.path">
+                  <component :is="item.icon" />
+                  <span>{{ item.title }}</span>
+                </RouterLink>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </SidebarContent>
+    <SidebarFooter>
+      <SidebarMenu>
+        <SidebarMenuItem v-for="item in bottomItems" :key="item.name">
+          <SidebarMenuButton as-child :is-active="isActive(item.name)">
+            <RouterLink :to="item.path">
+              <component :is="item.icon" />
+              <span>{{ item.title }}</span>
+            </RouterLink>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
+    <SidebarRail />
+  </Sidebar>
 </template>

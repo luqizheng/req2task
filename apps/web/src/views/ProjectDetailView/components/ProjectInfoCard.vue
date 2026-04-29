@@ -86,7 +86,7 @@ const handleSave = () => {
     <CardHeader>
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <Button variant="ghost" size="icon" @click="goBack">
+          <Button v-if="isSettings" variant="ghost" size="icon" @click="goBack">
             <ArrowLeft class="w-4 h-4" />
           </Button>
           <CardTitle>{{ isSettings ? "项目设置" : "项目信息" }}</CardTitle>
@@ -98,13 +98,15 @@ const handleSave = () => {
           >
             {{ statusConfig[project.status]?.label || project.status }}
           </Badge>
-          <Button v-if="!isEditing" variant="outline" size="sm" @click="handleEdit">
-            <Edit2 class="w-4 h-4 mr-2" />
-            编辑
-          </Button>
-          <Button v-else size="sm" @click="handleSave">
-            保存
-          </Button>
+          <template v-if="isSettings">
+            <Button v-if="!isEditing" variant="outline" size="sm" @click="handleEdit">
+              <Edit2 class="w-4 h-4 mr-2" />
+              编辑
+            </Button>
+            <Button v-else size="sm" @click="handleSave">
+              保存
+            </Button>
+          </template>
         </div>
       </div>
     </CardHeader>

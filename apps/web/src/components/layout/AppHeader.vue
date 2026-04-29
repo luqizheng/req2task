@@ -26,45 +26,43 @@ const getInitials = (name: string) => {
 </script>
 
 <template>
-  <header class="h-16 border-b border-border bg-background flex items-center justify-between px-6">
-    <div class="flex-1 max-w-md">
-      <Input
-        v-model="searchQuery"
-        type="search"
-        placeholder="全局搜索..."
-        class="w-full"
-      />
-    </div>
+  <div class="flex-1 max-w-md">
+    <Input
+      v-model="searchQuery"
+      type="search"
+      placeholder="全局搜索..."
+      class="w-full"
+    />
+  </div>
 
-    <div class="flex items-center gap-4">
-      <DropdownMenu>
-        <DropdownMenuTrigger as-child>
-          <Avatar class="h-9 w-9">
-            <AvatarFallback class="bg-primary text-primary-foreground">
-              {{ getInitials(userStore.userInfo?.displayName || 'User') }}
-            </AvatarFallback>
-          </Avatar>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent class="w-56" align="end">
-          <DropdownMenuLabel>
-            <div class="flex flex-col space-y-1">
-              <p class="text-sm font-medium leading-none">
-                {{ userStore.userInfo?.displayName || '用户' }}
-              </p>
-              <p class="text-xs leading-none text-muted-foreground">
-                {{ userStore.userInfo?.email || '' }}
-              </p>
-            </div>
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>个人中心</DropdownMenuItem>
-          <DropdownMenuItem>账号设置</DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem @click="userStore.logout()">
-            退出登录
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  </header>
+  <div class="flex items-center gap-4">
+    <DropdownMenu>
+      <DropdownMenuTrigger as-child>
+        <Avatar class="h-9 w-9">
+          <AvatarFallback class="bg-primary text-primary-foreground">
+            {{ getInitials(userStore.userInfo?.displayName || 'User') }}
+          </AvatarFallback>
+        </Avatar>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent class="w-56" align="end">
+        <DropdownMenuLabel>
+          <div class="flex flex-col space-y-1">
+            <p class="text-sm font-medium leading-none">
+              {{ userStore.userInfo?.displayName || '用户' }}
+            </p>
+            <p class="text-xs leading-none text-muted-foreground">
+              {{ userStore.userInfo?.email || '' }}
+            </p>
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>个人中心</DropdownMenuItem>
+        <DropdownMenuItem>账号设置</DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem @click="userStore.logout()">
+          退出登录
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </div>
 </template>

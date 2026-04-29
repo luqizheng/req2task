@@ -9,12 +9,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@req2task/dto": "workspace:*",
     "@vee-validate/zod": "^4.15.1",
     "@vueuse/core": "^14.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-vue-next": "^1.0.0",
     "pinia": "^2.3.1",
+    "reflect-metadata": "catalog:",
     "reka-ui": "^2.9.6",
     "shadcn-vue": "^2.6.2",
     "tailwind-merge": "^2.6.1",
@@ -23,8 +25,7 @@
     "vue": "^3.5.13",
     "vue-router": "^4.6.4",
     "vue-sonner": "^2.0.9",
-    "zod": "3.25.76",
-    "@req2task/dto":"workspace:*"
+    "zod": "3.25.76"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

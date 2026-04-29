@@ -1,14 +1,31 @@
 <script setup lang="ts">
-import { RouterLink } from 'vue-router'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { RouterLink } from "vue-router";
+import { useRouter } from "vue-router";
+import { useUserStore } from "@/stores/user";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FolderKanban } from "lucide-vue-next";
+
+const router = useRouter();
+const userStore = useUserStore();
+
+const handleLogout = () => {
+  userStore.logout();
+  router.push("/login");
+};
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-slate-100 p-8">
+  <div class="h-full p-8">
     <div class="max-w-4xl mx-auto">
       <h1 class="text-3xl font-bold text-slate-800 mb-8">Dashboard</h1>
-      
+
       <div class="grid grid-cols-3 gap-4 mb-8">
         <Card>
           <CardHeader>
@@ -34,9 +51,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
       </div>
 
       <div class="text-center">
-        <RouterLink to="/login">
-          <Button variant="outline" @click="$router.push('/login')">退出登录</Button>
+        <RouterLink to="/projects">
+          <Button class="gap-2">
+            <FolderKanban class="w-4 h-4" />
+            查看项目
+          </Button>
         </RouterLink>
+        <Button variant="outline" class="ml-4" @click="handleLogout">
+          退出登录
+        </Button>
       </div>
     </div>
   </div>

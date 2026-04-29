@@ -10,6 +10,7 @@ import {
   UserStory,
   AcceptanceCriteria,
   RawRequirement,
+  Task,
 } from "@req2task/core";
 
 @Module({
@@ -30,6 +31,7 @@ import {
         UserStory,
         AcceptanceCriteria,
         RawRequirement,
+        Task,
       ],
       synchronize: false,
     }),

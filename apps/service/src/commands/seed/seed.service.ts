@@ -1,10 +1,11 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { DataSource } from "typeorm";
+import { DataSource, Repository } from "typeorm";
 import {
   Project,
   FeatureModule,
   Requirement,
   RawRequirement,
+  Task,
   User,
 } from "@req2task/core";
 import {
@@ -15,11 +16,11 @@ import {
   RawRequirementStatus,
   CollectionType,
 } from "@req2task/dto";
-import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SeedService {
   private readonly logger = new Logger(SeedService.name);
+  private entityKeyCounters: Map<string, number> = new Map();
 
   constructor(private readonly dataSource: DataSource) {}
 
@@ -33,8 +34,9 @@ export class SeedService {
 
       const user = await this.getOrCreateDefaultUser(queryRunner);
       const project = await this.createProject(queryRunner, user.id);
+      await this.initEntityKeyCounters(queryRunner, project.projectKey);
       const modules = await this.createFeatureModules(queryRunner, project.id);
-      await this.createRequirements(queryRunner, modules, user.id);
+      await this.createRequirements(queryRunner, project.projectKey, modules, user.id);
       await this.createRawRequirements(queryRunner, project.id, user.id);
 
       await queryRunner.commitTransaction();
@@ -46,6 +48,39 @@ export class SeedService {
     } finally {
       await queryRunner.release();
     }
+  }
+
+  private async initEntityKeyCounters(queryRunner: any, projectKey: string): Promise<void> {
+    this.entityKeyCounters = new Map();
+
+    const reqRepo = queryRunner.manager.getRepository(Requirement);
+    const rawRepo = queryRunner.manager.getRepository(RawRequirement);
+    const taskRepo = queryRunner.manager.getRepository(Task);
+
+    const reqCount = await reqRepo
+      .createQueryBuilder("req")
+      .where("req.entity_key LIKE :prefix", { prefix: `${projectKey}-REQ-%` })
+      .getCount();
+    this.entityKeyCounters.set(`REQ-${projectKey}`, reqCount);
+
+    const rawCount = await rawRepo
+      .createQueryBuilder("raw")
+      .where("raw.entity_key LIKE :prefix", { prefix: `${projectKey}-RAW-%` })
+      .getCount();
+    this.entityKeyCounters.set(`RAW-${projectKey}`, rawCount);
+
+    const taskCount = await taskRepo
+      .createQueryBuilder("task")
+      .where("task.entity_key LIKE :prefix", { prefix: `${projectKey}-TSK-%` })
+      .getCount();
+    this.entityKeyCounters.set(`TSK-${projectKey}`, taskCount);
+  }
+
+  private generateEntityKey(projectKey: string, type: "REQ" | "RAW" | "TSK"): string {
+    const prefix = `${projectKey}-${type}`;
+    const counter = (this.entityKeyCounters.get(prefix) || 0) + 1;
+    this.entityKeyCounters.set(prefix, counter);
+    return `${prefix}-${counter}`;
   }
 
   private async getOrCreateDefaultUser(
@@ -167,6 +202,7 @@ export class SeedService {
 
   private async createRequirements(
     queryRunner: any,
+    projectKey: string,
     modules: Map<string, FeatureModule>,
     userId: string
   ): Promise<void> {
@@ -214,6 +250,7 @@ export class SeedService {
 
       if (!existing) {
         const requirement = queryRunner.manager.create(Requirement, {
+          entityKey: this.generateEntityKey(projectKey, "REQ"),
           moduleId: module.id,
           title: reqData.title,
           description: reqData.description || null,
@@ -334,6 +371,8 @@ export class SeedService {
       },
     ];
 
+    const projectKey = "REQ2TASK";
+
     for (const rawData of rawRequirementsData) {
       const existing = await queryRunner.manager.findOne(RawRequirement, {
         where: { projectId, originalContent: rawData.content },
@@ -341,14 +380,12 @@ export class SeedService {
 
       if (!existing) {
         const questionAndAnswers = rawData.questionAndAnswers?.map((qa) => ({
-          id: uuidv4(),
           question: qa.question,
           answer: qa.answer,
-          createdAt: new Date().toISOString(),
-          answeredAt: qa.answer ? new Date().toISOString() : null,
         })) || null;
 
         const rawRequirement = queryRunner.manager.create(RawRequirement, {
+          entityKey: this.generateEntityKey(projectKey, "RAW"),
           projectId,
           collectionType: rawData.collectionType,
           originalContent: rawData.content,

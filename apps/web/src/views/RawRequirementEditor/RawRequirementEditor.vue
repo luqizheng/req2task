@@ -85,6 +85,7 @@ const handleSubmit = async () => {
 };
 
 const handleAnalyze = async () => {
+  debugger
   rawRequirementSubmitHelper.rawRequirementAnalyze();
 };
 
@@ -108,6 +109,21 @@ const formatDate = (dateStr: string | null | undefined) => {
   const d = dayjs(dateStr);
   return d.isValid() ? d.format("YYYY-MM-DD HH:mm") : dateStr;
 };
+
+const collectTimeDate = computed({
+  get: () => {
+    if (!rawRequirement.value.collectTime) return undefined;
+    const d = dayjs(rawRequirement.value.collectTime);
+    return d.isValid() ? d.toDate() : undefined;
+  },
+  set: (date: Date | undefined) => {
+    if (date) {
+      rawRequirement.value.collectTime = date.toISOString();
+    } else {
+      rawRequirement.value.collectTime = null;
+    }
+  }
+});
 </script>
 
 <template>
@@ -194,14 +210,7 @@ const formatDate = (dateStr: string | null | undefined) => {
                       </PopoverTrigger>
                       <PopoverContent class="w-auto p-0">
                         <Calendar
-                          :model-value="rawRequirement.collectTime ? dayjs(rawRequirement.collectTime).toDate() : undefined"
-                          @update:model-value="(date) => {
-                            if (date) {
-                              rawRequirement.collectTime = date.toISOString();
-                            } else {
-                              rawRequirement.collectTime = null;
-                            }
-                          }"
+                          v-model="collectTimeDate"
                         />
                       </PopoverContent>
                     </Popover>
@@ -237,7 +246,7 @@ const formatDate = (dateStr: string | null | undefined) => {
           </Form>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button variant="outline" class="flex-1 h-9" @click="handleSubmit">保存</Button>
+          <Button variant="outline" class="flex-1 h-9" @click.stop="handleSubmit">保存</Button>
           <Button class="flex-1 h-9" @click="handleAnalyze">分析</Button>
         </div>
       </Card>

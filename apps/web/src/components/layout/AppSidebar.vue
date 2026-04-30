@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { RouterLink, useRoute } from 'vue-router'
-import { Home, FolderKanban, FileText, LayoutDashboard, BookOpen, Settings, Command } from 'lucide-vue-next'
+import { Home, FolderKanban, FileText, LayoutDashboard, BookOpen, Settings, Command, Brain } from 'lucide-vue-next'
 import {
   Sidebar,
   SidebarContent,
@@ -47,6 +47,12 @@ const navItems = [
     icon: BookOpen,
     path: '/knowledge',
     name: 'knowledge'
+  },
+  {
+    title: 'AI 配置',
+    icon: Brain,
+    path: '/ai/config',
+    name: 'aiConfig'
   }
 ]
 

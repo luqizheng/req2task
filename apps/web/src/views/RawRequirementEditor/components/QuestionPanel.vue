@@ -1,5 +1,6 @@
 <template>
   <div class="space-y-3">
+    {{ questions }}
     <div
       v-for="(qa, index) in questions"
       :key="qa.id"

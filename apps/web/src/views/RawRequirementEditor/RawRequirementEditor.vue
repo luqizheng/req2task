@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles, Save, Play, RotateCcw, Loader2 } from "lucide-vue-next";
 import dayjs from "dayjs";
 import { parseDate, DateValue } from "@internationalized/date";
@@ -121,7 +122,7 @@ const getCollectionTypeLabel = (value: CollectionType | undefined) => {
 const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return "";
   const d = dayjs(dateStr);
-  return d.isValid() ? d.format("YYYY-MM-DD HH:mm") : dateStr;
+  return d.isValid() ? d.format("YYYY-MM-DD") : dateStr;
 };
 
 const collectTimeDate = computed<DateValue | undefined>({
@@ -141,13 +142,13 @@ const collectTimeDate = computed<DateValue | undefined>({
 </script>
 
 <template>
-  <div class="h-full p-4 bg-muted/30">
+  <div class="h-[calc(100vh-7rem)] bg-muted/30">
     <div v-if="loading" class="space-y-4">
       <Skeleton class="h-8 w-full" />
       <Skeleton class="h-32 w-full" />
     </div>
 
-    <div v-else class="grid grid-cols-3 gap-4 h-full">
+    <div v-else class="grid grid-cols-3 gap-4 h-full overflow-hidden">
       <!-- 左栏：原始需求输入 -->
       <Card class="flex flex-col h-full overflow-hidden">
         <CardHeader class="pb-4 border-b shrink-0">
@@ -156,136 +157,139 @@ const collectTimeDate = computed<DateValue | undefined>({
               <FileText class="h-5 w-5 text-primary" />
               <CardTitle class="text-base font-semibold">原始需求输入</CardTitle>
             </div>
-            <span class="text-xs text-muted-foreground">步骤 1/3</span>
           </div>
         </CardHeader>
-        <CardContent class="flex-1 overflow-y-auto p-4">
-          <Form
-            :validation-schema="formSchema"
-            :initial-values="rawRequirement"
-            @submit="handleSubmit"
-          >
-            <div class="space-y-4">
-              <FormField v-slot="{ componentField, errorMessage }" name="title">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">标题</FormLabel>
-                  <div class="flex gap-2">
+        <CardContent class="flex-1 p-0 overflow-hidden">
+          <ScrollArea class="h-full px-4 py-4">
+            <Form
+              :validation-schema="formSchema"
+              :initial-values="rawRequirement"
+              @submit="handleSubmit"
+            >
+              <div class="space-y-4">
+                <FormField v-slot="{ componentField, errorMessage }" name="title">
+                  <FormItem>
+                    <FormLabel class="text-xs text-muted-foreground">标题</FormLabel>
+                    <div class="flex gap-2">
+                      <FormControl>
+                        <Input
+                          v-bind="componentField"
+                          :model-value="rawRequirement.title ?? ''"
+                          placeholder="请输入标题"
+                          class="h-9 flex-1"
+                          @update:model-value="(val) => rawRequirement.title = typeof val === 'string' ? val || null : null"
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="icon"
+                        :disabled="!rawRequirement.content?.trim()"
+                        title="AI 生成标题"
+                        @click="handleGenerateTitle"
+                      >
+                        <Sparkles class="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <FormMessage v-if="errorMessage" class="text-xs" />
+                  </FormItem>
+                </FormField>
+
+                <div class="grid grid-cols-2 gap-4">
+                  <FormField v-slot="{ componentField, errorMessage }" name="source">
+                    <FormItem>
+                      <FormLabel class="text-xs text-muted-foreground">来源</FormLabel>
+                      <FormControl>
+                        <Input
+                          v-bind="componentField"
+                          v-model="rawRequirement.source"
+                          placeholder="名字/职位/部门"
+                          class="h-9"
+                        />
+                      </FormControl>
+                      <FormMessage v-if="errorMessage" class="text-xs" />
+                    </FormItem>
+                  </FormField>
+
+                  <FormField v-slot="{ componentField, errorMessage }" name="collectionType">
+                    <FormItem>
+                      <FormLabel class="text-xs text-muted-foreground">收集类型</FormLabel>
+                      <FormControl>
+                        <Select
+                          v-bind="componentField"
+                          v-model="rawRequirement.collectionType"
+                        >
+                          <SelectTrigger class="h-9">
+                            <SelectValue :placeholder="getCollectionTypeLabel(rawRequirement.collectionType) || '选择采集方式'" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem
+                              v-for="opt in collectionTypeOptions"
+                              :key="opt.value"
+                              :value="opt.value"
+                            >
+                              {{ opt.label }}
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </FormControl>
+                      <FormMessage v-if="errorMessage" class="text-xs" />
+                    </FormItem>
+                  </FormField>
+                </div>
+
+                <FormField v-slot="{ errorMessage }" name="collectTime">
+                  <FormItem>
+                    <FormLabel class="text-xs text-muted-foreground">收集时间</FormLabel>
                     <FormControl>
-                      <Input
+                      <Popover>
+                        <PopoverTrigger as-child>
+                          <Button
+                            variant="outline"
+                            class="w-full justify-start text-left font-normal h-9"
+                            :class="!rawRequirement.collectTime && 'text-muted-foreground'"
+                          >
+                            <CalendarIcon class="mr-2 h-4 w-4" />
+                            {{ rawRequirement.collectTime ? formatDate(rawRequirement.collectTime) : '选择收集时间' }}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent class="w-auto p-0">
+                          <Calendar
+                            v-model="collectTimeDate"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </FormControl>
+                    <FormMessage v-if="errorMessage" class="text-xs" />
+                  </FormItem>
+                </FormField>
+
+                <FormField v-slot="{ componentField, errorMessage }" name="content">
+                  <FormItem>
+                    <FormLabel class="text-xs text-muted-foreground">原始内容</FormLabel>
+                    <FormControl>
+                      <Textarea
                         v-bind="componentField"
-                        :model-value="rawRequirement.title ?? ''"
-                        placeholder="请输入标题"
-                        class="h-9 flex-1"
-                        @update:model-value="(val) => rawRequirement.title = typeof val === 'string' ? val || null : null"
+                        v-model="rawRequirement.content"
+                        placeholder="请输入原始需求内容"
+                        :rows="6"
                       />
                     </FormControl>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      :disabled="!rawRequirement.content?.trim()"
-                      title="AI 生成标题"
-                      @click="handleGenerateTitle"
-                    >
-                      <Sparkles class="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <FormMessage v-if="errorMessage" class="text-xs" />
-                </FormItem>
-              </FormField>
+                    <FormMessage v-if="errorMessage" class="text-xs" />
+                  </FormItem>
+                </FormField>
 
-              <FormField v-slot="{ componentField, errorMessage }" name="source">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">来源</FormLabel>
-                  <FormControl>
-                    <Input
-                      v-bind="componentField"
-                      v-model="rawRequirement.source"
-                      placeholder="名字/职位/部门"
-                      class="h-9"
-                    />
-                  </FormControl>
-                  <FormMessage v-if="errorMessage" class="text-xs" />
-                </FormItem>
-              </FormField>
-
-              <FormField v-slot="{ componentField, errorMessage }" name="collectionType">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">收集类型</FormLabel>
-                  <FormControl>
-                    <Select
-                      v-bind="componentField"
-                      v-model="rawRequirement.collectionType"
-                    >
-                      <SelectTrigger class="h-9">
-                        <SelectValue :placeholder="getCollectionTypeLabel(rawRequirement.collectionType) || '选择采集方式'" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem
-                          v-for="opt in collectionTypeOptions"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >
-                          {{ opt.label }}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </FormControl>
-                  <FormMessage v-if="errorMessage" class="text-xs" />
-                </FormItem>
-              </FormField>
-
-              <FormField v-slot="{ errorMessage }" name="collectTime">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">收集时间</FormLabel>
-                  <FormControl>
-                    <Popover>
-                      <PopoverTrigger as-child>
-                        <Button
-                          variant="outline"
-                          class="w-full justify-start text-left font-normal h-9"
-                          :class="!rawRequirement.collectTime && 'text-muted-foreground'"
-                        >
-                          <CalendarIcon class="mr-2 h-4 w-4" />
-                          {{ rawRequirement.collectTime ? formatDate(rawRequirement.collectTime) : '选择收集时间' }}
-                        </Button>
-                      </PopoverTrigger>
-                      <PopoverContent class="w-auto p-0">
-                        <Calendar
-                          v-model="collectTimeDate"
-                        />
-                      </PopoverContent>
-                    </Popover>
-                  </FormControl>
-                  <FormMessage v-if="errorMessage" class="text-xs" />
-                </FormItem>
-              </FormField>
-
-              <FormField v-slot="{ componentField, errorMessage }" name="content">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">原始内容</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      v-bind="componentField"
-                      v-model="rawRequirement.content"
-                      placeholder="请输入原始需求内容"
-                      :rows="6"
-                    />
-                  </FormControl>
-                  <FormMessage v-if="errorMessage" class="text-xs" />
-                </FormItem>
-              </FormField>
-
-              <FormField name="fileIds">
-                <FormItem>
-                  <FormLabel class="text-xs text-muted-foreground">上传文件</FormLabel>
-                  <FormControl>
-                    <RustFSUploader v-model="rawRequirement.fileIds" />
-                  </FormControl>
-                </FormItem>
-              </FormField>
-            </div>
-          </Form>
+                <FormField name="fileIds">
+                  <FormItem>
+                    <FormLabel class="text-xs text-muted-foreground">上传文件</FormLabel>
+                    <FormControl>
+                      <RustFSUploader v-model="rawRequirement.fileIds" />
+                    </FormControl>
+                  </FormItem>
+                </FormField>
+              </div>
+            </Form>
+          </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
           <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click.stop="handleSubmit">
@@ -315,8 +319,10 @@ const collectTimeDate = computed<DateValue | undefined>({
             </div>
           </div>
         </CardHeader>
-        <CardContent class="flex-1 overflow-y-auto p-4">
-          <QuestionPanel :projectId="projectId" :store="store" />
+        <CardContent class="flex-1 p-0 overflow-hidden">
+          <ScrollArea class="h-full px-4 py-4">
+            <QuestionPanel :projectId="projectId" :store="store" />
+          </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0">
           <Button class="w-full h-9" @click="handlerGenerateRequirements">
@@ -337,8 +343,10 @@ const collectTimeDate = computed<DateValue | undefined>({
             <span class="text-xs text-muted-foreground">步骤 3/3</span>
           </div>
         </CardHeader>
-        <CardContent class="flex-1 overflow-y-auto p-4">
-          <RequirementList :projectId="projectId" :store="store" />
+        <CardContent class="flex-1 p-0 overflow-hidden">
+          <ScrollArea class="h-full px-4 py-4">
+            <RequirementList :projectId="projectId" :store="store" />
+          </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
           <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click="handlerGenerateRequirements">

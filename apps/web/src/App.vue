@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
+import 'vue-sonner/style.css'
 const route = useRoute()
 const isAuthLayout = route.meta.layout === 'auth'
 </script>

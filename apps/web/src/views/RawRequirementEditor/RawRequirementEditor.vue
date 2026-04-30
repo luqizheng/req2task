@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles, Save, Play, RotateCcw } from "lucide-vue-next";
+import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles, Save, Play, RotateCcw, Loader2 } from "lucide-vue-next";
 import dayjs from "dayjs";
 import { parseDate, DateValue } from "@internationalized/date";
 
@@ -48,6 +48,7 @@ store.projectId = projectId;
 const rawRequirementSubmitHelper = useRequirementSubmit(store);
 const { rawRequirement } = storeToRefs(store);
 const loading = ref(false);
+const isSaving = ref(false);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -83,7 +84,12 @@ onMounted(async () => {
 });
 
 const handleSubmit = async () => {
-  rawRequirementSubmitHelper.save();
+  isSaving.value = true;
+  try {
+    await rawRequirementSubmitHelper.save();
+  } finally {
+    isSaving.value = false;
+  }
 };
 
 const handleAnalyze = async () => {
@@ -282,11 +288,12 @@ const collectTimeDate = computed<DateValue | undefined>({
           </Form>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button variant="outline" class="flex-1 h-9" @click.stop="handleSubmit">
-            <Save class="w-4 h-4 mr-2" />
-            保存
+          <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click.stop="handleSubmit">
+            <Loader2 v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" />
+            <Save v-else class="w-4 h-4 mr-2" />
+            {{ isSaving ? '保存中...' : '保存' }}
           </Button>
-          <Button class="flex-1 h-9" @click="handleAnalyze">
+          <Button class="flex-1 h-9" :disabled="isSaving" @click="handleAnalyze">
             <Play class="w-4 h-4 mr-2" />
             分析
           </Button>
@@ -334,13 +341,14 @@ const collectTimeDate = computed<DateValue | undefined>({
           <RequirementList :projectId="projectId" :store="store" />
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button variant="outline" class="flex-1 h-9" @click="handlerGenerateRequirements">
+          <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click="handlerGenerateRequirements">
             <RotateCcw class="w-4 h-4 mr-2" />
             重新生成
           </Button>
-          <Button class="flex-1 h-9" @click="handleSubmit">
-            <Save class="w-4 h-4 mr-2" />
-            保存需求
+          <Button class="flex-1 h-9" :disabled="isSaving" @click="handleSubmit">
+            <Loader2 v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" />
+            <Save v-else class="w-4 h-4 mr-2" />
+            {{ isSaving ? '保存中...' : '保存需求' }}
           </Button>
         </div>
       </Card>

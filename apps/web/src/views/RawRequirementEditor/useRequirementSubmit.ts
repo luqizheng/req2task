@@ -159,8 +159,8 @@ export function useRequirementSubmit(
       const response = await rawRequirementsApi.generateTitle({
         content: store.rawRequirement.content,
       });
-      if (response.code === 0 && response.data.title) {
-        store.rawRequirement.title = response.data.title;
+      if (response.title) {
+        store.rawRequirement.title = response.title;
         toast.success("标题生成完成");
       } else {
         toast.error("生成标题失败");

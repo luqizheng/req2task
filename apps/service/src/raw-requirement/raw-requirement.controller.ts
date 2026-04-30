@@ -98,49 +98,6 @@ export class RawRequirementController {
     });
   }
 
-  @Post(":projectId")
-  async createRawRequirement(
-    @Param("projectId") projectId: string,
-    @Body() dto: CreateRawRequirementDto,
-    @Request() req: AuthenticatedRequest,
-  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
-    const userId = req.user?.id || "system";
-    const result =
-      await this.rawRequirementService.create(projectId, dto, userId);
-    return { code: 0, data: result, message: "创建成功"};
-  }
-
-  @Put(":rawRequirementId")
-  async updateRawRequirement(
-    @Param("rawRequirementId") rawRequirementId: string,
-    @Body() dto: UpdateRawRequirementDto,
-  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
-    const result =
-      await this.rawRequirementService.updateRawRequirement(rawRequirementId, dto);
-    return { code: 0, data: result, message: "更新成功" };
-  }
-  
-
-  @Delete(":rawRequirementId")
-  async deleteRawRequirement(
-    @Param("rawRequirementId") rawRequirementId: string,
-  ): Promise<ApiResponseDto<null>> {
-    await this.rawRequirementService.deleteRawRequirement(rawRequirementId);
-    return { code: 0, message: "删除成功" };
-  }
-
-
-  @Get(":projectId/raw-requirements")
-  async getRawRequirementsByProject(
-    @Param("projectId") projectId: string,
-    @Query() params: RawRequirementListParams,
-    @Request() _req: AuthenticatedRequest,
-  ): Promise<ApiResponseDto<RawRequirementResponseDto[]>> {
-    const result =
-      await this.rawRequirementService.getRawRequirementsByProject(projectId, params);
-    return { code: 0, data: result };
-  }
-
   @Post("generate-title")
   @HttpCode(HttpStatus.OK)
   async generateTitle(
@@ -174,6 +131,48 @@ ${dto.content}
     this.logger.log(`标题生成完成: ${title}`);
 
     return { code: 0, data: { title } };
+  }
+
+  @Post(":projectId")
+  async createRawRequirement(
+    @Param("projectId") projectId: string,
+    @Body() dto: CreateRawRequirementDto,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
+    const userId = req.user?.id || "system";
+    const result =
+      await this.rawRequirementService.create(projectId, dto, userId);
+    return { code: 0, data: result, message: "创建成功"};
+  }
+
+  @Put(":rawRequirementId")
+  async updateRawRequirement(
+    @Param("rawRequirementId") rawRequirementId: string,
+    @Body() dto: UpdateRawRequirementDto,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
+    const result =
+      await this.rawRequirementService.updateRawRequirement(rawRequirementId, dto);
+    return { code: 0, data: result, message: "更新成功" };
+  }
+  
+
+  @Delete(":rawRequirementId")
+  async deleteRawRequirement(
+    @Param("rawRequirementId") rawRequirementId: string,
+  ): Promise<ApiResponseDto<null>> {
+    await this.rawRequirementService.deleteRawRequirement(rawRequirementId);
+    return { code: 0, message: "删除成功" };
+  }
+
+  @Get(":projectId/raw-requirements")
+  async getRawRequirementsByProject(
+    @Param("projectId") projectId: string,
+    @Query() params: RawRequirementListParams,
+    @Request() _req: AuthenticatedRequest,
+  ): Promise<ApiResponseDto<RawRequirementResponseDto[]>> {
+    const result =
+      await this.rawRequirementService.getRawRequirementsByProject(projectId, params);
+    return { code: 0, data: result };
   }
 
 }

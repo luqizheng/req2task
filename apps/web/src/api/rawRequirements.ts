@@ -79,7 +79,7 @@ export const rawRequirementsApi = {
 
   generateTitle: (
     data: GenerateTitleRequestDto,
-  ): Promise<{ code: number; data: GenerateTitleResponseDto }> => {
+  ): Promise<GenerateTitleResponseDto> => {
     return api.post(`/raw-requirements/generate-title`, data);
   },
 };

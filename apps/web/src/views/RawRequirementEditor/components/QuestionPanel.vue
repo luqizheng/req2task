@@ -1,6 +1,5 @@
 <template>
   <div class="space-y-3">
-    {{ questions }}
     <div
       v-for="(qa, index) in questions"
       :key="qa.id"
@@ -33,7 +32,9 @@
 
       <!-- Content -->
       <div class="px-3 pb-3">
-        <p class="text-sm font-medium text-foreground mb-2">{{ qa.question }}</p>
+        <p class="text-sm font-medium text-foreground mb-2">
+          {{ qa.question }}
+        </p>
 
         <!-- Purpose -->
         <div
@@ -82,7 +83,10 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="questions.length === 0" class="text-center py-8 text-muted-foreground">
+    <div
+      v-if="questions.length === 0"
+      class="text-center py-8 text-muted-foreground"
+    >
       <HelpCircle class="h-8 w-8 mx-auto mb-2 opacity-50" />
       <p class="text-sm">暂无问题</p>
       <p class="text-xs">点击"分析"按钮生成问题</p>

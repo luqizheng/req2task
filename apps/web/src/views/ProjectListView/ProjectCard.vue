@@ -60,8 +60,8 @@ const formatDate = (date: Date | null) => {
 <template>
   <CommonCard
     class="group border-slate-200/60 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-200 cursor-pointer"
-    @click="goToProject(project.id)"
     :title="project.name"
+    @click="goToProject(project.id)"
   >
     <template #title-icon>
       <div

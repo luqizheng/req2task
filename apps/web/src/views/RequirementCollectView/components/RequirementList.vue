@@ -123,8 +123,8 @@ const handleDelete = (id: string) => {
         >
           <PaginationContent>
             <PaginationPrev
-              @click="goToPage(currentPage - 1)"
               :disabled="currentPage === 1"
+              @click="goToPage(currentPage - 1)"
             />
             <PaginationEllipsis v-if="currentPage > 2" @click="goToPage(currentPage - 2)" />
             <PaginationItem
@@ -145,8 +145,8 @@ const handleDelete = (id: string) => {
             </PaginationItem>
             <PaginationEllipsis v-if="currentPage < totalPages - 1" @click="goToPage(currentPage + 2)" />
             <PaginationNext
-              @click="goToPage(currentPage + 1)"
               :disabled="currentPage === totalPages"
+              @click="goToPage(currentPage + 1)"
             />
           </PaginationContent>
         </Pagination>

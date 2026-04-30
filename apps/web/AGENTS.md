@@ -5,22 +5,29 @@
 ### 启动开发服务器
 
 ```bash
-cd apps/web-shadcn
+cd apps/web
 pnpm dev
 ```
 
 ### 构建
 
 ```bash
-cd apps/web-shadcn
+cd apps/web
 pnpm build
+```
+
+### 代码检查
+
+```bash
+cd apps/web
+pnpm lint
 ```
 
 ### 类型检查
 
 ```bash
-cd apps/web-shadcn
-pnpm build
+cd apps/web
+pnpm type-check
 ```
 
 ## 技术栈
@@ -33,6 +40,7 @@ pnpm build
 - **工具库**: VueUse, clsx, tailwind-merge
 - **图标**: Lucide Vue Next
 - **语言**: TypeScript
+- **代码检查**: ESLint 9 + TypeScript 支持
 
 ## 目录结构
 
@@ -140,4 +148,6 @@ npx shadcn-vue@latest add select
 2. 样式使用 Tailwind CSS，不写自定义 CSS
 3. 组件类名使用 `cn()` 合并
 4. 遵循 shadcn-vue 组件模式
-5. 运行 `pnpm build`（包含类型检查）后再提交
+5. 支持 TSX 语法（需要使用 `@vitejs/plugin-vue-jsx`）
+6. 运行 `pnpm lint` 检查代码后再提交
+7. 运行 `pnpm build`（包含类型检查）后再提交

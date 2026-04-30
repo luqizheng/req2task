@@ -59,7 +59,7 @@ const handleSubmit = () => {
 </script>
 
 <template>
-  <Form @submit="handleSubmit" class="space-y-4">
+  <Form class="space-y-4" @submit="handleSubmit">
     <FormField name="title">
       <FormItem>
         <FormLabel>收集标题</FormLabel>

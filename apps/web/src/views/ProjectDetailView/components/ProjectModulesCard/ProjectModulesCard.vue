@@ -1,18 +1,19 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
-import { useRouter } from "vue-router";
-import type {
-  CreateFeatureModuleDto,
-  UpdateFeatureModuleDto,
-} from "@req2task/dto";
-import { featureModulesApi } from "@/api/featureModules";
-import { toast } from "vue-sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { onMounted } from 'vue';
+import { useRouter } from 'vue-router';
+import type { CreateFeatureModuleDto, UpdateFeatureModuleDto } from '@req2task/dto';
+import { useModules } from './useModules';
+import { useModuleForm } from './useModuleForm';
+import { toast } from 'vue-sonner';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Field,
+  FieldLabel,
+} from '@/components/ui/field';
 import {
   Dialog,
   DialogContent,
@@ -21,14 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from '@/components/ui/dialog';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from '@/components/ui/select';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+} from '@/components/ui/alert-dialog';
 import {
   FolderTree,
   Plus,
@@ -49,17 +50,7 @@ import {
   Edit,
   Trash2,
   Loader2,
-} from "lucide-vue-next";
-
-interface FeatureModule {
-  id: string;
-  name: string;
-  description: string | null;
-  moduleKey: string;
-  sort: number;
-  parentId: string | null;
-  children: FeatureModule[];
-}
+} from 'lucide-vue-next';
 
 const props = defineProps<{
   projectId: string;
@@ -67,115 +58,79 @@ const props = defineProps<{
 
 const router = useRouter();
 
-const modules = ref<FeatureModule[]>([]);
-const loading = ref(true);
-const error = ref<string | null>(null);
+const {
+  modules,
+  loading,
+  error,
+  fetchModules,
+  createModule,
+  updateModule,
+  deleteModule,
+  getAllModules,
+} = useModules(props.projectId);
 
-const showCreateDialog = ref(false);
-const showEditDialog = ref(false);
-const showDeleteDialog = ref(false);
-const selectedModule = ref<FeatureModule | null>(null);
-const submitting = ref(false);
-
-const formData = ref({
-  name: "",
-  description: "",
-  parentId: "",
-  moduleKey: "",
-});
-
-const fetchModules = async () => {
-  try {
-    loading.value = true;
-    const data = await featureModulesApi.getTree(props.projectId);
-    modules.value = data || [];
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : "加载模块失败";
-    toast.error(error.value);
-  } finally {
-    loading.value = false;
-  }
-};
-
-const resetForm = () => {
-  formData.value = {
-    name: "",
-    description: "",
-    parentId: "",
-    moduleKey: "",
-  };
-};
-
-const openCreateDialog = () => {
-  resetForm();
-  showCreateDialog.value = true;
-};
+const {
+  showCreateDialog,
+  showEditDialog,
+  showDeleteDialog,
+  selectedModule,
+  submitting,
+  formData,
+  isCreateValid,
+  isEditValid,
+  openCreateDialog,
+  openEditDialog,
+  openDeleteDialog,
+  closeCreateDialog,
+  closeEditDialog,
+  closeDeleteDialog,
+} = useModuleForm();
 
 const handleCreate = async () => {
-  if (!formData.value.name.trim() || !formData.value.moduleKey.trim()) {
-    toast.error("模块名称和模块Key不能为空");
+  if (!isCreateValid.value) {
+    toast.error('模块名称和模块Key不能为空');
     return;
   }
 
   try {
     submitting.value = true;
     const createData: CreateFeatureModuleDto = {
-      name: formData.value.name.trim(),
-      description: formData.value.description.trim() || undefined,
-      moduleKey: formData.value.moduleKey.trim(),
-      parentId: formData.value.parentId || undefined,
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      moduleKey: formData.moduleKey.trim(),
+      parentId: formData.parentId || undefined,
       projectId: props.projectId,
     };
-    await featureModulesApi.create(props.projectId, createData);
-    toast.success("模块已创建");
-    showCreateDialog.value = false;
-    fetchModules();
+    await createModule(createData);
+    closeCreateDialog();
   } catch (err) {
-    toast.error(err instanceof Error ? err.message : "创建模块失败");
+    toast.error(err instanceof Error ? err.message : '创建模块失败');
   } finally {
     submitting.value = false;
   }
 };
 
-const openEditDialog = (module: FeatureModule) => {
-  selectedModule.value = module;
-  formData.value = {
-    name: module.name,
-    description: module.description || "",
-    parentId: module.parentId || "",
-    moduleKey: module.moduleKey,
-  };
-  showEditDialog.value = true;
-};
-
 const handleUpdate = async () => {
   if (!selectedModule.value) return;
-  if (!formData.value.name.trim() || !formData.value.moduleKey.trim()) {
-    toast.error("模块名称和模块Key不能为空");
+  if (!isEditValid.value) {
+    toast.error('模块名称不能为空');
     return;
   }
 
   try {
     submitting.value = true;
     const updateData: UpdateFeatureModuleDto = {
-      name: formData.value.name.trim(),
-      description: formData.value.description.trim() || undefined,
-      parentId: formData.value.parentId || undefined,
+      name: formData.name.trim(),
+      description: formData.description.trim() || undefined,
+      parentId: formData.parentId || undefined,
     };
-    await featureModulesApi.update(selectedModule.value.id, updateData);
-    toast.success("模块已更新");
-    showEditDialog.value = false;
-    fetchModules();
+    await updateModule(selectedModule.value.id, updateData);
+    closeEditDialog();
   } catch (err) {
-    toast.error(err instanceof Error ? err.message : "更新模块失败");
+    toast.error(err instanceof Error ? err.message : '更新模块失败');
   } finally {
     submitting.value = false;
   }
-};
-
-const openDeleteDialog = (module: FeatureModule) => {
-  selectedModule.value = module;
-  showDeleteDialog.value = true;
 };
 
 const handleDelete = async () => {
@@ -183,12 +138,10 @@ const handleDelete = async () => {
 
   try {
     submitting.value = true;
-    await featureModulesApi.delete(selectedModule.value.id);
-    toast.success("模块已删除");
-    showDeleteDialog.value = false;
-    fetchModules();
+    await deleteModule(selectedModule.value.id);
+    closeDeleteDialog();
   } catch (err) {
-    toast.error(err instanceof Error ? err.message : "删除模块失败");
+    toast.error(err instanceof Error ? err.message : '删除模块失败');
   } finally {
     submitting.value = false;
   }
@@ -198,16 +151,8 @@ const goToModule = (moduleId: string) => {
   router.push(`/projects/${props.projectId}/modules/${moduleId}`);
 };
 
-const getAllModules = (moduleList: FeatureModule[]): FeatureModule[] => {
-  const result: FeatureModule[] = [];
-  const traverse = (modules: FeatureModule[]) => {
-    for (const m of modules) {
-      result.push(m);
-      if (m.children?.length) traverse(m.children);
-    }
-  };
-  traverse(moduleList);
-  return result;
+const availableParents = () => {
+  return getAllModules(modules.value).filter(m => m.id !== selectedModule.value?.id);
 };
 
 onMounted(() => {
@@ -241,33 +186,33 @@ onMounted(() => {
               <DialogDescription>创建一个新的功能模块</DialogDescription>
             </DialogHeader>
             <div class="space-y-4 py-4">
-              <div class="space-y-2">
-                <Label for="name">模块名称 <span class="text-red-500">*</span></Label>
+              <Field>
+                <FieldLabel for="name">模块名称 <span class="text-red-500">*</span></FieldLabel>
                 <Input
                   id="name"
                   v-model="formData.name"
                   placeholder="请输入模块名称"
                 />
-              </div>
-              <div class="space-y-2">
-                <Label for="moduleKey">模块 Key <span class="text-red-500">*</span></Label>
+              </Field>
+              <Field>
+                <FieldLabel for="moduleKey">模块 Key <span class="text-red-500">*</span></FieldLabel>
                 <Input
                   id="moduleKey"
                   v-model="formData.moduleKey"
                   placeholder="如: user-management"
                 />
-              </div>
-              <div class="space-y-2">
-                <Label for="description">描述</Label>
+              </Field>
+              <Field>
+                <FieldLabel for="description">描述</FieldLabel>
                 <Textarea
                   id="description"
                   v-model="formData.description"
                   placeholder="请输入模块描述（可选）"
                   rows="3"
                 />
-              </div>
-              <div class="space-y-2">
-                <Label for="parent">父模块</Label>
+              </Field>
+              <Field>
+                <FieldLabel for="parent">父模块</FieldLabel>
                 <Select v-model="formData.parentId">
                   <SelectTrigger id="parent">
                     <SelectValue placeholder="无（顶级模块）" />
@@ -283,11 +228,11 @@ onMounted(() => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </Field>
             </div>
             <DialogFooter>
-              <Button variant="outline" @click="showCreateDialog = false">取消</Button>
-              <Button @click="handleCreate" :disabled="submitting">
+              <Button variant="outline" @click="closeCreateDialog">取消</Button>
+              <Button :disabled="submitting" @click="handleCreate">
                 <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
                 创建
               </Button>
@@ -377,8 +322,8 @@ onMounted(() => {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel @click.stop="showDeleteDialog = false">取消</AlertDialogCancel>
-                  <AlertDialogAction variant="destructive" @click="handleDelete" :disabled="submitting">
+                  <AlertDialogCancel @click.stop="closeDeleteDialog">取消</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" :disabled="submitting" @click="handleDelete">
                     <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
                     删除
                   </AlertDialogAction>
@@ -399,25 +344,25 @@ onMounted(() => {
         <DialogDescription>修改模块信息</DialogDescription>
       </DialogHeader>
       <div class="space-y-4 py-4" @click.stop>
-        <div class="space-y-2">
-          <Label for="edit-name">模块名称 <span class="text-red-500">*</span></Label>
+        <Field>
+          <FieldLabel for="edit-name">模块名称 <span class="text-red-500">*</span></FieldLabel>
           <Input id="edit-name" v-model="formData.name" placeholder="请输入模块名称" />
-        </div>
-        <div class="space-y-2">
-          <Label for="edit-moduleKey">模块 Key</Label>
+        </Field>
+        <Field>
+          <FieldLabel for="edit-moduleKey">模块 Key</FieldLabel>
           <Input id="edit-moduleKey" v-model="formData.moduleKey" disabled />
-        </div>
-        <div class="space-y-2">
-          <Label for="edit-description">描述</Label>
+        </Field>
+        <Field>
+          <FieldLabel for="edit-description">描述</FieldLabel>
           <Textarea
             id="edit-description"
             v-model="formData.description"
             placeholder="请输入模块描述（可选）"
             rows="3"
           />
-        </div>
-        <div class="space-y-2">
-          <Label for="edit-parent">父模块</Label>
+        </Field>
+        <Field>
+          <FieldLabel for="edit-parent">父模块</FieldLabel>
           <Select v-model="formData.parentId">
             <SelectTrigger id="edit-parent">
               <SelectValue placeholder="无（顶级模块）" />
@@ -425,7 +370,7 @@ onMounted(() => {
             <SelectContent>
               <SelectItem value="">无（顶级模块）</SelectItem>
               <SelectItem
-                v-for="m in getAllModules(modules).filter(m => m.id !== selectedModule?.id)"
+                v-for="m in availableParents()"
                 :key="m.id"
                 :value="m.id"
               >
@@ -433,11 +378,11 @@ onMounted(() => {
               </SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </Field>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="showEditDialog = false">取消</Button>
-        <Button @click="handleUpdate" :disabled="submitting">
+        <Button variant="outline" @click="closeEditDialog">取消</Button>
+        <Button :disabled="submitting" @click="handleUpdate">
           <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
           保存
         </Button>

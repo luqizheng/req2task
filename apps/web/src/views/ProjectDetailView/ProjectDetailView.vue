@@ -21,7 +21,7 @@ import {
 } from "lucide-vue-next";
 import ProjectInfoCard from "./components/ProjectInfoCard.vue";
 import ProjectProgressCard from "./components/ProjectProgressCard.vue";
-import ProjectModulesCard from "./components/ProjectModulesCard.vue";
+import ProjectModulesCard from "./components/ProjectModulesCard/ProjectModulesCard.vue";
 import ProjectRequirementsCard from "./components/ProjectRequirementsCard.vue";
 import ProjectTasksCard from "./components/ProjectTasksCard.vue";
 import ProjectBaselinesCard from "./components/ProjectBaselinesCard.vue";

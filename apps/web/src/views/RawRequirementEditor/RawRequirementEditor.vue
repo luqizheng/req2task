@@ -144,7 +144,7 @@ const formatDate = (dateStr: string | null | undefined) => {
             @submit="handleSubmit"
           >
             <div class="grid grid-cols-2 gap-4">
-              <FormField name="source" v-slot="{ componentField, errorMessage }">
+              <FormField v-slot="{ componentField, errorMessage }" name="source">
                 <FormItem>
                   <FormLabel>需求来源</FormLabel>
                   <FormControl>
@@ -158,7 +158,7 @@ const formatDate = (dateStr: string | null | undefined) => {
                 </FormItem>
               </FormField>
 
-              <FormField name="collectionType" v-slot="{ componentField, errorMessage }">
+              <FormField v-slot="{ componentField, errorMessage }" name="collectionType">
                 <FormItem>
                   <FormLabel>采集方式</FormLabel>
                   <FormControl>
@@ -186,7 +186,7 @@ const formatDate = (dateStr: string | null | undefined) => {
             </div>
 
             <div class="grid grid-cols-2 gap-4 mt-4">
-              <FormField name="collectTime" v-slot="{ componentField, errorMessage }">
+              <FormField v-slot="{ errorMessage }" name="collectTime">
                 <FormItem>
                   <FormLabel>收集时间</FormLabel>
                   <FormControl>
@@ -222,7 +222,7 @@ const formatDate = (dateStr: string | null | undefined) => {
               </FormField>
             </div>
 
-            <FormField name="fileIds" v-slot="{ componentField }">
+            <FormField name="fileIds">
               <FormItem class="mt-4">
                 <FormLabel>上传文件</FormLabel>
                 <FormControl>
@@ -231,7 +231,7 @@ const formatDate = (dateStr: string | null | undefined) => {
               </FormItem>
             </FormField>
 
-            <FormField name="content" v-slot="{ componentField, errorMessage }">
+            <FormField v-slot="{ componentField, errorMessage }" name="content">
               <FormItem class="mt-4">
                 <FormLabel>原始需求内容</FormLabel>
                 <FormControl>

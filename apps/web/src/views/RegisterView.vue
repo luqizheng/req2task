@@ -81,7 +81,7 @@ const goToLogin = () => {
         <CardDescription class="text-slate-500 text-lg">创建账号</CardDescription>
       </CardHeader>
       <CardContent>
-        <form @submit="onSubmit" class="space-y-4">
+        <form class="space-y-4" @submit="onSubmit">
           <div class="space-y-2">
             <Label for="username" class="text-slate-700">用户名</Label>
             <div class="relative">

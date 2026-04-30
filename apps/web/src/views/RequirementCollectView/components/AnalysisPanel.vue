@@ -43,8 +43,8 @@ const handleAnalyze = async () => {
         <Button
           size="sm"
           variant="outline"
-          @click="handleAnalyze"
           :disabled="store.rawRequirements.length === 0 || store.isLoading"
+          @click="handleAnalyze"
         >
           <RefreshCw
             class="mr-2 h-4 w-4"

@@ -60,9 +60,9 @@ const handleSubmit = async () => {
         </div>
 
         <Button
-          @click="handleSubmit"
           :disabled="!requirementContent.trim() || isSubmitting"
           class="w-full"
+          @click="handleSubmit"
         >
           <Loader2 v-if="isSubmitting" class="mr-2 h-4 w-4 animate-spin" />
           <SendHorizontal v-else class="mr-2 h-4 w-4" />

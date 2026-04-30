@@ -1,12 +1,14 @@
 {
-  "name": "web-shadcn",
+  "name": "@req2task/web",
   "type": "module",
   "version": "0.0.0",
   "private": true,
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "lint": "eslint \"src/**/*.{ts,vue,tsx}\" --fix",
+    "type-check": "vue-tsc --noEmit"
   },
   "dependencies": {
     "@req2task/dto": "workspace:*",
@@ -33,7 +35,14 @@
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.2.1",
+    "@vitejs/plugin-vue-jsx": "^4.0.0",
+    "@vue/eslint-config-typescript": "^14.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-import": "^2.30.0",
+    "eslint-plugin-vue": "^9.0.0",
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.2",
     "vite": "^6.0.0",

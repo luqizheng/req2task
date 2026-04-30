@@ -152,7 +152,7 @@ const getCriteriaTypeColor = (type: string) => {
             <p class="text-sm font-medium text-slate-700 mb-2">验收条件:</p>
             <ul class="space-y-2">
               <li
-                v-for="(criteria, index) in story.acceptanceCriteria"
+                v-for="criteria in story.acceptanceCriteria"
                 :key="criteria.id"
                 class="flex items-start gap-2"
               >

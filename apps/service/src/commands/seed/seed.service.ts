@@ -1,5 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { DataSource, Repository } from "typeorm";
+import * as crypto from "crypto";
 import {
   Project,
   FeatureModule,
@@ -251,7 +252,7 @@ export class SeedService {
       if (!existing) {
         const requirement = queryRunner.manager.create(Requirement, {
           entityKey: this.generateEntityKey(projectKey, "REQ"),
-          moduleId: module.id,
+          modules: [module],
           title: reqData.title,
           description: reqData.description || null,
           priority: reqData.priority,
@@ -380,8 +381,11 @@ export class SeedService {
 
       if (!existing) {
         const questionAndAnswers = rawData.questionAndAnswers?.map((qa) => ({
+          id: crypto.randomUUID(),
           question: qa.question,
           answer: qa.answer,
+          createdAt: new Date().toISOString(),
+          answeredAt: qa.answer ? new Date().toISOString() : null,
         })) || null;
 
         const rawRequirement = queryRunner.manager.create(RawRequirement, {

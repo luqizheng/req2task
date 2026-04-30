@@ -1,24 +1,24 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Init1777450608152 implements MigrationInterface {
-    name = 'Init1777450608152'
+export class Init1777570875202 implements MigrationInterface {
+    name = 'Init1777570875202'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "public"."user_role_enum" AS ENUM('admin', 'user', 'projectManager', 'requirementAnalyst', 'developer', 'tester')`);
         await queryRunner.query(`CREATE TABLE "user" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "username" character varying NOT NULL, "email" character varying NOT NULL, "display_name" character varying NOT NULL, "role" "public"."user_role_enum" NOT NULL DEFAULT 'user', "password_hash" character varying NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_78a916df40e02a9deb1c4b75edb" UNIQUE ("username"), CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email"), CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."projects_status_enum" AS ENUM('planning', 'active', 'on_hold', 'completed', 'archived')`);
         await queryRunner.query(`CREATE TABLE "projects" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" text, "project_key" character varying NOT NULL, "status" "public"."projects_status_enum" NOT NULL DEFAULT 'planning', "start_date" date, "end_date" date, "owner_id" character varying NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_c655a93948868c0af4c102745e0" UNIQUE ("project_key"), CONSTRAINT "PK_6271df0a7aed1d6c0691ce6ac50" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TABLE "feature_modules" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" text, "module_key" character varying NOT NULL, "sort" integer NOT NULL DEFAULT '0', "parent_id" uuid, "project_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_56a951cb998397df7e11afa727a" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."acceptance_criteria_criteriatype_enum" AS ENUM('functional', 'non_functional', 'performance', 'security', 'usability')`);
         await queryRunner.query(`CREATE TABLE "acceptance_criteria" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "user_story_id" uuid NOT NULL, "criteriaType" "public"."acceptance_criteria_criteriatype_enum" NOT NULL DEFAULT 'functional', "content" text NOT NULL, "test_method" text, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_c2ea9c3ca5e197f3b89d8bb5816" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TABLE "user_stories" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "requirement_id" uuid NOT NULL, "role" character varying NOT NULL, "goal" text NOT NULL, "benefit" text NOT NULL, "story_points" integer NOT NULL DEFAULT '0', "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_2eb2857c3f0754ea3260194524b" PRIMARY KEY ("id"))`);
-        await queryRunner.query(`CREATE TYPE "public"."requirements_priority_enum" AS ENUM('critical', 'high', 'medium', 'low')`);
-        await queryRunner.query(`CREATE TYPE "public"."requirements_source_enum" AS ENUM('manual', 'ai_generated', 'document_import')`);
-        await queryRunner.query(`CREATE TYPE "public"."requirements_status_enum" AS ENUM('draft', 'reviewed', 'approved', 'rejected', 'processing', 'completed', 'cancelled')`);
-        await queryRunner.query(`CREATE TABLE "requirements" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "entity_key" character varying NOT NULL, "module_id" uuid, "module_ids" text, "title" character varying NOT NULL, "description" text, "key_elements" text, "priority" "public"."requirements_priority_enum" NOT NULL DEFAULT 'medium', "source" "public"."requirements_source_enum" NOT NULL DEFAULT 'manual', "status" "public"."requirements_status_enum" NOT NULL DEFAULT 'draft', "story_points" integer NOT NULL DEFAULT '0', "parent_id" uuid, "source_raw_requirement_id" uuid, "conversation_id" uuid, "review_chain_id" uuid, "created_by_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_11df3ea432c3da480886b5033b3" UNIQUE ("entity_key"), CONSTRAINT "PK_4e966e20a0ebaf89e4c1ed664a4" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."raw_requirements_collection_type_enum" AS ENUM('meeting', 'interview', 'document', 'other')`);
         await queryRunner.query(`CREATE TYPE "public"."raw_requirements_status_enum" AS ENUM('pending', 'processing', 'completed', 'clarified', 'converted', 'discarded', 'failed')`);
         await queryRunner.query(`CREATE TABLE "raw_requirements" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "entity_key" character varying NOT NULL, "project_id" uuid NOT NULL, "collection_type" "public"."raw_requirements_collection_type_enum", "original_content" text NOT NULL, "status" "public"."raw_requirements_status_enum" NOT NULL DEFAULT 'pending', "source" character varying(200), "collect_time" TIMESTAMP WITH TIME ZONE, "conversation_id" uuid, "key_elements" json, "question_and_answers" json, "created_by_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_b6816af5a9ade6212b38528d6a6" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TYPE "public"."requirements_priority_enum" AS ENUM('critical', 'high', 'medium', 'low')`);
+        await queryRunner.query(`CREATE TYPE "public"."requirements_source_enum" AS ENUM('manual', 'ai_generated', 'document_import')`);
+        await queryRunner.query(`CREATE TYPE "public"."requirements_status_enum" AS ENUM('draft', 'reviewed', 'approved', 'rejected', 'processing', 'completed', 'cancelled')`);
+        await queryRunner.query(`CREATE TABLE "requirements" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "entity_key" character varying NOT NULL, "title" character varying NOT NULL, "description" text, "key_elements" text, "priority" "public"."requirements_priority_enum" NOT NULL DEFAULT 'medium', "source" "public"."requirements_source_enum" NOT NULL DEFAULT 'manual', "status" "public"."requirements_status_enum" NOT NULL DEFAULT 'draft', "story_points" integer NOT NULL DEFAULT '0', "parent_id" uuid, "source_raw_requirement_id" uuid, "conversation_id" uuid, "review_chain_id" uuid, "created_by_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_11df3ea432c3da480886b5033b3" UNIQUE ("entity_key"), CONSTRAINT "PK_4e966e20a0ebaf89e4c1ed664a4" PRIMARY KEY ("id"))`);
+        await queryRunner.query(`CREATE TABLE "feature_modules" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "name" character varying NOT NULL, "description" text, "module_key" character varying NOT NULL, "aliases" jsonb, "keywords" jsonb, "path" text, "sort" integer NOT NULL DEFAULT '0', "parent_id" uuid, "project_id" uuid NOT NULL, "created_at" TIMESTAMP NOT NULL DEFAULT now(), "updated_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_56a951cb998397df7e11afa727a" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."conversation_messages_role_enum" AS ENUM('user', 'assistant', 'system')`);
         await queryRunner.query(`CREATE TABLE "conversation_messages" ("id" uuid NOT NULL DEFAULT uuid_generate_v4(), "conversation_id" uuid NOT NULL, "role" "public"."conversation_messages_role_enum" NOT NULL, "content" text NOT NULL, "raw_requirement_id" uuid, "metadata" json, "created_at" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "PK_113248f25c4c0a7c179b3f5a609" PRIMARY KEY ("id"))`);
         await queryRunner.query(`CREATE TYPE "public"."conversations_status_enum" AS ENUM('active', 'completed', 'archived')`);
@@ -43,16 +43,18 @@ export class Init1777450608152 implements MigrationInterface {
         await queryRunner.query(`CREATE TABLE "project_members" ("project_id" uuid NOT NULL, "user_id" uuid NOT NULL, CONSTRAINT "PK_b3f491d3a3f986106d281d8eb4b" PRIMARY KEY ("project_id", "user_id"))`);
         await queryRunner.query(`CREATE INDEX "IDX_b5729113570c20c7e214cf3f58" ON "project_members" ("project_id") `);
         await queryRunner.query(`CREATE INDEX "IDX_e89aae80e010c2faa72e6a49ce" ON "project_members" ("user_id") `);
-        await queryRunner.query(`ALTER TABLE "feature_modules" ADD CONSTRAINT "FK_f6e529d44162985c833e0d77557" FOREIGN KEY ("parent_id") REFERENCES "feature_modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "feature_modules" ADD CONSTRAINT "FK_1a7cd479d68971fa2bf907da838" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`CREATE TABLE "requirement_modules" ("requirement_id" uuid NOT NULL, "module_id" uuid NOT NULL, CONSTRAINT "PK_ab340ee13ae31dabcaa0730dc79" PRIMARY KEY ("requirement_id", "module_id"))`);
+        await queryRunner.query(`CREATE INDEX "IDX_18da9ced250ff8bebad5a9f0b2" ON "requirement_modules" ("requirement_id") `);
+        await queryRunner.query(`CREATE INDEX "IDX_149c7eb0716f1b509b98a48759" ON "requirement_modules" ("module_id") `);
         await queryRunner.query(`ALTER TABLE "acceptance_criteria" ADD CONSTRAINT "FK_56107574c14411e36a3048da20e" FOREIGN KEY ("user_story_id") REFERENCES "user_stories"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "user_stories" ADD CONSTRAINT "FK_7a4ff6bf9b6295c708107c1e6b4" FOREIGN KEY ("requirement_id") REFERENCES "requirements"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "requirements" ADD CONSTRAINT "FK_5081b0520428f213d7d4346a5cd" FOREIGN KEY ("module_id") REFERENCES "feature_modules"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "raw_requirements" ADD CONSTRAINT "FK_3395bad51b8624a32bfb8b504b0" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "raw_requirements" ADD CONSTRAINT "FK_78b9b50f8cb78c5590e525de6df" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "requirements" ADD CONSTRAINT "FK_ddd5581013807b79e0eee43ee95" FOREIGN KEY ("parent_id") REFERENCES "requirements"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "requirements" ADD CONSTRAINT "FK_fe5074b1c8e6da475300271d4e0" FOREIGN KEY ("source_raw_requirement_id") REFERENCES "raw_requirements"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "requirements" ADD CONSTRAINT "FK_29037e58d8cdd8dce651a7d1e6c" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "raw_requirements" ADD CONSTRAINT "FK_3395bad51b8624a32bfb8b504b0" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
-        await queryRunner.query(`ALTER TABLE "raw_requirements" ADD CONSTRAINT "FK_78b9b50f8cb78c5590e525de6df" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "feature_modules" ADD CONSTRAINT "FK_f6e529d44162985c833e0d77557" FOREIGN KEY ("parent_id") REFERENCES "feature_modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
+        await queryRunner.query(`ALTER TABLE "feature_modules" ADD CONSTRAINT "FK_1a7cd479d68971fa2bf907da838" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "conversation_messages" ADD CONSTRAINT "FK_8e166abf2dd2ee28670e53e6803" FOREIGN KEY ("conversation_id") REFERENCES "conversations"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "requirement_change_logs" ADD CONSTRAINT "FK_049f3462c9ad349d74b6394cb7f" FOREIGN KEY ("requirement_id") REFERENCES "requirements"("id") ON DELETE CASCADE ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "requirement_change_logs" ADD CONSTRAINT "FK_6b6c4b7c15baa8836750b1d8ab4" FOREIGN KEY ("changed_by_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
@@ -69,9 +71,13 @@ export class Init1777450608152 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "project_attachments" ADD CONSTRAINT "FK_0bba5b3e6621febe9fb6883ff81" FOREIGN KEY ("created_by_id") REFERENCES "user"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
         await queryRunner.query(`ALTER TABLE "project_members" ADD CONSTRAINT "FK_b5729113570c20c7e214cf3f58d" FOREIGN KEY ("project_id") REFERENCES "projects"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
         await queryRunner.query(`ALTER TABLE "project_members" ADD CONSTRAINT "FK_e89aae80e010c2faa72e6a49ce8" FOREIGN KEY ("user_id") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "requirement_modules" ADD CONSTRAINT "FK_18da9ced250ff8bebad5a9f0b25" FOREIGN KEY ("requirement_id") REFERENCES "requirements"("id") ON DELETE CASCADE ON UPDATE CASCADE`);
+        await queryRunner.query(`ALTER TABLE "requirement_modules" ADD CONSTRAINT "FK_149c7eb0716f1b509b98a487594" FOREIGN KEY ("module_id") REFERENCES "feature_modules"("id") ON DELETE NO ACTION ON UPDATE NO ACTION`);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {
+        await queryRunner.query(`ALTER TABLE "requirement_modules" DROP CONSTRAINT "FK_149c7eb0716f1b509b98a487594"`);
+        await queryRunner.query(`ALTER TABLE "requirement_modules" DROP CONSTRAINT "FK_18da9ced250ff8bebad5a9f0b25"`);
         await queryRunner.query(`ALTER TABLE "project_members" DROP CONSTRAINT "FK_e89aae80e010c2faa72e6a49ce8"`);
         await queryRunner.query(`ALTER TABLE "project_members" DROP CONSTRAINT "FK_b5729113570c20c7e214cf3f58d"`);
         await queryRunner.query(`ALTER TABLE "project_attachments" DROP CONSTRAINT "FK_0bba5b3e6621febe9fb6883ff81"`);
@@ -88,16 +94,18 @@ export class Init1777450608152 implements MigrationInterface {
         await queryRunner.query(`ALTER TABLE "requirement_change_logs" DROP CONSTRAINT "FK_6b6c4b7c15baa8836750b1d8ab4"`);
         await queryRunner.query(`ALTER TABLE "requirement_change_logs" DROP CONSTRAINT "FK_049f3462c9ad349d74b6394cb7f"`);
         await queryRunner.query(`ALTER TABLE "conversation_messages" DROP CONSTRAINT "FK_8e166abf2dd2ee28670e53e6803"`);
-        await queryRunner.query(`ALTER TABLE "raw_requirements" DROP CONSTRAINT "FK_78b9b50f8cb78c5590e525de6df"`);
-        await queryRunner.query(`ALTER TABLE "raw_requirements" DROP CONSTRAINT "FK_3395bad51b8624a32bfb8b504b0"`);
+        await queryRunner.query(`ALTER TABLE "feature_modules" DROP CONSTRAINT "FK_1a7cd479d68971fa2bf907da838"`);
+        await queryRunner.query(`ALTER TABLE "feature_modules" DROP CONSTRAINT "FK_f6e529d44162985c833e0d77557"`);
         await queryRunner.query(`ALTER TABLE "requirements" DROP CONSTRAINT "FK_29037e58d8cdd8dce651a7d1e6c"`);
         await queryRunner.query(`ALTER TABLE "requirements" DROP CONSTRAINT "FK_fe5074b1c8e6da475300271d4e0"`);
         await queryRunner.query(`ALTER TABLE "requirements" DROP CONSTRAINT "FK_ddd5581013807b79e0eee43ee95"`);
-        await queryRunner.query(`ALTER TABLE "requirements" DROP CONSTRAINT "FK_5081b0520428f213d7d4346a5cd"`);
+        await queryRunner.query(`ALTER TABLE "raw_requirements" DROP CONSTRAINT "FK_78b9b50f8cb78c5590e525de6df"`);
+        await queryRunner.query(`ALTER TABLE "raw_requirements" DROP CONSTRAINT "FK_3395bad51b8624a32bfb8b504b0"`);
         await queryRunner.query(`ALTER TABLE "user_stories" DROP CONSTRAINT "FK_7a4ff6bf9b6295c708107c1e6b4"`);
         await queryRunner.query(`ALTER TABLE "acceptance_criteria" DROP CONSTRAINT "FK_56107574c14411e36a3048da20e"`);
-        await queryRunner.query(`ALTER TABLE "feature_modules" DROP CONSTRAINT "FK_1a7cd479d68971fa2bf907da838"`);
-        await queryRunner.query(`ALTER TABLE "feature_modules" DROP CONSTRAINT "FK_f6e529d44162985c833e0d77557"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_149c7eb0716f1b509b98a48759"`);
+        await queryRunner.query(`DROP INDEX "public"."IDX_18da9ced250ff8bebad5a9f0b2"`);
+        await queryRunner.query(`DROP TABLE "requirement_modules"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_e89aae80e010c2faa72e6a49ce"`);
         await queryRunner.query(`DROP INDEX "public"."IDX_b5729113570c20c7e214cf3f58"`);
         await queryRunner.query(`DROP TABLE "project_members"`);
@@ -122,17 +130,17 @@ export class Init1777450608152 implements MigrationInterface {
         await queryRunner.query(`DROP TYPE "public"."conversations_status_enum"`);
         await queryRunner.query(`DROP TABLE "conversation_messages"`);
         await queryRunner.query(`DROP TYPE "public"."conversation_messages_role_enum"`);
-        await queryRunner.query(`DROP TABLE "raw_requirements"`);
-        await queryRunner.query(`DROP TYPE "public"."raw_requirements_status_enum"`);
-        await queryRunner.query(`DROP TYPE "public"."raw_requirements_collection_type_enum"`);
+        await queryRunner.query(`DROP TABLE "feature_modules"`);
         await queryRunner.query(`DROP TABLE "requirements"`);
         await queryRunner.query(`DROP TYPE "public"."requirements_status_enum"`);
         await queryRunner.query(`DROP TYPE "public"."requirements_source_enum"`);
         await queryRunner.query(`DROP TYPE "public"."requirements_priority_enum"`);
+        await queryRunner.query(`DROP TABLE "raw_requirements"`);
+        await queryRunner.query(`DROP TYPE "public"."raw_requirements_status_enum"`);
+        await queryRunner.query(`DROP TYPE "public"."raw_requirements_collection_type_enum"`);
         await queryRunner.query(`DROP TABLE "user_stories"`);
         await queryRunner.query(`DROP TABLE "acceptance_criteria"`);
         await queryRunner.query(`DROP TYPE "public"."acceptance_criteria_criteriatype_enum"`);
-        await queryRunner.query(`DROP TABLE "feature_modules"`);
         await queryRunner.query(`DROP TABLE "projects"`);
         await queryRunner.query(`DROP TYPE "public"."projects_status_enum"`);
         await queryRunner.query(`DROP TABLE "user"`);

@@ -74,19 +74,19 @@ export function useRequirementSubmit(
   const save = async (): Promise<boolean> => {
     try {
       const requirementDto = {
+        title: store.rawRequirement.title || undefined,
         content: store.rawRequirement.content,
         source: store.rawRequirement.source || undefined,
         collectionType: store.rawRequirement.collectionType,
         collectTime: store.rawRequirement.collectTime || undefined,
         fileIds: store.rawRequirement.fileIds,
+        questionAndAnswers: store.rawRequirement.questionAndAnswers,
+        keyElements: store.rawRequirement.keyElements,
       };
 
       const result = !store.rawRequirement.id
         ? await rawRequirementsApi.create(store.projectId, requirementDto)
-        : await rawRequirementsApi.update(store.rawRequirement.id, {
-            questionAndAnswers: store.rawRequirement.questionAndAnswers,
-            keyElements: store.rawRequirement.keyElements,
-          });
+        : await rawRequirementsApi.update(store.rawRequirement.id, requirementDto);
 
       if (result) {
         if (!store.rawRequirement.id) {

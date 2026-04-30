@@ -37,6 +37,7 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles } from "lucide-vue-next";
 import dayjs from "dayjs";
+import { parseDate, DateValue } from "@internationalized/date";
 
 const route = useRoute();
 const projectId = route.params.projectId as string;
@@ -117,15 +118,15 @@ const formatDate = (dateStr: string | null | undefined) => {
   return d.isValid() ? d.format("YYYY-MM-DD HH:mm") : dateStr;
 };
 
-const collectTimeDate = computed({
+const collectTimeDate = computed<DateValue | undefined>({
   get: () => {
     if (!rawRequirement.value.collectTime) return undefined;
     const d = dayjs(rawRequirement.value.collectTime);
-    return d.isValid() ? d.toDate() : undefined;
+    return d.isValid() ? parseDate(d.format("YYYY-MM-DD")) : undefined;
   },
-  set: (date: Date | undefined) => {
+  set: (date: DateValue | undefined) => {
     if (date) {
-      rawRequirement.value.collectTime = date.toISOString();
+      rawRequirement.value.collectTime = date.toString();
     } else {
       rawRequirement.value.collectTime = null;
     }

@@ -157,10 +157,7 @@ const getCriteriaTypeColor = (type: string) => {
                 class="flex items-start gap-2"
               >
                 <CheckCircle2
-                  :class="cn(
-                    'w-4 h-4 mt-0.5 flex-shrink-0',
-                    criteria.isChecked ? 'text-green-500' : 'text-slate-300'
-                  )"
+                  class="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-300"
                 />
                 <div class="flex-1">
                   <div class="flex items-center gap-2">

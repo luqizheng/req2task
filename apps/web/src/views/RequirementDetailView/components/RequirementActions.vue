@@ -21,13 +21,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+
 import {
   Edit,
   Trash2,
   Download,
-  ChevronDown,
-  FileText,
+
   Loader2,
 } from "lucide-vue-next";
 
@@ -49,8 +48,8 @@ const emit = defineEmits<{
 const selectedStatus = ref<string>("");
 const showDeleteDialog = ref(false);
 
-const handleStatusChange = (newStatus: string) => {
-  if (newStatus && newStatus !== props.requirement.status) {
+const handleStatusChange = (newStatus: unknown) => {
+  if (typeof newStatus === 'string' && newStatus !== props.requirement.status) {
     emit("status-change", newStatus as RequirementStatus);
   }
   selectedStatus.value = "";

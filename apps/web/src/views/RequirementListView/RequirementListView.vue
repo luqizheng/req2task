@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { useRequirementStore } from './store'
-import { showToast } from '@/lib/toast'
+import { toast } from 'vue-sonner'
 import RequirementSearch from './components/RequirementSearch.vue'
 import RequirementFilters from './components/RequirementFilters.vue'
 import RequirementTable from './components/RequirementTable.vue'
@@ -19,13 +19,13 @@ const projectId = route.params.projectId as string
 
 const handleSearch = () => {
   store.fetchRequirements(projectId)
-  showToast.success('搜索完成')
+  toast.success('搜索完成')
 }
 
 const handleFiltersChange = (filters: any) => {
   store.setFilters(filters)
   store.fetchRequirements(projectId)
-  showToast.success('筛选条件已应用')
+  toast.success('筛选条件已应用')
 }
 
 const handlePageChange = (page: number) => {

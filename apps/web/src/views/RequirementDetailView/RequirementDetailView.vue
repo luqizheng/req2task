@@ -31,7 +31,6 @@ const projectId = route.params.projectId as string;
 const requirement = ref<RequirementResponseDto | null>(null);
 const allowedTransitions = ref<TransitionOption[]>([]);
 const conflicts = ref<ConflictDto[]>([]);
-const changeHistory = ref<any[]>([]);
 
 const loading = ref(true);
 const isDeleting = ref(false);

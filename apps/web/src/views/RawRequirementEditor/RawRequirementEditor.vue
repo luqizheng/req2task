@@ -3,7 +3,6 @@ import { useRoute } from "vue-router";
 import RustFSUploader from "@/components/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 import QuestionPanel from "./components/QuestionPanel.vue";
-
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
@@ -16,13 +15,11 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-
 import {
   Select,
   SelectContent,
@@ -38,8 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, Loader2 } from "lucide-vue-next";
-import { cn } from "@/lib/utils";
+import { CalendarIcon, FileText, HelpCircle, ListTodo } from "lucide-vue-next";
 import dayjs from "dayjs";
 
 const route = useRoute();
@@ -115,52 +111,55 @@ const formatDate = (dateStr: string | null | undefined) => {
 </script>
 
 <template>
-  <div class="rq-edit-view-container">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-bold">{{ store.rawRequirement.id ? '更新原始需求' : '录入原始需求' }}</h1>
-      <Button @click="handleSubmit">保存</Button>
-    </div>
-
+  <div class="h-full p-4 bg-muted/30">
     <div v-if="loading" class="space-y-4">
       <Skeleton class="h-8 w-full" />
       <Skeleton class="h-32 w-full" />
     </div>
 
-    <template v-else>
-      <Card class="meta-card">
-        <CardHeader>
-          <CardTitle>基本信息</CardTitle>
+    <div v-else class="grid grid-cols-3 gap-4 h-full">
+      <!-- 左栏：原始需求输入 -->
+      <Card class="flex flex-col h-full overflow-hidden">
+        <CardHeader class="pb-4 border-b shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <FileText class="h-5 w-5 text-primary" />
+              <CardTitle class="text-base font-semibold">原始需求输入</CardTitle>
+            </div>
+            <span class="text-xs text-muted-foreground">步骤 1/3</span>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent class="flex-1 overflow-y-auto p-4">
           <Form
             :validation-schema="formSchema"
             :initial-values="rawRequirement"
             @submit="handleSubmit"
           >
-            <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-4">
               <FormField v-slot="{ componentField, errorMessage }" name="source">
                 <FormItem>
-                  <FormLabel>需求来源</FormLabel>
+                  <FormLabel class="text-xs text-muted-foreground">来源</FormLabel>
                   <FormControl>
                     <Input
                       v-bind="componentField"
                       v-model="rawRequirement.source"
                       placeholder="名字/职位/部门"
+                      class="h-9"
                     />
                   </FormControl>
-                  <FormMessage v-if="errorMessage">{{ errorMessage }}</FormMessage>
+                  <FormMessage v-if="errorMessage" class="text-xs" />
                 </FormItem>
               </FormField>
 
               <FormField v-slot="{ componentField, errorMessage }" name="collectionType">
                 <FormItem>
-                  <FormLabel>采集方式</FormLabel>
+                  <FormLabel class="text-xs text-muted-foreground">收集类型</FormLabel>
                   <FormControl>
                     <Select
                       v-bind="componentField"
                       v-model="rawRequirement.collectionType"
                     >
-                      <SelectTrigger>
+                      <SelectTrigger class="h-9">
                         <SelectValue :placeholder="getCollectionTypeLabel(rawRequirement.collectionType) || '选择采集方式'" />
                       </SelectTrigger>
                       <SelectContent>
@@ -174,24 +173,20 @@ const formatDate = (dateStr: string | null | undefined) => {
                       </SelectContent>
                     </Select>
                   </FormControl>
-                  <FormMessage v-if="errorMessage">{{ errorMessage }}</FormMessage>
+                  <FormMessage v-if="errorMessage" class="text-xs" />
                 </FormItem>
               </FormField>
-            </div>
 
-            <div class="grid grid-cols-2 gap-4 mt-4">
               <FormField v-slot="{ errorMessage }" name="collectTime">
                 <FormItem>
-                  <FormLabel>收集时间</FormLabel>
+                  <FormLabel class="text-xs text-muted-foreground">收集时间</FormLabel>
                   <FormControl>
                     <Popover>
                       <PopoverTrigger as-child>
                         <Button
                           variant="outline"
-                          :class="cn(
-                            'w-full justify-start text-left font-normal',
-                            !rawRequirement.collectTime && 'text-muted-foreground'
-                          )"
+                          class="w-full justify-start text-left font-normal h-9"
+                          :class="!rawRequirement.collectTime && 'text-muted-foreground'"
                         >
                           <CalendarIcon class="mr-2 h-4 w-4" />
                           {{ rawRequirement.collectTime ? formatDate(rawRequirement.collectTime) : '选择收集时间' }}
@@ -211,77 +206,88 @@ const formatDate = (dateStr: string | null | undefined) => {
                       </PopoverContent>
                     </Popover>
                   </FormControl>
-                  <FormMessage v-if="errorMessage">{{ errorMessage }}</FormMessage>
+                  <FormMessage v-if="errorMessage" class="text-xs" />
+                </FormItem>
+              </FormField>
+
+              <FormField v-slot="{ componentField, errorMessage }" name="content">
+                <FormItem>
+                  <FormLabel class="text-xs text-muted-foreground">原始内容</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      v-bind="componentField"
+                      v-model="rawRequirement.content"
+                      placeholder="请输入原始需求内容"
+                      :rows="6"
+                    />
+                  </FormControl>
+                  <FormMessage v-if="errorMessage" class="text-xs" />
+                </FormItem>
+              </FormField>
+
+              <FormField name="fileIds">
+                <FormItem>
+                  <FormLabel class="text-xs text-muted-foreground">上传文件</FormLabel>
+                  <FormControl>
+                    <RustFSUploader v-model="rawRequirement.fileIds" />
+                  </FormControl>
                 </FormItem>
               </FormField>
             </div>
-
-            <FormField name="fileIds">
-              <FormItem class="mt-4">
-                <FormLabel>上传文件</FormLabel>
-                <FormControl>
-                  <RustFSUploader v-model="rawRequirement.fileIds" />
-                </FormControl>
-              </FormItem>
-            </FormField>
-
-            <FormField v-slot="{ componentField, errorMessage }" name="content">
-              <FormItem class="mt-4">
-                <FormLabel>原始需求内容</FormLabel>
-                <FormControl>
-                  <Textarea
-                    v-bind="componentField"
-                    v-model="rawRequirement.content"
-                    placeholder="请输入原始需求内容"
-                    :rows="4"
-                  />
-                </FormControl>
-                <FormMessage v-if="errorMessage">{{ errorMessage }}</FormMessage>
-              </FormItem>
-            </FormField>
           </Form>
         </CardContent>
-        <CardFooter class="flex gap-2">
-          <Button @click="handleSubmit">保存</Button>
-          <Button variant="secondary" @click="handleAnalyze">分析</Button>
-        </CardFooter>
+        <div class="p-4 border-t shrink-0 flex gap-2">
+          <Button variant="outline" class="flex-1 h-9" @click="handleSubmit">保存</Button>
+          <Button class="flex-1 h-9" @click="handleAnalyze">分析</Button>
+        </div>
       </Card>
 
-      <AppCard
-        class="meta-card"
-        title="追问与澄清"
-        :current-step="doneQuestionCount"
-        :total-steps="questionCount"
-      >
-        <template #extra>
-          <Button @click="handlerGenerateRequirements">生成需求</Button>
-        </template>
+      <!-- 中栏：追问与澄清 -->
+      <Card class="flex flex-col h-full overflow-hidden">
+        <CardHeader class="pb-4 border-b shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <HelpCircle class="h-5 w-5 text-primary" />
+              <CardTitle class="text-base font-semibold">追问与澄清</CardTitle>
+            </div>
+            <div class="flex items-center gap-2 text-xs">
+              <span class="text-muted-foreground">{{ questionCount }} 个问题</span>
+              <span class="text-muted-foreground">|</span>
+              <span class="text-primary">{{ doneQuestionCount }}/{{ questionCount }} 已回答</span>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent class="flex-1 overflow-y-auto p-4">
+          <QuestionPanel :projectId="projectId" :store="store" />
+        </CardContent>
+        <div class="p-4 border-t shrink-0">
+          <Button class="w-full h-9" @click="handlerGenerateRequirements">
+            生成需求
+          </Button>
+        </div>
+      </Card>
 
-        <QuestionPanel :projectId="projectId" :store="store" />
-      </AppCard>
-
-      <AppCard class="meta-card" title="需求列表">
-        <RequirementList :projectId="projectId" :store="store" />
-      </AppCard>
-    </template>
+      <!-- 右栏：需求列表 -->
+      <Card class="flex flex-col h-full overflow-hidden">
+        <CardHeader class="pb-4 border-b shrink-0">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <ListTodo class="h-5 w-5 text-primary" />
+              <CardTitle class="text-base font-semibold">{{ store.requirements.length }} 条需求</CardTitle>
+            </div>
+            <span class="text-xs text-muted-foreground">步骤 3/3</span>
+          </div>
+        </CardHeader>
+        <CardContent class="flex-1 overflow-y-auto p-4">
+          <RequirementList :projectId="projectId" :store="store" />
+        </CardContent>
+        <div class="p-4 border-t shrink-0 flex gap-2">
+          <Button variant="outline" class="flex-1 h-9" @click="handlerGenerateRequirements">
+            重新生成
+          </Button>
+          <Button class="flex-1 h-9" @click="handleSubmit">保存需求</Button>
+        </div>
+      </Card>
+    </div>
   </div>
 </template>
-
-<style scoped>
-.rq-edit-view-container {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 1rem;
-}
-
-.meta-card {
-  width: 100%;
-}
-
-.step-indicator {
-  font-size: 12px;
-  font-weight: 500;
-  color: #a1a1aa;
-}
-</style>

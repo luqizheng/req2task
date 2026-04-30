@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { RouterView, useRoute } from 'vue-router'
-
 const route = useRoute()
 const isAuthLayout = route.meta.layout === 'auth'
 </script>

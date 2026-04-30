@@ -1,44 +1,102 @@
 <template>
-  <div>
-    <el-radio-group v-model="filter" style="margin-bottom: 12px">
-      <el-radio-button value="all">所有</el-radio-button>
-      <el-radio-button value="answered">已回答</el-radio-button>
-      <el-radio-button value="pending">未回答</el-radio-button>
-    </el-radio-group>
+  <div class="space-y-3">
+    <div
+      v-for="(qa, index) in questions"
+      :key="qa.id"
+      class="rounded-lg border transition-all cursor-pointer"
+      :class="getCardClass(qa)"
+      @click="handleCardClick(qa)"
+    >
+      <!-- Header -->
+      <div class="flex items-center justify-between p-3">
+        <div class="flex items-center gap-2">
+          <div
+            class="flex items-center justify-center w-6 h-6 rounded text-xs font-semibold"
+            :class="getBadgeClass(qa)"
+          >
+            Q{{ index + 1 }}
+          </div>
+          <span class="text-xs font-medium" :class="getStatusTextClass(qa)">
+            {{ getStatusText(qa) }}
+          </span>
+        </div>
+        <Badge
+          v-if="getStatusTag(qa)"
+          variant="outline"
+          class="text-xs h-5"
+          :class="getTagClass(qa)"
+        >
+          {{ getStatusTag(qa) }}
+        </Badge>
+      </div>
 
-    <AppStatusCard v-for="(qa, index) in questions" :key="qa.id" :status="getCardStatus(qa)" :title="`Q${index + 1}`"
-      :status-text="getStatusText(qa)" show-status-dot @click="handleCardClick(qa)">
-      <div class="question-text">{{ qa.question }}</div>
-      <AppInfo v-if="qa.purpose" :type="!qa.answer && !isSelected(qa) ? 'warning' : 'default'">
-        目的: {{ qa.purpose }}
-      </AppInfo>
+      <!-- Content -->
+      <div class="px-3 pb-3">
+        <p class="text-sm font-medium text-foreground mb-2">{{ qa.question }}</p>
 
-      <div v-if="isSelected(qa)" class="answer-section" @click.stop>
-        <el-input v-model="currentAnswer" type="textarea" :rows="3" placeholder="请输入您的回答..." class="answer-input" />
-        <div class="action-buttons">
-          <el-button class="skip-btn" @click.stop="handleSkip">跳过</el-button>
-          <el-button type="primary" class="submit-btn" @click.stop="handleSubmit">提交回答</el-button>
+        <!-- Purpose -->
+        <div
+          v-if="qa.purpose"
+          class="text-xs rounded-md p-2 mb-2"
+          :class="getPurposeClass(qa)"
+        >
+          <span class="font-medium">目的:</span> {{ qa.purpose }}
+        </div>
+
+        <!-- Answer Input (when selected) -->
+        <div v-if="isSelected(qa)" class="space-y-2 mt-3" @click.stop>
+          <Textarea
+            v-model="currentAnswer"
+            placeholder="请输入您的回答..."
+            :rows="3"
+            class="resize-none"
+          />
+          <div class="flex gap-2 justify-end">
+            <Button variant="outline" size="sm" @click.stop="handleSkip(qa.id)">
+              跳过
+            </Button>
+            <Button size="sm" @click.stop="handleSubmit(qa.id)">
+              提交回答
+            </Button>
+          </div>
+        </div>
+
+        <!-- Skipped Hint -->
+        <div
+          v-else-if="isSkipped(qa)"
+          class="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2 mt-2"
+        >
+          <AlertCircle class="h-3.5 w-3.5" />
+          <span>此问题已跳过，将在下次提交时保留</span>
+        </div>
+
+        <!-- Answered Display -->
+        <div
+          v-else-if="isAnswered(qa)"
+          class="text-xs text-green-700 bg-green-50 rounded-md p-2 mt-2"
+        >
+          {{ qa.answer }}
         </div>
       </div>
+    </div>
 
-      <div v-else-if="isSkipped(qa)" class="hint-section skipped">
-        <SkipIcon class="hint-icon" />
-        <span class="hint-text">此问题已跳过，将在下次提交时保留</span>
-      </div>
-      <AppInfo v-else-if="isAnswered(qa)" type="success">
-        {{ qa.answer }}
-      </AppInfo>
-    </AppStatusCard>
+    <!-- Empty State -->
+    <div v-if="questions.length === 0" class="text-center py-8 text-muted-foreground">
+      <HelpCircle class="h-8 w-8 mx-auto mb-2 opacity-50" />
+      <p class="text-sm">暂无问题</p>
+      <p class="text-xs">点击"分析"按钮生成问题</p>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { onClickOutside } from "@vueuse/core";
 import type { RawRequirementQADto } from "@req2task/dto";
 import { useRawRequirementCreateStore } from "../store";
-import { AppStatusCard, AppInfo } from "@/components/common";
-import { SkipIcon } from "@/components/icons";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { HelpCircle, AlertCircle } from "lucide-vue-next";
 
 interface Props {
   projectId: string;
@@ -47,24 +105,9 @@ interface Props {
 
 const props = defineProps<Props>();
 
-const panelRef = ref<HTMLElement | null>(null);
 const questions = computed(() => props.store.visibleQuestions || []);
-
 const selectedId = ref<string | null>(null);
 const currentAnswer = ref("");
-const filter = computed({
-  get: () => props.store.questionFilter || "all",
-  set: (value) => {
-    props.store.questionFilter = value;
-  },
-});
-
-onClickOutside(panelRef, () => {
-  if (selectedId.value) {
-    selectedId.value = null;
-    currentAnswer.value = "";
-  }
-});
 
 const isAnswered = (qa: RawRequirementQADto) => {
   return qa.answer !== null && qa.answer !== "" && qa.answer !== undefined;
@@ -78,20 +121,51 @@ const isSelected = (qa: RawRequirementQADto) => {
   return selectedId.value === qa.id;
 };
 
-const getCardStatus = (
-  qa: RawRequirementQADto,
-): "default" | "success" | "warning" | "selected" => {
-  if (isSelected(qa)) return "selected";
-  if (isSkipped(qa) || !qa.answer) return "warning";
-  if (isAnswered(qa)) return "success";
-  return "default";
-};
-
 const getStatusText = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return !qa.answer ? "待回答" : "已回答";
   if (isSkipped(qa)) return "已跳过";
   if (isAnswered(qa)) return "已回答";
-  return !qa.answer ? "待回答" : "已回答";
+  return "待回答";
+};
+
+const getStatusTag = (qa: RawRequirementQADto) => {
+  if (isSkipped(qa)) return "已跳过";
+  if (isAnswered(qa)) return "已回答";
+  return null;
+};
+
+const getCardClass = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "border-primary bg-primary/5";
+  if (isSkipped(qa)) return "border-amber-200 bg-amber-50/30";
+  if (isAnswered(qa)) return "border-green-200 bg-green-50/30";
+  return "border-border hover:border-muted-foreground/50";
+};
+
+const getBadgeClass = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "bg-primary text-primary-foreground";
+  if (isSkipped(qa)) return "bg-amber-100 text-amber-700";
+  if (isAnswered(qa)) return "bg-green-100 text-green-700";
+  return "bg-muted text-muted-foreground";
+};
+
+const getStatusTextClass = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "text-primary";
+  if (isSkipped(qa)) return "text-amber-600";
+  if (isAnswered(qa)) return "text-green-600";
+  return "text-muted-foreground";
+};
+
+const getTagClass = (qa: RawRequirementQADto) => {
+  if (isSkipped(qa)) return "border-amber-200 text-amber-600";
+  if (isAnswered(qa)) return "border-green-200 text-green-600";
+  return "";
+};
+
+const getPurposeClass = (qa: RawRequirementQADto) => {
+  if (isSelected(qa)) return "bg-primary/10 text-primary";
+  if (isSkipped(qa)) return "bg-amber-100/50 text-amber-700";
+  if (isAnswered(qa)) return "bg-green-100/50 text-green-700";
+  return "bg-muted text-muted-foreground";
 };
 
 const handleCardClick = (qa: RawRequirementQADto) => {
@@ -99,198 +173,17 @@ const handleCardClick = (qa: RawRequirementQADto) => {
   currentAnswer.value = qa.answer || "";
 };
 
-const handleSkip = () => {
-  if (selectedId.value) {
-    selectedId.value = null;
-    currentAnswer.value = "";
-  }
+const handleSkip = (id: string) => {
+  props.store.deleteQuestion(id);
+  selectedId.value = null;
+  currentAnswer.value = "";
 };
 
-const handleSubmit = () => {
-  if (selectedId.value && currentAnswer.value.trim()) {
-    const currentAnswerIndex =
-      props.store.rawRequirement.questionAndAnswers.findIndex(
-        (qa) => qa.id === selectedId.value,
-      );
-    if (currentAnswerIndex !== -1) {
-      props.store.rawRequirement.questionAndAnswers[currentAnswerIndex].answer =
-        currentAnswer.value.trim();
-    }
-
+const handleSubmit = (id: string) => {
+  if (currentAnswer.value.trim()) {
+    props.store.answerQuestion(id, currentAnswer.value.trim());
     selectedId.value = null;
     currentAnswer.value = "";
   }
 };
 </script>
-
-<style scoped>
-.question-panel {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  background: #fff;
-}
-
-.panel-header {
-  padding: 16px 0;
-  border-bottom: 1px solid #e4e4e4;
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 600;
-  color: #1e293b;
-  margin: 0;
-}
-
-.questions-scroll-area {
-  flex: 1;
-  overflow-y: auto;
-  padding: 12px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.question-text {
-  font-size: 13px;
-  font-weight: 500;
-  color: #18181b;
-  line-height: 150%;
-}
-
-.purpose-tag {
-  display: inline-flex;
-  align-items: flex-start;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: 6px;
-  align-self: flex-start;
-}
-
-.purpose-tag.purpose-default {
-  background: #f8f8fa;
-}
-
-.purpose-tag.purpose-selected {
-  background: #dbeafe;
-}
-
-.purpose-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: #a1a1aa;
-}
-
-.purpose-content {
-  font-size: 12px;
-  color: #71717a;
-}
-
-.purpose-selected .purpose-label {
-  color: #60a5fa;
-}
-
-.purpose-selected .purpose-content {
-  color: #2563eb;
-}
-
-.answer-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.answer-input {
-  border-radius: 8px;
-}
-
-.answer-input :deep(.el-textarea__inner) {
-  border: 1.5px solid #2563eb;
-  border-radius: 8px;
-  padding: 10px 12px;
-  font-size: 13px;
-  color: #a1a1aa;
-}
-
-.answer-input :deep(.el-textarea__inner:focus) {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
-}
-
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.skip-btn {
-  padding: 0 14px;
-  height: 32px;
-  border-radius: 6px;
-  border: 1px solid #e4e4e4;
-  background: #fff;
-  color: #71717a;
-  font-size: 13px;
-  font-weight: 500;
-}
-
-.skip-btn:hover {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-}
-
-.submit-btn {
-  padding: 0 14px;
-  height: 32px;
-  border-radius: 6px;
-  background: #2563eb;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.submit-btn:hover {
-  background: #1d4ed8;
-}
-
-.hint-section {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  padding: 10px 12px;
-  border-radius: 8px;
-}
-
-.hint-section.skipped {
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-}
-
-.hint-icon {
-  width: 13px;
-  height: 13px;
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: #d97706;
-}
-
-.hint-text {
-  font-size: 12px;
-  line-height: 150%;
-  color: #d97706;
-}
-
-.answer-display {
-  padding: 10px 12px;
-  background: #f0fdf4;
-  border-radius: 8px;
-  border: 1px solid #bbf7d0;
-}
-
-.answer-content {
-  font-size: 13px;
-  line-height: 150%;
-  color: #15803d;
-}
-</style>

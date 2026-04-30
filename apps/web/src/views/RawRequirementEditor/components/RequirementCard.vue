@@ -1,22 +1,36 @@
 <template>
-  <div class="requirement-card">
-
-    <div class="card-header">
-      <div class="header-left">
-        <span class="card-index">{{ props.index }}</span>
-        <h3 class="card-title">{{ props.requirement.title }}</h3>
+  <div class="rounded-lg border bg-card p-4 transition-all hover:border-primary/50 hover:shadow-sm">
+    <!-- Header -->
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div class="flex items-center gap-2 min-w-0">
+        <div class="flex items-center justify-center w-6 h-6 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0">
+          {{ props.index + 1 }}
+        </div>
+        <h3 class="text-sm font-semibold text-foreground truncate">
+          {{ props.requirement.title }}
+        </h3>
       </div>
-      <Badge :variant="priorityVariant">
-        {{ props.requirement.priority }}
+      <Badge
+        :variant="priorityVariant"
+        class="text-xs h-5 shrink-0"
+      >
+        {{ priorityLabel }}
       </Badge>
     </div>
 
-    <p class="card-description">
+    <!-- Description -->
+    <p class="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3">
       {{ props.requirement.content }}
     </p>
 
-    <div class="card-tags">
-      <Badge v-for="tag in tags" :key="tag" variant="outline">
+    <!-- Tags -->
+    <div class="flex flex-wrap gap-1.5">
+      <Badge
+        v-for="tag in displayTags"
+        :key="tag"
+        variant="secondary"
+        class="text-[10px] h-5 px-1.5"
+      >
         {{ tag }}
       </Badge>
     </div>
@@ -35,7 +49,7 @@ interface Props {
 }
 
 const props = withDefaults(defineProps<Props>(), {
-  tags: () => ["导入", "数据管理", "文件处理"],
+  tags: () => [],
 });
 
 const priorityVariant = computed(() => {
@@ -47,74 +61,18 @@ const priorityVariant = computed(() => {
   };
   return variantMap[(props.requirement.priority as Priority) || Priority.LOW];
 });
+
+const priorityLabel = computed(() => {
+  const labelMap: Record<Priority, string> = {
+    critical: "高优先级",
+    high: "高优先级",
+    medium: "中优先级",
+    low: "低优先级",
+  };
+  return labelMap[(props.requirement.priority as Priority) || Priority.LOW];
+});
+
+const displayTags = computed(() => {
+  return props.tags.length > 0 ? props.tags : ["需求"];
+});
 </script>
-
-<style scoped>
-.requirement-card {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 14px 16px;
-  background: white;
-  border: 1px solid #e4e4e7;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.requirement-card:hover {
-  border-color: #409eff;
-  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
-}
-
-.card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 1;
-  min-width: 0;
-}
-
-.card-index {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  background: #2563eb;
-  color: white;
-  border-radius: 6px;
-  font-size: 11px;
-  font-weight: bold;
-  flex-shrink: 0;
-}
-
-.card-title {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  color: #18181b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-description {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #71717a;
-}
-
-.card-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-</style>

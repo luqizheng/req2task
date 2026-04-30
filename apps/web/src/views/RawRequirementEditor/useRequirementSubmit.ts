@@ -1,4 +1,4 @@
-import { toast } from 'vue-sonner';
+import { toast } from "vue-sonner";
 import { useRawRequirementCreateStore, type AiQuestion } from "./store";
 
 import {
@@ -43,8 +43,6 @@ export function useRequirementSubmit(
     {
       trigger: "questions",
       onArrayItem(item) {
-        console.log('questions',item)
-        debugger;
         store.addQuestionFromSSE(item as AiQuestion);
       },
     },

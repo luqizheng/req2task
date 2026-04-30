@@ -1,0 +1,187 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { ArrowUpDown, MoreHorizontal, Eye, Edit, Trash2 } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrev
+} from '@/components/ui/pagination'
+import type { RequirementResponseDto } from '@req2task/dto'
+import { RequirementStatus, Priority } from '@req2task/dto'
+
+const props = defineProps<{
+  requirements: RequirementResponseDto[]
+  loading: boolean
+  page: number
+  totalPages: number
+}>()
+
+const emit = defineEmits<{
+  view: [id: string]
+  edit: [id: string]
+  delete: [id: string]
+  'update:page': [page: number]
+}>()
+
+const statusConfig = {
+  [RequirementStatus.DRAFT]: { variant: 'outline' as const, label: '草稿' },
+  [RequirementStatus.REVIEWED]: { variant: 'secondary' as const, label: '已审查' },
+  [RequirementStatus.APPROVED]: { variant: 'default' as const, label: '已批准' },
+  [RequirementStatus.REJECTED]: { variant: 'destructive' as const, label: '已拒绝' },
+  [RequirementStatus.PROCESSING]: { variant: 'secondary' as const, label: '处理中' },
+  [RequirementStatus.COMPLETED]: { variant: 'default' as const, label: '已完成' },
+  [RequirementStatus.CANCELLED]: { variant: 'outline' as const, label: '已取消' }
+}
+
+const priorityConfig = {
+  [Priority.CRITICAL]: { variant: 'destructive' as const, label: '紧急' },
+  [Priority.HIGH]: { variant: 'secondary' as const, label: '高' },
+  [Priority.MEDIUM]: { variant: 'outline' as const, label: '中' },
+  [Priority.LOW]: { variant: 'outline' as const, label: '低' }
+}
+
+const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString('zh-CN')
+}
+
+const pageNumbers = computed(() => {
+  const pages: (number | 'ellipsis')[] = []
+  const total = props.totalPages
+  const current = props.page
+
+  if (total <= 7) {
+    for (let i = 1; i <= total; i++) pages.push(i)
+  } else {
+    pages.push(1)
+    if (current > 3) pages.push('ellipsis')
+    for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) {
+      pages.push(i)
+    }
+    if (current < total - 2) pages.push('ellipsis')
+    pages.push(total)
+  }
+
+  return pages
+})
+</script>
+
+<template>
+  <div class="space-y-4">
+    <div class="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead class="w-[300px]">
+              <Button variant="ghost" size="sm" class="gap-1 -ml-3">
+                需求标题
+                <ArrowUpDown class="w-4 h-4" />
+              </Button>
+            </TableHead>
+            <TableHead>状态</TableHead>
+            <TableHead>优先级</TableHead>
+            <TableHead>故事点</TableHead>
+            <TableHead>创建者</TableHead>
+            <TableHead>更新时间</TableHead>
+            <TableHead class="w-[50px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          <TableRow v-if="loading">
+            <TableCell colspan="7" class="text-center py-8 text-slate-500">
+              加载中...
+            </TableCell>
+          </TableRow>
+          <TableRow v-else-if="requirements.length === 0">
+            <TableCell colspan="7" class="text-center py-8 text-slate-500">
+              暂无数据
+            </TableCell>
+          </TableRow>
+          <TableRow v-for="req in requirements" :key="req.id">
+            <TableCell class="font-medium">
+              <div class="max-w-[280px] truncate" :title="req.title">
+                {{ req.title }}
+              </div>
+            </TableCell>
+            <TableCell>
+              <Badge :variant="statusConfig[req.status].variant">
+                {{ statusConfig[req.status].label }}
+              </Badge>
+            </TableCell>
+            <TableCell>
+              <Badge :variant="priorityConfig[req.priority].variant">
+                {{ priorityConfig[req.priority].label }}
+              </Badge>
+            </TableCell>
+            <TableCell>{{ req.storyPoints }}</TableCell>
+            <TableCell>{{ req.createdBy?.displayName || '-' }}</TableCell>
+            <TableCell>{{ formatDate(req.updatedAt) }}</TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger as-child>
+                  <Button variant="ghost" size="icon" class="h-8 w-8">
+                    <MoreHorizontal class="w-4 h-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem @click="emit('view', req.id)">
+                    <Eye class="w-4 h-4 mr-2" />
+                    查看详情
+                  </DropdownMenuItem>
+                  <DropdownMenuItem @click="emit('edit', req.id)">
+                    <Edit class="w-4 h-4 mr-2" />
+                    编辑
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    class="text-red-600"
+                    @click="emit('delete', req.id)"
+                  >
+                    <Trash2 class="w-4 h-4 mr-2" />
+                    删除
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+
+    <Pagination v-if="totalPages > 1" :total="totalPages" :sibling-count="1" :page="page">
+      <PaginationContent>
+        <PaginationPrev :disabled="page === 1" @click="emit('update:page', page - 1)" />
+        <template v-for="(p, index) in pageNumbers" :key="index">
+          <PaginationEllipsis v-if="p === 'ellipsis'" />
+          <PaginationItem v-else :value="p" @click="emit('update:page', p)">
+            <Button
+              :variant="p === page ? 'default' : 'ghost'"
+              size="sm"
+              class="w-9"
+            >
+              {{ p }}
+            </Button>
+          </PaginationItem>
+        </template>
+        <PaginationNext :disabled="page === totalPages" @click="emit('update:page', page + 1)" />
+      </PaginationContent>
+    </Pagination>
+  </div>
+</template>

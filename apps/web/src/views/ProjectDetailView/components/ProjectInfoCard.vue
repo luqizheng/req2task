@@ -10,6 +10,11 @@ import {
   Calendar,
   Users,
   ArrowLeft,
+  FileText,
+  Key,
+  Clock,
+  Settings,
+  Plus,
 } from "lucide-vue-next";
 import { formatDate, getInitials } from "@/lib/utils";
 
@@ -18,30 +23,35 @@ defineProps<{
   isSettings?: boolean;
 }>();
 
-const router = useRouter();
-
-const statusConfig: Record<ProjectStatus, { label: string; class: string }> = {
+const statusConfig: Record<ProjectStatus, { label: string; class: string; dot: string }> = {
   [ProjectStatus.PLANNING]: {
     label: "规划中",
-    class: "bg-blue-100 text-blue-700 border-blue-200",
+    class: "bg-blue-50 text-blue-700 border-blue-200",
+    dot: "bg-blue-500",
   },
   [ProjectStatus.ACTIVE]: {
     label: "进行中",
-    class: "bg-emerald-100 text-emerald-700 border-emerald-200",
+    class: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    dot: "bg-emerald-500",
   },
   [ProjectStatus.ON_HOLD]: {
     label: "暂停",
-    class: "bg-amber-100 text-amber-700 border-amber-200",
+    class: "bg-amber-50 text-amber-700 border-amber-200",
+    dot: "bg-amber-500",
   },
   [ProjectStatus.COMPLETED]: {
     label: "已完成",
-    class: "bg-purple-100 text-purple-700 border-purple-200",
+    class: "bg-purple-50 text-purple-700 border-purple-200",
+    dot: "bg-purple-500",
   },
   [ProjectStatus.ARCHIVED]: {
     label: "已归档",
     class: "bg-slate-100 text-slate-600 border-slate-200",
+    dot: "bg-slate-400",
   },
 };
+
+const router = useRouter();
 
 const goBack = () => {
   router.push("/projects");
@@ -49,80 +59,135 @@ const goBack = () => {
 </script>
 
 <template>
-  <Card>
-    <CardHeader>
+  <Card class="border-slate-200 shadow-sm overflow-hidden">
+    <CardHeader class="pb-4 border-b border-slate-100 bg-slate-50/50">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
-          <Button v-if="isSettings" variant="ghost" size="icon" @click="goBack">
+          <Button
+            v-if="isSettings"
+            variant="ghost"
+            size="icon"
+            class="hover:bg-slate-200"
+            @click="goBack"
+          >
             <ArrowLeft class="w-4 h-4" />
           </Button>
-          <CardTitle>{{ isSettings ? "项目设置" : "项目信息" }}</CardTitle>
+          <div class="w-9 h-9 rounded-lg bg-blue-100 flex items-center justify-center">
+            <Settings v-if="isSettings" class="w-4 h-4 text-blue-600" />
+            <FileText v-else class="w-4 h-4 text-blue-600" />
+          </div>
+          <CardTitle class="text-slate-800">
+            {{ isSettings ? "项目设置" : "项目信息" }}
+          </CardTitle>
         </div>
         <Badge
           :class="statusConfig[project.status]?.class"
           variant="outline"
+          class="px-2.5 py-0.5 font-medium text-xs"
         >
+          <span
+            :class="['w-1.5 h-1.5 rounded-full mr-1.5', statusConfig[project.status]?.dot]"
+          />
           {{ statusConfig[project.status]?.label || project.status }}
         </Badge>
       </div>
     </CardHeader>
-    <CardContent class="space-y-6">
-      <div class="grid grid-cols-2 gap-6">
-        <div class="space-y-4">
-          <div>
-            <label class="text-sm font-medium text-slate-500">项目名称</label>
-            <p class="text-base text-slate-800">{{ project.name }}</p>
+    <CardContent class="p-6">
+      <div class="grid grid-cols-2 gap-8">
+        <div class="space-y-5">
+          <div class="group">
+            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <FileText class="w-3.5 h-3.5" />
+              项目名称
+            </label>
+            <p class="text-base font-semibold text-slate-900 group-hover:text-slate-700 transition-colors">
+              {{ project.name }}
+            </p>
           </div>
-          <div>
-            <label class="text-sm font-medium text-slate-500">项目描述</label>
-            <p class="text-base text-slate-800">
+
+          <div class="group">
+            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <Key class="w-3.5 h-3.5" />
+              项目标识
+            </label>
+            <p class="text-base font-mono text-slate-700 bg-slate-50 px-2.5 py-1 rounded-md inline-block">
+              {{ project.projectKey }}
+            </p>
+          </div>
+
+          <div class="group">
+            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <FileText class="w-3.5 h-3.5" />
+              项目描述
+            </label>
+            <p class="text-sm text-slate-600 leading-relaxed">
               {{ project.description || "暂无描述" }}
             </p>
           </div>
-          <div>
-            <label class="text-sm font-medium text-slate-500">项目标识</label>
-            <p class="text-base text-slate-800 font-mono">{{ project.projectKey }}</p>
-          </div>
         </div>
-        <div class="space-y-4">
-          <div class="flex items-center gap-2">
-            <Calendar class="w-4 h-4 text-slate-400" />
-            <div>
-              <label class="text-sm font-medium text-slate-500">项目周期</label>
-              <p class="text-base text-slate-800">
-                {{ formatDate(project.startDate) }} - {{ formatDate(project.endDate) }}
-              </p>
-            </div>
+
+        <div class="space-y-5">
+          <div class="group">
+            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <Calendar class="w-3.5 h-3.5" />
+              项目周期
+            </label>
+            <p class="text-sm text-slate-700">
+              {{ formatDate(project.startDate) }}
+              <span class="text-slate-400 mx-2">—</span>
+              {{ formatDate(project.endDate) }}
+            </p>
           </div>
-          <div>
-            <label class="text-sm font-medium text-slate-500">创建时间</label>
-            <p class="text-base text-slate-800">{{ formatDate(project.createdAt) }}</p>
+
+          <div class="group">
+            <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+              <Clock class="w-3.5 h-3.5" />
+              创建时间
+            </label>
+            <p class="text-sm text-slate-700">
+              {{ formatDate(project.createdAt) }}
+            </p>
           </div>
         </div>
       </div>
 
-      <div class="border-t pt-4">
-        <div class="flex items-center gap-2 mb-3">
-          <Users class="w-4 h-4 text-slate-400" />
-          <label class="text-sm font-medium text-slate-500">
-            项目成员 ({{ project.members?.length || 0 }})
+      <div class="mt-8 pt-6 border-t border-slate-100">
+        <div class="flex items-center justify-between mb-4">
+          <label class="text-xs font-medium text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <Users class="w-3.5 h-3.5" />
+            项目成员
+            <span class="ml-1.5 px-1.5 py-0.5 bg-slate-100 rounded text-slate-500 text-xs">
+              {{ project.members?.length || 0 }}
+            </span>
           </label>
+          <Button variant="ghost" size="sm" class="text-slate-500 hover:text-slate-700">
+            <Plus class="w-4 h-4 mr-1" />
+            添加成员
+          </Button>
         </div>
+
         <div class="flex flex-wrap gap-2">
           <div
             v-for="member in project.members"
             :key="member.id"
-            class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 rounded-lg"
+            class="flex items-center gap-2.5 px-3 py-2 bg-white border border-slate-200 rounded-lg hover:border-slate-300 hover:shadow-sm transition-all cursor-pointer group"
           >
-            <Avatar class="w-6 h-6">
-              <AvatarFallback class="text-xs">
+            <Avatar class="w-7 h-7 ring-2 ring-slate-100">
+              <AvatarFallback class="text-xs bg-blue-50 text-blue-600 font-medium">
                 {{ getInitials(member.displayName || member.username) }}
               </AvatarFallback>
             </Avatar>
-            <span class="text-sm text-slate-700">{{ member.displayName || member.username }}</span>
+            <span class="text-sm text-slate-700 group-hover:text-slate-900 transition-colors">
+              {{ member.displayName || member.username }}
+            </span>
           </div>
-          <div v-if="!project.members?.length" class="text-sm text-slate-400">
-            暂无成员
+
+          <div
+            v-if="!project.members?.length"
+            class="w-full text-center py-8 text-slate-400"
+          >
+            <Users class="w-8 h-8 mx-auto mb-2 opacity-50" />
+            <p class="text-sm">暂无成员</p>
           </div>
         </div>
       </div>

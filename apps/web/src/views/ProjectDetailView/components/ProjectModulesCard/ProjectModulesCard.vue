@@ -21,7 +21,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+
 } from '@/components/ui/dialog';
 import {
   Select,
@@ -173,13 +173,11 @@ onMounted(() => {
             {{ modules.length }}
           </span>
         </div>
+        <Button size="sm" class="shadow-sm" @click="openCreateDialog">
+          <Plus class="w-4 h-4 mr-2" />
+          新建模块
+        </Button>
         <Dialog v-model:open="showCreateDialog">
-          <DialogTrigger as-child>
-            <Button size="sm" class="shadow-sm" @click="openCreateDialog">
-              <Plus class="w-4 h-4 mr-2" />
-              新建模块
-            </Button>
-          </DialogTrigger>
           <DialogContent class="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>新建模块</DialogTitle>
@@ -218,7 +216,6 @@ onMounted(() => {
                     <SelectValue placeholder="无（顶级模块）" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">无（顶级模块）</SelectItem>
                     <SelectItem
                       v-for="m in getAllModules(modules)"
                       :key="m.id"
@@ -368,21 +365,20 @@ onMounted(() => {
               <SelectValue placeholder="无（顶级模块）" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">无（顶级模块）</SelectItem>
-              <SelectItem
-                v-for="m in availableParents()"
-                :key="m.id"
-                :value="m.id"
-              >
-                {{ m.name }}
-              </SelectItem>
-            </SelectContent>
+                <SelectItem
+                  v-for="m in availableParents()"
+                  :key="m.id"
+                  :value="m.id"
+                >
+                  {{ m.name }}
+                </SelectItem>
+              </SelectContent>
           </Select>
         </Field>
       </div>
       <DialogFooter>
-        <Button variant="outline" @click="closeEditDialog">取消</Button>
-        <Button :disabled="submitting" @click="handleUpdate">
+        <Button variant="outline" @click.stop="closeEditDialog">取消</Button>
+        <Button :disabled="submitting" @click.stop="handleUpdate">
           <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
           保存
         </Button>

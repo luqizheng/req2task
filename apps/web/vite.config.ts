@@ -3,10 +3,14 @@ import tailwindcss from "@tailwindcss/vite";
 import vue from "@vitejs/plugin-vue";
 import vueJsx from "@vitejs/plugin-vue-jsx";
 import { defineConfig } from "vite";
-
+import { resolve } from "path";
 export default defineConfig({
   server: {
-  
+    resolve: {
+      alias: {
+        "@": resolve(__dirname, "src"),
+      },
+    },
     proxy: {
       // '/api/chat': {
       //   target: 'http://localhost:4001',

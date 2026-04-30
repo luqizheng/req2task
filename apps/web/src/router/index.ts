@@ -50,6 +50,11 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/RequirementDetailView/RequirementDetailView.vue'),
       },
       {
+        path: 'projects/:projectId/raw-requirements/:rawRequirementId',
+        name: 'raw-requirement-detail',
+        component: () => import('@/views/RawRequirementEditor/RawRequirementEditor.vue'),
+      },
+      {
         path: 'collect/:projectId',
         name: 'requirement-collect',
         component: () => import('@/views/RequirementCollectView/RequirementCollectView.vue'),

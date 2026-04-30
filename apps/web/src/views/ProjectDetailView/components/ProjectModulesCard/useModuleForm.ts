@@ -4,7 +4,7 @@ import type { FeatureModule } from './useModules';
 export interface ModuleFormData {
   name: string;
   description: string;
-  parentId: string;
+  parentId: string | undefined;
   moduleKey: string;
 }
 
@@ -18,7 +18,7 @@ export function useModuleForm() {
   const formData = reactive<ModuleFormData>({
     name: '',
     description: '',
-    parentId: '',
+    parentId: undefined,
     moduleKey: '',
   });
 
@@ -33,7 +33,7 @@ export function useModuleForm() {
   const resetForm = () => {
     formData.name = '';
     formData.description = '';
-    formData.parentId = '';
+    formData.parentId = undefined;
     formData.moduleKey = '';
   };
 
@@ -46,7 +46,7 @@ export function useModuleForm() {
     selectedModule.value = module;
     formData.name = module.name;
     formData.description = module.description || '';
-    formData.parentId = module.parentId || '';
+    formData.parentId = module.parentId || undefined;
     formData.moduleKey = module.moduleKey;
     showEditDialog.value = true;
   };

@@ -1,10 +1,9 @@
 <script setup lang="ts">
-import ViewContainer from "@/components/view-container.vue";
 import { useRoute } from "vue-router";
-import RustFSUploader from "@/components/common/RustFSUploader.vue";
+import RustFSUploader from "@/components/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 import QuestionPanel from "./components/QuestionPanel.vue";
-import { AppCard } from "@/components/common";
+
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
@@ -23,7 +22,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
+
 import {
   Select,
   SelectContent,
@@ -41,10 +40,10 @@ import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "
 import { Skeleton } from "@/components/ui/skeleton";
 import { CalendarIcon, Loader2 } from "lucide-vue-next";
 import { cn } from "@/lib/utils";
-import { format, parseISO } from "date-fns";
+import dayjs from "dayjs";
 
 const route = useRoute();
-const projectId = route.params.id as string;
+const projectId = route.params.projectId as string;
 const rawRequirementId = route.params.rawRequirementId as string | undefined;
 
 const store = useRawRequirementCreateStore();
@@ -110,22 +109,17 @@ const getCollectionTypeLabel = (value: CollectionType | undefined) => {
 
 const formatDate = (dateStr: string | null | undefined) => {
   if (!dateStr) return "";
-  try {
-    return format(parseISO(dateStr), "yyyy-MM-dd HH:mm");
-  } catch {
-    return dateStr;
-  }
+  const d = dayjs(dateStr);
+  return d.isValid() ? d.format("YYYY-MM-DD HH:mm") : dateStr;
 };
 </script>
 
 <template>
-  <ViewContainer
-    :title="store.rawRequirement.id ? '更新原始需求' : '录入原始需求'"
-    content-class="rq-edit-view-container"
-  >
-    <template #actions>
+  <div class="rq-edit-view-container">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-bold">{{ store.rawRequirement.id ? '更新原始需求' : '录入原始需求' }}</h1>
       <Button @click="handleSubmit">保存</Button>
-    </template>
+    </div>
 
     <div v-if="loading" class="space-y-4">
       <Skeleton class="h-8 w-full" />
@@ -205,7 +199,7 @@ const formatDate = (dateStr: string | null | undefined) => {
                       </PopoverTrigger>
                       <PopoverContent class="w-auto p-0">
                         <Calendar
-                          :model-value="rawRequirement.collectTime ? parseISO(rawRequirement.collectTime) : undefined"
+                          :model-value="rawRequirement.collectTime ? dayjs(rawRequirement.collectTime).toDate() : undefined"
                           @update:model-value="(date) => {
                             if (date) {
                               rawRequirement.collectTime = date.toISOString();
@@ -270,7 +264,7 @@ const formatDate = (dateStr: string | null | undefined) => {
         <RequirementList :projectId="projectId" :store="store" />
       </AppCard>
     </template>
-  </ViewContainer>
+  </div>
 </template>
 
 <style scoped>

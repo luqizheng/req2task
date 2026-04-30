@@ -1,0 +1,120 @@
+<template>
+  <div class="requirement-card">
+
+    <div class="card-header">
+      <div class="header-left">
+        <span class="card-index">{{ props.index }}</span>
+        <h3 class="card-title">{{ props.requirement.title }}</h3>
+      </div>
+      <Badge :variant="priorityVariant">
+        {{ props.requirement.priority }}
+      </Badge>
+    </div>
+
+    <p class="card-description">
+      {{ props.requirement.content }}
+    </p>
+
+    <div class="card-tags">
+      <Badge v-for="tag in tags" :key="tag" variant="outline">
+        {{ tag }}
+      </Badge>
+    </div>
+  </div>
+</template>
+
+<script lang="ts" setup>
+import { computed } from "vue";
+import { Badge } from "@/components/ui/badge";
+import { Priority, RawRequirementResponseDto } from "@req2task/dto";
+
+interface Props {
+  requirement: RawRequirementResponseDto;
+  index: number;
+  tags?: string[];
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  tags: () => ["导入", "数据管理", "文件处理"],
+});
+
+const priorityVariant = computed(() => {
+  const variantMap: Record<Priority, "default" | "secondary" | "destructive" | "outline"> = {
+    critical: "destructive",
+    high: "default",
+    medium: "secondary",
+    low: "outline",
+  };
+  return variantMap[(props.requirement.priority as Priority) || Priority.LOW];
+});
+</script>
+
+<style scoped>
+.requirement-card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: white;
+  border: 1px solid #e4e4e7;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+}
+
+.requirement-card:hover {
+  border-color: #409eff;
+  box-shadow: 0 2px 12px rgba(64, 158, 255, 0.1);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-index {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  background: #2563eb;
+  color: white;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #18181b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-description {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #71717a;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+</style>

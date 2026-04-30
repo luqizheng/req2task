@@ -1,11 +1,11 @@
-import { ElMessage } from "element-plus";
+import { toast } from 'vue-sonner';
 import { useRawRequirementCreateStore, type AiQuestion } from "./store";
 
 import {
   AiSubmitRequestDto,
   GenerateRawRequirementByLLMDto,
 } from "@req2task/dto";
-import { useJsonStream } from "@/utils/useJson";
+import { useJsonStream } from "../../utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 import { useSSEStream } from "@/utils/useSSEStream";
 
@@ -25,7 +25,7 @@ export function useRequirementSubmit(
   }) => {
     const { request } = data;
     if (!data) {
-      ElMessage.warning("未收到有效数据");
+      toast.warning("未收到有效数据");
       return;
     }
 
@@ -36,7 +36,7 @@ export function useRequirementSubmit(
   };
 
   const handleError = (error: Error) => {
-    ElMessage.error(error.message || "提交失败");
+    toast.error(error.message || "提交失败");
   };
 
   const jsonHelperQuestAndAnswer = useJsonStream([
@@ -60,18 +60,13 @@ export function useRequirementSubmit(
     {
       trigger: "requirements",
       onArrayItem(item) {
-        //console.log('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',item);
-     
         store.addRequirement({
           id: `rq_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           ...item,
           projectId: store.projectId,
         });
-        //store.addQuestionFromSSE(item as Requirement);
       },
-      onObject() {
-        //console.log(obj);
-      },
+      onObject() {},
     },
   ]);
 
@@ -94,20 +89,21 @@ export function useRequirementSubmit(
 
       if (result) {
         if (!store.rawRequirement.id) {
-          ElMessage.success("创建成功");
+          toast.success("创建成功");
           store.rawRequirement.id = result.id;
         } else {
-          ElMessage.success("更新成功");
+          toast.success("更新成功");
         }
 
         return true;
       }
       return false;
     } catch (error) {
-      ElMessage.error(error instanceof Error ? error.message : "创建失败");
+      toast.error(error instanceof Error ? error.message : "创建失败");
       return false;
     }
   };
+
   let a = "";
   const rawRequirementAnalyze = () => {
     const analyzerData = {
@@ -125,10 +121,10 @@ export function useRequirementSubmit(
       },
       onMessage: () => {},
       onDone: () => {
-        ElMessage.success("分析完成");
+        toast.success("分析完成");
       },
       onError: (error) => {
-        ElMessage.error(error.message || "分析失败");
+        toast.error(error.message || "分析失败");
       },
     });
   };
@@ -140,24 +136,18 @@ export function useRequirementSubmit(
     sseGenerateRequirementsStream.submitStream(data, {
       onAnalyzeStart: (event) => {
         store.rawRequirement.conversationId = event.collectionId;
-        // console.log("开始生成需求...");
       },
-      onConversationStart: () => {
-        //   console.log("开始对话...", cc);
-      },
+      onConversationStart: () => {},
       onContent: (content) => {
-         a += content;
-         //console.log("content", a);
+        a += content;
         jsonHelperRequirements.feed(content);
       },
-      onMessage: () => {
-        //   console.log("message", message);
-      },
+      onMessage: () => {},
       onDone: () => {
-        ElMessage.success("生成需求完成");
+        toast.success("生成需求完成");
       },
       onError: (error) => {
-        ElMessage.error(error.message || "生成需求失败");
+        toast.error(error.message || "生成需求失败");
       },
     });
   };

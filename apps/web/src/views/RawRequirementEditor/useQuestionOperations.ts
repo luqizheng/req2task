@@ -1,5 +1,5 @@
 import { ref } from "vue";
-import { ElMessage, ElMessageBox } from "element-plus";
+import { toast } from "vue-sonner";
 import { useRawRequirementCreateStore } from "./store";
 
 export function useQuestionOperations(store: ReturnType<typeof useRawRequirementCreateStore>) {
@@ -11,7 +11,7 @@ export function useQuestionOperations(store: ReturnType<typeof useRawRequirement
 
   const handleAddQuestion = () => {
     if (!newQuestion.value.trim()) {
-      ElMessage.warning("请输入问题内容");
+      toast.warning("请输入问题内容");
       return;
     }
     store.addQuestion(newQuestion.value.trim(), newAnswer.value.trim());
@@ -27,7 +27,7 @@ export function useQuestionOperations(store: ReturnType<typeof useRawRequirement
 
   const handleSaveAnswer = (id: string) => {
     if (!editingAnswer.value.trim()) {
-      ElMessage.warning("请输入回答内容");
+      toast.warning("请输入回答内容");
       return;
     }
     store.answerQuestion(id, editingAnswer.value.trim());
@@ -44,19 +44,9 @@ export function useQuestionOperations(store: ReturnType<typeof useRawRequirement
     const qa = store.visibleQuestions.find((q: { id: string }) => q.id === id);
     const actionLabel = qa?.answer ? "删除" : "跳过";
 
-    try {
-      await ElMessageBox.confirm(
-        `确定要${actionLabel}该问题吗？`,
-        "确认操作",
-        {
-          confirmButtonText: "确定",
-          cancelButtonText: "取消",
-          type: "warning",
-        },
-      );
+    // 简化处理：直接使用 confirm
+    if (confirm(`确定要${actionLabel}该问题吗？`)) {
       store.deleteQuestion(id);
-    } catch {
-      // 用户取消
     }
   };
 

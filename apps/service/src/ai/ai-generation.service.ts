@@ -144,14 +144,14 @@ export class AiGenerationService {
     projectId: string,
     rawRequirement: string,
     context?: string,
-    moduleIds?: string[],
+    existingModules?: string,
   ): Observable<LLMStreamChunk> {
     const title = `ReqGen_${projectId}_${Date.now()}`;
 
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
-      moduleIds,
+      existingModules,
       rawRequirement,
     });
 

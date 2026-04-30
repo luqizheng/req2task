@@ -18,16 +18,24 @@ export const requirementPrompts: PromptTemplate[] = [
 - status: "draft" (固定值，初始状态)
 - type: "功能需求" | "性能需求" | "安全需求" | "接口需求" | "数据需求" | "用户体验需求"
 - storyPoints: number (故事点，数字)
-- moduleIds: string[] (关联的模块ID列表)
+- moduleId: string | "NEW" | null (匹配的模块ID，或"NEW"表示新建，或null表示无法确定)
 - keyElements: string[] (需求摘要列表，4-12字，不超过10个)。从content提炼的关键要素，每个摘要4-12字。
-- parentId: string | null (父需求ID，可为空)`,
+- parentId: string | null (父需求ID，可为空)
+
+模块匹配规则：
+1. 从提供的现有模块列表中选择最匹配的模块ID
+2. 匹配标准：需求的核心功能必须被该模块的职责覆盖
+3. 优先匹配叶子模块（没有子模块的模块）
+4. 如果无法匹配任何现有模块（置信度 < 0.7），moduleId设为 "NEW"
+5. 如果子需求涉及多个模块的功能，请先拆解成更细粒度的子需求，每个子需求只归属一个模块`,
     userPromptTemplate: `{{#if projectId}}项目ID: {{projectId}}
 
 {{/if}}{{#if context}}## 上下文信息
 {{context}}
 
-{{/if}}{{#if moduleIds}}## 关联模块ID
-{{moduleIds}}
+{{/if}}{{#if existingModules}}## 现有功能模块列表
+每个模块包含：id（模块ID）, path（模块路径）, description（模块职责描述）
+{{existingModules}}
 
 {{/if}}请根据以下原始需求，生成结构化的需求列表。
 
@@ -41,7 +49,11 @@ export const requirementPrompts: PromptTemplate[] = [
 4. status必须为: "draft"
 5. type只允许使用指定的类型
 6. storyPoints为数字，建议范围: 1,2,3,5,8,13
-7. moduleIds可以是空数组[]
+7. moduleId匹配规则：
+   - 从现有模块列表中选择最匹配的模块ID
+   - 需求核心功能必须被模块职责覆盖
+   - 优先选择叶子模块
+   - 无法匹配时设为 "NEW"
 8. keyElements从原始需求中提取关键要素
 9. 请严格遵守json格式，只返回JSON数组格式，不要其他内容
 10. keyElements 蓄意摘要，4-12字，不超过10个。
@@ -60,20 +72,21 @@ JSON格式：
       "status": "draft",
       "type": "功能需求",
       "storyPoints": 3,
-      "moduleIds": [],
+      "moduleId": "模块ID或NEW",
       "parentId": null
     }
   ]
 }
 \`\`\`
 `,
-    temperature: 0.3,
-    maxTokens: 3000,
-    isActive: true,
     parameters: [
       { name: "projectId", type: "string", description: "项目ID" },
       { name: "context", type: "string", description: "上下文信息" },
-      { name: "moduleIds", type: "array", description: "关联的模块ID列表" },
+      {
+        name: "existingModules",
+        type: "string",
+        description: "现有功能模块列表，JSON数组格式，每个模块包含id, path, description",
+      },
       {
         name: "rawRequirement",
         type: "string",
@@ -81,6 +94,9 @@ JSON格式：
         description: "原始需求",
       },
     ],
+    temperature: 0.3,
+    maxTokens: 3000,
+    isActive: true,
   },
   {
     code: "RAW_REQUIREMENT_ANALYSIS",

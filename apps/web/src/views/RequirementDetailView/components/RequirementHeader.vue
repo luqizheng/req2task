@@ -5,7 +5,6 @@ import { RequirementStatus, Priority } from "@req2task/dto";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;

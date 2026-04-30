@@ -92,12 +92,13 @@ const pageNumbers = computed(() => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead class="w-[300px]">
+            <TableHead class="w-[280px]">
               <Button variant="ghost" size="sm" class="gap-1 -ml-3">
                 需求标题
                 <ArrowUpDown class="w-4 h-4" />
               </Button>
             </TableHead>
+            <TableHead>关联模块</TableHead>
             <TableHead>状态</TableHead>
             <TableHead>优先级</TableHead>
             <TableHead>故事点</TableHead>
@@ -108,19 +109,35 @@ const pageNumbers = computed(() => {
         </TableHeader>
         <TableBody>
           <TableRow v-if="loading">
-            <TableCell colspan="7" class="text-center py-8 text-slate-500">
+            <TableCell colspan="8" class="text-center py-8 text-slate-500">
               加载中...
             </TableCell>
           </TableRow>
           <TableRow v-else-if="requirements.length === 0">
-            <TableCell colspan="7" class="text-center py-8 text-slate-500">
+            <TableCell colspan="8" class="text-center py-8 text-slate-500">
               暂无数据
             </TableCell>
           </TableRow>
           <TableRow v-for="req in requirements" :key="req.id">
             <TableCell class="font-medium">
-              <div class="max-w-[280px] truncate" :title="req.title">
+              <div class="max-w-[260px] truncate" :title="req.title">
                 {{ req.title }}
+              </div>
+            </TableCell>
+            <TableCell>
+              <div class="flex flex-wrap gap-1">
+                <Badge
+                  v-for="module in req.modules?.slice(0, 2)"
+                  :key="module.id"
+                  variant="outline"
+                  class="text-xs"
+                >
+                  {{ module.name }}
+                </Badge>
+                <Badge v-if="req.modules && req.modules.length > 2" variant="outline" class="text-xs">
+                  +{{ req.modules.length - 2 }}
+                </Badge>
+                <span v-if="!req.modules || req.modules.length === 0" class="text-slate-400 text-sm">-</span>
               </div>
             </TableCell>
             <TableCell>

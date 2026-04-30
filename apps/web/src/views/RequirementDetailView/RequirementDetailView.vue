@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import RequirementHeader from "./components/RequirementHeader.vue";
 import RequirementContent from "./components/RequirementContent.vue";
 import RequirementActions from "./components/RequirementActions.vue";
+import RequirementModules from "./components/RequirementModules.vue";
 import ConflictAlert from "./components/ConflictAlert.vue";
 import { ArrowLeft, User, AlertTriangle, History } from "lucide-vue-next";
 import { formatDateTime } from "@/lib/utils";
@@ -230,6 +231,8 @@ onMounted(() => {
               @status-change="handleStatusChange"
               @export="handleExport"
             />
+
+            <RequirementModules :requirement="requirement" />
 
             <Card>
               <CardHeader>

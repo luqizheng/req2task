@@ -31,6 +31,7 @@ import {
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
 import { AiGenerationService } from "../ai/ai-generation.service";
 import { ProjectsService } from "src/projects/projects.service";
+import { FeatureModulesService } from "src/feature-modules/feature-modules.service";
 
 interface ApiResponse<T> {
   code: number;
@@ -56,6 +57,7 @@ export class RequirementsController {
     private readonly rawRequirementService: RawRequirementService,
     private readonly aiGenerationService: AiGenerationService,
     private readonly projectsService: ProjectsService,
+    private readonly modulesService: FeatureModulesService,
   ) {}
 
   @Post("requirements/modules/:moduleId/requirements")
@@ -241,11 +243,14 @@ export class RequirementsController {
     \`\`\`
     问答记录: ${JSON.stringify(rawRequirement.questionAndAnswers || [])}`;
 
+    // 获取项目所有模块
+    const modules = await this.modulesService.findByProject(rawRequirement.projectId,1,1000000);
+    const existing = modules.items.map((module) => module.id+', '+module.path+', '+module.description).join('\n');
     const stream$ = this.aiGenerationService.streamGenerateRequirements(
       rawRequirement.projectId,
       requirementPrompt,
       project.description,
-      undefined,
+      existing,
     );
 
     stream$.subscribe({

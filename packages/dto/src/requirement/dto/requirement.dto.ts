@@ -106,6 +106,15 @@ export class RequirementResponseDto {
   updatedAt!: Date;
 }
 
+export class RequirementCardDto {
+  id!: string;
+  entityKey!: string;
+  title!: string;
+  priority!: Priority;
+  status!: RequirementStatus;
+  storyPoints!: number;
+}
+
 export class RequirementListResponseDto {
   items!: RequirementResponseDto[];
   total!: number;

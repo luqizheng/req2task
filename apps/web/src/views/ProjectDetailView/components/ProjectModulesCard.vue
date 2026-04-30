@@ -1,17 +1,55 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
+import type {
+  CreateFeatureModuleDto,
+  UpdateFeatureModuleDto,
+} from "@req2task/dto";
+import { featureModulesApi } from "@/api/featureModules";
+import { toast } from "vue-sonner";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   FolderTree,
   Plus,
   ChevronRight,
   Folder,
   Layers,
+  Edit,
+  Trash2,
+  Loader2,
 } from "lucide-vue-next";
-import api from "@/api/axios";
 
 interface FeatureModule {
   id: string;
@@ -28,24 +66,148 @@ const props = defineProps<{
 }>();
 
 const router = useRouter();
+
 const modules = ref<FeatureModule[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 
+const showCreateDialog = ref(false);
+const showEditDialog = ref(false);
+const showDeleteDialog = ref(false);
+const selectedModule = ref<FeatureModule | null>(null);
+const submitting = ref(false);
+
+const formData = ref({
+  name: "",
+  description: "",
+  parentId: "",
+  moduleKey: "",
+});
+
 const fetchModules = async () => {
   try {
     loading.value = true;
-    const response = await api.get<{ items: FeatureModule[] }>(`/projects/${props.projectId}/modules`);
-    modules.value = response.items || [];
+    const data = await featureModulesApi.getTree(props.projectId);
+    modules.value = data || [];
   } catch (err) {
     error.value = err instanceof Error ? err.message : "加载模块失败";
+    toast.error(error.value);
   } finally {
     loading.value = false;
   }
 };
 
+const resetForm = () => {
+  formData.value = {
+    name: "",
+    description: "",
+    parentId: "",
+    moduleKey: "",
+  };
+};
+
+const openCreateDialog = () => {
+  resetForm();
+  showCreateDialog.value = true;
+};
+
+const handleCreate = async () => {
+  if (!formData.value.name.trim() || !formData.value.moduleKey.trim()) {
+    toast.error("模块名称和模块Key不能为空");
+    return;
+  }
+
+  try {
+    submitting.value = true;
+    const createData: CreateFeatureModuleDto = {
+      name: formData.value.name.trim(),
+      description: formData.value.description.trim() || undefined,
+      moduleKey: formData.value.moduleKey.trim(),
+      parentId: formData.value.parentId || undefined,
+      projectId: props.projectId,
+    };
+    await featureModulesApi.create(props.projectId, createData);
+    toast.success("模块已创建");
+    showCreateDialog.value = false;
+    fetchModules();
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "创建模块失败");
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const openEditDialog = (module: FeatureModule) => {
+  selectedModule.value = module;
+  formData.value = {
+    name: module.name,
+    description: module.description || "",
+    parentId: module.parentId || "",
+    moduleKey: module.moduleKey,
+  };
+  showEditDialog.value = true;
+};
+
+const handleUpdate = async () => {
+  if (!selectedModule.value) return;
+  if (!formData.value.name.trim() || !formData.value.moduleKey.trim()) {
+    toast.error("模块名称和模块Key不能为空");
+    return;
+  }
+
+  try {
+    submitting.value = true;
+    const updateData: UpdateFeatureModuleDto = {
+      name: formData.value.name.trim(),
+      description: formData.value.description.trim() || undefined,
+      parentId: formData.value.parentId || undefined,
+    };
+    await featureModulesApi.update(selectedModule.value.id, updateData);
+    toast.success("模块已更新");
+    showEditDialog.value = false;
+    fetchModules();
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "更新模块失败");
+  } finally {
+    submitting.value = false;
+  }
+};
+
+const openDeleteDialog = (module: FeatureModule) => {
+  selectedModule.value = module;
+  showDeleteDialog.value = true;
+};
+
+const handleDelete = async () => {
+  if (!selectedModule.value) return;
+
+  try {
+    submitting.value = true;
+    await featureModulesApi.delete(selectedModule.value.id);
+    toast.success("模块已删除");
+    showDeleteDialog.value = false;
+    fetchModules();
+  } catch (err) {
+    toast.error(err instanceof Error ? err.message : "删除模块失败");
+  } finally {
+    submitting.value = false;
+  }
+};
+
 const goToModule = (moduleId: string) => {
   router.push(`/projects/${props.projectId}/modules/${moduleId}`);
+};
+
+const getAllModules = (moduleList: FeatureModule[]): FeatureModule[] => {
+  const result: FeatureModule[] = [];
+  const traverse = (modules: FeatureModule[]) => {
+    for (const m of modules) {
+      result.push(m);
+      if (m.children?.length) traverse(m.children);
+    }
+  };
+  traverse(moduleList);
+  return result;
 };
 
 onMounted(() => {
@@ -66,10 +228,72 @@ onMounted(() => {
             {{ modules.length }}
           </span>
         </div>
-        <Button size="sm" class="shadow-sm">
-          <Plus class="w-4 h-4 mr-2" />
-          新建模块
-        </Button>
+        <Dialog v-model:open="showCreateDialog">
+          <DialogTrigger as-child>
+            <Button size="sm" class="shadow-sm" @click="openCreateDialog">
+              <Plus class="w-4 h-4 mr-2" />
+              新建模块
+            </Button>
+          </DialogTrigger>
+          <DialogContent class="sm:max-w-[480px]">
+            <DialogHeader>
+              <DialogTitle>新建模块</DialogTitle>
+              <DialogDescription>创建一个新的功能模块</DialogDescription>
+            </DialogHeader>
+            <div class="space-y-4 py-4">
+              <div class="space-y-2">
+                <Label for="name">模块名称 <span class="text-red-500">*</span></Label>
+                <Input
+                  id="name"
+                  v-model="formData.name"
+                  placeholder="请输入模块名称"
+                />
+              </div>
+              <div class="space-y-2">
+                <Label for="moduleKey">模块 Key <span class="text-red-500">*</span></Label>
+                <Input
+                  id="moduleKey"
+                  v-model="formData.moduleKey"
+                  placeholder="如: user-management"
+                />
+              </div>
+              <div class="space-y-2">
+                <Label for="description">描述</Label>
+                <Textarea
+                  id="description"
+                  v-model="formData.description"
+                  placeholder="请输入模块描述（可选）"
+                  rows="3"
+                />
+              </div>
+              <div class="space-y-2">
+                <Label for="parent">父模块</Label>
+                <Select v-model="formData.parentId">
+                  <SelectTrigger id="parent">
+                    <SelectValue placeholder="无（顶级模块）" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">无（顶级模块）</SelectItem>
+                    <SelectItem
+                      v-for="m in getAllModules(modules)"
+                      :key="m.id"
+                      :value="m.id"
+                    >
+                      {{ m.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" @click="showCreateDialog = false">取消</Button>
+              <Button @click="handleCreate" :disabled="submitting">
+                <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
+                创建
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </CardHeader>
     <CardContent class="p-6">
@@ -95,7 +319,7 @@ onMounted(() => {
         </div>
         <h3 class="text-sm font-medium text-slate-700 mb-1">暂无功能模块</h3>
         <p class="text-xs text-slate-400 mb-4">点击下方按钮创建第一个模块</p>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" @click="openCreateDialog">
           <Plus class="w-4 h-4 mr-2" />
           创建模块
         </Button>
@@ -106,9 +330,8 @@ onMounted(() => {
           v-for="module in modules"
           :key="module.id"
           class="group flex items-center justify-between p-4 border border-slate-200 rounded-lg hover:border-emerald-200 hover:bg-emerald-50/30 cursor-pointer transition-all duration-200"
-          @click="goToModule(module.id)"
         >
-          <div class="flex items-center gap-4">
+          <div class="flex items-center gap-4 flex-1" @click="goToModule(module.id)">
             <div class="w-10 h-10 rounded-lg bg-slate-100 group-hover:bg-emerald-100 flex items-center justify-center transition-colors">
               <FolderTree class="w-5 h-5 text-slate-500 group-hover:text-emerald-600 transition-colors" />
             </div>
@@ -119,17 +342,106 @@ onMounted(() => {
               <p class="text-xs text-slate-400 font-mono">{{ module.moduleKey }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
             <span
               v-if="module.children?.length"
               class="text-xs text-slate-400 bg-slate-100 group-hover:bg-emerald-100 px-2 py-1 rounded transition-colors"
             >
               {{ module.children.length }} 个子模块
             </span>
+            <Button
+              variant="ghost"
+              size="sm"
+              class="opacity-0 group-hover:opacity-100 transition-opacity"
+              @click.stop="openEditDialog(module)"
+            >
+              <Edit class="w-4 h-4" />
+            </Button>
+            <AlertDialog v-model:open="showDeleteDialog">
+              <AlertDialogTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  class="opacity-0 group-hover:opacity-100 transition-opacity text-red-500 hover:text-red-600 hover:bg-red-50"
+                  @click.stop="openDeleteDialog(module)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent @click.stop>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>确认删除</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    确定要删除模块 "<strong>{{ selectedModule?.name }}</strong>" 吗？
+                    此操作无法撤销。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel @click.stop="showDeleteDialog = false">取消</AlertDialogCancel>
+                  <AlertDialogAction variant="destructive" @click="handleDelete" :disabled="submitting">
+                    <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
+                    删除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
             <ChevronRight class="w-4 h-4 text-slate-400 group-hover:text-emerald-600 group-hover:translate-x-0.5 transition-all" />
           </div>
         </div>
       </div>
     </CardContent>
   </Card>
+
+  <Dialog v-model:open="showEditDialog">
+    <DialogContent class="sm:max-w-[480px]" @click.stop>
+      <DialogHeader>
+        <DialogTitle>编辑模块</DialogTitle>
+        <DialogDescription>修改模块信息</DialogDescription>
+      </DialogHeader>
+      <div class="space-y-4 py-4" @click.stop>
+        <div class="space-y-2">
+          <Label for="edit-name">模块名称 <span class="text-red-500">*</span></Label>
+          <Input id="edit-name" v-model="formData.name" placeholder="请输入模块名称" />
+        </div>
+        <div class="space-y-2">
+          <Label for="edit-moduleKey">模块 Key</Label>
+          <Input id="edit-moduleKey" v-model="formData.moduleKey" disabled />
+        </div>
+        <div class="space-y-2">
+          <Label for="edit-description">描述</Label>
+          <Textarea
+            id="edit-description"
+            v-model="formData.description"
+            placeholder="请输入模块描述（可选）"
+            rows="3"
+          />
+        </div>
+        <div class="space-y-2">
+          <Label for="edit-parent">父模块</Label>
+          <Select v-model="formData.parentId">
+            <SelectTrigger id="edit-parent">
+              <SelectValue placeholder="无（顶级模块）" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="">无（顶级模块）</SelectItem>
+              <SelectItem
+                v-for="m in getAllModules(modules).filter(m => m.id !== selectedModule?.id)"
+                :key="m.id"
+                :value="m.id"
+              >
+                {{ m.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <DialogFooter>
+        <Button variant="outline" @click="showEditDialog = false">取消</Button>
+        <Button @click="handleUpdate" :disabled="submitting">
+          <Loader2 v-if="submitting" class="w-4 h-4 mr-2 animate-spin" />
+          保存
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
 </template>

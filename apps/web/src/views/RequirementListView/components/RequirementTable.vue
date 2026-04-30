@@ -23,7 +23,7 @@ import {
   PaginationEllipsis,
   PaginationItem,
   PaginationNext,
-  PaginationPrev
+
 } from '@/components/ui/pagination'
 import type { RequirementResponseDto } from '@req2task/dto'
 import { RequirementStatus, Priority } from '@req2task/dto'
@@ -33,6 +33,8 @@ const props = defineProps<{
   loading: boolean
   page: number
   totalPages: number
+  total: number
+  pageSize: number
 }>()
 
 const emit = defineEmits<{
@@ -165,7 +167,7 @@ const pageNumbers = computed(() => {
       </Table>
     </div>
 
-    <Pagination v-if="totalPages > 1" :total="totalPages" :sibling-count="1" :page="page">
+    <Pagination v-if="totalPages > 1" :total="total" :items-per-page="pageSize" :sibling-count="1" :page="page">
       <PaginationContent>
         <PaginationPrev :disabled="page === 1" @click="emit('update:page', page - 1)" />
         <template v-for="(p, index) in pageNumbers" :key="index">

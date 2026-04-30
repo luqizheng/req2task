@@ -6,6 +6,8 @@ import type {
   CreateRawRequirementDto,
   UpdateRawRequirementDto,
   RawRequirementListParams,
+  GenerateTitleRequestDto,
+  GenerateTitleResponseDto,
 } from "@req2task/dto";
 import { RawRequirementStatus } from "@req2task/dto";
 
@@ -73,5 +75,11 @@ export const rawRequirementsApi = {
       `/raw-requirements/${projectId}/raw-requirements`,
       { params },
     );
+  },
+
+  generateTitle: (
+    data: GenerateTitleRequestDto,
+  ): Promise<{ code: number; data: GenerateTitleResponseDto }> => {
+    return api.post(`/raw-requirements/generate-title`, data);
   },
 };

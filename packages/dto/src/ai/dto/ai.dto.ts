@@ -195,3 +195,12 @@ export class PromptTemplateResponseDto {
     description?: string;
   }>;
 }
+
+export class GenerateTitleRequestDto {
+  @IsString()
+  content!: string;
+}
+
+export class GenerateTitleResponseDto {
+  title!: string;
+}

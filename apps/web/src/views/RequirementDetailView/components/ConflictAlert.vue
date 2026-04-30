@@ -1,13 +1,14 @@
 <script setup lang="ts">
-import { computed } from "vue";
+
 import type { ConflictDto } from "@req2task/dto";
 import { ConflictType } from "@req2task/dto";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import { AlertTriangle, Lightbulb, ArrowRight } from "lucide-vue-next";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const props = defineProps<{
   conflicts: ConflictDto[];
   isLoading?: boolean;

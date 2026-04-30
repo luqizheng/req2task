@@ -164,6 +164,31 @@ export class AiGenerationService {
     });
   }
 
+  streamGenerateTitle(content: string): Observable<LLMStreamChunk> {
+    const title = `TitleGen_${Date.now()}`;
+
+    const systemPrompt = `你是一个专业的需求分析师。请根据提供的原始需求内容，生成一个简洁、准确的标题。
+标题要求：
+1. 长度不超过50个字符
+2. 准确概括需求的核心内容
+3. 使用简洁的专业术语
+4. 直接返回标题文本，不要有任何解释或额外内容`;
+
+    const userPrompt = `请为以下原始需求生成标题：
+
+${content}
+
+标题：`
+
+    return this.llmClient.streamGenerate({
+      title,
+      systemPrompt,
+      userPrompt,
+      temperature: 0.3,
+      maxTokens: 100,
+    });
+  }
+
   private extractAnalysisResult(content: string): {
     questions: string[];
     keyElements: string[];
@@ -218,7 +243,7 @@ export class AiGenerationService {
         const saved = await queryRunner.manager.save(rawRequirement);
         await queryRunner.commitTransaction();
         this.logger.log(
-          `Created raw requirement ${saved.id} with ${followUpQuestions.length} follow-up questions`,
+          `Created raw requirement ${(saved as any).id} with ${followUpQuestions.length} follow-up questions`,
         );
 
         return saved;
@@ -499,7 +524,7 @@ export class AiGenerationService {
               const acceptanceCriteria = queryRunner.manager.create(
                 AcceptanceCriteria,
                 {
-                  userStoryId: saved.id,
+                  userStoryId: (saved as any).id,
                   criteriaType:
                     criteria.criteriaType || CriteriaType.FUNCTIONAL,
                   content: criteria.content,

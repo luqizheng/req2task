@@ -18,8 +18,15 @@ import { Response } from "express";
 import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementService } from "./raw-requirement.service";
 import { AiGenerationService } from "src/ai/ai-generation.service";
+import { LLmClientService } from "src/ai/llm-client.service";
 import { ProjectsService } from "src/projects/projects.service";
-import { GenerateRawRequirementByLLMDto,CreateRawRequirementDto, RawRequirementResponseDto, ApiResponseDto, UpdateRawRequirementDto, RawRequirementListParams } from "@req2task/dto";
+import { GenerateRawRequirementByLLMDto, CreateRawRequirementDto, RawRequirementResponseDto, ApiResponseDto, UpdateRawRequirementDto, RawRequirementListParams, GenerateTitleRequestDto, GenerateTitleResponseDto } from "@req2task/dto";
+
+interface AuthenticatedRequest {
+  user?: {
+    id?: string;
+  };
+}
 
 @Controller("raw-requirements")
 @UseGuards(AuthGuard("jwt"))
@@ -30,6 +37,7 @@ export class RawRequirementController {
     private readonly rawRequirementService: RawRequirementService,
     private readonly aiGenerationService: AiGenerationService,
     private readonly projectsService: ProjectsService,
+    private readonly llmClient: LLmClientService,
   ) {}
 
   @Get(":rawRequirementId")
@@ -46,7 +54,7 @@ export class RawRequirementController {
   async streamGenerateRawRequirement(
     @Param("projectId") projectId: string,
     @Body() dto: GenerateRawRequirementByLLMDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
     @Res() res: Response,
   ) {
     const createdById = req.user?.id || "system";
@@ -94,7 +102,7 @@ export class RawRequirementController {
   async createRawRequirement(
     @Param("projectId") projectId: string,
     @Body() dto: CreateRawRequirementDto,
-    @Request() req: any,
+    @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponseDto<RawRequirementResponseDto>> {
     const userId = req.user?.id || "system";
     const result =
@@ -126,12 +134,46 @@ export class RawRequirementController {
   async getRawRequirementsByProject(
     @Param("projectId") projectId: string,
     @Query() params: RawRequirementListParams,
-    @Request() req: any,
+    @Request() _req: AuthenticatedRequest,
   ): Promise<ApiResponseDto<RawRequirementResponseDto[]>> {
-    const userId = req.user?.id || "system";
     const result =
       await this.rawRequirementService.getRawRequirementsByProject(projectId, params);
     return { code: 0, data: result };
+  }
+
+  @Post("generate-title")
+  @HttpCode(HttpStatus.OK)
+  async generateTitle(
+    @Body() dto: GenerateTitleRequestDto,
+  ): Promise<ApiResponseDto<GenerateTitleResponseDto>> {
+    this.logger.log(`开始生成标题`);
+
+    const systemPrompt = `你是一个专业的需求分析师。请根据提供的原始需求内容，生成一个简洁、准确的标题。
+标题要求：
+1. 长度不超过50个字符
+2. 准确概括需求的核心内容
+3. 使用简洁的专业术语
+4. 直接返回标题文本，不要有任何解释或额外内容`;
+
+    const userPrompt = `请为以下原始需求生成标题：
+
+${dto.content}
+
+标题：`;
+
+    const result = await this.llmClient.generate({
+      systemPrompt,
+      userPrompt,
+      temperature: 0.3,
+      maxTokens: 100,
+    });
+
+    // 清理标题（去除引号、换行等）
+    const title = result.content.trim().replace(/^[""']|[""']$/g, "").replace(/\n/g, "");
+
+    this.logger.log(`标题生成完成: ${title}`);
+
+    return { code: 0, data: { title } };
   }
 
 }

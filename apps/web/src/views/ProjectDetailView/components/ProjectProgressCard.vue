@@ -18,12 +18,6 @@ const formatPercent = (value: number) => {
   return `${Math.round(value)}%`;
 };
 
-const getProgressColor = (value: number) => {
-  if (value >= 80) return "bg-emerald-500";
-  if (value >= 50) return "bg-blue-500";
-  if (value >= 25) return "bg-amber-500";
-  return "bg-slate-400";
-};
 </script>
 
 <template>

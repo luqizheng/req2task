@@ -154,11 +154,28 @@ export function useRequirementSubmit(
     });
   };
 
+  const generateTitle = async () => {
+    try {
+      const response = await rawRequirementsApi.generateTitle({
+        content: store.rawRequirement.content,
+      });
+      if (response.code === 0 && response.data.title) {
+        store.rawRequirement.title = response.data.title;
+        toast.success("标题生成完成");
+      } else {
+        toast.error("生成标题失败");
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "生成标题失败");
+    }
+  };
+
   return {
     handleSuccess,
     handleError,
     save,
     rawRequirementAnalyze,
     generateRequirements,
+    generateTitle,
   };
 }

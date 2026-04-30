@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, FileText, HelpCircle, ListTodo } from "lucide-vue-next";
+import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles } from "lucide-vue-next";
 import dayjs from "dayjs";
 
 const route = useRoute();
@@ -50,6 +50,7 @@ const loading = ref(false);
 
 const formSchema = toTypedSchema(
   z.object({
+    title: z.string().nullable().optional(),
     source: z.string().min(1, "请输入需求来源"),
     content: z.string().min(1, "请输入原始需求内容"),
     collectionType: z.nativeEnum(CollectionType, {
@@ -85,8 +86,14 @@ const handleSubmit = async () => {
 };
 
 const handleAnalyze = async () => {
-  debugger
   rawRequirementSubmitHelper.rawRequirementAnalyze();
+};
+
+const handleGenerateTitle = async () => {
+  if (!rawRequirement.value.content?.trim()) {
+    return;
+  }
+  await rawRequirementSubmitHelper.generateTitle();
 };
 
 const questionCount = computed(() => {
@@ -152,6 +159,34 @@ const collectTimeDate = computed({
             @submit="handleSubmit"
           >
             <div class="space-y-4">
+              <FormField v-slot="{ componentField, errorMessage }" name="title">
+                <FormItem>
+                  <FormLabel class="text-xs text-muted-foreground">标题</FormLabel>
+                  <div class="flex gap-2">
+                    <FormControl>
+                      <Input
+                        v-bind="componentField"
+                        :model-value="rawRequirement.title ?? ''"
+                        placeholder="请输入标题"
+                        class="h-9 flex-1"
+                        @update:model-value="(val) => rawRequirement.title = typeof val === 'string' ? val || null : null"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      :disabled="!rawRequirement.content?.trim()"
+                      title="AI 生成标题"
+                      @click="handleGenerateTitle"
+                    >
+                      <Sparkles class="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <FormMessage v-if="errorMessage" class="text-xs" />
+                </FormItem>
+              </FormField>
+
               <FormField v-slot="{ componentField, errorMessage }" name="source">
                 <FormItem>
                   <FormLabel class="text-xs text-muted-foreground">来源</FormLabel>

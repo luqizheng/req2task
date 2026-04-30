@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type {
   RequirementResponseDto,
@@ -12,25 +12,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/components/ui/toast/use-toast";
+
+
 import RequirementHeader from "./components/RequirementHeader.vue";
 import RequirementContent from "./components/RequirementContent.vue";
 import RequirementActions from "./components/RequirementActions.vue";
 import ConflictAlert from "./components/ConflictAlert.vue";
-import {
-  ArrowLeft,
-  Clock,
-  User,
-  AlertTriangle,
-  FileText,
-  History,
-} from "lucide-vue-next";
+import { ArrowLeft, User, AlertTriangle, History } from "lucide-vue-next";
 import { formatDateTime } from "@/lib/utils";
+import { toast } from "vue-sonner";
 
 const route = useRoute();
 const router = useRouter();
-const { toast } = useToast();
 
 const requirementId = route.params.id as string;
 const projectId = route.params.projectId as string;
@@ -74,15 +67,12 @@ const handleTitleUpdate = async (newTitle: string) => {
     const updateData: UpdateRequirementDto = { title: newTitle };
     const updated = await requirementsApi.update(requirementId, updateData);
     requirement.value = updated;
-    toast({
-      title: "更新成功",
+    toast.success("更新成功", {
       description: "需求标题已更新",
     });
   } catch (error) {
-    toast({
-      title: "更新失败",
+    toast.error("更新失败", {
       description: error instanceof Error ? error.message : "无法更新需求标题",
-      variant: "destructive",
     });
   }
 };
@@ -112,18 +102,18 @@ const handleStatusChange = async (newStatus: RequirementStatus) => {
 
   try {
     isTransitioning.value = true;
-    const updated = await requirementsApi.transitionStatus(requirementId, newStatus);
+    const updated = await requirementsApi.transitionStatus(
+      requirementId,
+      newStatus,
+    );
     requirement.value = updated;
     await fetchRequirement();
-    toast({
-      title: "状态更新成功",
+    toast.success("状态更新成功", {
       description: `需求状态已更新为 ${newStatus}`,
     });
   } catch (error) {
-    toast({
-      title: "状态更新失败",
+    toast.error("状态更新失败", {
       description: error instanceof Error ? error.message : "无法更新需求状态",
-      variant: "destructive",
     });
   } finally {
     isTransitioning.value = false;
@@ -136,16 +126,13 @@ const handleDelete = async () => {
   try {
     isDeleting.value = true;
     await requirementsApi.delete(requirementId);
-    toast({
-      title: "删除成功",
+    toast.success("删除成功", {
       description: "需求已成功删除",
     });
     router.push(`/projects/${projectId}`);
   } catch (error) {
-    toast({
-      title: "删除失败",
+    toast.error("删除失败", {
       description: error instanceof Error ? error.message : "无法删除需求",
-      variant: "destructive",
     });
   } finally {
     isDeleting.value = false;
@@ -155,22 +142,18 @@ const handleDelete = async () => {
 const handleExport = async () => {
   try {
     isExporting.value = true;
-    toast({
-      title: "导出中",
+    toast("导出中", {
       description: "正在生成需求文档...",
     });
     setTimeout(() => {
-      toast({
-        title: "导出成功",
+      toast.success("导出成功", {
         description: "需求文档已准备就绪",
       });
       isExporting.value = false;
     }, 1500);
   } catch (error) {
-    toast({
-      title: "导出失败",
+    toast.error("导出失败", {
       description: error instanceof Error ? error.message : "无法导出需求文档",
-      variant: "destructive",
     });
     isExporting.value = false;
   }
@@ -217,9 +200,7 @@ onMounted(() => {
             返回
           </Button>
           <Separator orientation="vertical" class="h-6" />
-          <span class="text-sm text-slate-500">
-            需求详情
-          </span>
+          <span class="text-sm text-slate-500"> 需求详情 </span>
         </div>
 
         <RequirementHeader
@@ -232,8 +213,7 @@ onMounted(() => {
           v-if="conflicts.length > 0"
           :conflicts="conflicts"
           :is-loading="isLoadingConflicts"
-          @resolve="(conflict) => {}"
-          @view-detail="(conflict) => {}"
+        
         />
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
@@ -340,12 +320,8 @@ onMounted(() => {
       <template v-else>
         <div class="text-center py-12">
           <AlertTriangle class="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <h3 class="text-lg font-medium text-slate-700 mb-2">
-            需求不存在
-          </h3>
-          <p class="text-slate-500 mb-4">
-            该需求可能已被删除或不存在
-          </p>
+          <h3 class="text-lg font-medium text-slate-700 mb-2">需求不存在</h3>
+          <p class="text-slate-500 mb-4">该需求可能已被删除或不存在</p>
           <Button @click="goBack">
             <ArrowLeft class="w-4 h-4 mr-2" />
             返回项目

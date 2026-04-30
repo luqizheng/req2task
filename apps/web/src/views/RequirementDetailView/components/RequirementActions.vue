@@ -49,16 +49,6 @@ const emit = defineEmits<{
 const selectedStatus = ref<string>("");
 const showDeleteDialog = ref(false);
 
-const statusConfig: Record<RequirementStatus, { label: string; class: string }> = {
-  [RequirementStatus.DRAFT]: { label: "草稿", class: "bg-slate-100 text-slate-700 border-slate-300" },
-  [RequirementStatus.REVIEWED]: { label: "已审核", class: "bg-blue-100 text-blue-700 border-blue-300" },
-  [RequirementStatus.APPROVED]: { label: "已批准", class: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-  [RequirementStatus.REJECTED]: { label: "已拒绝", class: "bg-red-100 text-red-700 border-red-300" },
-  [RequirementStatus.PROCESSING]: { label: "进行中", class: "bg-indigo-100 text-indigo-700 border-indigo-300" },
-  [RequirementStatus.COMPLETED]: { label: "已完成", class: "bg-purple-100 text-purple-700 border-purple-300" },
-  [RequirementStatus.CANCELLED]: { label: "已取消", class: "bg-slate-100 text-slate-600 border-slate-300" },
-};
-
 const handleStatusChange = (newStatus: string) => {
   if (newStatus && newStatus !== props.requirement.status) {
     emit("status-change", newStatus as RequirementStatus);
@@ -76,8 +66,18 @@ const confirmDelete = () => {
   <Card>
     <CardHeader>
       <CardTitle class="text-lg flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
+          />
         </svg>
         操作
       </CardTitle>
@@ -94,7 +94,10 @@ const confirmDelete = () => {
 
       <div class="space-y-2">
         <label class="text-sm font-medium text-slate-700">状态变更</label>
-        <Select v-model="selectedStatus" @update:model-value="handleStatusChange">
+        <Select
+          v-model="selectedStatus"
+          @update:model-value="handleStatusChange"
+        >
           <SelectTrigger class="w-full">
             <SelectValue placeholder="选择新状态" />
           </SelectTrigger>
@@ -122,7 +125,10 @@ const confirmDelete = () => {
             </SelectItem>
           </SelectContent>
         </Select>
-        <div v-if="isTransitioning" class="flex items-center gap-2 text-sm text-slate-500">
+        <div
+          v-if="isTransitioning"
+          class="flex items-center gap-2 text-sm text-slate-500"
+        >
           <Loader2 class="w-4 h-4 animate-spin" />
           状态更新中...
         </div>
@@ -155,16 +161,13 @@ const confirmDelete = () => {
           <AlertDialogHeader>
             <AlertDialogTitle>确认删除</AlertDialogTitle>
             <AlertDialogDescription>
-              确定要删除需求 "<strong>{{ requirement.title }}</strong>" 吗？
-              此操作无法撤销。
+              确定要删除需求 "<strong>{{ requirement.title }}</strong
+              >" 吗？ 此操作无法撤销。
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>取消</AlertDialogCancel>
-            <AlertDialogAction
-              variant="destructive"
-              @click="confirmDelete"
-            >
+            <AlertDialogAction variant="destructive" @click="confirmDelete">
               删除
             </AlertDialogAction>
           </AlertDialogFooter>

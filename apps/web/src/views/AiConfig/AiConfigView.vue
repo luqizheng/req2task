@@ -182,7 +182,7 @@ const handleSave = async () => {
               {{ sheetDescription }}
             </SheetDescription>
           </SheetHeader>
-          <div class="mt-6">
+          <div class="mt-6 pl-2.5 pr-2.5">
             <ConfigForm
               v-model:config-form="configForm"
               :editing-config-id="editingConfigId"

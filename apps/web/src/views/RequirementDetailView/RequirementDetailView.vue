@@ -49,10 +49,8 @@ const fetchRequirement = async () => {
     requirement.value = reqData;
     allowedTransitions.value = transitionsData.allowedTransitions || [];
   } catch (error) {
-    toast({
-      title: "加载失败",
+    toast.error("加载失败", {
       description: error instanceof Error ? error.message : "无法加载需求详情",
-      variant: "destructive",
     });
   } finally {
     loading.value = false;
@@ -83,15 +81,12 @@ const handleDescriptionUpdate = async (newDescription: string) => {
     const updateData: UpdateRequirementDto = { description: newDescription };
     const updated = await requirementsApi.update(requirementId, updateData);
     requirement.value = updated;
-    toast({
-      title: "更新成功",
+    toast.success("更新成功", {
       description: "需求描述已更新",
     });
   } catch (error) {
-    toast({
-      title: "更新失败",
+    toast.error("更新失败", {
       description: error instanceof Error ? error.message : "无法更新需求描述",
-      variant: "destructive",
     });
   }
 };

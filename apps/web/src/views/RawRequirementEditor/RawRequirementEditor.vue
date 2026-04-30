@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles } from "lucide-vue-next";
+import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles, Save, Play, RotateCcw } from "lucide-vue-next";
 import dayjs from "dayjs";
 import { parseDate, DateValue } from "@internationalized/date";
 
@@ -282,8 +282,14 @@ const collectTimeDate = computed<DateValue | undefined>({
           </Form>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button variant="outline" class="flex-1 h-9" @click.stop="handleSubmit">保存</Button>
-          <Button class="flex-1 h-9" @click="handleAnalyze">分析</Button>
+          <Button variant="outline" class="flex-1 h-9" @click.stop="handleSubmit">
+            <Save class="w-4 h-4 mr-2" />
+            保存
+          </Button>
+          <Button class="flex-1 h-9" @click="handleAnalyze">
+            <Play class="w-4 h-4 mr-2" />
+            分析
+          </Button>
         </div>
       </Card>
 
@@ -307,6 +313,7 @@ const collectTimeDate = computed<DateValue | undefined>({
         </CardContent>
         <div class="p-4 border-t shrink-0">
           <Button class="w-full h-9" @click="handlerGenerateRequirements">
+            <ListTodo class="w-4 h-4 mr-2" />
             生成需求
           </Button>
         </div>
@@ -328,9 +335,13 @@ const collectTimeDate = computed<DateValue | undefined>({
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
           <Button variant="outline" class="flex-1 h-9" @click="handlerGenerateRequirements">
+            <RotateCcw class="w-4 h-4 mr-2" />
             重新生成
           </Button>
-          <Button class="flex-1 h-9" @click="handleSubmit">保存需求</Button>
+          <Button class="flex-1 h-9" @click="handleSubmit">
+            <Save class="w-4 h-4 mr-2" />
+            保存需求
+          </Button>
         </div>
       </Card>
     </div>

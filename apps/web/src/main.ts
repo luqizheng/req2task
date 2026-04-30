@@ -5,7 +5,7 @@ import App from './App.vue'
 import router from './router'
 
 import './assets/index.css'
-import { Toaster } from 'vue-sonner'
+import { Toaster } from '@/components/ui/sonner'
 
 const app = createApp(App)
 

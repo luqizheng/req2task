@@ -206,9 +206,10 @@ export class BaselineService {
     const moduleIds = modules.map((m) => m.id);
 
     const requirements = moduleIds.length > 0
-      ? await this.requirementRepository.find({
-          where: moduleIds.map((id) => ({ moduleId: id })),
-        })
+      ? await this.requirementRepository
+          .createQueryBuilder('req')
+          .innerJoin('req.modules', 'module', 'module.id IN (:...moduleIds)', { moduleIds })
+          .getMany()
       : [];
 
     const requirementIds = requirements.map((r) => r.id);

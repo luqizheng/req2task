@@ -22,6 +22,9 @@ export class FeatureModulesService {
       name: module.name,
       description: module.description,
       moduleKey: module.moduleKey,
+      aliases: module.aliases,
+      keywords: module.keywords,
+      path: module.path,
       sort: module.sort,
       parentId: module.parentId,
       projectId: module.projectId,
@@ -29,6 +32,23 @@ export class FeatureModulesService {
       createdAt: module.createdAt,
       updatedAt: module.updatedAt,
     };
+  }
+
+  private async calculatePath(module: FeatureModule): Promise<string> {
+    const paths: string[] = [module.name];
+    let current = module;
+    while (current.parentId) {
+      const parent = await this.featureModuleRepository.findOne({
+        where: { id: current.parentId },
+      });
+      if (parent) {
+        paths.unshift(parent.name);
+        current = parent;
+      } else {
+        break;
+      }
+    }
+    return paths.join(' / ');
   }
 
   async findByProject(
@@ -95,10 +115,14 @@ export class FeatureModulesService {
       name: createDto.name,
       description: createDto.description || null,
       moduleKey: createDto.moduleKey,
+      aliases: createDto.aliases || null,
+      keywords: createDto.keywords || null,
       sort: createDto.sort || 0,
       parentId: createDto.parentId || null,
       projectId: createDto.projectId,
     });
+
+    module.path = await this.calculatePath(module);
 
     const saved = await this.featureModuleRepository.save(module);
     return this.toResponseDto(saved);
@@ -131,8 +155,13 @@ export class FeatureModulesService {
       module.parentId = updateDto.parentId || null;
     }
 
-    if (updateDto.name) module.name = updateDto.name;
+    if (updateDto.name) {
+      module.name = updateDto.name;
+      module.path = await this.calculatePath(module);
+    }
     if (updateDto.description !== undefined) module.description = updateDto.description;
+    if (updateDto.aliases !== undefined) module.aliases = updateDto.aliases || null;
+    if (updateDto.keywords !== undefined) module.keywords = updateDto.keywords || null;
     if (updateDto.sort !== undefined) module.sort = updateDto.sort;
 
     const updated = await this.featureModuleRepository.save(module);

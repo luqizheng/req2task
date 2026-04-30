@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsInt, Min } from 'class-validator';
+import { IsString, IsOptional, IsInt, Min, IsArray } from 'class-validator';
 
 export class CreateFeatureModuleDto {
   @IsString()
@@ -10,6 +10,16 @@ export class CreateFeatureModuleDto {
 
   @IsString()
   moduleKey!: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
 
   @IsOptional()
   @IsInt()
@@ -34,6 +44,16 @@ export class UpdateFeatureModuleDto {
   description?: string;
 
   @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
+
+  @IsOptional()
   @IsInt()
   @Min(0)
   sort?: number;
@@ -48,6 +68,9 @@ export class FeatureModuleResponseDto {
   name!: string;
   description!: string | null;
   moduleKey!: string;
+  aliases!: string[] | null;
+  keywords!: string[] | null;
+  path!: string | null;
   sort!: number;
   parentId!: string | null;
   projectId!: string;

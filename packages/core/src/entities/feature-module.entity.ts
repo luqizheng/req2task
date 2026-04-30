@@ -6,9 +6,11 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  ManyToMany,
   JoinColumn,
 } from 'typeorm';
 import { Project } from './project.entity';
+import { Requirement } from './requirement.entity';
 
 @Entity('feature_modules')
 export class FeatureModule {
@@ -23,6 +25,15 @@ export class FeatureModule {
 
   @Column({ name: 'module_key' })
   moduleKey!: string;
+
+  @Column({ type: 'jsonb', nullable: true })
+  aliases!: string[] | null;
+
+  @Column({ type: 'jsonb', nullable: true })
+  keywords!: string[] | null;
+
+  @Column({ type: 'text', nullable: true })
+  path!: string | null;
 
   @Column({ default: 0 })
   sort!: number;
@@ -43,6 +54,9 @@ export class FeatureModule {
   @ManyToOne(() => Project)
   @JoinColumn({ name: 'project_id' })
   project!: Project;
+
+  @ManyToMany(() => Requirement, (req) => req.modules)
+  requirements!: Requirement[];
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt!: Date;

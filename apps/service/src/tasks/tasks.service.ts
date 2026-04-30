@@ -39,14 +39,14 @@ export class TasksService {
   ): Promise<TaskResponseDto> {
     const requirement = await this.requirementRepository.findOne({
       where: { id: requirementId },
-      relations: ['module'],
+      relations: ['modules'],
     });
 
     if (!requirement) {
       throw new NotFoundException(`Requirement with ID ${requirementId} not found`);
     }
 
-    const projectId = requirement.module?.projectId;
+    const projectId = requirement.modules?.[0]?.projectId;
     if (!projectId) {
       throw new BadRequestException('Requirement has no associated project');
     }
@@ -97,10 +97,11 @@ export class TasksService {
     page: number = 1,
     limit: number = 20,
   ): Promise<TaskListResponseDto> {
-    const requirements = await this.requirementRepository.find({
-      where: { moduleId },
-      select: ['id'],
-    });
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .innerJoin('req.modules', 'module', 'module.id = :moduleId', { moduleId })
+      .select(['req.id'])
+      .getMany();
     const requirementIds = requirements.map((r) => r.id);
 
     if (requirementIds.length === 0) {
@@ -339,9 +340,10 @@ export class TasksService {
       };
     }
 
-    const requirements = await this.requirementRepository.find({
-      where: moduleIds.map((id) => ({ moduleId: id })),
-    });
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .innerJoin('req.modules', 'module', 'module.id IN (:...moduleIds)', { moduleIds })
+      .getMany();
     const requirementIds = requirements.map((r) => r.id);
 
     const tasks = requirementIds.length > 0

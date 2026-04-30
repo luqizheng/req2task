@@ -35,9 +35,10 @@ export class ProjectProgressService {
     const moduleIds = modules.map((m) => m.id);
 
     const requirements = moduleIds.length > 0
-      ? await this.requirementRepository.find({
-          where: moduleIds.map((id) => ({ moduleId: id })),
-        })
+      ? await this.requirementRepository
+          .createQueryBuilder('req')
+          .innerJoin('req.modules', 'module', 'module.id IN (:...moduleIds)', { moduleIds })
+          .getMany()
       : [];
 
     const requirementIds = requirements.map((r) => r.id);
@@ -119,9 +120,10 @@ export class ProjectProgressService {
     const moduleIds = modules.map((m) => m.id);
 
     const requirements = moduleIds.length > 0
-      ? await this.requirementRepository.find({
-          where: moduleIds.map((id) => ({ moduleId: id })),
-        })
+      ? await this.requirementRepository
+          .createQueryBuilder('req')
+          .innerJoin('req.modules', 'module', 'module.id IN (:...moduleIds)', { moduleIds })
+          .getMany()
       : [];
 
     const totalPoints = totalStoryPoints ?? requirements.reduce((sum, r) => sum + r.storyPoints, 0);
@@ -177,9 +179,10 @@ export class ProjectProgressService {
     const moduleIds = modules.map((m) => m.id);
 
     const requirements = moduleIds.length > 0
-      ? await this.requirementRepository.find({
-          where: moduleIds.map((id) => ({ moduleId: id })),
-        })
+      ? await this.requirementRepository
+          .createQueryBuilder('req')
+          .innerJoin('req.modules', 'module', 'module.id IN (:...moduleIds)', { moduleIds })
+          .getMany()
       : [];
 
     const totalStoryPoints = requirements.reduce((sum, r) => sum + r.storyPoints, 0);
@@ -235,10 +238,11 @@ export class ProjectProgressService {
       throw new NotFoundException('Module not found');
     }
 
-    const requirements = await this.requirementRepository.find({
-      where: { moduleId },
-      relations: ['children'],
-    });
+    const requirements = await this.requirementRepository
+      .createQueryBuilder('req')
+      .innerJoin('req.modules', 'module', 'module.id = :moduleId', { moduleId })
+      .leftJoinAndSelect('req.children', 'children')
+      .getMany();
 
     const requirementsWithTasks = await Promise.all(
       requirements.map(async (r) => {

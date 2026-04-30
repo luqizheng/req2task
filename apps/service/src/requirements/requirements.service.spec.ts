@@ -51,7 +51,8 @@ describe('RequirementsService', () => {
 
   const mockRequirement: Requirement = {
     id: 'req-uuid',
-    moduleId: 'module-uuid',
+    entityKey: 'REQ-001',
+    modules: [],
     title: 'Test Requirement',
     description: 'Test Description',
     priority: Priority.HIGH,
@@ -63,6 +64,12 @@ describe('RequirementsService', () => {
     createdBy: mockUser,
     children: [],
     userStories: [],
+    keyElements: null,
+    parent: null,
+    sourceRawRequirementId: null,
+    sourceRawRequirement: null,
+    conversationId: null,
+    reviewChainId: null,
     createdAt: new Date(),
     updatedAt: new Date(),
   } as Requirement;

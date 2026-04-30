@@ -1,5 +1,5 @@
 ---
-last_updated: 2024-02-01
+last_updated: 2025-04-30
 status: active
 owner: req2task团队
 ---
@@ -191,9 +191,234 @@ export class Project {
 
 ---
 
-## 3. 需求管理模块 (Requirements)
+## 3. 功能模块 (FeatureModules)
 
-### 3.1 实体定义
+### 3.1 目录结构
+
+```
+modules/feature-modules/
+├── dto/
+│   ├── create-feature-module.dto.ts
+│   ├── update-feature-module.dto.ts
+│   └── index.ts
+├── entities/
+│   └── feature-module.entity.ts
+├── services/
+│   ├── feature-modules.service.ts
+│   └── feature-modules.service.spec.ts
+├── controllers/
+│   └── feature-modules.controller.ts
+└── feature-modules.module.ts
+```
+
+### 3.2 实体定义
+
+```typescript
+// entities/feature-module.entity.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  ManyToOne,
+  OneToMany,
+  ManyToMany,
+  JoinColumn,
+} from 'typeorm';
+import { Project } from './project.entity';
+import { Requirement } from './requirement.entity';
+
+@Entity('feature_modules')
+export class FeatureModule {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column()
+  name: string;
+
+  @Column({ type: 'text', nullable: true })
+  description: string | null;
+
+  // 模块唯一标识，用于生成编译编号（如 AUTH-001）
+  @Column({ name: 'module_key' })
+  moduleKey: string;
+
+  // 别名列表（JSONB），如 ["用户认证", "身份验证"]
+  // 用于 LLM 理解模块语义
+  @Column({ type: 'jsonb', nullable: true })
+  aliases: string[] | null;
+
+  // 关键词列表（JSONB），如 ["登录", "注册", "鉴权"]
+  // 用于 LLM 匹配需求归属
+  @Column({ type: 'jsonb', nullable: true })
+  keywords: string[] | null;
+
+  // 完整路径，如 "系统设置 / 权限管理 / 角色分配"
+  // 从根节点到当前模块的层级路径
+  @Column({ type: 'text', nullable: true })
+  path: string | null;
+
+  // 排序顺序
+  @Column({ default: 0 })
+  sort: number;
+
+  // 树形结构：父模块
+  @Column({ name: 'parent_id', nullable: true })
+  parentId: string | null;
+
+  @ManyToOne(() => FeatureModule, (module) => module.children, { nullable: true })
+  @JoinColumn({ name: 'parent_id' })
+  parent: FeatureModule | null;
+
+  // 树形结构：子模块
+  @OneToMany(() => FeatureModule, (module) => module.parent)
+  children: FeatureModule[];
+
+  // 所属项目
+  @Column({ name: 'project_id' })
+  projectId: string;
+
+  @ManyToOne(() => Project)
+  @JoinColumn({ name: 'project_id' })
+  project: Project;
+
+  // 多对多关系：关联的需求
+  @ManyToMany(() => Requirement, (req) => req.modules)
+  requirements: Requirement[];
+
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @UpdateDateColumn({ name: 'updated_at' })
+  updatedAt: Date;
+}
+```
+
+**字段说明：**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| moduleKey | string | 模块唯一标识，用于生成编译编号 |
+| aliases | string[] | 别名列表，便于 LLM 理解模块语义，如 `["用户认证", "身份验证"]` |
+| keywords | string[] | 关键词列表，用于 LLM 匹配需求归属，如 `["登录", "注册", "鉴权"]` |
+| path | string | 完整路径，从根节点到当前模块，如 `"系统设置 / 权限管理 / 角色分配"` |
+| sort | number | 同级模块排序顺序 |
+| parent/parentId | FeatureModule | 树形结构父模块 |
+| children | FeatureModule[] | 树形结构子模块 |
+| requirements | Requirement[] | 关联的需求列表（多对多） |
+
+**路径计算逻辑：**
+```typescript
+private async calculatePath(module: FeatureModule): Promise<string> {
+  const paths: string[] = [module.name];
+  let current = module;
+  while (current.parentId) {
+    const parent = await this.featureModuleRepository.findOne({
+      where: { id: current.parentId },
+    });
+    if (parent) {
+      paths.unshift(parent.name);
+      current = parent;
+    } else {
+      break;
+    }
+  }
+  return paths.join(' / ');
+}
+```
+
+### 3.3 DTO 定义
+
+```typescript
+// dto/create-feature-module.dto.ts
+export class CreateFeatureModuleDto {
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsString()
+  moduleKey: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sort?: number;
+
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+
+  @IsString()
+  projectId: string;
+}
+
+// dto/update-feature-module.dto.ts
+export class UpdateFeatureModuleDto {
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  aliases?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  keywords?: string[];
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sort?: number;
+
+  @IsOptional()
+  @IsString()
+  parentId?: string;
+}
+
+// dto/feature-module-response.dto.ts
+export class FeatureModuleResponseDto {
+  id: string;
+  name: string;
+  description: string | null;
+  moduleKey: string;
+  aliases: string[] | null;
+  keywords: string[] | null;
+  path: string | null;
+  sort: number;
+  parentId: string | null;
+  projectId: string;
+  children: FeatureModuleResponseDto[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+```
+
+---
+
+## 4. 需求管理模块 (Requirements)
+
+### 4.1 实体定义
 
 ```typescript
 // entities/requirement.entity.ts
@@ -225,18 +450,26 @@ export class Requirement {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column({ name: 'module_id' })
-  moduleId: string;
+  @Column({ name: 'entity_key', unique: true })
+  entityKey: string;
 
-  @ManyToOne(() => FeatureModule, (module) => module.requirements)
-  @JoinColumn({ name: 'module_id' })
-  module: FeatureModule;
+  // 多对多关系：一个需求可关联多个模块
+  @ManyToMany(() => FeatureModule, (module) => module.requirements, { onDelete: 'CASCADE' })
+  @JoinTable({
+    name: 'requirement_modules',
+    joinColumn: { name: 'requirement_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'module_id', referencedColumnName: 'id' },
+  })
+  modules: FeatureModule[];
 
   @Column({ length: 255 })
   title: string;
 
   @Column({ type: 'text' })
   description: string;
+
+  @Column({ name: 'key_elements', type: 'simple-array', nullable: true })
+  keyElements: string[] | null;
 
   @Column({
     type: 'enum',
@@ -264,11 +497,24 @@ export class Requirement {
   })
   storyPoints: number;
 
-  @Column({ name: 'parent_requirement_id', nullable: true })
-  parentRequirementId: string;
+  @Column({ name: 'parent_id', nullable: true })
+  parentId: string;
 
-  @Column({ type: 'integer', default: 1 })
-  version: number;
+  @ManyToOne(() => Requirement, (req) => req.children, { nullable: true })
+  @JoinColumn({ name: 'parent_id' })
+  parent: Requirement | null;
+
+  @OneToMany(() => Requirement, (req) => req.parent)
+  children: Requirement[];
+
+  @Column({ name: 'source_raw_requirement_id', type: 'uuid', nullable: true })
+  sourceRawRequirementId: string | null;
+
+  @Column({ name: 'conversation_id', type: 'uuid', nullable: true })
+  conversationId: string | null;
+
+  @Column({ name: 'review_chain_id', type: 'uuid', nullable: true })
+  reviewChainId: string | null;
 
   @Column({ name: 'created_by_id' })
   createdById: string;
@@ -291,13 +537,18 @@ export class Requirement {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
-
-  @DeleteDateColumn({ name: 'deleted_at' })
-  deletedAt: Date;
 }
 ```
 
-### 3.2 状态机服务
+**关键变更说明：**
+- ~~删除 `moduleId` 字段（单模块关联）~~
+- ~~删除 `moduleIds` 字段（simple-array）~~
+- 新增 `entityKey` 字段：业务编号，用于生成编译编号
+- 新增 `modules` 多对多关系：通过 `requirement_modules` 关联表实现
+- 新增 `keyElements` 字段：需求关键要素
+- 新增 `parent`/`children` 自关联：支持需求层级结构
+
+### 4.2 状态机服务
 
 ```typescript
 // services/requirement-state.service.ts
@@ -326,9 +577,9 @@ export class RequirementStateService {
 
 ---
 
-## 4. 任务管理模块 (Tasks)
+## 5. 任务管理模块 (Tasks)
 
-### 4.1 实体定义
+### 5.1 实体定义
 
 ```typescript
 // entities/task.entity.ts
@@ -437,9 +688,9 @@ export class Task {
 
 ---
 
-## 5. AI 模块 (LLM & AI)
+## 6. AI 模块 (LLM & AI)
 
-### 5.1 LLM Provider 接口
+### 6.1 LLM Provider 接口
 
 ```typescript
 // providers/llm-provider.interface.ts
@@ -482,9 +733,9 @@ export enum LLMProviderType {
 
 ---
 
-## 6. 前端模块组织
+## 7. 前端模块组织
 
-### 6.1 Vue 项目结构
+### 7.1 Vue 项目结构
 
 ```
 apps/web/src/
@@ -530,9 +781,9 @@ apps/web/src/
 
 ---
 
-## 7. 命名规范
+## 8. 命名规范
 
-### 7.1 后端命名
+### 8.1 后端命名
 
 | 类型 | 规范 | 示例 |
 |------|------|------|
@@ -544,7 +795,7 @@ apps/web/src/
 | 数据库列 | snake_case | `project_id`, `created_at` |
 | 枚举值 | snake_case | `in_progress`, `high_priority` |
 
-### 7.2 前端命名
+### 8.2 前端命名
 
 | 类型 | 规范 | 示例 |
 |------|------|------|

@@ -296,8 +296,7 @@ ${content}
         requirements = data.map((item) => ({
           id: "",
           entityKey: "",
-          moduleId: moduleIds?.[0] || null,
-          moduleIds: item.moduleIds || moduleIds || null,
+          modules: [],
           title: item.title,
           description: item.description || null,
           keyElements: item.keyElements || null,
@@ -317,7 +316,6 @@ ${content}
           userStories: [],
           children: [],
           parent: null,
-          module: null,
           sourceRawRequirement: null,
           followUpQuestions: item.followUpQuestions || [],
         }));

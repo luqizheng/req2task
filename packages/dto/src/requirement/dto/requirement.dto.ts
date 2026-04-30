@@ -13,6 +13,13 @@ import {
 } from '../../enums';
 import { AcceptanceCriteriaSummaryDto } from './acceptance-criteria-summary.dto';
 
+export class ModuleSummaryDto {
+  id!: string;
+  name!: string;
+  moduleKey!: string;
+  path!: string | null;
+}
+
 export class CreateRequirementDto {
   @IsString()
   title!: string;
@@ -87,8 +94,7 @@ export class ChildRequirementSummaryDto {
 export class RequirementResponseDto {
   id!: string;
   entityKey!: string;
-  moduleId!: string | null;
-  moduleIds!: string[] | null;
+  modules!: ModuleSummaryDto[];
   title!: string;
   description!: string | null;
   priority!: Priority;
@@ -113,6 +119,7 @@ export class RequirementCardDto {
   priority!: Priority;
   status!: RequirementStatus;
   storyPoints!: number;
+  modules?: ModuleSummaryDto[];
 }
 
 export class RequirementListResponseDto {

@@ -1,5 +1,5 @@
 ---
-last_updated: 2024-02-01
+last_updated: 2025-04-30
 status: active
 owner: req2task团队
 ---
@@ -22,32 +22,50 @@ owner: req2task团队
                     └────────┬────────┘                 │  (原始需求收集)   │                 └──────────────────────────┘
                              │                           └────────┬────────┘
                              │                                    │
-                             ▼                                    ▼
-                    ┌─────────────────┐                 ┌──────────────────────────┐
-                    │   Requirement   │────────────────▶│   RawRequirement         │
-                    │   (需求)         │                 │   (原始需求)              │
-                    └────────┬────────┘                 └──────────────────────────┘
+                             │                                    ▼
+                             │                          ┌──────────────────────────┐
+                             │                          │   RawRequirement         │
+                             │                          │   (原始需求)              │
+                             │                          └──────────────────────────┘
+                             │
+                             │◀──────────────────┐
+                             │                   │
+                             │    ┌──────────────┴───────────┐
+                             │    │  Requirement_Modules     │
+                             │    │  (需求-模块关联表)        │
+                             │    │  (ManyToMany)            │
+                             │    └──────────────┬───────────┘
+                             │                   │
+                             ▼                   ▼
+                    ┌─────────────────┐   ┌─────────────────┐
+                    │   Requirement   │   │   Requirement   │
+                    │   (需求)         │   │   (父需求)      │
+                    └────────┬────────┘   └─────────────────┘
                              │
           ┌──────────────────┼──────────────────┐
           │                  │                  │
           ▼                  ▼                  ▼
    ┌─────────────┐   ┌─────────────┐   ┌─────────────┐
-   │  UserStory  │   │    Task     │   │ Requirement │
-   │  (用户故事)  │   │   (任务)     │   │   (父需求)  │
-   └──────┬──────┘   └──────┬──────┘   └─────────────┘
-          │                  │
+   │  UserStory  │   │    Task     │   │ Acceptance  │
+   │  (用户故事)  │   │   (任务)     │   │  Criteria   │
+   └──────┬──────┘   └──────┬──────┘   │ (验收条件)   │
+          │                  │          └─────────────┘
           ▼                  ▼
    ┌─────────────┐   ┌─────────────┐
    │ Acceptance   │   │    SubTask  │
    │ Criteria    │   │   (子任务)   │
-   │ (验收条件)   │   └─────────────┘
-   └─────────────┘           │
-                              ▼
-                    ┌─────────────────┐
-                    │TaskDependency   │
-                    │ (任务依赖)      │
-                    └─────────────────┘
+   │ (验收条件)   │   └──────┬──────┘
+   └─────────────┘          │
+                            ▼
+                   ┌─────────────────┐
+                   │TaskDependency   │
+                   │ (任务依赖)      │
+                   └─────────────────┘
 ```
+
+**关键变更说明：**
+- Requirement 与 FeatureModule 改为 **多对多关系**，通过 `requirement_modules` 关联表实现
+- FeatureModule 新增 `aliases`、`keywords`、`path`、`module_key` 字段，支持 LLM 匹配和层级路径展示
 
 ---
 
@@ -124,67 +142,93 @@ CREATE TABLE feature_modules (
   project_id UUID NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name VARCHAR(255) NOT NULL,
   description TEXT,
-  parent_module_id UUID REFERENCES feature_modules(id) ON DELETE SET NULL,
-  module_type VARCHAR(20) NOT NULL CHECK (module_type IN ('system', 'business', 'feature')),
-  status VARCHAR(20) DEFAULT 'planning' CHECK (status IN ('planning', 'development', 'completed', 'deprecated')),
-  estimated_story_points INTEGER DEFAULT 0,
-  sort_order INTEGER DEFAULT 0,
+  -- 模块唯一标识，用于生成编译编号
+  module_key VARCHAR(100) NOT NULL,
+  -- 别名列表（JSONB），如 ["用户认证", "身份验证"]
+  aliases JSONB,
+  -- 关键词列表（JSONB），如 ["登录", "注册", "鉴权"]
+  keywords JSONB,
+  -- 完整路径，如 "系统设置 / 权限管理 / 角色分配"
+  path TEXT,
+  parent_id UUID REFERENCES feature_modules(id) ON DELETE SET NULL,
+  sort INTEGER DEFAULT 0,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   deleted_at TIMESTAMP,
-  CONSTRAINT chk_module_nesting CHECK (
-    parent_module_id IS NULL OR (
-      SELECT COUNT(*) FROM feature_modules f2
-      WHERE f2.id = feature_modules.parent_module_id
-      AND f2.parent_module_id IS NOT NULL
-    ) < 2
-  ),
-  UNIQUE(project_id, name, parent_module_id)
+  UNIQUE(project_id, module_key),
+  UNIQUE(project_id, name, parent_id)
 );
 
 CREATE INDEX idx_feature_modules_project ON feature_modules(project_id);
-CREATE INDEX idx_feature_modules_parent ON feature_modules(parent_module_id);
-CREATE INDEX idx_feature_modules_status ON feature_modules(status);
+CREATE INDEX idx_feature_modules_parent ON feature_modules(parent_id);
+CREATE INDEX idx_feature_modules_path ON feature_modules(path);
 CREATE INDEX idx_feature_modules_deleted ON feature_modules(deleted_at) WHERE deleted_at IS NULL;
+
+-- GIN 索引用于 JSONB 字段查询
+CREATE INDEX idx_feature_modules_aliases ON feature_modules USING GIN (aliases);
+CREATE INDEX idx_feature_modules_keywords ON feature_modules USING GIN (keywords);
 ```
 
-### 2.5 需求表 (requirements)
+**字段说明：**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| module_key | VARCHAR(100) | 模块唯一标识，用于生成编译编号（如 AUTH-001） |
+| aliases | JSONB | 别名列表，便于 LLM 理解模块语义 |
+| keywords | JSONB | 关键词列表，用于 LLM 匹配需求归属 |
+| path | TEXT | 从根节点到当前模块的完整路径 |
+| sort | INTEGER | 同级模块排序顺序 |
+
+### 2.5 需求-模块关联表 (requirement_modules)
+
+```sql
+CREATE TABLE requirement_modules (
+  requirement_id UUID NOT NULL REFERENCES requirements(id) ON DELETE CASCADE,
+  module_id UUID NOT NULL REFERENCES feature_modules(id) ON DELETE CASCADE,
+  PRIMARY KEY (requirement_id, module_id)
+);
+
+CREATE INDEX idx_requirement_modules_requirement ON requirement_modules(requirement_id);
+CREATE INDEX idx_requirement_modules_module ON requirement_modules(module_id);
+```
+
+**说明：** Requirement 与 FeatureModule 的多对多关联表，一个需求可关联多个模块。
+
+### 2.6 需求表 (requirements)
 
 ```sql
 CREATE TABLE requirements (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  module_id UUID NOT NULL REFERENCES feature_modules(id) ON DELETE CASCADE,
+  entity_key VARCHAR(100) NOT NULL UNIQUE,
   title VARCHAR(255) NOT NULL,
-  description TEXT NOT NULL,
+  description TEXT,
+  key_elements TEXT,
   priority VARCHAR(20) NOT NULL CHECK (priority IN ('critical', 'high', 'medium', 'low')),
   source VARCHAR(20) NOT NULL CHECK (source IN ('manual', 'ai_generated', 'document_import')),
   status VARCHAR(20) DEFAULT 'draft' CHECK (status IN ('draft', 'reviewed', 'approved', 'rejected', 'processing', 'completed', 'cancelled')),
   story_points INTEGER DEFAULT 0,
-  parent_requirement_id UUID REFERENCES requirements(id) ON DELETE SET NULL,
-  version INTEGER DEFAULT 1,
+  parent_id UUID REFERENCES requirements(id) ON DELETE SET NULL,
+  source_raw_requirement_id UUID REFERENCES raw_requirements(id) ON DELETE SET NULL,
+  conversation_id UUID,
+  review_chain_id UUID,
   created_by_id UUID NOT NULL REFERENCES users(id),
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  deleted_at TIMESTAMP,
-  CONSTRAINT chk_requirement_nesting CHECK (
-    parent_requirement_id IS NULL OR (
-      SELECT COUNT(*) FROM requirements r2
-      WHERE r2.id = requirements.parent_requirement_id
-      AND r2.parent_requirement_id IS NOT NULL
-    ) < 2
-  ),
-  UNIQUE(module_id, title)
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_requirements_module ON requirements(module_id);
+CREATE INDEX idx_requirements_entity_key ON requirements(entity_key);
 CREATE INDEX idx_requirements_status ON requirements(status);
 CREATE INDEX idx_requirements_priority ON requirements(priority);
-CREATE INDEX idx_requirements_parent ON requirements(parent_requirement_id);
+CREATE INDEX idx_requirements_parent ON requirements(parent_id);
 CREATE INDEX idx_requirements_created_by ON requirements(created_by_id);
-CREATE INDEX idx_requirements_deleted ON requirements(deleted_at) WHERE deleted_at IS NULL;
 ```
 
-### 2.6 用户故事表 (user_stories)
+**变更说明：**
+- ~~已删除：module_id 字段~~
+- ~~已删除：module_ids 字段（simple-array）~~
+- 新增：通过 `requirement_modules` 表实现多对多关联
+- 新增：entity_key 字段，用于业务编号
+
+### 2.7 用户故事表 (user_stories)
 
 ```sql
 CREATE TABLE user_stories (
@@ -203,7 +247,7 @@ CREATE INDEX idx_user_stories_requirement ON user_stories(requirement_id);
 CREATE INDEX idx_user_stories_deleted ON user_stories(deleted_at) WHERE deleted_at IS NULL;
 ```
 
-### 2.7 验收条件表 (acceptance_criteria)
+### 2.8 验收条件表 (acceptance_criteria)
 
 ```sql
 CREATE TABLE acceptance_criteria (
@@ -223,7 +267,7 @@ CREATE INDEX idx_acceptance_criteria_type ON acceptance_criteria(criteria_type);
 CREATE INDEX idx_acceptance_criteria_deleted ON acceptance_criteria(deleted_at) WHERE deleted_at IS NULL;
 ```
 
-### 2.8 任务表 (tasks)
+### 2.9 任务表 (tasks)
 
 ```sql
 CREATE TABLE tasks (
@@ -274,7 +318,7 @@ CREATE INDEX idx_tasks_deleted ON tasks(deleted_at) WHERE deleted_at IS NULL;
 CREATE INDEX idx_tasks_number ON tasks(task_number);
 ```
 
-### 2.9 任务依赖表 (task_dependencies)
+### 2.10 任务依赖表 (task_dependencies)
 
 ```sql
 CREATE TABLE task_dependencies (
@@ -291,7 +335,7 @@ CREATE INDEX idx_task_dependencies_prerequisite ON task_dependencies(prerequisit
 CREATE INDEX idx_task_dependencies_dependent ON task_dependencies(dependent_task_id);
 ```
 
-### 2.10 需求变更日志表 (requirement_change_logs)
+### 2.11 需求变更日志表 (requirement_change_logs)
 
 ```sql
 CREATE TABLE requirement_change_logs (
@@ -311,7 +355,7 @@ CREATE INDEX idx_requirement_change_logs_type ON requirement_change_logs(change_
 CREATE INDEX idx_requirement_change_logs_created ON requirement_change_logs(created_at);
 ```
 
-### 2.11 原始需求收集表 (raw_requirement_collections)
+### 2.12 原始需求收集表 (raw_requirement_collections)
 
 ```sql
 CREATE TABLE raw_requirement_collections (
@@ -333,7 +377,7 @@ CREATE INDEX idx_raw_requirement_collections_collected_by ON raw_requirement_col
 CREATE INDEX idx_raw_requirement_collections_deleted ON raw_requirement_collections(deleted_at) WHERE deleted_at IS NULL;
 ```
 
-### 2.12 原始需求表 (raw_requirements)
+### 2.13 原始需求表 (raw_requirements)
 
 ```sql
 CREATE TABLE raw_requirements (
@@ -352,7 +396,7 @@ CREATE INDEX idx_raw_requirements_converted ON raw_requirements(converted_requir
 CREATE INDEX idx_raw_requirements_deleted ON raw_requirements(deleted_at) WHERE deleted_at IS NULL;
 ```
 
-### 2.13 原始需求关联表 (raw_requirement_collection_requirements)
+### 2.14 原始需求关联表 (raw_requirement_collection_requirements)
 
 ```sql
 CREATE TABLE raw_requirement_collection_requirements (
@@ -367,7 +411,7 @@ CREATE INDEX idx_raw_req_coll_req_collection ON raw_requirement_collection_requi
 CREATE INDEX idx_raw_req_coll_req_raw_req ON raw_requirement_collection_requirements(raw_requirement_id);
 ```
 
-### 2.14 LLM 配置表 (llm_configs)
+### 2.15 LLM 配置表 (llm_configs)
 
 ```sql
 CREATE TABLE llm_configs (
@@ -408,7 +452,9 @@ CREATE UNIQUE INDEX idx_llm_configs_name_provider ON llm_configs(name, provider)
 | projects.owner_id | idx_projects_owner | 项目查询 |
 | project_members.project_id | idx_project_members_project | 成员查询 |
 | feature_modules.project_id | idx_feature_modules_project | 模块查询 |
-| requirements.module_id | idx_requirements_module | 需求查询 |
+| ~~requirements.module_id~~ | ~~idx_requirements_module~~ | ~~已删除~~ |
+| requirement_modules.requirement_id | idx_requirement_modules_requirement | 需求-模块关联查询 |
+| requirement_modules.module_id | idx_requirement_modules_module | 模块需求查询 |
 | user_stories.requirement_id | idx_user_stories_requirement | 用户故事查询 |
 | tasks.requirement_id | idx_tasks_requirement | 任务查询 |
 | tasks.assignee_id | idx_tasks_assignee | 分配查询 |
@@ -418,8 +464,12 @@ CREATE UNIQUE INDEX idx_llm_configs_name_provider ON llm_configs(name, provider)
 |------|----------|------|
 | projects.status | B-tree | 状态过滤 |
 | projects.deleted_at | Partial | 软删除查询 |
+| feature_modules.aliases | GIN | LLM 别名匹配 |
+| feature_modules.keywords | GIN | LLM 关键词匹配 |
+| feature_modules.path | B-tree | 层级路径查询 |
 | requirements.status | B-tree | 状态流转 |
 | requirements.priority | B-tree | 优先级排序 |
+| requirements.entity_key | B-tree | 业务编号查询 |
 | tasks.status | B-tree | 看板视图 |
 | tasks.due_date | B-tree | 逾期提醒 |
 
@@ -428,6 +478,8 @@ CREATE UNIQUE INDEX idx_llm_configs_name_provider ON llm_configs(name, provider)
 |------|------|------|
 | UNIQUE | users.email | 邮箱唯一 |
 | UNIQUE | projects.name | 项目名唯一 |
+| UNIQUE | feature_modules.module_key (project_id) | 项目内模块标识唯一 |
+| UNIQUE | requirements.entity_key | 需求业务编号唯一 |
 | UNIQUE | tasks.task_number | 任务编号唯一 |
 | UNIQUE | project_members(project_id, user_id) | 成员不重复 |
 | UNIQUE | llm_configs(provider) WHERE is_default | 每提供商一个默认 |
@@ -454,6 +506,9 @@ CONSTRAINT chk_actual_positive CHECK (actual_hours IS NULL OR actual_hours >= 0)
 
 -- 不能自依赖
 CONSTRAINT chk_no_self_dependency CHECK (prerequisite_task_id != dependent_task_id);
+
+-- 模块在项目内唯一标识
+CONSTRAINT uq_feature_modules_project_key UNIQUE (project_id, module_key);
 ```
 
 ---
@@ -476,3 +531,28 @@ CONSTRAINT chk_no_self_dependency CHECK (prerequisite_task_id != dependent_task_
 | 索引命名 | idx_{table}_{column} |
 | 触发器命名 | update_{table}_updated_at |
 | 外键命名 | fk_{table}_{ref_table} |
+
+---
+
+## 7. 数据结构变更日志
+
+### 2025-04-30 Requirement-Module 关系重构
+
+**变更内容：**
+1. **feature_modules 表新增字段**
+   - `module_key` (VARCHAR): 模块唯一标识，用于生成编译编号
+   - `aliases` (JSONB): 别名列表，如 `["用户认证", "身份验证"]`
+   - `keywords` (JSONB): 关键词列表，如 `["登录", "注册", "鉴权"]`
+   - `path` (TEXT): 完整路径，如 `"系统设置 / 权限管理 / 角色分配"`
+
+2. **requirements 表结构变更**
+   - ~~删除 `module_id` 字段~~
+   - ~~删除 `module_ids` 字段（simple-array）~~
+   - 新增 `entity_key` 字段（业务编号）
+   - 通过 `requirement_modules` 关联表实现多对多关系
+
+3. **新增关联表 requirement_modules**
+   - 字段：`requirement_id`, `module_id`
+   - 主键：联合主键 (requirement_id, module_id)
+
+**迁移脚本：** [1777564000000-modify-requirement-module-relation.ts](../../../apps/service/src/migrations/1777564000000-modify-requirement-module-relation.ts)

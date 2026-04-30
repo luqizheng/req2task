@@ -44,9 +44,9 @@ describe('ProjectProgressService', () => {
       const mockProject = { id: '1', name: 'Test Project' } as Project;
       const mockModules = [{ id: 'm1', projectId: '1', name: 'Module 1' }] as FeatureModule[];
       const mockRequirements = [
-        { id: 'r1', moduleId: 'm1', status: RequirementStatus.COMPLETED, storyPoints: 5 },
-        { id: 'r2', moduleId: 'm1', status: RequirementStatus.DRAFT, storyPoints: 3 },
-      ] as Requirement[];
+        { id: 'r1', modules: [{ id: 'm1' }], status: RequirementStatus.COMPLETED, storyPoints: 5 },
+        { id: 'r2', modules: [{ id: 'm1' }], status: RequirementStatus.DRAFT, storyPoints: 3 },
+      ] as unknown as Requirement[];
       const mockTasks = [
         { id: 't1', requirementId: 'r1', status: TaskStatus.DONE, estimatedHours: 4, actualHours: 5 },
         { id: 't2', requirementId: 'r2', status: TaskStatus.TODO, estimatedHours: 2, actualHours: null },

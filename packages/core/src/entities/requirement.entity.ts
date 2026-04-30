@@ -6,7 +6,9 @@ import {
   UpdateDateColumn,
   ManyToOne,
   OneToMany,
+  ManyToMany,
   JoinColumn,
+  JoinTable,
 } from 'typeorm';
 import { FeatureModule } from './feature-module.entity';
 import { User } from './user.entity';
@@ -22,15 +24,13 @@ export class Requirement {
   @Column({ name: 'entity_key', unique: true })
   entityKey!: string;
 
-  @Column({ name: 'module_id', nullable: true })
-  moduleId!: string | null;
-
-  @ManyToOne(() => FeatureModule, { onDelete: 'CASCADE', nullable: true })
-  @JoinColumn({ name: 'module_id' })
-  module!: FeatureModule | null;
-
-  @Column({ name: 'module_ids', type: 'simple-array', nullable: true })
-  moduleIds!: string[] | null;
+  @ManyToMany(() => FeatureModule, (module) => module.requirements, { onDelete: 'CASCADE' })
+  @JoinTable({
+    name: 'requirement_modules',
+    joinColumn: { name: 'requirement_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'module_id', referencedColumnName: 'id' },
+  })
+  modules!: FeatureModule[];
 
   @Column()
   title!: string;

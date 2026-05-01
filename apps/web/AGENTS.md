@@ -42,6 +42,12 @@ cd apps/web && npx tsx ../../scripts/remove-unused-imports.ts --web --fix
 - **禁止 debugger**：使用断点调试
 - **禁止未使用的导入**：定期运行 `pnpm lint:remove-unused:fix --web`
 - **测试文件豁免**：`*.test.ts` 文件豁免 console 和未使用变量检查
+- **颜色必须使用 CSS 变量**：所有颜色必须从 `src/assets/index.css` 定义的 CSS 变量获取，禁止硬编码 Tailwind 颜色类（如 `text-slate-500`、`bg-red-100` 等）。必须使用设计系统变量：
+  - 背景：`background`、`card`、`muted`、`accent`
+  - 文字：`foreground`、`card-foreground`、`muted-foreground`、`primary-foreground`
+  - 强调：`primary`、`secondary`、`destructive`
+  - 边框：`border`、`input`、`ring`
+  - 特殊场景需要自定义颜色时，需同步更新 `index.css` 的 CSS 变量定义
 
 ### 类型检查
 

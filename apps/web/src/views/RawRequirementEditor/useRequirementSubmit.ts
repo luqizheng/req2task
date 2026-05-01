@@ -4,9 +4,12 @@ import { useRawRequirementCreateStore, type AiQuestion } from "./store";
 import {
   AiSubmitRequestDto,
   GenerateRawRequirementByLLMDto,
+  AiGeneratedRequirementDto,
+  CreateRequirementDto,
 } from "@req2task/dto";
 import { useJsonStream } from "../../utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
+import { requirementsApi } from "@/api/requirements";
 import { useSSEStream } from "@/utils/useSSEStream";
 
 export function useRequirementSubmit(
@@ -166,6 +169,39 @@ export function useRequirementSubmit(
     }
   };
 
+  const saveRequirement = async (
+    requirement: AiGeneratedRequirementDto,
+  ): Promise<boolean> => {
+    try {
+      const moduleId = requirement.moduleId === "NEW" || !requirement.moduleId
+        ? undefined
+        : requirement.moduleId;
+
+      if (!moduleId) {
+        toast.error("需求缺少模块信息，无法保存");
+        return false;
+      }
+
+      const createDto: CreateRequirementDto = {
+        title: requirement.title,
+        description: requirement.content,
+        priority: requirement.priority,
+        source: requirement.source,
+        parentRequirementId: requirement.parentId || undefined,
+        sourceRawRequirementId: store.rawRequirement.id || undefined,
+        moduleIds: [moduleId],
+      };
+
+      const result = await requirementsApi.create(moduleId, createDto);
+      store.updateRequirementId(requirement.id, result.id);
+      toast.success("需求保存成功");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "保存需求失败");
+      return false;
+    }
+  };
+
   return {
     handleSuccess,
     handleError,
@@ -173,5 +209,6 @@ export function useRequirementSubmit(
     rawRequirementAnalyze,
     generateRequirements,
     generateTitle,
+    saveRequirement,
   };
 }

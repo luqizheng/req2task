@@ -3,6 +3,8 @@ import { ref, computed } from "vue";
 import type {
   RawRequirementResponseDto,
   RawRequirementQADto,
+  AiGeneratedRequirementDto,
+  RequirementResponseDto,
 } from "@req2task/dto";
 import { RawRequirementStatus } from "@req2task/dto";
 
@@ -31,6 +33,25 @@ function isTemporaryId(id: string): boolean {
   return id.startsWith("sse_") || id.startsWith("qa_");
 }
 
+function convertToAiGeneratedRequirement(
+  dto: RequirementResponseDto,
+): AiGeneratedRequirementDto {
+  return {
+    id: dto.id,
+    entityKey: dto.entityKey,
+    title: dto.title,
+    content: dto.description || "",
+    keyElements: [],
+    priority: dto.priority,
+    source: dto.source,
+    status: dto.status,
+    type: "功能需求",
+    storyPoints: dto.storyPoints,
+    moduleId: dto.modules?.[0]?.id || null,
+    parentId: dto.parentId,
+  };
+}
+
 export const useRawRequirementCreateStore = defineStore(
   "rawRequirementCreate",
   () => {
@@ -41,7 +62,7 @@ export const useRawRequirementCreateStore = defineStore(
     const deletedQuestionIds = ref<Set<string>>(new Set());
     const questionFilter = ref<"all" | "pending" | "answered">("all");
     const messageHistory = ref<Array<{ role: "user"; content: string }>>([]);
-    const requirements = ref<RawRequirementResponseDto[]>([]);
+    const requirements = ref<AiGeneratedRequirementDto[]>([]);
 
     const allVisibleQuestions = computed(() =>
       rawRequirement.value.questionAndAnswers.filter(
@@ -191,11 +212,11 @@ export const useRawRequirementCreateStore = defineStore(
         }));
     };
 
-    const setRequirements = (data: RawRequirementResponseDto[]) => {
+    const setRequirements = (data: AiGeneratedRequirementDto[]) => {
       requirements.value = data;
     };
 
-    const addRequirement = (requirement: RawRequirementResponseDto) => {
+    const addRequirement = (requirement: AiGeneratedRequirementDto) => {
       const exists = requirements.value.some((r) => r.id === requirement.id);
       if (!exists) {
         requirements.value.push(requirement);
@@ -204,7 +225,7 @@ export const useRawRequirementCreateStore = defineStore(
 
     const updateRequirement = (
       id: string,
-      updates: Partial<RawRequirementResponseDto>,
+      updates: Partial<AiGeneratedRequirementDto>,
     ) => {
       const index = requirements.value.findIndex((r) => r.id === id);
       if (index !== -1) {
@@ -228,6 +249,23 @@ export const useRawRequirementCreateStore = defineStore(
 
     const clearRequirements = () => {
       requirements.value = [];
+    };
+
+    const updateRequirementId = (tempId: string, newId: string) => {
+      const index = requirements.value.findIndex((r) => r.id === tempId);
+      if (index !== -1) {
+        requirements.value[index] = {
+          ...requirements.value[index],
+          id: newId,
+        };
+      }
+    };
+
+    const loadRequirementsByRawRequirement = (
+      _rawRequirementId: string,
+      data: RequirementResponseDto[],
+    ) => {
+      requirements.value = data.map(convertToAiGeneratedRequirement);
     };
 
     return {
@@ -259,6 +297,8 @@ export const useRawRequirementCreateStore = defineStore(
       deleteRequirement,
       getRequirementById,
       clearRequirements,
+      updateRequirementId,
+      loadRequirementsByRawRequirement,
     };
   },
 );

@@ -104,6 +104,14 @@ export class RequirementsController {
     return { code: 0, data: result };
   }
 
+  @Get("requirements/raw-requirement/:rawRequirementId/requirements")
+  async findByRawRequirement(
+    @Param("rawRequirementId") rawRequirementId: string,
+  ): Promise<ApiResponse<RequirementResponseDto[]>> {
+    const result = await this.requirementsService.findByRawRequirement(rawRequirementId);
+    return { code: 0, data: result };
+  }
+
   @Get("requirements/:id")
   async findById(
     @Param("id") id: string,

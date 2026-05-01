@@ -56,6 +56,7 @@ export class RequirementsService {
       source: createDto.source || RequirementSource.MANUAL,
       status: RequirementStatus.DRAFT,
       parentId: createDto.parentRequirementId || null,
+      sourceRawRequirementId: createDto.sourceRawRequirementId || null,
       createdById,
       storyPoints: 0,
       entityKey,
@@ -122,6 +123,15 @@ export class RequirementsService {
       page,
       limit,
     };
+  }
+
+  async findByRawRequirement(rawRequirementId: string): Promise<RequirementResponseDto[]> {
+    const requirements = await this.requirementRepository.find({
+      where: { sourceRawRequirementId: rawRequirementId },
+      relations: ['createdBy', 'modules'],
+      order: { createdAt: 'DESC' },
+    });
+    return requirements.map((r) => this.toResponseDto(r));
   }
 
   async findById(id: string): Promise<RequirementResponseDto> {

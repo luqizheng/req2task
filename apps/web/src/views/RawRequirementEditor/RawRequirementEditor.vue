@@ -10,6 +10,7 @@ import { ref, onMounted, computed } from "vue";
 import { toTypedSchema } from "@vee-validate/zod";
 import * as z from "zod";
 import { rawRequirementsApi } from "@/api/rawRequirements";
+import { requirementsApi } from "@/api/requirements";
 import RequirementList from "./components/RequirementList.vue";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +51,7 @@ const rawRequirementSubmitHelper = useRequirementSubmit(store);
 const { rawRequirement } = storeToRefs(store);
 const loading = ref(false);
 const isSaving = ref(false);
+const isGenerating = ref(false);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -76,6 +78,8 @@ onMounted(async () => {
     try {
       const data = await rawRequirementsApi.getRawRequirement(rawRequirementId);
       store.loadRawRequirement(data);
+      const requirementsRes = await requirementsApi.getByRawRequirement(rawRequirementId);
+      store.loadRequirementsByRawRequirement(rawRequirementId, requirementsRes || []);
     } catch (error) {
       console.error("加载原始需求失败:", error);
     } finally {
@@ -112,7 +116,12 @@ const doneQuestionCount = computed(() => {
     .length;
 });
 const handlerGenerateRequirements = async () => {
-  rawRequirementSubmitHelper.generateRequirements();
+  isGenerating.value = true;
+  try {
+    await rawRequirementSubmitHelper.generateRequirements();
+  } finally {
+    isGenerating.value = false;
+  }
 };
 
 const getCollectionTypeLabel = (value: CollectionType | undefined) => {
@@ -325,9 +334,10 @@ const collectTimeDate = computed<DateValue | undefined>({
           </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0">
-          <Button class="w-full h-9" @click="handlerGenerateRequirements">
-            <ListTodo class="w-4 h-4 mr-2" />
-            生成需求
+          <Button class="w-full h-9" :disabled="isGenerating" @click="handlerGenerateRequirements">
+            <Loader2 v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
+            <ListTodo v-else class="w-4 h-4 mr-2" />
+            {{ isGenerating ? '生成中...' : '生成需求' }}
           </Button>
         </div>
       </Card>

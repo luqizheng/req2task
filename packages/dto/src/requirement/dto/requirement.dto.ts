@@ -41,6 +41,10 @@ export class CreateRequirementDto {
   parentRequirementId?: string;
 
   @IsOptional()
+  @IsString()
+  sourceRawRequirementId?: string;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   moduleIds?: string[];

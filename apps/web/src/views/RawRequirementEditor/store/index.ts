@@ -10,7 +10,7 @@ export type AiQuestion = Pick<RawRequirementQADto, "question" | "purpose">;
 
 function createDefaultRawRequirement(): RawRequirementResponseDto {
   return {
-    entityKey:'',
+    entityKey: '',
     id: "",
     projectId: "",
     collectionType: undefined,

@@ -43,7 +43,6 @@ export function useRequirementSubmit(
     {
       trigger: "questions",
       onArrayItem(item) {
-        console.log(item,'===================')
         store.addQuestionFromSSE(item as AiQuestion);
       },
     },
@@ -105,7 +104,6 @@ export function useRequirementSubmit(
     }
   };
 
-  let a = "";
   const rawRequirementAnalyze = () => {
     const analyzerData = {
       conversationText: store.rawRequirement.content,
@@ -140,7 +138,6 @@ export function useRequirementSubmit(
       },
       onConversationStart: () => {},
       onContent: (content) => {
-        a += content;
         jsonHelperRequirements.feed(content);
       },
       onMessage: () => {},

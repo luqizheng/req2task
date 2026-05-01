@@ -12,13 +12,13 @@ req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端、N
 
 ## 技术栈
 
-- **包管理器**: pnpm@9.0.0
+- **包管理器**: pnpm@10.33.0
 - **前端**: Vue 3 + Vite + Pinia + Vue Router
 - **后端**: NestJS + TypeORM + PostgreSQL
 - **语言**: TypeScript
 - **包编译**: tsup（用于 packages/ 下的共享包）
 - **对象存储**: RustFS API 兼容 MinIO（S3 协议）
-- **API Gateway**: Rust + Pingora + Nacos（支持 HTTP/WebSocket/SSE）
+
 
 ## 全局命令
 
@@ -27,14 +27,12 @@ pnpm dev:web                  # 启动前端开发服务器
 pnpm dev:service              # 启动后端开发服务器（自动检查4000端口占用情况）
 pnpm dev:ai-chat-service      # 启动 AI 聊天服务
 pnpm dev:file-conversion      # 启动文件转换服务
-pnpm dev:gateway              # 启动 Rust API Gateway（需要先启动 pnpm dev:infra）
 pnpm dev:infra                # 启动开发基础设施服务（PostgreSQL, Redis, ChromaDB, Nacos等）
 pnpm dev:infra:stop           # 停止开发基础设施服务
 pnpm check:env                # 检查开发环境工具（Node.js, pnpm, Docker等）
 pnpm build                    # 构建所有应用
 pnpm build:web                # 构建前端
 pnpm build:service            # 构建后端
-pnpm build:gateway            # 构建 Rust API Gateway
 pnpm lint                     # 检查所有代码
 pnpm lint:fix                 # 修复所有包的 lint 问题
 pnpm lint:check               # 检查所有包的 lint 问题（详细报告）
@@ -51,6 +49,10 @@ pnpm db:migration:revert       # 回滚数据库迁移
 pnpm db:migration:show        # 查看迁移状态
 pnpm db:reset                 # 重置数据库
 pnpm db:seed                  # 填充数据库
+pnpm db:ai-chat:migration:generate  # 生成 AI 聊天服务数据库迁移
+pnpm db:ai-chat:migration:run       # 运行 AI 聊天服务数据库迁移
+pnpm db:ai-chat:migration:revert    # 回滚 AI 聊天服务数据库迁移
+pnpm db:ai-chat:migration:show     # 查看 AI 聊天服务迁移状态
 ```
 
 ## Monorepo 工作流
@@ -70,7 +72,6 @@ apps/
 ├── service/       # NestJS 后端
 ├── ai-chat-service/  # AI 聊天服务（对话管理、LLM 集成）
 ├── file-conversion/ # 文件转换服务（PDF、Docx、音频等格式转换）
-└── api-gateway/   # Rust API Gateway（Pingora + Nacos，支持 HTTP/WebSocket/SSE）
 ```
 
 ## 子包 AGENTS.md
@@ -81,7 +82,6 @@ apps/
 - [apps/service/AGENTS.md](apps/service/AGENTS.md) - NestJS 后端开发规范（含 SSE 通信规范）
 - [apps/ai-chat-service/AGENTS.md](apps/ai-chat-service/AGENTS.md) - AI 聊天服务开发规范（含 SSE 通信规范）
 - [apps/file-conversion/AGENTS.md](apps/file-conversion/AGENTS.md) - 文件转换服务开发规范
-- [apps/api-gateway/](apps/api-gateway/) - Rust API Gateway 开发规范（Pingora + Nacos）
 
 ## SSE 通信规范
 
@@ -218,10 +218,10 @@ pnpm lint:remove-unused:fix          # 自动移除未使用的导入
 | 你想做什么             | 去哪里看                                                                 |
 | ---------------------- | ------------------------------------------------------------------------ |
 | 了解系统架构           | [docs/architecture/overview.md](docs/architecture/overview.md)           |
-| 了解模块边界和依赖规则 | [docs/design/module-design.md](docs/design/module-design.md)             |
-| 了解数据库设计         | [docs/design/database-design.md](docs/design/database-design.md)         |
+| 了解模块边界和依赖规则 | [docs/design/modules/module-design.md](docs/design/modules/module-design.md)             |
+| 了解数据库设计         | [docs/design/data/database-design.md](docs/design/data/database-design.md)         |
 | 了解 API 规范          | [docs/reference/api-spec.md](docs/reference/api-spec.md)                 |
-| 了解实施计划           | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
+| 了解项目计划           | [docs/design/project/project-user-system-plan.md](docs/design/project/project-user-system-plan.md) |
 | 了解编码规范           | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md)                 |
 | 了解代码质量检查规则   | [AGENTS.md#代码质量检查规则](#代码质量检查规则)                           |
 | Bug修复流程            | [.agents/rules/bug-fix-rules.md](.agents/rules/bug-fix-rules.md)         |

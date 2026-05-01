@@ -131,18 +131,36 @@ export class AiGenerationService {
     });
   }
 
-  streamGenerateRequirements(
+  async streamGenerateRequirements(
     projectId: string,
     rawRequirement: string,
+    rawRequirementId?: string,
     context?: string,
     existingModules?: string,
-  ): Observable<LLMStreamChunk> {
+  ): Promise<Observable<LLMStreamChunk>> {
     const title = `ReqGen_${projectId}_${Date.now()}`;
+
+    let existingRequirementsStr: string | undefined;
+    if (rawRequirementId) {
+      const existingRequirements = await this.requirementRepository.find({
+        where: { sourceRawRequirementId: rawRequirementId },
+        select: ["id", "title", "description", "priority", "storyPoints"],
+      });
+      if (existingRequirements.length > 0) {
+        existingRequirementsStr = existingRequirements
+          .map(
+            (r) =>
+              `- ${r.title}${r.description ? `：${r.description}` : ""} (优先级: ${r.priority}, 故事点: ${r.storyPoints})`,
+          )
+          .join("\n");
+      }
+    }
 
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
       existingModules,
+      existingRequirements: existingRequirementsStr,
       rawRequirement,
     });
 
@@ -254,14 +272,32 @@ ${content}
     projectId: string,
     rawRequirement: string,
     createdById: string,
+    rawRequirementId?: string,
     context?: string,
     moduleIds?: string[],
     persist: boolean = true,
   ): Promise<{ requirements: Requirement[]; rawContent: string }> {
+    let existingRequirementsStr: string | undefined;
+    if (rawRequirementId) {
+      const existingRequirements = await this.requirementRepository.find({
+        where: { sourceRawRequirementId: rawRequirementId },
+        select: ["id", "title", "description", "priority", "storyPoints"],
+      });
+      if (existingRequirements.length > 0) {
+        existingRequirementsStr = existingRequirements
+          .map(
+            (r) =>
+              `- ${r.title}${r.description ? `：${r.description}` : ""} (优先级: ${r.priority}, 故事点: ${r.storyPoints})`,
+          )
+          .join("\n");
+      }
+    }
+
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
       moduleIds,
+      existingRequirements: existingRequirementsStr,
       rawRequirement,
     });
 

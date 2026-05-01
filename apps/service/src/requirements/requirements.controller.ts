@@ -246,9 +246,10 @@ export class RequirementsController {
     // 获取项目所有模块
     const modules = await this.modulesService.findByProject(rawRequirement.projectId,1,1000000);
     const existing = modules.items.map((module) => module.id+', '+module.path+', '+module.description).join('\n');
-    const stream$ = this.aiGenerationService.streamGenerateRequirements(
+    const stream$ = await this.aiGenerationService.streamGenerateRequirements(
       rawRequirement.projectId,
       requirementPrompt,
+      rawRequirementId,
       project.description,
       existing,
     );

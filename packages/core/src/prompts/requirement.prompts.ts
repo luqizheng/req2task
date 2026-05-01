@@ -22,6 +22,12 @@ export const requirementPrompts: PromptTemplate[] = [
 - keyElements: string[] (需求摘要列表，4-12字，不超过10个)。从content提炼的关键要素，每个摘要4-12字。
 - parentId: string | null (父需求ID，可为空)
 
+已有需求处理规则：
+1. 如果提供了已存在的需求列表，请参考其风格和粒度
+2. 避免生成与已有需求重复或高度相似的内容
+3. 新生成的需求应与已有需求保持一致性和连贯性
+4. 如有冲突或重复，请生成差异化的需求
+
 模块匹配规则：
 1. 从提供的现有模块列表中选择最匹配的模块ID
 2. 匹配标准：需求的核心功能必须被该模块的职责覆盖
@@ -36,6 +42,9 @@ export const requirementPrompts: PromptTemplate[] = [
 {{/if}}{{#if existingModules}}## 现有功能模块列表
 每个模块包含：id（模块ID）, path（模块路径）, description（模块职责描述）
 {{existingModules}}
+
+{{/if}}{{#if existingRequirements}}## 已从这个原始需求生成的需求（请参考风格和粒度，避免重复）
+{{existingRequirements}}
 
 {{/if}}请根据以下原始需求，生成结构化的需求列表。
 
@@ -86,6 +95,11 @@ JSON格式：
         name: "existingModules",
         type: "string",
         description: "现有功能模块列表，JSON数组格式，每个模块包含id, path, description",
+      },
+      {
+        name: "existingRequirements",
+        type: "string",
+        description: "已从这个原始需求生成的需求列表，用于参考风格和避免重复",
       },
       {
         name: "rawRequirement",

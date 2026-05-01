@@ -45,6 +45,17 @@
   --sidebar-accent-foreground: #00806c;
   --sidebar-border: #dfecea;
   --sidebar-ring: #00b398;
+  --status-draft: #9ca3af;
+  --status-reviewed: #3b82f6;
+  --status-approved: #10b981;
+  --status-rejected: #ef4444;
+  --status-processing: #6366f1;
+  --status-completed: #8b5cf6;
+  --status-cancelled: #6b7280;
+  --priority-critical: #dc2626;
+  --priority-high: #ea580c;
+  --priority-medium: #ca8a04;
+  --priority-low: #6b7280;
   --font-sans: Plus Jakarta Sans, Quicksand, system-ui, sans-serif;
   --font-serif: Chillax, Playfair Display, serif;
   --font-mono: Fira Code, monospace;
@@ -153,6 +164,17 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-status-draft: var(--status-draft);
+  --color-status-reviewed: var(--status-reviewed);
+  --color-status-approved: var(--status-approved);
+  --color-status-rejected: var(--status-rejected);
+  --color-status-processing: var(--status-processing);
+  --color-status-completed: var(--status-completed);
+  --color-status-cancelled: var(--status-cancelled);
+  --color-priority-critical: var(--priority-critical);
+  --color-priority-high: var(--priority-high);
+  --color-priority-medium: var(--priority-medium);
+  --color-priority-low: var(--priority-low);
 
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);

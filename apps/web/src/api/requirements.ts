@@ -40,11 +40,7 @@ export interface ChangeHistoryResponse {
   total: number;
 }
 
-export interface TransitionOption {
-  to: string;
-  label: string;
-  color: string;
-}
+export type TransitionOption = string;
 
 export const requirementsApi = {
   getByRawRequirement: (rawRequirementId: string) => {

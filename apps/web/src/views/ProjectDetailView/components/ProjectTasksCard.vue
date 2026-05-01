@@ -26,19 +26,19 @@ const loading = ref(true);
 const error = ref<string | null>(null);
 
 const statusConfig: Record<TaskStatus, { label: string; class: string }> = {
-  [TaskStatus.TODO]: { label: "待办", class: "bg-slate-100 text-slate-700" },
-  [TaskStatus.IN_PROGRESS]: { label: "进行中", class: "bg-blue-100 text-blue-700" },
-  [TaskStatus.IN_REVIEW]: { label: "审核中", class: "bg-amber-100 text-amber-700" },
-  [TaskStatus.DONE]: { label: "已完成", class: "bg-emerald-100 text-emerald-700" },
-  [TaskStatus.BLOCKED]: { label: "已阻塞", class: "bg-red-100 text-red-700" },
-  [TaskStatus.CANCELLED]: { label: "已取消", class: "bg-slate-100 text-slate-600" },
+  [TaskStatus.TODO]: { label: "待办", class: "bg-status-draft/10 text-status-draft" },
+  [TaskStatus.IN_PROGRESS]: { label: "进行中", class: "bg-status-processing/10 text-status-processing" },
+  [TaskStatus.IN_REVIEW]: { label: "审核中", class: "bg-status-reviewed/10 text-status-reviewed" },
+  [TaskStatus.DONE]: { label: "已完成", class: "bg-status-completed/10 text-status-completed" },
+  [TaskStatus.BLOCKED]: { label: "已阻塞", class: "bg-status-rejected/10 text-status-rejected" },
+  [TaskStatus.CANCELLED]: { label: "已取消", class: "bg-status-cancelled/10 text-status-cancelled" },
 };
 
 const priorityConfig: Record<TaskPriority, { label: string; class: string }> = {
-  [TaskPriority.URGENT]: { label: "紧急", class: "bg-red-500 text-white" },
-  [TaskPriority.HIGH]: { label: "高", class: "bg-orange-500 text-white" },
-  [TaskPriority.MEDIUM]: { label: "中", class: "bg-yellow-500 text-white" },
-  [TaskPriority.LOW]: { label: "低", class: "bg-slate-500 text-white" },
+  [TaskPriority.URGENT]: { label: "紧急", class: "bg-priority-critical text-white" },
+  [TaskPriority.HIGH]: { label: "高", class: "bg-priority-high text-white" },
+  [TaskPriority.MEDIUM]: { label: "中", class: "bg-priority-medium text-white" },
+  [TaskPriority.LOW]: { label: "低", class: "bg-priority-low text-white" },
 };
 
 const fetchTasks = async () => {
@@ -57,6 +57,10 @@ const goToTask = (taskId: string) => {
   router.push(`/projects/${props.projectId}/tasks/${taskId}`);
 };
 
+const goToCreateTask = () => {
+  router.push(`/projects/${props.projectId}/tasks/new`);
+};
+
 onMounted(() => {
   fetchTasks();
 });
@@ -70,7 +74,7 @@ onMounted(() => {
           <CheckSquare class="w-5 h-5" />
           任务列表
         </CardTitle>
-        <Button size="sm">
+        <Button size="sm" @click="goToCreateTask">
           <Plus class="w-4 h-4 mr-2" />
           新建任务
         </Button>
@@ -83,11 +87,11 @@ onMounted(() => {
         <Skeleton class="h-16 w-full" />
       </div>
 
-      <div v-else-if="error" class="text-center py-8 text-red-500">
+      <div v-else-if="error" class="text-center py-8 text-destructive">
         {{ error }}
       </div>
 
-      <div v-else-if="tasks.length === 0" class="text-center py-12 text-slate-400">
+      <div v-else-if="tasks.length === 0" class="text-center py-12 text-muted-foreground">
         暂无任务
       </div>
 
@@ -95,14 +99,19 @@ onMounted(() => {
         <div
           v-for="task in tasks"
           :key="task.id"
-          class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          class="flex items-center justify-between p-3 border rounded-lg hover:bg-muted cursor-pointer transition-colors"
           @click="goToTask(task.id)"
         >
           <div class="flex items-center gap-3 flex-1">
-            <CheckSquare class="w-4 h-4 text-slate-400" />
+            <CheckSquare
+              :class="[
+                'w-4 h-4 transition-colors',
+                task.status === TaskStatus.DONE ? 'text-primary' : 'text-muted-foreground'
+              ]"
+            />
             <div class="flex-1">
-              <p class="font-medium text-slate-800">{{ task.title }}</p>
-              <p class="text-xs text-slate-500">{{ task.taskNo }}</p>
+              <p class="font-medium text-foreground">{{ task.title }}</p>
+              <p class="text-xs text-muted-foreground">{{ task.taskNo }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -123,8 +132,8 @@ onMounted(() => {
                 {{ getInitials(task.assignedTo.displayName) }}
               </AvatarFallback>
             </Avatar>
-            <span class="text-xs text-slate-400">{{ task.estimatedHours }}h</span>
-            <ChevronRight class="w-4 h-4 text-slate-400" />
+            <span class="text-xs text-muted-foreground">{{ task.estimatedHours }}h</span>
+            <ChevronRight class="w-4 h-4 text-muted-foreground" />
           </div>
         </div>
       </div>

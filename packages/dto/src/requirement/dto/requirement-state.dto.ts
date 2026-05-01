@@ -19,8 +19,14 @@ export class ReviewRequirementDto {
   comment?: string;
 }
 
+export interface AllowedTransitionOption {
+  to: RequirementStatus;
+  label: string;
+  color: string;
+}
+
 export class AllowedTransitionsDto {
-  allowedTransitions!: RequirementStatus[];
+  allowedTransitions!: AllowedTransitionOption[];
 }
 
 export class RequirementChangeLogDto {

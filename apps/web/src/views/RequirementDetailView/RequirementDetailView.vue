@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type {
   RequirementResponseDto,
@@ -24,6 +24,13 @@ import ChangeHistoryCard from "./components/ChangeHistoryCard.vue";
 import { ArrowLeft, AlertTriangle, User } from "lucide-vue-next";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "vue-sonner";
+import { mapStatusesToOptions } from "@/utils/status-mapping";
+
+interface TransitionOptionWithLabel {
+  to: string;
+  label: string;
+  color: string;
+}
 
 const route = useRoute();
 const router = useRouter();
@@ -32,8 +39,12 @@ const requirementId = route.params.id as string;
 const projectId = route.params.projectId as string;
 
 const requirement = ref<RequirementResponseDto | null>(null);
-const allowedTransitions = ref<TransitionOption[]>([]);
+const allowedTransitionsRaw = ref<TransitionOption[]>([]);
 const conflicts = ref<ConflictDto[]>([]);
+
+const allowedTransitions = computed<TransitionOptionWithLabel[]>(() => {
+  return mapStatusesToOptions(allowedTransitionsRaw.value);
+});
 
 const loading = ref(true);
 const isDeleting = ref(false);
@@ -50,7 +61,7 @@ const fetchRequirement = async () => {
     ]);
 
     requirement.value = reqData;
-    allowedTransitions.value = transitionsData.allowedTransitions || [];
+    allowedTransitionsRaw.value = transitionsData.allowedTransitions || [];
   } catch (error) {
     toast.error("加载失败", {
       description: error instanceof Error ? error.message : "无法加载需求详情",
@@ -203,7 +214,10 @@ onMounted(() => {
         <RequirementHeader
           :requirement="requirement"
           :project-id="projectId"
+          :allowed-transitions="allowedTransitions"
+          :is-transitioning="isTransitioning"
           @title-update="handleTitleUpdate"
+          @status-change="handleStatusChange"
         />
 
         <ConflictAlert
@@ -214,12 +228,19 @@ onMounted(() => {
         />
 
         <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          <div class="lg:col-span-3">
+          <div class="lg:col-span-3 space-y-6">
             <RequirementContent
               :requirement="requirement"
               :project-id="projectId"
               @description-update="handleDescriptionUpdate"
               @user-stories-updated="fetchRequirement"
+              @tasks-updated="fetchRequirement"
+            />
+
+            <RequirementTasks
+              v-if="requirement"
+              :requirement="requirement"
+              :project-id="projectId"
               @tasks-updated="fetchRequirement"
             />
           </div>
@@ -238,13 +259,6 @@ onMounted(() => {
             />
 
             <RequirementModules :requirement="requirement" />
-
-            <RequirementTasks
-              v-if="requirement"
-              :requirement="requirement"
-              :project-id="projectId"
-              @tasks-updated="fetchRequirement"
-            />
 
             <Card>
               <CardHeader>

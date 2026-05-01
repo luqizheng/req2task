@@ -1,30 +1,38 @@
 <script setup lang="ts">
-import { ref, watch } from "vue";
+import { ref, watch, nextTick } from "vue";
 import type { RequirementResponseDto } from "@req2task/dto";
 import { RequirementStatus, Priority } from "@req2task/dto";
 import { Badge } from "@/components/ui/badge";
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { ButtonGroup } from "@/components/ui/button-group";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
   projectId: string;
+  allowedTransitions?: Array<{ to: string; label: string; color: string }>;
+  isTransitioning?: boolean;
 }>();
 
 const emit = defineEmits<{
   (e: "title-update", title: string): void;
+  (e: "status-change", status: RequirementStatus): void;
 }>();
 
 const isEditing = ref(false);
 const editedTitle = ref(props.requirement.title);
+const editInputRef = ref<InstanceType<typeof Input> | null>(null);
 
 watch(() => props.requirement.title, (newTitle) => {
   editedTitle.value = newTitle;
 });
 
-const startEditing = () => {
+const startEditing = async () => {
   editedTitle.value = props.requirement.title;
   isEditing.value = true;
+  await nextTick();
+  editInputRef.value?.focus?.();
 };
 
 const saveTitle = () => {
@@ -39,21 +47,27 @@ const cancelEditing = () => {
   isEditing.value = false;
 };
 
-const statusConfig: Record<RequirementStatus, { label: string; class: string }> = {
-  [RequirementStatus.DRAFT]: { label: "草稿", class: "bg-slate-100 text-slate-700 border-slate-300" },
-  [RequirementStatus.REVIEWED]: { label: "已审核", class: "bg-blue-100 text-blue-700 border-blue-300" },
-  [RequirementStatus.APPROVED]: { label: "已批准", class: "bg-emerald-100 text-emerald-700 border-emerald-300" },
-  [RequirementStatus.REJECTED]: { label: "已拒绝", class: "bg-red-100 text-red-700 border-red-300" },
-  [RequirementStatus.PROCESSING]: { label: "进行中", class: "bg-indigo-100 text-indigo-700 border-indigo-300" },
-  [RequirementStatus.COMPLETED]: { label: "已完成", class: "bg-purple-100 text-purple-700 border-purple-300" },
-  [RequirementStatus.CANCELLED]: { label: "已取消", class: "bg-slate-100 text-slate-600 border-slate-300" },
+const handleStatusChange = (newStatus: unknown) => {
+  if (typeof newStatus === 'string' && newStatus !== props.requirement.status) {
+    emit("status-change", newStatus as RequirementStatus);
+  }
 };
 
-const priorityConfig: Record<Priority, { label: string; class: string }> = {
-  [Priority.CRITICAL]: { label: "关键", class: "bg-red-500 text-white border-red-600" },
-  [Priority.HIGH]: { label: "高", class: "bg-orange-500 text-white border-orange-600" },
-  [Priority.MEDIUM]: { label: "中", class: "bg-yellow-500 text-white border-yellow-600" },
-  [Priority.LOW]: { label: "低", class: "bg-slate-500 text-white border-slate-600" },
+const statusConfig: Record<RequirementStatus, { label: string; color: string }> = {
+  [RequirementStatus.DRAFT]: { label: "草稿", color: "status-draft" },
+  [RequirementStatus.REVIEWED]: { label: "已审核", color: "status-reviewed" },
+  [RequirementStatus.APPROVED]: { label: "已批准", color: "status-approved" },
+  [RequirementStatus.REJECTED]: { label: "已拒绝", color: "status-rejected" },
+  [RequirementStatus.PROCESSING]: { label: "进行中", color: "status-processing" },
+  [RequirementStatus.COMPLETED]: { label: "已完成", color: "status-completed" },
+  [RequirementStatus.CANCELLED]: { label: "已取消", color: "status-cancelled" },
+};
+
+const priorityConfig: Record<Priority, { label: string; color: string }> = {
+  [Priority.CRITICAL]: { label: "关键", color: "priority-critical" },
+  [Priority.HIGH]: { label: "高", color: "priority-high" },
+  [Priority.MEDIUM]: { label: "中", color: "priority-medium" },
+  [Priority.LOW]: { label: "低", color: "priority-low" },
 };
 </script>
 
@@ -85,48 +99,70 @@ const priorityConfig: Record<Priority, { label: string; class: string }> = {
       <div class="flex-1">
         <div v-if="isEditing" class="flex items-center gap-2">
           <Input
+            ref="editInputRef"
             v-model="editedTitle"
             class="text-2xl font-bold"
             @keyup.enter="saveTitle"
             @keyup.escape="cancelEditing"
           />
-          <Badge
-            :class="priorityConfig[requirement.priority]?.class"
-            variant="outline"
-          >
-            {{ priorityConfig[requirement.priority]?.label }}
-          </Badge>
-          <Badge
-            :class="statusConfig[requirement.status]?.class"
-            variant="outline"
-          >
-            {{ statusConfig[requirement.status]?.label }}
-          </Badge>
         </div>
         <div
           v-else
           class="group flex items-center gap-3 cursor-pointer"
           @click="startEditing"
         >
-          <h1 class="text-2xl font-bold text-slate-800 group-hover:text-blue-600 transition-colors">
+          <h1 class="text-2xl font-bold text-foreground group-hover:text-primary transition-colors">
             {{ requirement.title }}
           </h1>
         </div>
 
         <div class="flex items-center gap-2 mt-2">
           <Badge
-            :class="priorityConfig[requirement.priority]?.class"
             variant="outline"
+            class="border-status-draft text-status-draft hover:bg-status-draft hover:text-white"
+            :class="{
+              'border-priority-critical text-priority-critical hover:bg-priority-critical': requirement.priority === Priority.CRITICAL,
+              'border-priority-high text-priority-high hover:bg-priority-high': requirement.priority === Priority.HIGH,
+              'border-priority-medium text-priority-medium hover:bg-priority-medium': requirement.priority === Priority.MEDIUM,
+              'border-priority-low text-priority-low hover:bg-priority-low': requirement.priority === Priority.LOW,
+            }"
           >
             {{ priorityConfig[requirement.priority]?.label }}
           </Badge>
-          <Badge
-            :class="statusConfig[requirement.status]?.class"
-            variant="outline"
-          >
-            {{ statusConfig[requirement.status]?.label }}
-          </Badge>
-          <span class="text-sm text-slate-500 ml-2">
+          <ButtonGroup>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled
+              :class="[
+                'justify-start border-2 border-status-draft text-primary bg-primary/30 font-medium',
+                requirement.status === RequirementStatus.REVIEWED && 'border-2 border-status-reviewed text-primary bg-primary/20 font-medium',
+                requirement.status === RequirementStatus.APPROVED && 'border-2 border-status-approved text-primary bg-primary/20 font-medium',
+                requirement.status === RequirementStatus.REJECTED && 'border-2 border-status-rejected text-primary bg-primary/20 font-medium',
+                requirement.status === RequirementStatus.PROCESSING && 'border-2 border-status-processing text-primary bg-primary/20 font-medium',
+                requirement.status === RequirementStatus.COMPLETED && 'border-2 border-status-completed text-primary bg-primary/20 font-medium',
+                requirement.status === RequirementStatus.CANCELLED && 'border-2 border-status-cancelled text-primary bg-primary/20 font-medium',
+              ]"
+            >
+              {{ statusConfig[requirement.status]?.label }}
+            </Button>
+            <Button
+              v-for="transition in allowedTransitions"
+              :key="transition.to"
+              variant="outline"
+              size="sm"
+              class="justify-start"
+              :disabled="isTransitioning"
+              @click="handleStatusChange(transition.to)"
+            >
+              <span
+                class="w-2 h-2 rounded-full mr-1.5"
+                :style="{ backgroundColor: transition.color }"
+              />
+              {{ transition.label }}
+            </Button>
+          </ButtonGroup>
+          <span class="text-sm text-muted-foreground ml-2">
             {{ requirement.storyPoints }} SP
           </span>
         </div>

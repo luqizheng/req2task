@@ -114,8 +114,8 @@ const entityKey = await this.entityKeyService.generateEntityKey(
 // 创建任务
 const task = this.taskRepository.create({
   requirementId,
-  taskNo: entityKey,      // 存储为 taskNo
-  entityKey: entityKey,   // 同时存储为 entityKey
+  taskNo: entityKey[0],      // 存储为 taskNo
+  entityKey: entityKey[0],   // 同时存储为 entityKey
   // ... 其他字段
 });
 ```

@@ -51,7 +51,7 @@ export class TasksService {
       throw new BadRequestException('Requirement has no associated project');
     }
 
-    const entityKey = await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.TSK);
+    const entityKeys = await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.TSK);
 
     const task = this.taskRepository.create({
       requirementId,
@@ -59,7 +59,7 @@ export class TasksService {
       description: createDto.description || null,
       priority: createDto.priority || TaskPriority.MEDIUM,
       status: TaskStatus.TODO,
-      taskNo: entityKey,
+      taskNo: entityKeys[0],
       assignedToId: createDto.assignedToId || null,
       estimatedHours: createDto.estimatedHours || null,
       dueDate: createDto.dueDate ? new Date(createDto.dueDate) : null,
@@ -68,7 +68,7 @@ export class TasksService {
     });
 
     const saved = await this.taskRepository.save(task);
-    return this.toResponseDto(saved);
+    return this.toResponseDto(saved as Task);
   }
 
   async findByRequirement(

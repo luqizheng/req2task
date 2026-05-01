@@ -92,6 +92,7 @@ const handleSubmit = async () => {
   isSaving.value = true;
   try {
     await rawRequirementSubmitHelper.save();
+    await rawRequirementSubmitHelper.saveAllRequirements();
   } finally {
     isSaving.value = false;
   }
@@ -118,6 +119,12 @@ const doneQuestionCount = computed(() => {
 const handlerGenerateRequirements = async () => {
   isGenerating.value = true;
   try {
+    if (!store.rawRequirement.id) {
+      const saved = await rawRequirementSubmitHelper.save();
+      if (!saved) {
+        return;
+      }
+    }
     await rawRequirementSubmitHelper.generateRequirements();
   } finally {
     isGenerating.value = false;

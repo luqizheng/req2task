@@ -5,7 +5,7 @@ import {
   AiSubmitRequestDto,
   GenerateRawRequirementByLLMDto,
   AiGeneratedRequirementDto,
-  CreateRequirementDto,
+  RequirementDto,
 } from "@req2task/dto";
 import { useJsonStream } from "../../utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
@@ -182,7 +182,7 @@ export function useRequirementSubmit(
         return false;
       }
 
-      const createDto: CreateRequirementDto = {
+      const createDto: RequirementDto = {
         title: requirement.title,
         description: requirement.content,
         priority: requirement.priority,
@@ -192,12 +192,61 @@ export function useRequirementSubmit(
         moduleIds: [moduleId],
       };
 
-      const result = await requirementsApi.create(moduleId, createDto);
+      const result = await requirementsApi.create(createDto);
       store.updateRequirementId(requirement.id, result.id);
-      toast.success("需求保存成功");
       return true;
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "保存需求失败");
+      return false;
+    }
+  };
+
+  const saveAllRequirements = async (): Promise<boolean> => {
+    const unsavedRequirements = store.requirements.filter(
+      (r) => !r.id || r.id.startsWith("rq_"),
+    );
+
+    if (unsavedRequirements.length === 0) {
+      toast.warning("没有需要保存的需求");
+      return false;
+    }
+
+    const groupedByModule = new Map<string, AiGeneratedRequirementDto[]>();
+    for (const req of unsavedRequirements) {
+      const moduleId = req.moduleId === "NEW" || !req.moduleId ? null : req.moduleId;
+      if (!moduleId) {
+        toast.error(`需求"${req.title}"缺少模块信息，无法保存`);
+        return false;
+      }
+      if (!groupedByModule.has(moduleId)) {
+        groupedByModule.set(moduleId, []);
+      }
+      groupedByModule.get(moduleId)!.push(req);
+    }
+
+    try {
+      for (const [moduleId, reqs] of groupedByModule) {
+        const dtos: RequirementDto[] = reqs.map((req) => ({
+          title: req.title,
+          description: req.content,
+          priority: req.priority,
+          source: req.source,
+          parentRequirementId: req.parentId || undefined,
+          sourceRawRequirementId: store.rawRequirement.id || undefined,
+          moduleIds: [moduleId],
+        }));
+
+        const results = await requirementsApi.batchCreate(dtos);
+        for (let i = 0; i < reqs.length; i++) {
+          if (results[i]) {
+            store.updateRequirementId(reqs[i].id, results[i].id);
+          }
+        }
+      }
+      toast.success(`成功保存 ${unsavedRequirements.length} 个需求`);
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "批量保存需求失败");
       return false;
     }
   };
@@ -210,5 +259,6 @@ export function useRequirementSubmit(
     generateRequirements,
     generateTitle,
     saveRequirement,
+    saveAllRequirements,
   };
 }

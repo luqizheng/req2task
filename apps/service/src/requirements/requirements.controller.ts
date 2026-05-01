@@ -19,8 +19,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { RequirementsService } from "./requirements.service";
 import { RequirementStateService } from "@req2task/core";
 import {
-  CreateRequirementDto,
-  UpdateRequirementDto,
+  RequirementDto,
   TransitionStatusDto,
   ReviewRequirementDto,
   RequirementResponseDto,
@@ -60,19 +59,14 @@ export class RequirementsController {
     private readonly modulesService: FeatureModulesService,
   ) {}
 
-  @Post("requirements/modules/:moduleId/requirements")
+  @Post("requirements")
   async create(
-    @Param("moduleId") moduleId: string,
-    @Body() createDto: CreateRequirementDto,
+    @Body() createDto: RequirementDto,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<RequirementResponseDto>> {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
-    const result = await this.requirementsService.create(
-      moduleId || null,
-      createDto,
-      userId!,
-    );
+    const result = await this.requirementsService.save(createDto, userId!);
     return { code: 0, data: result };
   }
 
@@ -108,7 +102,8 @@ export class RequirementsController {
   async findByRawRequirement(
     @Param("rawRequirementId") rawRequirementId: string,
   ): Promise<ApiResponse<RequirementResponseDto[]>> {
-    const result = await this.requirementsService.findByRawRequirement(rawRequirementId);
+    const result =
+      await this.requirementsService.findByRawRequirement(rawRequirementId);
     return { code: 0, data: result };
   }
 
@@ -123,9 +118,9 @@ export class RequirementsController {
   @Put("requirements/:id")
   async update(
     @Param("id") id: string,
-    @Body() updateDto: UpdateRequirementDto,
+    @Body() dto: RequirementDto,
   ): Promise<ApiResponse<RequirementResponseDto>> {
-    const result = await this.requirementsService.update(id, updateDto);
+    const result = await this.requirementsService.save(dto, id);
     return { code: 0, data: result };
   }
 
@@ -252,8 +247,16 @@ export class RequirementsController {
     问答记录: ${JSON.stringify(rawRequirement.questionAndAnswers || [])}`;
 
     // 获取项目所有模块
-    const modules = await this.modulesService.findByProject(rawRequirement.projectId,1,1000000);
-    const existing = modules.items.map((module) => module.id+', '+module.path+', '+module.description).join('\n');
+    const modules = await this.modulesService.findByProject(
+      rawRequirement.projectId,
+      1,
+      1000000,
+    );
+    const existing = modules.items
+      .map(
+        (module) => module.id + ", " + module.path + ", " + module.description,
+      )
+      .join("\n");
     const stream$ = await this.aiGenerationService.streamGenerateRequirements(
       rawRequirement.projectId,
       requirementPrompt,
@@ -286,24 +289,24 @@ export class RequirementsController {
 
   @Post("requirements/batch")
   async batchCreateRequirements(
-    @Body("requirements") requirements: CreateRequirementDto[],
-    @Body("moduleId") moduleId: string,
+    @Body("requirements") requirements: RequirementDto[],
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<RequirementResponseDto[]>> {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
 
-    // 批量创建需求
-    const createdRequirements = [];
-    for (const reqDto of requirements) {
-      const created = await this.requirementsService.create(
-        moduleId || null,
-        reqDto,
-        userId!,
-      );
-      createdRequirements.push(created);
-    }
+    const requirement = requirements[0];
 
-    return { code: 0, data: createdRequirements };
+    const rawRequirement =
+      await this.rawRequirementService.getRawRequirementById(
+        requirement.sourceRawRequirementId,
+      );
+    const result = await this.requirementsService.saveBatch(
+      rawRequirement.projectId,
+      requirements,
+      userId!,
+    );
+
+    return { code: 0, data: result };
   }
 }

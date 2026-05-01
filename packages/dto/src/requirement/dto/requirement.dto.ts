@@ -20,9 +20,14 @@ export class ModuleSummaryDto {
   path!: string | null;
 }
 
-export class CreateRequirementDto {
+export class RequirementDto {
+  @IsOptional()
   @IsString()
-  title!: string;
+  id?: string;
+
+  @IsOptional()
+  @IsString()
+  title?: string;
 
   @IsOptional()
   @IsString()
@@ -37,6 +42,15 @@ export class CreateRequirementDto {
   source?: RequirementSource;
 
   @IsOptional()
+  @IsEnum(RequirementStatus)
+  status?: RequirementStatus;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  storyPoints?: number;
+
+  @IsOptional()
   @IsString()
   parentRequirementId?: string;
 
@@ -48,29 +62,6 @@ export class CreateRequirementDto {
   @IsArray()
   @IsString({ each: true })
   moduleIds?: string[];
-}
-
-export class UpdateRequirementDto {
-  @IsOptional()
-  @IsString()
-  title?: string;
-
-  @IsOptional()
-  @IsString()
-  description?: string;
-
-  @IsOptional()
-  @IsEnum(Priority)
-  priority?: Priority;
-
-  @IsOptional()
-  @IsEnum(RequirementStatus)
-  status?: RequirementStatus;
-
-  @IsOptional()
-  @IsInt()
-  @Min(0)
-  storyPoints?: number;
 }
 
 export class UserSummaryDto {

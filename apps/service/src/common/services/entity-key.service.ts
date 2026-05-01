@@ -25,7 +25,12 @@ export class EntityKeyService {
   async generateEntityKey(
     projectId: string,
     type: EntityKeyType,
-  ): Promise<string> {
+    count: number = 1,
+  ): Promise<string[]> {
+    if (count < 1) {
+      throw new Error('Count must be at least 1');
+    }
+
     const project = await this.projectRepository.findOne({
       where: { id: projectId },
       select: ['projectKey'],
@@ -37,8 +42,8 @@ export class EntityKeyService {
 
     const prefix = `${project.projectKey}-${type}`;
     const maxSeq = await this.getMaxSequence(prefix, type);
-
-    return `${prefix}-${maxSeq + 1}`;
+    console.warn('max key sequence:', maxSeq, 'count:', count);
+    return Array.from({ length: count }, (_, i) => `${prefix}-${maxSeq + 1 + i}`);
   }
 
   private async getMaxSequence(
@@ -61,10 +66,9 @@ export class EntityKeyService {
 
     const result = await repository
       .createQueryBuilder('entity')
-      .select(`MAX(SUBSTRING(entity.entity_key FROM ${prefix.length + 2}))`, 'maxSeq')
+      .select(`MAX(REGEXP_REPLACE(entity.entity_key, '${prefix}-', '', 'g'))`, 'maxSeq')
       .where(`entity.entity_key LIKE :prefix`, { prefix: `${prefix}-%` })
       .getRawOne();
-
     const maxSeq = result?.maxSeq ? parseInt(result.maxSeq, 10) : 0;
     return isNaN(maxSeq) ? 0 : maxSeq;
   }

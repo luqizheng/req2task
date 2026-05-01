@@ -3,7 +3,7 @@ import { ref, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import type {
   RequirementResponseDto,
-  UpdateRequirementDto,
+  RequirementDto as UpdateRequirementDto,
   ConflictDto,
 } from "@req2task/dto";
 import { RequirementStatus } from "@req2task/dto";

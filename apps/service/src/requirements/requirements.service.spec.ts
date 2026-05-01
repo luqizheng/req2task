@@ -136,13 +136,13 @@ describe('RequirementsService', () => {
     service = module.get<RequirementsService>(RequirementsService);
   });
 
-  describe('create', () => {
+  describe('save', () => {
     it('should create a new requirement', async () => {
       requirementRepository.create.mockReturnValue(mockRequirement);
       requirementRepository.save.mockResolvedValue(mockRequirement);
+      requirementRepository.findOne.mockResolvedValue(mockRequirement);
 
-      const result = await service.create(
-        'module-uuid',
+      const result = await service.save(
         { title: 'Test Requirement' },
         'user-uuid',
       );
@@ -155,12 +155,12 @@ describe('RequirementsService', () => {
     it('should set default values', async () => {
       requirementRepository.create.mockReturnValue(mockRequirement);
       requirementRepository.save.mockResolvedValue(mockRequirement);
+      requirementRepository.findOne.mockResolvedValue(mockRequirement);
 
-      await service.create('module-uuid', { title: 'Test' }, 'user-uuid');
+      await service.save({ title: 'Test' }, 'user-uuid');
 
       expect(requirementRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          moduleId: 'module-uuid',
           status: RequirementStatus.DRAFT,
           priority: Priority.MEDIUM,
           source: RequirementSource.MANUAL,
@@ -210,13 +210,13 @@ describe('RequirementsService', () => {
     });
   });
 
-  describe('update', () => {
+  describe('save', () => {
     it('should update requirement', async () => {
       const updated = { ...mockRequirement, title: 'Updated Title' };
       requirementRepository.findOne.mockResolvedValue(mockRequirement);
       requirementRepository.save.mockResolvedValue(updated);
 
-      const result = await service.update('req-uuid', { title: 'Updated Title' });
+      const result = await service.save({ id: 'req-uuid', title: 'Updated Title' }, 'user-uuid');
 
       expect(result.title).toBe('Updated Title');
     });
@@ -224,7 +224,7 @@ describe('RequirementsService', () => {
     it('should throw NotFoundException when not found', async () => {
       requirementRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.update('nonexistent', { title: 'Test' })).rejects.toThrow(
+      await expect(service.save({ id: 'nonexistent', title: 'Test' }, 'user-uuid')).rejects.toThrow(
         NotFoundException,
       );
     });

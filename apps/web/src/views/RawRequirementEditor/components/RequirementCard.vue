@@ -9,7 +9,9 @@
       <!-- Header -->
       <div class="flex items-start justify-between gap-3 mb-3">
         <div class="flex items-center gap-2 min-w-0">
-          <div class="flex items-center justify-center w-6 h-6 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0">
+          <div
+            class="flex items-center justify-center w-6 h-6 rounded-md bg-primary text-primary-foreground text-xs font-bold shrink-0"
+          >
             {{ props.index + 1 }}
           </div>
           <h3 class="text-sm font-semibold text-foreground truncate">
@@ -17,22 +19,24 @@
           </h3>
         </div>
         <div class="flex items-center gap-2">
-          <component
-            :is="isPersisted ? Cloud : CloudOff"
-            :class="['w-4 h-4', isPersisted ? 'text-green-500' : 'text-muted-foreground']"
-            :title="isPersisted ? '已持久化' : '未持久化'"
-          />
-          <Badge
-            :variant="priorityVariant"
-            class="text-xs h-5 shrink-0"
-          >
+          <span :title="isPersisted ? '已持久化' : '未持久化'">
+            <Cloud
+              v-if="isPersisted"
+              class="w-4 h-4 text-muted-foreground text-green-500"
+            />
+            <CloudOff v-else class="w-4 h-4 text-muted-foreground" />
+          </span>
+       
+          <Badge :variant="priorityVariant" class="text-xs h-5 shrink-0">
             {{ priorityLabel }}
           </Badge>
         </div>
       </div>
 
       <!-- Description -->
-      <p class="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3">
+      <p
+        class="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3"
+      >
         {{ props.requirement.content }}
       </p>
 
@@ -98,7 +102,7 @@
           >
             <Loader2 v-if="isSaving" class="w-3 h-3 mr-1 animate-spin" />
             <Save v-else class="w-3 h-3 mr-1" />
-            {{ isSaving ? '保存中...' : '保存' }}
+            {{ isSaving ? "保存中..." : "保存" }}
           </Button>
         </div>
       </div>
@@ -161,7 +165,10 @@ const handleDelete = () => {
 };
 
 const priorityVariant = computed(() => {
-  const variantMap: Record<Priority, "default" | "secondary" | "destructive" | "outline"> = {
+  const variantMap: Record<
+    Priority,
+    "default" | "secondary" | "destructive" | "outline"
+  > = {
     critical: "destructive",
     high: "default",
     medium: "secondary",
@@ -181,7 +188,10 @@ const priorityLabel = computed(() => {
 });
 
 const displayTags = computed(() => {
-  if (props.requirement.keyElements && props.requirement.keyElements.length > 0) {
+  if (
+    props.requirement.keyElements &&
+    props.requirement.keyElements.length > 0
+  ) {
     return props.requirement.keyElements;
   }
   return props.tags.length > 0 ? props.tags : ["需求"];

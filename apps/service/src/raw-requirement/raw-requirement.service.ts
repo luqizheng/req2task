@@ -44,7 +44,7 @@ export class RawRequirementService {
 
     const rawRequirement = this.rawRequirementRepository.create({
       projectId,
-      entityKey,
+      entityKey: entityKey[0],
       collectionType: dto.collectionType || null,
       originalContent: dto.content,
       source: dto.source || null,
@@ -129,7 +129,7 @@ export class RawRequirementService {
 
     const rawRequirement = this.rawRequirementRepository.create({
       projectId: dto.projectId,
-      entityKey,
+      entityKey: entityKey[0],
       collectionType: dto.collectionType || null,
       originalContent: dto.content,
       source: dto.source || null,

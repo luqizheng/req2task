@@ -1,6 +1,5 @@
 import type {
-  CreateRequirementDto,
-  UpdateRequirementDto,
+  RequirementDto,
   RequirementResponseDto,
   RequirementListResponseDto,
   CreateUserStoryDto,
@@ -73,13 +72,13 @@ export const requirementsApi = {
   getById: (id: string) =>
     api.get<RequirementResponseDto>(`/requirements/${id}`),
 
-  create: (moduleId: string, data: CreateRequirementDto) =>
-    api.post<RequirementResponseDto>(
-      `/requirements/modules/${moduleId}/requirements`,
-      data
-    ),
+  create: (data: RequirementDto) =>
+    api.post<RequirementResponseDto>(`/requirements`, data),
 
-  update: (id: string, data: UpdateRequirementDto) =>
+  batchCreate: (requirements: RequirementDto[]) =>
+    api.post<RequirementResponseDto[]>(`/requirements/batch`, { requirements }),
+
+  update: (id: string, data: RequirementDto) =>
     api.put<RequirementResponseDto>(`/requirements/${id}`, data),
 
   delete: (id: string) => api.delete(`/requirements/${id}`),

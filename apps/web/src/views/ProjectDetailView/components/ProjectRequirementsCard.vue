@@ -11,8 +11,9 @@ import {
   FileText,
   Plus,
   ChevronRight,
+  RefreshCw,
 } from "lucide-vue-next";
-import api from "@/api/axios";
+import { requirementsApi } from "@/api/requirements";
 
 const props = defineProps<{
   projectId: string;
@@ -22,6 +23,7 @@ const router = useRouter();
 const requirements = ref<RequirementResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
+const isRefreshing = ref(false);
 
 const statusConfig: Record<RequirementStatus, { label: string; class: string }> = {
   [RequirementStatus.DRAFT]: { label: "草稿", class: "bg-slate-100 text-slate-700" },
@@ -43,7 +45,8 @@ const priorityConfig: Record<Priority, { label: string; class: string }> = {
 const fetchRequirements = async () => {
   try {
     loading.value = true;
-    const response = await api.get<{ items: RequirementResponseDto[] }>(`/projects/${props.projectId}/requirements`);
+    error.value = null;
+    const response = await requirementsApi.getListByProject(props.projectId, { limit: 20 });
     requirements.value = response.items || [];
   } catch (err) {
     error.value = err instanceof Error ? err.message : "加载需求失败";
@@ -52,12 +55,26 @@ const fetchRequirements = async () => {
   }
 };
 
+const refresh = async () => {
+  isRefreshing.value = true;
+  await fetchRequirements();
+  isRefreshing.value = false;
+};
+
 const goToRequirement = (requirementId: string) => {
   router.push(`/projects/${props.projectId}/requirements/${requirementId}`);
 };
 
+const goToCreate = () => {
+  router.push(`/projects/${props.projectId}/requirements/create`);
+};
+
 onMounted(() => {
   fetchRequirements();
+});
+
+defineExpose({
+  refresh,
 });
 </script>
 
@@ -68,11 +85,24 @@ onMounted(() => {
         <CardTitle class="flex items-center gap-2">
           <FileText class="w-5 h-5" />
           需求列表
+          <Badge v-if="requirements.length > 0" variant="secondary" class="text-xs">
+            {{ requirements.length }}
+          </Badge>
         </CardTitle>
-        <Button size="sm">
-          <Plus class="w-4 h-4 mr-2" />
-          新建需求
-        </Button>
+        <div class="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            :disabled="isRefreshing"
+            @click="refresh"
+          >
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" />
+          </Button>
+          <Button size="sm" @click="goToCreate">
+            <Plus class="w-4 h-4 mr-2" />
+            新建需求
+          </Button>
+        </div>
       </div>
     </CardHeader>
     <CardContent>
@@ -82,26 +112,36 @@ onMounted(() => {
         <Skeleton class="h-16 w-full" />
       </div>
 
-      <div v-else-if="error" class="text-center py-8 text-red-500">
-        {{ error }}
+      <div v-else-if="error" class="text-center py-8">
+        <p class="text-red-500 mb-4">{{ error }}</p>
+        <Button variant="outline" size="sm" @click="refresh">
+          <RefreshCw class="w-4 h-4 mr-2" />
+          重试
+        </Button>
       </div>
 
-      <div v-else-if="requirements.length === 0" class="text-center py-12 text-slate-400">
-        暂无需求
+      <div v-else-if="requirements.length === 0" class="text-center py-12">
+        <FileText class="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
+        <p class="text-muted-foreground mb-2">暂无需求</p>
+        <p class="text-muted-foreground/60 text-sm mb-4">开始创建项目需求</p>
+        <Button size="sm" @click="goToCreate">
+          <Plus class="w-4 h-4 mr-2" />
+          新建需求
+        </Button>
       </div>
 
       <div v-else class="space-y-2">
         <div
           v-for="req in requirements"
           :key="req.id"
-          class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer transition-colors"
+          class="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
           @click="goToRequirement(req.id)"
         >
           <div class="flex items-center gap-3 flex-1">
-            <FileText class="w-4 h-4 text-slate-400" />
+            <FileText class="w-4 h-4 text-muted-foreground" />
             <div class="flex-1">
-              <p class="font-medium text-slate-800">{{ req.title }}</p>
-              <p class="text-xs text-slate-500">{{ req.entityKey }}</p>
+              <p class="font-medium text-card-foreground">{{ req.title }}</p>
+              <p class="text-xs text-muted-foreground">{{ req.entityKey }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2">
@@ -117,8 +157,8 @@ onMounted(() => {
             >
               {{ statusConfig[req.status]?.label || req.status }}
             </Badge>
-            <span class="text-xs text-slate-400">{{ req.storyPoints }} SP</span>
-            <ChevronRight class="w-4 h-4 text-slate-400" />
+            <span class="text-xs text-muted-foreground">{{ req.storyPoints }} SP</span>
+            <ChevronRight class="w-4 h-4 text-muted-foreground" />
           </div>
         </div>
       </div>

@@ -6,12 +6,7 @@ import {
 } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
-
-interface ApiResponse<T> {
-  code: number;
-  data?: T;
-  message?: string;
-}
+import { ApiResponse } from "../common";
 
 @Controller("ai/projects")
 @UseGuards(AuthGuard("jwt"))

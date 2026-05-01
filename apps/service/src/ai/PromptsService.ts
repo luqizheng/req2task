@@ -61,24 +61,6 @@ export interface RequirementCollectDto {
   previousQuestions?: Array<{ question: string; answer: string }>;
 }
 
-interface ApiResponse<T> {
-  code: number;
-  data?: T;
-  message?: string;
-}
-
-interface SendMessageResponse {
-  id: string;
-  conversationId: string;
-  role: string;
-  content: string;
-  createdAt: string;
-  metadata?: {
-    followUpQuestions?: string[];
-    keyElements?: string[];
-  };
-}
-
 @Injectable()
 export class PromptsService {
   private readonly logger = new Logger(PromptsService.name);

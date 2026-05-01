@@ -1,19 +1,19 @@
 import { Injectable, Logger, BadRequestException } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, DataSource } from "typeorm";
+import { Repository } from "typeorm";
 import { Observable } from "rxjs";
 import {
   Requirement,
   UserStory,
-  AcceptanceCriteria,
   Task,
   FeatureModule,
   RawRequirement,
 } from "@req2task/core";
 import { PromptService } from "@req2task/core";
-import { RequirementStatus, Priority, RequirementSource, TaskStatus, TaskPriority, CriteriaType, RawRequirementStatus,  } from '@req2task/dto';
+import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
 import { LLmClientService, LLMStreamChunk } from "./llm-client.service";
 import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
+import { AiPersistenceService } from "./ai-persistence.service";
 
 export interface GenerationResult {
   requirements?: Requirement[];
@@ -33,20 +33,10 @@ export class AiGenerationService {
   constructor(
     @InjectRepository(Requirement)
     private requirementRepository: Repository<Requirement>,
-    @InjectRepository(UserStory)
-    private userStoryRepository: Repository<UserStory>,
-    @InjectRepository(AcceptanceCriteria)
-    private acceptanceCriteriaRepository: Repository<AcceptanceCriteria>,
-    @InjectRepository(Task)
-    private taskRepository: Repository<Task>,
-    @InjectRepository(FeatureModule)
-    private featureModuleRepository: Repository<FeatureModule>,
-    @InjectRepository(RawRequirement)
-    private rawRequirementRepository: Repository<RawRequirement>,
     private readonly promptService: PromptService,
     private readonly llmClient: LLmClientService,
-    private readonly dataSource: DataSource,
     private readonly rawRequirementService: RawRequirementService,
+    private readonly persistenceService: AiPersistenceService,
   ) {}
 
   async generateRawRequirement(
@@ -84,10 +74,10 @@ export class AiGenerationService {
       maxTokens: rendered.maxTokens,
     });
 
-    const { questions, keyElements } = this.extractAnalysisResult(
+    const { questions, keyElements } = this.persistenceService.extractAnalysisResult(
       result.content,
     );
-    const rawRequirement = await this.persistRawRequirementWithAnalysis(
+    const rawRequirement = await this.persistenceService.persistRawRequirementWithAnalysis(
       result.content,
       projectId,
       createdById,
@@ -198,76 +188,6 @@ ${content}
     });
   }
 
-  private extractAnalysisResult(content: string): {
-    questions: string[];
-    keyElements: string[];
-  } {
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        return {
-          questions: parsed.questions?.map((q: any) => q.question) || [],
-          keyElements: parsed.keyElements || [],
-        };
-      }
-      return { questions: [], keyElements: [] };
-    } catch {
-      return { questions: [], keyElements: [] };
-    }
-  }
-
-  private async persistRawRequirementWithAnalysis(
-    content: string,
-    projectId: string,
-    createdById: string,
-    followUpQuestions: string[],
-    keyElements: string[],
-  ): Promise<RawRequirement | null> {
-    try {
-      const questionAndAnswers = followUpQuestions.map((question, index) => ({
-        id: `qa_${Date.now()}_${index}`,
-        question,
-        answer: null,
-        createdAt: new Date().toISOString(),
-        answeredAt: null,
-      }));
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const rawRequirement = queryRunner.manager.create(RawRequirement, {
-          projectId,
-          originalContent: content,
-          // collectionType: (collectionType as CollectionType) || null,
-          // source: source || null,
-          keyElements,
-          status: RawRequirementStatus.PENDING,
-          questionAndAnswers,
-          createdById,
-        });
-
-        const saved = await queryRunner.manager.save(rawRequirement);
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created raw requirement ${(saved as any).id} with ${followUpQuestions.length} follow-up questions`,
-        );
-
-        return saved;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist raw requirement");
-      return null;
-    }
-  }
-
   async generateRequirements(
     projectId: string,
     rawRequirement: string,
@@ -310,15 +230,14 @@ ${content}
 
     let requirements: Requirement[] = [];
     if (persist) {
-      requirements = await this.persistRequirements(
+      requirements = await this.persistenceService.persistRequirements(
         result.content,
         projectId,
         createdById,
         moduleIds,
       );
     } else {
-      // 不持久化，只解析 JSON 并返回 Requirement 对象
-      const data = this.extractJsonArray(result.content);
+      const data = this.persistenceService.extractJsonArray(result.content);
       if (data && data.length > 0) {
         requirements = data.map((item) => ({
           id: "",
@@ -345,7 +264,7 @@ ${content}
           parent: null,
           sourceRawRequirement: null,
           followUpQuestions: item.followUpQuestions || [],
-        }));
+        } as Requirement));
       }
     }
 
@@ -382,7 +301,7 @@ ${content}
       maxTokens: rendered.maxTokens,
     });
 
-    const userStories = await this.persistUserStories(
+    const userStories = await this.persistenceService.persistUserStories(
       result.content,
       requirementId,
     );
@@ -420,9 +339,10 @@ ${content}
       maxTokens: rendered.maxTokens,
     });
 
-    const tasks = await this.persistTasks(
+    const tasks = await this.persistenceService.persistTasks(
       result.content,
       requirementId,
+      projectId,
       createdById,
     );
 
@@ -450,320 +370,11 @@ ${content}
       maxTokens: rendered.maxTokens,
     });
 
-    const modules = await this.persistModules(result.content, projectId);
+    const modules = await this.persistenceService.persistModules(
+      result.content,
+      projectId,
+    );
 
     return { modules, rawContent: result.content };
-  }
-
-  private async persistRequirements(
-    content: string,
-    projectId: string,
-    createdById: string,
-    moduleIds?: string[],
-  ): Promise<Requirement[]> {
-    try {
-      const data = this.extractJsonArray(content);
-      if (!data || data.length === 0) {
-        this.logger.warn("No requirements found in AI response");
-        return [];
-      }
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const requirements: Requirement[] = [];
-
-        for (const item of data) {
-          const requirement = queryRunner.manager.create(Requirement, {
-            title: item.title,
-            description: item.description || null,
-            priority: item.priority?.toUpperCase() || Priority.MEDIUM,
-            source: RequirementSource.AI_GENERATED,
-            status: RequirementStatus.DRAFT,
-            storyPoints: item.storyPoints || 0,
-            moduleIds: item.moduleIds || moduleIds || null,
-            parentId: item.parentId || null,
-            createdById,
-            projectId,
-          });
-
-          const saved = await queryRunner.manager.save(requirement);
-          requirements.push(saved);
-        }
-
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created ${requirements.length} requirements for project ${projectId}`,
-        );
-
-        return requirements;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist requirements");
-      return [];
-    }
-  }
-
-  private async persistUserStories(
-    content: string,
-    requirementId: string,
-  ): Promise<UserStory[]> {
-    try {
-      const data = this.extractJsonArray(content);
-      if (!data || data.length === 0) {
-        this.logger.warn("No user stories found in AI response");
-        return [];
-      }
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const userStories: UserStory[] = [];
-
-        for (const item of data) {
-          const userStory = queryRunner.manager.create(UserStory, {
-            requirementId,
-            role: item.role,
-            goal: item.goal,
-            benefit: item.benefit,
-            storyPoints: item.storyPoints || 0,
-          });
-
-          const saved = await queryRunner.manager.save(userStory);
-          userStories.push(saved);
-
-          if (
-            item.acceptanceCriteria &&
-            Array.isArray(item.acceptanceCriteria)
-          ) {
-            for (const criteria of item.acceptanceCriteria) {
-              const acceptanceCriteria = queryRunner.manager.create(
-                AcceptanceCriteria,
-                {
-                  userStoryId: (saved as any).id,
-                  criteriaType:
-                    criteria.criteriaType || CriteriaType.FUNCTIONAL,
-                  content: criteria.content,
-                  testMethod: criteria.testMethod || null,
-                },
-              );
-              await queryRunner.manager.save(acceptanceCriteria);
-            }
-          }
-        }
-
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created ${userStories.length} user stories for requirement ${requirementId}`,
-        );
-
-        return userStories;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist user stories");
-      return [];
-    }
-  }
-
-  private async persistTasks(
-    content: string,
-    requirementId: string,
-    createdById: string,
-  ): Promise<Task[]> {
-    try {
-      const data = this.extractJsonArray(content);
-      if (!data || data.length === 0) {
-        this.logger.warn("No tasks found in AI response");
-        return [];
-      }
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const tasks: Task[] = [];
-
-        for (const item of data) {
-          const taskNo = await this.generateTaskNo(queryRunner.manager);
-
-          const task = queryRunner.manager.create(Task, {
-            taskNo,
-            title: item.title,
-            description: item.description || null,
-            requirementId,
-            status: TaskStatus.TODO,
-            priority: this.mapPriority(item.priority),
-            estimatedHours: item.estimatedHours || null,
-            createdById,
-          });
-
-          const saved = await queryRunner.manager.save(task);
-          tasks.push(saved);
-        }
-
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created ${tasks.length} tasks for requirement ${requirementId}`,
-        );
-
-        return tasks;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist tasks");
-      return [];
-    }
-  }
-
-  private async persistModules(
-    content: string,
-    projectId: string,
-  ): Promise<FeatureModule[]> {
-    try {
-      const jsonMatch = content.match(/\{[\s\S]*"modules"[\s\S]*\}/);
-      if (!jsonMatch) {
-        this.logger.warn("No modules found in AI response");
-        return [];
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-      const modulesData = parsed.modules || [];
-
-      if (!modulesData || modulesData.length === 0) {
-        return [];
-      }
-
-      const queryRunner = this.dataSource.createQueryRunner();
-      await queryRunner.connect();
-      await queryRunner.startTransaction();
-
-      try {
-        const modules: FeatureModule[] = [];
-
-        for (const item of modulesData) {
-          const module = await this.createModuleWithChildren(
-            queryRunner.manager,
-            item,
-            projectId,
-            null,
-          );
-          modules.push(module);
-        }
-
-        await queryRunner.commitTransaction();
-        this.logger.log(
-          `Created ${modules.length} modules for project ${projectId}`,
-        );
-
-        return modules;
-      } catch (error) {
-        await queryRunner.rollbackTransaction();
-        throw error;
-      } finally {
-        await queryRunner.release();
-      }
-    } catch (error) {
-      this.logger.error({ error }, "Failed to persist modules");
-      return [];
-    }
-  }
-
-  private async createModuleWithChildren(
-    manager: any,
-    data: any,
-    projectId: string,
-    parentId: string | null,
-  ): Promise<FeatureModule> {
-    const module = manager.create(FeatureModule, {
-      name: data.name,
-      description: data.description || null,
-      moduleKey: data.moduleKey,
-      sort: data.sort || 0,
-      parentId,
-      projectId,
-    });
-
-    const saved = await manager.save(module);
-
-    if (data.children && Array.isArray(data.children)) {
-      for (const child of data.children) {
-        await this.createModuleWithChildren(
-          manager,
-          child,
-          projectId,
-          saved.id,
-        );
-      }
-    }
-
-    return saved;
-  }
-
-  private async generateTaskNo(manager: any): Promise<string> {
-    const result = await manager.query(
-      "SELECT COALESCE(MAX(CAST(SUBSTRING(task_no, 5) AS INTEGER)), 0) + 1 as next_no FROM tasks WHERE task_no LIKE 'TASK%'",
-    );
-    const nextNo = result[0]?.next_no || 1;
-    return `TASK${String(nextNo).padStart(5, "0")}`;
-  }
-
-  private mapPriority(priority: string): TaskPriority {
-    const mapping: Record<string, TaskPriority> = {
-      urgent: TaskPriority.URGENT,
-      high: TaskPriority.HIGH,
-      medium: TaskPriority.MEDIUM,
-      low: TaskPriority.LOW,
-    };
-    return mapping[priority?.toLowerCase()] || TaskPriority.MEDIUM;
-  }
-
-  private extractJsonArray(content: string): any[] {
-    try {
-      const jsonMatch = content.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        return JSON.parse(jsonMatch[0]);
-      }
-
-      const jsonObjectMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonObjectMatch) {
-        const parsed = JSON.parse(jsonObjectMatch[0]);
-        if (Array.isArray(parsed.data)) {
-          return parsed.data;
-        }
-        if (Array.isArray(parsed.requirements)) {
-          return parsed.requirements;
-        }
-        if (Array.isArray(parsed.items)) {
-          return parsed.items;
-        }
-      }
-
-      return [];
-    } catch (error) {
-      this.logger.error(
-        { error, content: content.substring(0, 500) },
-        "Failed to extract JSON from content",
-      );
-      return [];
-    }
   }
 }

@@ -31,12 +31,7 @@ import { RawRequirementService } from "../raw-requirement/raw-requirement.servic
 import { AiGenerationService } from "../ai/ai-generation.service";
 import { ProjectsService } from "src/projects/projects.service";
 import { FeatureModulesService } from "src/feature-modules/feature-modules.service";
-
-interface ApiResponse<T> {
-  code: number;
-  data?: T;
-  message?: string;
-}
+import { ApiResponse } from "../common";
 
 interface AuthenticatedRequest {
   user: {
@@ -295,12 +290,20 @@ export class RequirementsController {
     const user = req.user as { id?: string; userId?: string };
     const userId = user.id || user.userId;
 
-    const requirement = requirements[0];
+    if (!requirements || requirements.length === 0) {
+      return { code: 400, message: "批量创建需求不能为空" };
+    }
+
+    const firstRawReqId = requirements[0].sourceRawRequirementId;
+    const allSameSource = requirements.every(
+      (r) => r.sourceRawRequirementId === firstRawReqId,
+    );
+    if (!allSameSource) {
+      return { code: 400, message: "批量创建的需求必须属于同一原始需求" };
+    }
 
     const rawRequirement =
-      await this.rawRequirementService.getRawRequirementById(
-        requirement.sourceRawRequirementId,
-      );
+      await this.rawRequirementService.getRawRequirementById(firstRawReqId);
     const result = await this.requirementsService.saveBatch(
       rawRequirement.projectId,
       requirements,

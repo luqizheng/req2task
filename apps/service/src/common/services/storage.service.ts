@@ -26,7 +26,6 @@ export class StorageService {
       },
       forcePathStyle: true,
     };
-    console.log("----", cfg);
     this.s3Client = new S3Client(cfg);
   }
 
@@ -39,7 +38,7 @@ export class StorageService {
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
     const day = String(now.getDate()).padStart(2, "0");
-    const ext = originalName.split(".").pop() || "";
+    const _ext = originalName.split(".").pop() || "";
     const storagePath = `attachments/${year}/${month}/${day}/${uuidv4()}_${originalName}`;
 
     await this.s3Client.send(

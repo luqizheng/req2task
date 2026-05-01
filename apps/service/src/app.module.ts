@@ -62,7 +62,6 @@ const nacosConfig = {
   password: process.env.NACOS_PASSWORD || "nacos",
   logger: console,
 };
-console.log("nacosConfig", nacosConfig);
 
 const nacosClient = new nacos.NacosNamingClient(nacosConfig );
 
@@ -130,7 +129,7 @@ export class AppModule implements OnModuleInit {
         healthy: false,
         enabled: true,
       });
-      console.log("Nacos naming client connected successfully");
+      console.warn("Nacos naming client connected successfully");
     } catch (error) {
       console.warn("Nacos naming client connection failed:", error);
     }

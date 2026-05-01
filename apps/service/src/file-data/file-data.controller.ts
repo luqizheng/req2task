@@ -17,7 +17,7 @@ export class FileDataController {
     @UploadedFile() file: Express.Multer.File,
     @CurrentUser() user: User,
   ) {
-    console.log("上传文件", user);
+    console.warn("上传文件", user);
     const fileData = await this.fileDataService.uploadFile(file.buffer, file.originalname, file.mimetype, user.id);
     return { fileDataId: fileData.id };
   }

@@ -34,16 +34,10 @@ export class RequirementsService {
   ): Promise<RequirementResponseDto[]> {
     const create = dto.filter((item) => !item.id);
     const update = dto.filter((item) => item.id);
-    console.log('---------------------------- create.length,', create.length,)
     const entityKeyIds = await this.entityKeyService.generateEntityKey(
       projectId,
       EntityKeyType.REQ,
       create.length,
-    );
-    console.log(
-      entityKeyIds,
-      `[entityKeyIds]`,
-      "-----=========================================-----------------------",
     );
     const push = [];
     for (const item of create) {
@@ -103,7 +97,6 @@ export class RequirementsService {
               EntityKeyType.REQ,
             )
           : [""];
-      console.log(entityKey, "---------------------------");
       const requirement = this.requirementRepository.create({
         title: createDto.title,
         description: createDto.description || null,

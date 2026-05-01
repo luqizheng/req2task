@@ -2,11 +2,6 @@ import { Body, Controller, Post, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginRequestDto, LoginResponseDto, RegisterRequestDto } from '@req2task/dto';
 
-interface JwtPayload {
-  userId: string;
-  username: string;
-}
-
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}

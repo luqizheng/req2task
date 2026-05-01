@@ -428,7 +428,7 @@ export class SeedService {
   private async createUserStories(
     queryRunner: any,
     requirements: Requirement[],
-    userId: string
+    _userId: string
   ): Promise<void> {
     const userStoriesData: Array<{
       requirementTitle: string;

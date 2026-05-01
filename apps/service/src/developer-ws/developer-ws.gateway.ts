@@ -38,7 +38,7 @@ export class DeveloperWsGateway
     private readonly developerSession: DeveloperSessionService,
   ) {}
 
-  afterInit(server: Server) {
+  afterInit(_server: Server) {
     this.logger.log('WebSocket Gateway initialized');
   }
 

@@ -11,25 +11,6 @@ interface DeveloperSession {
   lastHeartbeat: Date;
 }
 
-interface EnvConfig {
-  database?: {
-    host: string;
-    port: number;
-    username: string;
-    password: string;
-    database: string;
-    type: 'postgresql' | 'mysql' | 'mongodb';
-  };
-  redis?: {
-    host: string;
-    port: number;
-    password?: string;
-    db?: number;
-  };
-  services?: Record<string, { url: string; auth?: Record<string, string> }>;
-  envVars?: Record<string, string>;
-}
-
 @Injectable()
 export class DeveloperSessionService {
   private readonly logger = new Logger(DeveloperSessionService.name);

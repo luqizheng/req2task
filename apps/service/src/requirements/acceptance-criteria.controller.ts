@@ -15,12 +15,7 @@ import {
   UpdateAcceptanceCriteriaDto,
   AcceptanceCriteriaResponseDto,
 } from '@req2task/dto';
-
-interface ApiResponse<T> {
-  code: number;
-  data?: T;
-  message?: string;
-}
+import { ApiResponse } from '../common';
 
 @Controller()
 @UseGuards(AuthGuard('jwt'))

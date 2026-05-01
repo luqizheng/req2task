@@ -32,10 +32,12 @@ export default [
       ...pluginVue.configs['vue3-essential'].rules,
       ...pluginVue.configs['recommended'].rules,
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', {
+      '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_'
       }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
       'vue/multi-word-component-names': 'off',
       'no-unused-vars': 'off'
     },
@@ -68,10 +70,12 @@ export default [
     },
     rules: {
       '@typescript-eslint/no-explicit-any': 'warn',
-      '@typescript-eslint/no-unused-vars': ['warn', {
+      '@typescript-eslint/no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
         varsIgnorePattern: '^_'
       }],
+      'no-console': ['error', { allow: ['warn', 'error'] }],
+      'no-debugger': 'error',
       'no-unused-vars': 'off'
     },
     settings: {
@@ -84,6 +88,12 @@ export default [
           extensions: ['.ts', '.tsx', '.vue']
         }
       }
+    }
+  },
+  {
+    files: ['**/*.test.{ts,tsx,js,jsx}', '**/*.spec.{ts,tsx,js,jsx}'],
+    rules: {
+      'no-console': 'off'
     }
   }
 ]

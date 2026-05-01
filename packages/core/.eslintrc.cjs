@@ -16,11 +16,13 @@ module.exports = {
   },
   plugins: ['@typescript-eslint', 'import'],
   rules: {
-    '@typescript-eslint/no-unused-vars': ['warn', {
+    '@typescript-eslint/no-unused-vars': ['error', {
       argsIgnorePattern: '^_',
       varsIgnorePattern: '^_'
     }],
-    '@typescript-eslint/no-explicit-any': 'warn'
+    '@typescript-eslint/no-explicit-any': 'warn',
+    'no-console': ['error', { allow: ['warn', 'error'] }],
+    'no-debugger': 'error'
   },
   settings: {
     'import/resolver': {

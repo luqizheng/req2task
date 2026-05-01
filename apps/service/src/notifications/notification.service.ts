@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Notification } from '@req2task/core';
-import { NotificationType } from '@req2task/dto';
+
 import {
   NotificationDto,
   NotificationListDto,

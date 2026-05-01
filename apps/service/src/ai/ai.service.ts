@@ -1,11 +1,6 @@
 import { Injectable } from "@nestjs/common";
 
-import {
-  PromptService,
-  ChromaVectorStore,
-  VectorDocument,
-  SearchResult,
-} from "@req2task/core";
+import { ChromaVectorStore, VectorDocument, SearchResult,  } from '@req2task/core';
 
 @Injectable()
 export class AiService {

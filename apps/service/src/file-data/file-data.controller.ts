@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, Body, HttpCode, HttpStatus, Get, Query, Delete, Param, ParseUUIDPipe } from '@nestjs/common';
+import { Controller, Post, UseGuards, UseInterceptors, UploadedFile, HttpCode, HttpStatus, Get, Query, Delete, Param, ParseUUIDPipe } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';

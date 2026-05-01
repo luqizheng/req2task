@@ -36,6 +36,26 @@ pnpm lint
 cd apps/service && pnpm lint
 ```
 
+### 自动修复未使用的导入
+
+项目提供了专门的工具来检测和移除未使用的导入：
+
+```bash
+# 从根目录运行（推荐）
+pnpm lint:remove-unused              # 检测未使用的导入
+pnpm lint:remove-unused:fix          # 自动移除
+
+# 或在 service 目录运行
+cd apps/service && npx tsx ../../scripts/remove-unused-imports.ts --fix
+```
+
+### 强制规则
+
+- **禁止 console.log**：使用 `console.warn` 或 `console.error`
+- **禁止 debugger**：使用断点调试
+- **禁止未使用的导入**：定期运行 `pnpm lint:remove-unused:fix`
+- **测试文件豁免**：`*.spec.ts` 文件豁免 console 和未使用变量检查
+
 ## 架构
 
 - **框架**: NestJS

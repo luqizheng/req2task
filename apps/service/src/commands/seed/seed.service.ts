@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { DataSource, Repository } from "typeorm";
+import { DataSource } from 'typeorm';
 import * as crypto from "crypto";
 import {
   Project,

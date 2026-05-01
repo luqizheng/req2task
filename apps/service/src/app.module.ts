@@ -28,7 +28,7 @@ import { FeatureModulesModule } from "./feature-modules/feature-modules.module";
 import { RequirementsModule } from "./requirements/requirements.module";
 import { TasksModule } from "./tasks/tasks.module";
 import { NotificationModule } from "./notifications/notification.module";
-import { RawRequirementModule } from "./raw-requirement/raw-requirement.module";
+
 import { DeveloperWsModule } from "./developer-ws/developer-ws.module";
 import { SeedModule } from "./commands/seed/seed.module";
 import { ProjectAttachmentModule } from "./project-attachment/project-attachment.module";

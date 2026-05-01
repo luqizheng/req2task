@@ -15,13 +15,15 @@ module.exports = {
   plugins: ["@typescript-eslint", "import"],
   rules: {
     "@typescript-eslint/no-unused-vars": [
-      "warn",
+      "error",
       {
         argsIgnorePattern: "^_",
         varsIgnorePattern: "^_",
       },
     ],
     "@typescript-eslint/no-explicit-any": "warn",
+    "no-console": ["error", { allow: ["warn", "error"] }],
+    "no-debugger": "error",
   },
   settings: {
     "import/resolver": {
@@ -39,6 +41,7 @@ module.exports = {
       files: ["*.spec.ts"],
       rules: {
         "@typescript-eslint/no-unused-vars": "off",
+        "no-console": "off",
       },
     },
   ],

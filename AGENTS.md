@@ -36,6 +36,10 @@ pnpm build:web                # 构建前端
 pnpm build:service            # 构建后端
 pnpm build:gateway            # 构建 Rust API Gateway
 pnpm lint                     # 检查所有代码
+pnpm lint:fix                 # 修复所有包的 lint 问题
+pnpm lint:check               # 检查所有包的 lint 问题（详细报告）
+pnpm lint:remove-unused       # 检测未使用的导入（默认扫描后端）
+pnpm lint:remove-unused:fix   # 自动移除未使用的导入
 pnpm test                     # 运行所有测试
 pnpm test:web                 # 运行前端测试
 pnpm test:e2e:web             # 运行前端 E2E 测试
@@ -136,6 +140,56 @@ export default defineConfig([
 - TypeScript 严格模式
 - 提交前自动运行 lint-staged（配置于 package.json）
 
+## 代码质量检查规则
+
+项目使用增强的 ESLint 规则来保证代码质量：
+
+### 必须遵守的规则
+
+1. **no-console 规则**：禁止使用 `console.log`，只允许 `console.warn` 和 `console.error`
+   - 错误示例：`console.log('debug info')`
+   - 正确示例：`console.warn('warning')` 或 `console.error('error message')`
+
+2. **no-debugger 规则**：禁止使用 `debugger` 语句
+
+3. **no-unused-vars 规则**：禁止未使用的变量和导入
+   - 变量名以下划线 `_` 开头可豁免：`const _unusedVar = 'test'`
+   - 函数参数以下划线 `_` 开头可豁免：`function test(_unusedParam: string) {}`
+
+4. **no-explicit-any 规则**：警告使用 `any` 类型，推荐使用具体类型
+
+### 自动修复工具
+
+项目提供了自动修复工具：
+
+```bash
+# 扫描所有包的 lint 问题
+pnpm lint:check
+
+# 自动修复所有包的 lint 问题
+pnpm lint:fix
+
+# 专门检测和移除未使用的导入
+pnpm lint:remove-unused              # 检测（默认扫描后端）
+pnpm lint:remove-unused --web        # 检测前端
+pnpm lint:remove-unused --service    # 检测后端
+pnpm lint:remove-unused --packages   # 检测 packages
+pnpm lint:remove-unused --all        # 检测所有包
+pnpm lint:remove-unused:fix          # 自动移除未使用的导入
+```
+
+### 豁免规则的文件
+
+以下文件的 `no-console` 规则被豁免：
+- 所有 `*.spec.ts` 测试文件
+- 所有 `*.test.ts` 测试文件
+
+### 配置文件位置
+
+- 前端：`apps/web/eslint.config.js`（ESLint 9 flat config）
+- 后端：`apps/service/.eslintrc.cjs`（ESLint 8 rc config）
+- 其他包：各自的 `.eslintrc.cjs`
+
 ## 硬性规则（必须遵守，CI 会验证）
 
 1. **开发环境启动规则**：启动开发环境或测试环境时，必须使用全局命令（根目录 `package.json` 中定义的命令），禁止直接在子目录运行 `npm run dev` 或 `pnpm dev`。全局命令可确保基础设施服务和所有依赖服务正确启动。如果命令不存在，请警告并且提示用户添加。
@@ -152,8 +206,10 @@ export default defineConfig([
      └── useValidation.ts  # 验证逻辑
      ```
 3. 新增代码必须有对应测试
-4. 使用结构化日志，禁止 console.log
+4. **禁止使用 console.log**：使用 `console.warn` 或 `console.error` 替代，或使用结构化日志库
 5. 项目不需要考虑数据迁移、api接口兼容问题。请激进重构。只讲合不合理。
+6. **提交前必须通过 lint 检查**：运行 `pnpm lint` 确保代码符合规范
+7. **定期清理未使用的导入**：使用 `pnpm lint:remove-unused:fix` 自动清理
 
 **强制要求**：所有开发活动必须严格遵守 [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md) 中的规则。
 
@@ -167,6 +223,7 @@ export default defineConfig([
 | 了解 API 规范          | [docs/reference/api-spec.md](docs/reference/api-spec.md)                 |
 | 了解实施计划           | [docs/design/implementation-plan.md](docs/design/implementation-plan.md) |
 | 了解编码规范           | [.agents/rules/dev-rules.md](.agents/rules/dev-rules.md)                 |
+| 了解代码质量检查规则   | [AGENTS.md#代码质量检查规则](#代码质量检查规则)                           |
 | Bug修复流程            | [.agents/rules/bug-fix-rules.md](.agents/rules/bug-fix-rules.md)         |
 | 了解完整文档索引       | [docs/README.md](docs/README.md)                                         |
 | 查看用户手册           | [docs/manuals/index.md](docs/manuals/index.md)                           |

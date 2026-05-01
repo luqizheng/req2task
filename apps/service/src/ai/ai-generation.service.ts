@@ -11,16 +11,7 @@ import {
   RawRequirement,
 } from "@req2task/core";
 import { PromptService } from "@req2task/core";
-import {
-  RequirementStatus,
-  Priority,
-  RequirementSource,
-  TaskStatus,
-  TaskPriority,
-  CriteriaType,
-  RawRequirementStatus,
-  CollectionType,
-} from "@req2task/dto";
+import { RequirementStatus, Priority, RequirementSource, TaskStatus, TaskPriority, CriteriaType, RawRequirementStatus,  } from '@req2task/dto';
 import { LLmClientService, LLMStreamChunk } from "./llm-client.service";
 import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
 

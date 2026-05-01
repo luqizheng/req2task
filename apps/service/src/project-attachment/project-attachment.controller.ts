@@ -1,22 +1,6 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Delete,
-  Param,
-  Query,
-  Body,
-  UseGuards,
-  UseInterceptors,
-  UploadedFile,
-  HttpCode,
-  HttpStatus,
-  ParseUUIDPipe,
-  Res,
-  StreamableFile,
-} from '@nestjs/common';
+import { Controller, Post, Get, Delete, Param, Query, Body, UseGuards, HttpCode, HttpStatus, ParseUUIDPipe, Res, StreamableFile,  } from '@nestjs/common';
 import { Response } from 'express';
-import { FileInterceptor } from '@nestjs/platform-express';
+
 import { JwtAuthGuard } from '../common/guards';
 import { CurrentUser } from '../common/decorators';
 import { ProjectAttachmentService } from './project-attachment.service';

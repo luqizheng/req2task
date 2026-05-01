@@ -4,7 +4,6 @@ import {
   Body,
   Param,
   Query,
-  Res,
   HttpCode,
   HttpStatus,
   Request,
@@ -12,14 +11,11 @@ import {
 } from "@nestjs/common";
 import { AiGenerationService } from "./ai-generation.service";
 import {
-  GenerateRequirementsDto,
   GenerateUserStoriesDto,
   GenerateTasksDto,
   GenerateModulesDto,
-  GenerateRawRequirementByLLMDto,
 } from "@req2task/dto";
 import { ProjectsService } from "src/projects/projects.service";
-import { LLmClientService } from "./llm-client.service";
 
 @Controller("ai/generation")
 export class AiGenerationController {

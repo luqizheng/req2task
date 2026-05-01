@@ -23,6 +23,26 @@ cd apps/web
 pnpm lint
 ```
 
+### 自动修复未使用的导入
+
+项目提供了专门的工具来检测和移除未使用的导入：
+
+```bash
+# 从根目录运行（推荐）
+pnpm lint:remove-unused --web              # 检测前端未使用的导入
+pnpm lint:remove-unused:fix --web          # 自动移除
+
+# 或直接在 web 目录运行
+cd apps/web && npx tsx ../../scripts/remove-unused-imports.ts --web --fix
+```
+
+### 强制规则
+
+- **禁止 console.log**：使用 `console.warn` 或 `console.error`
+- **禁止 debugger**：使用断点调试
+- **禁止未使用的导入**：定期运行 `pnpm lint:remove-unused:fix --web`
+- **测试文件豁免**：`*.test.ts` 文件豁免 console 和未使用变量检查
+
 ### 类型检查
 
 ```bash

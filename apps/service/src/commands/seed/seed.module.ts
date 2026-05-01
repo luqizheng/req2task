@@ -33,6 +33,7 @@ import {
         AcceptanceCriteria,
         RawRequirement,
         Task,
+        Notification,
       ],
       synchronize: false,
     }),

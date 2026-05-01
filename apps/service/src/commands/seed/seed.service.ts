@@ -257,14 +257,17 @@ export class SeedService {
       const module = modules.get(reqData.moduleKey);
       if (!module) continue;
 
-      let existing = await queryRunner.manager.findOne(Requirement, {
-        where: { moduleId: module.id, title: reqData.title },
-      });
+      const existing = await queryRunner.manager
+        .createQueryBuilder(Requirement, 'req')
+        .leftJoin('req.modules', 'module')
+        .where('module.id = :moduleId', { moduleId: module.id })
+        .andWhere('req.title = :title', { title: reqData.title })
+        .getOne();
 
       if (!existing) {
         const requirement = queryRunner.manager.create(Requirement, {
           entityKey: this.generateEntityKey(projectKey, "REQ"),
-          moduleId: module.id,
+          modules: [module],
           title: reqData.title,
           description: reqData.description || null,
           priority: reqData.priority,
@@ -275,11 +278,11 @@ export class SeedService {
         });
         await queryRunner.manager.save(requirement);
         this.logger.log(`Created requirement: ${reqData.title}`);
-        existing = requirement;
+        requirements.push(requirement);
       } else {
         this.logger.log(`Requirement ${reqData.title} already exists, skipping...`);
+        requirements.push(existing);
       }
-      requirements.push(existing);
     }
     return requirements;
   }
@@ -907,9 +910,9 @@ export class SeedService {
         data: { requirementId: "sample-req-3", changeType: "content_update" },
       },
       {
-        type: NotificationType.PROJECT_INVITATION,
+        type: NotificationType.PROJECT_MEMBER_ADDED,
         title: "项目邀请",
-        message: "您被邀请加入「req2task」项目",
+        message: "您已被添加为「req2task」项目的成员",
         isRead: true,
         data: { projectId: "sample-project-1", inviter: "admin" },
       },

@@ -18,6 +18,10 @@ const formatPercent = (value: number) => {
   return `${Math.round(value)}%`;
 };
 
+const formatHours = (value: number) => {
+  return Math.round(value);
+};
+
 </script>
 
 <template>
@@ -89,14 +93,14 @@ const formatPercent = (value: number) => {
           </div>
           <div class="flex items-baseline gap-2 mb-3">
             <div class="text-3xl font-bold text-purple-900 tabular-nums">
-              {{ progress.totalActualHours }}
+              {{ formatHours(progress.totalActualHours) }}
             </div>
             <span class="text-sm text-purple-600">小时</span>
           </div>
           <div class="space-y-1.5">
             <div class="flex items-center justify-between text-xs">
               <span class="text-purple-600/70">预估工时</span>
-              <span class="font-medium text-purple-700">{{ progress.totalEstimatedHours }}h</span>
+              <span class="font-medium text-purple-700">{{ formatHours(progress.totalEstimatedHours) }}h</span>
             </div>
             <div class="flex items-center justify-between text-xs">
               <span class="text-purple-600/70">故事点</span>

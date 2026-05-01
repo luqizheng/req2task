@@ -26,7 +26,7 @@ req2task 是一个基于 pnpm monorepo 的全栈应用，包含 Vue 3 前端、N
 pnpm dev:web                  # 启动前端开发服务器
 pnpm dev:service              # 启动后端开发服务器（自动检查4000端口占用情况）
 pnpm dev:ai-chat-service      # 启动 AI 聊天服务
-pnpm dev:file-conversion      # 启动文件转换服务
+
 pnpm dev:infra                # 启动开发基础设施服务（PostgreSQL, Redis, ChromaDB, Nacos等）
 pnpm dev:infra:stop           # 停止开发基础设施服务
 pnpm check:env                # 检查开发环境工具（Node.js, pnpm, Docker等）
@@ -71,7 +71,6 @@ apps/
 ├── web/           # Vue 3 前端
 ├── service/       # NestJS 后端
 ├── ai-chat-service/  # AI 聊天服务（对话管理、LLM 集成）
-├── file-conversion/ # 文件转换服务（PDF、Docx、音频等格式转换）
 ```
 
 ## 子包 AGENTS.md
@@ -81,7 +80,7 @@ apps/
 - [apps/web/AGENTS.md](apps/web/AGENTS.md) - Vue 3 前端开发规范（含 SSE 通信规范）
 - [apps/service/AGENTS.md](apps/service/AGENTS.md) - NestJS 后端开发规范（含 SSE 通信规范）
 - [apps/ai-chat-service/AGENTS.md](apps/ai-chat-service/AGENTS.md) - AI 聊天服务开发规范（含 SSE 通信规范）
-- [apps/file-conversion/AGENTS.md](apps/file-conversion/AGENTS.md) - 文件转换服务开发规范
+
 
 ## SSE 通信规范
 

@@ -3,6 +3,7 @@ import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { ConversationService } from "../services/conversation.service.js";
 import { LLMService } from "../services/llm.service.js";
+import { ServiceApiService } from "../services/service-api.service.js";
 import { logger } from "../utils/logger.js";
 import {
   CreateConversationDto,
@@ -36,6 +37,7 @@ async function validateDto<T extends object>(
 export function createConversationRoutes(
   conversationService: ConversationService,
   llmService: LLMService,
+  serviceApiService: ServiceApiService,
 ): Router {
   const router = Router();
 
@@ -141,12 +143,23 @@ export function createConversationRoutes(
       let chunkCount = 0;
 
       try {
-        logger.debug({ conversationId: conversation.id, messageCount: messages.length }, 'Starting LLM stream');
-        for await (const chunk of llmService.streamComplete(
-          messages,
-          undefined,
-          body.files as Parameters<typeof llmService.streamComplete>[2],
-        )) {
+        const llmConfig = await serviceApiService.getDefaultLLMConfig();
+        const hasCustomConfig = llmConfig && llmConfig.apiKey;
+
+        logger.debug({ conversationId: conversation.id, messageCount: messages.length, hasCustomConfig }, 'Starting LLM stream');
+        
+        const streamIterator = hasCustomConfig
+          ? llmService.streamCompleteWithConfig(
+              messages,
+              {
+                ...llmConfig,
+                baseUrl: llmConfig.baseUrl || undefined,
+              } as Parameters<typeof llmService.streamCompleteWithConfig>[1],
+              body.files as Parameters<typeof llmService.streamCompleteWithConfig>[2],
+            )
+          : llmService.streamComplete(messages, undefined, body.files as Parameters<typeof llmService.streamComplete>[2]);
+
+        for await (const chunk of streamIterator) {
           if (chunk.content) {
             chunkCount++;
             fullContent += chunk.content;
@@ -397,7 +410,16 @@ export function createConversationRoutes(
       ];
 
       logger.debug({ conversationId: req.params["id"], messageCount: messages.length }, 'Calling LLM complete');
-      const response = await llmService.complete(messages, undefined, dto.files);
+      const llmConfig = await serviceApiService.getDefaultLLMConfig();
+      const hasCustomConfig = llmConfig && llmConfig.apiKey;
+      
+      const response = hasCustomConfig
+        ? await llmService.completeWithConfig(
+            messages,
+            { ...llmConfig, baseUrl: llmConfig.baseUrl || undefined } as Parameters<typeof llmService.completeWithConfig>[1],
+            dto.files,
+          )
+        : await llmService.complete(messages, undefined, dto.files);
 
       logger.debug({ conversationId: req.params["id"], responseLength: response.content.length }, 'LLM response received, saving assistant message');
       const assistantMessage = await conversationService.addMessage(
@@ -500,12 +522,20 @@ export function createConversationRoutes(
       let chunkCount = 0;
 
       try {
-        logger.debug({ conversationId: req.params["id"], messageCount: messages.length }, 'Starting LLM stream');
-        for await (const chunk of llmService.streamComplete(
-          messages,
-          undefined,
-          dto.files,
-        )) {
+        const llmConfig = await serviceApiService.getDefaultLLMConfig();
+        const hasCustomConfig = llmConfig && llmConfig.apiKey;
+
+        logger.debug({ conversationId: req.params["id"], messageCount: messages.length, hasCustomConfig }, 'Starting LLM stream');
+
+        const streamIterator = hasCustomConfig
+          ? llmService.streamCompleteWithConfig(
+              messages,
+              { ...llmConfig, baseUrl: llmConfig.baseUrl || undefined } as Parameters<typeof llmService.streamCompleteWithConfig>[1],
+              dto.files,
+            )
+          : llmService.streamComplete(messages, undefined, dto.files);
+
+        for await (const chunk of streamIterator) {
           if (chunk.content) {
             chunkCount++;
             fullContent += chunk.content;

@@ -89,7 +89,7 @@ export async function createApp(): Promise<Express> {
     });
   });
 
-  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService));
+  app.use('/api/ai/conversations', createConversationRoutes(conversationService, llmService, serviceApiService));
   app.use('/api/ai/text', createTextRoutes(llmService));
   app.use('/api/ai', createLlmRoutes(llmService));
   app.use('/api/ai/llm-configs', createLlMConfigRoutes(llmConfigService));

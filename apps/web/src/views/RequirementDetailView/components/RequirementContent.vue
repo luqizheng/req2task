@@ -5,15 +5,31 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, ListTodo } from "lucide-vue-next";
+import { CheckCircle2, Circle, ListTodo, Sparkles, Loader2 } from "lucide-vue-next";
+import { aiApi, type GeneratedUserStory } from "@/api/ai";
+import { toast } from "vue-sonner";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
+  projectId: string;
 }>();
 
 const emit = defineEmits<{
   (e: "description-update", description: string): void;
+  (e: "user-stories-updated"): void;
 }>();
 
 const isEditingDescription = ref(false);
@@ -36,6 +52,79 @@ const saveDescription = () => {
 const cancelEditingDescription = () => {
   editedDescription.value = props.requirement.description || "";
   isEditingDescription.value = false;
+};
+
+const isGeneratingUserStories = ref(false);
+const showUserStoryDialog = ref(false);
+const userStoryFeaturePoints = ref("");
+const userStoryContext = ref("");
+const generatedUserStories = ref<GeneratedUserStory[]>([]);
+
+const isGeneratingCriteria = ref<string | null>(null);
+const criteriaDialogUserStoryId = ref<string | null>(null);
+const criteriaContext = ref("");
+const showCriteriaDialog = ref(false);
+
+const handleGenerateUserStories = async () => {
+  if (!userStoryFeaturePoints.value.trim()) {
+    toast.error("请输入功能点描述");
+    return;
+  }
+
+  try {
+    isGeneratingUserStories.value = true;
+    const response = await aiApi.generateUserStoriesForRequirement(
+      props.requirement.id,
+      props.projectId,
+      userStoryFeaturePoints.value,
+      userStoryContext.value || undefined
+    );
+    
+    generatedUserStories.value = response.userStories;
+    toast.success(`成功生成 ${response.userStories.length} 个用户故事`);
+    emit("user-stories-updated");
+    showUserStoryDialog.value = false;
+    userStoryFeaturePoints.value = "";
+    userStoryContext.value = "";
+  } catch (error) {
+    console.error("Failed to generate user stories:", error);
+    toast.error("生成用户故事失败", {
+      description: error instanceof Error ? error.message : "请稍后重试",
+    });
+  } finally {
+    isGeneratingUserStories.value = false;
+  }
+};
+
+const openCriteriaDialog = (userStoryId: string) => {
+  criteriaDialogUserStoryId.value = userStoryId;
+  criteriaContext.value = "";
+  showCriteriaDialog.value = true;
+};
+
+const handleGenerateCriteria = async () => {
+  if (!criteriaDialogUserStoryId.value) return;
+
+  try {
+    isGeneratingCriteria.value = criteriaDialogUserStoryId.value;
+    const response = await aiApi.generateAcceptanceCriteriaForUserStory(
+      criteriaDialogUserStoryId.value,
+      criteriaContext.value || undefined
+    );
+    
+    toast.success(`成功生成 ${response.acceptanceCriteria.length} 个验收条件`);
+    emit("user-stories-updated");
+    showCriteriaDialog.value = false;
+    criteriaDialogUserStoryId.value = null;
+    criteriaContext.value = "";
+  } catch (error) {
+    console.error("Failed to generate acceptance criteria:", error);
+    toast.error("生成验收条件失败", {
+      description: error instanceof Error ? error.message : "请稍后重试",
+    });
+  } finally {
+    isGeneratingCriteria.value = null;
+  }
 };
 
 const criteriaTypeLabels: Record<string, string> = {
@@ -112,18 +201,69 @@ const getCriteriaTypeColor = (type: string) => {
       </CardContent>
     </Card>
 
-    <Card v-if="requirement.userStories && requirement.userStories.length > 0">
+    <Card>
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle class="text-lg flex items-center gap-2">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            用户故事 ({{ requirement.userStories.length }})
+            用户故事 ({{ requirement.userStories?.length || 0 }})
           </CardTitle>
+          <Dialog v-model:open="showUserStoryDialog">
+            <DialogTrigger as-child>
+              <Button variant="outline" size="sm" class="gap-2">
+                <Sparkles class="w-4 h-4" />
+                AI 生成
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>AI 生成用户故事</DialogTitle>
+                <DialogDescription>
+                  描述功能点，AI 将自动生成用户故事
+                </DialogDescription>
+              </DialogHeader>
+              <div class="space-y-4 py-4">
+                <div class="space-y-2">
+                  <Label for="feature-points">功能点描述 <span class="text-red-500">*</span></Label>
+                  <Textarea
+                    id="feature-points"
+                    v-model="userStoryFeaturePoints"
+                    placeholder="请描述需要实现的功能点，例如：用户登录功能，包括账号密码验证、记住登录状态..."
+                    class="min-h-[100px]"
+                  />
+                </div>
+                <div class="space-y-2">
+                  <Label for="context">附加上下文（可选）</Label>
+                  <Input
+                    id="context"
+                    v-model="userStoryContext"
+                    placeholder="补充项目背景、技术栈、约束条件等"
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  :disabled="isGeneratingUserStories"
+                  @click="showUserStoryDialog = false"
+                >
+                  取消
+                </Button>
+                <Button
+                  :disabled="isGeneratingUserStories || !userStoryFeaturePoints.trim()"
+                  @click="handleGenerateUserStories"
+                >
+                  <Loader2 v-if="isGeneratingUserStories" class="w-4 h-4 mr-2 animate-spin" />
+                  {{ isGeneratingUserStories ? '生成中...' : '生成用户故事' }}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </CardHeader>
-      <CardContent class="space-y-4">
+      <CardContent v-if="requirement.userStories && requirement.userStories.length > 0" class="space-y-4">
         <div
           v-for="story in requirement.userStories"
           :key="story.id"
@@ -149,7 +289,18 @@ const getCriteriaTypeColor = (type: string) => {
 
           <div v-if="story.acceptanceCriteria && story.acceptanceCriteria.length > 0">
             <Separator class="my-3" />
-            <p class="text-sm font-medium text-slate-700 mb-2">验收条件:</p>
+            <div class="flex items-center justify-between mb-2">
+              <p class="text-sm font-medium text-slate-700">验收条件:</p>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="gap-1 text-xs text-blue-600 hover:text-blue-700"
+                @click="openCriteriaDialog(story.id)"
+              >
+                <Sparkles class="w-3 h-3" />
+                AI 补充
+              </Button>
+            </div>
             <ul class="space-y-2">
               <li
                 v-for="criteria in story.acceptanceCriteria"
@@ -173,8 +324,67 @@ const getCriteriaTypeColor = (type: string) => {
               </li>
             </ul>
           </div>
+          <div v-else class="mt-3">
+            <Separator class="my-3" />
+            <Button
+              variant="outline"
+              size="sm"
+              class="gap-2"
+              @click="openCriteriaDialog(story.id)"
+            >
+              <Sparkles class="w-4 h-4" />
+              AI 生成验收条件
+            </Button>
+          </div>
         </div>
       </CardContent>
+      <CardContent v-else>
+        <div class="text-center py-8 text-slate-400">
+          <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          <p class="text-sm">暂无用户故事</p>
+          <p class="text-xs mt-1">点击上方"AI 生成"按钮创建用户故事</p>
+        </div>
+      </CardContent>
+
+      <Dialog v-model:open="showCriteriaDialog">
+        <DialogContent class="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>AI 生成验收条件</DialogTitle>
+            <DialogDescription>
+              描述功能上下文，AI 将自动生成验收条件
+            </DialogDescription>
+          </DialogHeader>
+          <div class="space-y-4 py-4">
+            <div class="space-y-2">
+              <Label for="criteria-context">附加上下文（可选）</Label>
+              <Textarea
+                id="criteria-context"
+                v-model="criteriaContext"
+                placeholder="补充验收标准、边界条件、特殊场景等"
+                class="min-h-[100px]"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              :disabled="isGeneratingCriteria !== null"
+              @click="showCriteriaDialog = false"
+            >
+              取消
+            </Button>
+            <Button
+              :disabled="isGeneratingCriteria !== null"
+              @click="handleGenerateCriteria"
+            >
+              <Loader2 v-if="isGeneratingCriteria !== null" class="w-4 h-4 mr-2 animate-spin" />
+              {{ isGeneratingCriteria !== null ? '生成中...' : '生成验收条件' }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Card>
 
     <Card v-if="requirement.children && requirement.children.length > 0">

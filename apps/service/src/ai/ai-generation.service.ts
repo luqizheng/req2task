@@ -8,6 +8,7 @@ import {
   Task,
   FeatureModule,
   RawRequirement,
+  AcceptanceCriteria,
 } from "@req2task/core";
 import { PromptService } from "@req2task/core";
 import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
@@ -33,6 +34,10 @@ export class AiGenerationService {
   constructor(
     @InjectRepository(Requirement)
     private requirementRepository: Repository<Requirement>,
+    @InjectRepository(UserStory)
+    private userStoryRepository: Repository<UserStory>,
+    @InjectRepository(AcceptanceCriteria)
+    private acceptanceCriteriaRepository: Repository<AcceptanceCriteria>,
     private readonly promptService: PromptService,
     private readonly llmClient: LLmClientService,
     private readonly rawRequirementService: RawRequirementService,
@@ -376,5 +381,48 @@ ${content}
     );
 
     return { modules, rawContent: result.content };
+  }
+
+  async generateAcceptanceCriteria(
+    userStoryId: string,
+    context?: string,
+  ): Promise<{ acceptanceCriteria: AcceptanceCriteria[]; rawContent: string }> {
+    const userStory = await this.userStoryRepository.findOne({
+      where: { id: userStoryId },
+    });
+
+    if (!userStory) {
+      throw new BadRequestException("User story not found");
+    }
+
+    const rendered = this.promptService.render("ACCEPTANCE_CRITERIA_GENERATION", {
+      context,
+      userStory: `作为${userStory.role}，我想要${userStory.goal}，以便于${userStory.benefit}`,
+    });
+
+    const result = await this.llmClient.generate({
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
+
+    const data = this.persistenceService.extractJsonArray(result.content);
+    const acceptanceCriteriaList: AcceptanceCriteria[] = [];
+
+    if (data && data.length > 0) {
+      for (const item of data) {
+        const criteria = this.acceptanceCriteriaRepository.create({
+          userStoryId,
+          criteriaType: item.criteriaType || "functional",
+          content: item.content,
+          testMethod: item.testMethod || null,
+        });
+        const saved = await this.acceptanceCriteriaRepository.save(criteria);
+        acceptanceCriteriaList.push(saved);
+      }
+    }
+
+    return { acceptanceCriteria: acceptanceCriteriaList, rawContent: result.content };
   }
 }

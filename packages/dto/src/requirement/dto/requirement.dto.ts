@@ -123,3 +123,26 @@ export class RequirementListResponseDto {
   page!: number;
   limit!: number;
 }
+
+export class UpdateRequirementDto {
+  @IsOptional()
+  @IsString()
+  title?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @IsOptional()
+  @IsEnum(Priority)
+  priority?: Priority;
+
+  @IsOptional()
+  @IsEnum(RequirementStatus)
+  status?: RequirementStatus;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  storyPoints?: number;
+}

@@ -45,6 +45,37 @@ export interface ConversationResponse {
   updatedAt: string;
 }
 
+export interface GeneratedUserStory {
+  id: string;
+  requirementId: string;
+  role: string;
+  goal: string;
+  benefit: string;
+  storyPoints: number;
+  createdAt: string;
+}
+
+export interface GeneratedTask {
+  id: string;
+  taskNo: string;
+  title: string;
+  description: string;
+  requirementId: string;
+  status: string;
+  priority: string;
+  estimatedHours: number;
+  createdAt: string;
+}
+
+export interface GeneratedAcceptanceCriteria {
+  id: string;
+  userStoryId: string;
+  criteriaType: string;
+  content: string;
+  testMethod: string | null;
+  createdAt: string;
+}
+
 export const aiApi = {
   chat: (data: ChatRequestDto) => {
     return api.post<ChatResponse>('/ai/chat', data);
@@ -71,10 +102,46 @@ export const aiApi = {
     );
   },
 
+  generateUserStoriesForRequirement: (
+    requirementId: string,
+    projectId: string,
+    featurePoints: string,
+    context?: string
+  ) => {
+    return api.post<{ userStories: GeneratedUserStory[]; rawContent: string }>(
+      `/ai/generation/user-stories/${requirementId}`,
+      { featurePoints, context },
+      { params: { projectId } }
+    );
+  },
+
+  generateTasksForRequirement: (
+    requirementId: string,
+    projectId: string,
+    featurePoints: string,
+    context?: string
+  ) => {
+    return api.post<{ tasks: GeneratedTask[]; rawContent: string }>(
+      `/ai/generation/tasks/${requirementId}`,
+      { featurePoints, context },
+      { params: { projectId } }
+    );
+  },
+
   generateAcceptanceCriteria: (requirementContent: string, configId?: string) => {
     return api.post<string[]>(
       '/ai/generate-acceptance-criteria',
       { requirementContent, configId }
+    );
+  },
+
+  generateAcceptanceCriteriaForUserStory: (
+    userStoryId: string,
+    context?: string
+  ) => {
+    return api.post<{ acceptanceCriteria: GeneratedAcceptanceCriteria[]; rawContent: string }>(
+      `/ai/generation/acceptance-criteria/${userStoryId}`,
+      { context }
     );
   },
 

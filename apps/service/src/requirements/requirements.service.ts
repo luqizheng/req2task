@@ -12,6 +12,7 @@ import {
   RequirementResponseDto,
   RequirementListResponseDto,
   ModuleSummaryDto,
+  UpdateRequirementDto,
 } from "@req2task/dto";
 import { UserStoriesService } from "./user-stories.service";
 import { AcceptanceCriteriaService } from "./acceptance-criteria.service";
@@ -225,9 +226,9 @@ export class RequirementsService {
     return this.toResponseDto(requirement);
   }
 
-  private async update(
+  async update(
     id: string,
-    updateDto: RequirementDto,
+    updateDto: UpdateRequirementDto,
   ): Promise<RequirementResponseDto> {
     const requirement = await this.requirementRepository.findOne({
       where: { id },

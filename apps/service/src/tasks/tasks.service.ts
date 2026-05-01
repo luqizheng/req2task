@@ -78,7 +78,7 @@ export class TasksService {
   ): Promise<TaskListResponseDto> {
     const [items, total] = await this.taskRepository.findAndCount({
       where: { requirementId },
-      relations: ['assignedTo', 'createdBy', 'dependencies'],
+      relations: ['assignedTo', 'createdBy'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -110,7 +110,7 @@ export class TasksService {
 
     const [items, total] = await this.taskRepository.findAndCount({
       where: requirementIds.map((id) => ({ requirementId: id })),
-      relations: ['assignedTo', 'createdBy', 'dependencies', 'requirement'],
+      relations: ['assignedTo', 'createdBy'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -152,7 +152,7 @@ export class TasksService {
 
     const [items, total] = await this.taskRepository.findAndCount({
       where: requirementIds.map((id) => ({ requirementId: id })),
-      relations: ['assignedTo', 'createdBy', 'dependencies', 'requirement'],
+      relations: ['assignedTo', 'createdBy'],
       skip: (page - 1) * limit,
       take: limit,
       order: { createdAt: 'DESC' },
@@ -169,7 +169,7 @@ export class TasksService {
   async findById(id: string): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({
       where: { id },
-      relations: ['assignedTo', 'createdBy', 'dependencies', 'dependents', 'requirement', 'replacedByTask'],
+      relations: ['assignedTo', 'createdBy'],
     });
 
     if (!task) {
@@ -182,7 +182,7 @@ export class TasksService {
   async update(id: string, updateDto: UpdateTaskDto): Promise<TaskResponseDto> {
     const task = await this.taskRepository.findOne({
       where: { id },
-      relations: ['assignedTo', 'createdBy', 'dependencies'],
+      relations: ['assignedTo', 'createdBy'],
     });
 
     if (!task) {

@@ -43,6 +43,15 @@ export class GenerateTasksDto {
   context?: string;
 }
 
+export class GenerateAcceptanceCriteriaDto {
+  @IsString()
+  userStoryId!: string;
+
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
 export class GenerateModulesDto {
   @IsString()
   requirements!: string;

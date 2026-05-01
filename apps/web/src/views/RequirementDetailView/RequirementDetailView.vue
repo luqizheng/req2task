@@ -18,8 +18,10 @@ import RequirementHeader from "./components/RequirementHeader.vue";
 import RequirementContent from "./components/RequirementContent.vue";
 import RequirementActions from "./components/RequirementActions.vue";
 import RequirementModules from "./components/RequirementModules.vue";
+import RequirementTasks from "./components/RequirementTasks.vue";
 import ConflictAlert from "./components/ConflictAlert.vue";
-import { ArrowLeft, User, AlertTriangle, History } from "lucide-vue-next";
+import ChangeHistoryCard from "./components/ChangeHistoryCard.vue";
+import { ArrowLeft, AlertTriangle, User } from "lucide-vue-next";
 import { formatDateTime } from "@/lib/utils";
 import { toast } from "vue-sonner";
 
@@ -215,7 +217,10 @@ onMounted(() => {
           <div class="lg:col-span-3">
             <RequirementContent
               :requirement="requirement"
+              :project-id="projectId"
               @description-update="handleDescriptionUpdate"
+              @user-stories-updated="fetchRequirement"
+              @tasks-updated="fetchRequirement"
             />
           </div>
 
@@ -233,6 +238,13 @@ onMounted(() => {
             />
 
             <RequirementModules :requirement="requirement" />
+
+            <RequirementTasks
+              v-if="requirement"
+              :requirement="requirement"
+              :project-id="projectId"
+              @tasks-updated="fetchRequirement"
+            />
 
             <Card>
               <CardHeader>
@@ -296,20 +308,10 @@ onMounted(() => {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle class="text-lg flex items-center gap-2">
-                  <History class="w-5 h-5" />
-                  变更历史
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div class="text-center py-8 text-slate-400">
-                  <History class="w-12 h-12 mx-auto mb-2 opacity-50" />
-                  <p class="text-sm">暂无变更历史</p>
-                </div>
-              </CardContent>
-            </Card>
+            <ChangeHistoryCard
+              v-if="requirement"
+              :requirement="requirement"
+            />
           </div>
         </div>
       </template>

@@ -14,6 +14,7 @@ import {
   GenerateUserStoriesDto,
   GenerateTasksDto,
   GenerateModulesDto,
+  GenerateAcceptanceCriteriaDto,
 } from "@req2task/dto";
 import { ProjectsService } from "src/projects/projects.service";
 
@@ -127,6 +128,33 @@ export class AiGenerationController {
           parentId: m.parentId,
           projectId: m.projectId,
           createdAt: m.createdAt,
+        })),
+        rawContent: result.rawContent,
+      },
+    };
+  }
+
+  @Post("acceptance-criteria/:userStoryId")
+  @HttpCode(HttpStatus.CREATED)
+  async generateAcceptanceCriteria(
+    @Param("userStoryId") userStoryId: string,
+    @Body() dto: GenerateAcceptanceCriteriaDto,
+  ) {
+    const result = await this.aiGenerationService.generateAcceptanceCriteria(
+      userStoryId,
+      dto.context,
+    );
+
+    return {
+      code: 0,
+      data: {
+        acceptanceCriteria: result.acceptanceCriteria.map((ac) => ({
+          id: ac.id,
+          userStoryId: ac.userStoryId,
+          criteriaType: ac.criteriaType,
+          content: ac.content,
+          testMethod: ac.testMethod,
+          createdAt: ac.createdAt,
         })),
         rawContent: result.rawContent,
       },

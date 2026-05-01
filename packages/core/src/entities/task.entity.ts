@@ -8,6 +8,7 @@ import {
   OneToMany,
   ManyToMany,
   JoinColumn,
+  JoinTable,
 } from 'typeorm';
 import { Requirement } from './requirement.entity';
 import { User } from './user.entity';
@@ -75,6 +76,11 @@ export class Task {
   parentTask!: Task | null;
 
   @ManyToMany(() => Task, (task) => task.dependents)
+  @JoinTable({
+    name: 'tasks_dependencies',
+    joinColumn: { name: 'task_id', referencedColumnName: 'id' },
+    inverseJoinColumn: { name: 'dependency_id', referencedColumnName: 'id' },
+  })
   dependencies!: Task[];
 
   @ManyToMany(() => Task, (task) => task.dependencies)

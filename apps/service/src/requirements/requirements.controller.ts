@@ -26,6 +26,7 @@ import {
   RequirementListResponseDto,
   ChangeHistoryResponseDto,
   AllowedTransitionsDto,
+  UpdateRequirementDto,
 } from "@req2task/dto";
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
 import { AiGenerationService } from "../ai/ai-generation.service";
@@ -113,9 +114,9 @@ export class RequirementsController {
   @Put("requirements/:id")
   async update(
     @Param("id") id: string,
-    @Body() dto: RequirementDto,
+    @Body() dto: UpdateRequirementDto,
   ): Promise<ApiResponse<RequirementResponseDto>> {
-    const result = await this.requirementsService.save(dto, id);
+    const result = await this.requirementsService.update(id, dto);
     return { code: 0, data: result };
   }
 

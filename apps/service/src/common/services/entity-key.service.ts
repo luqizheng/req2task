@@ -64,12 +64,19 @@ export class EntityKeyService {
         break;
     }
 
-    const result = await repository
+    const query = repository
       .createQueryBuilder('entity')
-      .select(`MAX(REGEXP_REPLACE(entity.entity_key, '${prefix}-', '', 'g'))`, 'maxSeq')
-      .where(`entity.entity_key LIKE :prefix`, { prefix: `${prefix}-%` })
-      .getRawOne();
+      .select(`MAX(SUBSTRING(entity.entity_key FROM '\\d+$')::int)`, 'maxSeq')
+      .where(`entity.entity_key LIKE :prefix`, { prefix: `${prefix}-%` });
+
+    console.warn('[getMaxSequence] prefix:', prefix, 'type:', type);
+    console.warn('[getMaxSequence] SQL:', query.getSql());
+
+    const result = await query.getRawOne();
+    console.warn('[getMaxSequence] raw result:', result);
+
     const maxSeq = result?.maxSeq ? parseInt(result.maxSeq, 10) : 0;
+    console.warn('[getMaxSequence] parsed maxSeq:', maxSeq);
     return isNaN(maxSeq) ? 0 : maxSeq;
   }
 

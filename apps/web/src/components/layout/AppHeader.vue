@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Input } from '@/components/ui/input'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import AppBreadcrumb from './AppBreadcrumb.vue'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -33,20 +34,22 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="flex w-full items-center justify-between">
-    <div class="max-w-md flex-1">
-      <Input
-        v-model="searchQuery"
-        type="search"
-        placeholder="全局搜索..."
-        class="w-full"
-      />
-    </div>
+  <div class="flex w-full items-center justify-between gap-4">
+    <AppBreadcrumb />
 
     <div class="flex items-center gap-4">
+      <div class="hidden w-64 md:block">
+        <Input
+          v-model="searchQuery"
+          type="search"
+          placeholder="全局搜索..."
+          class="w-full"
+        />
+      </div>
+
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Avatar class="h-9 w-9">
+          <Avatar class="h-9 w-9 cursor-pointer">
             <AvatarFallback class="bg-primary text-primary-foreground">
               {{ getInitials(userStore.userInfo?.displayName || 'User') }}
             </AvatarFallback>

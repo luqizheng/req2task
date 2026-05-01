@@ -35,6 +35,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { useForm } from "vee-validate";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CalendarIcon, FileText, HelpCircle, ListTodo, Sparkles, Save, Play, RotateCcw, Loader2 } from "lucide-vue-next";
@@ -65,6 +66,10 @@ const formSchema = toTypedSchema(
   })
 );
 
+const form = useForm({
+  validationSchema: formSchema,
+});
+
 const collectionTypeOptions = [
   { label: "会议", value: CollectionType.MEETING },
   { label: "访谈", value: CollectionType.INTERVIEW },
@@ -89,6 +94,9 @@ onMounted(async () => {
 });
 
 const handleSubmit = async () => {
+  const { valid } = await form.validate();
+  if (!valid) return;
+
   isSaving.value = true;
   try {
     await rawRequirementSubmitHelper.save();
@@ -113,8 +121,7 @@ const questionCount = computed(() => {
   return store.rawRequirement.questionAndAnswers.length;
 });
 const doneQuestionCount = computed(() => {
-  return store.rawRequirement.questionAndAnswers.filter((item) => item.answer)
-    .length;
+  return store.visibleQuestions.filter((item) => item.answer).length;
 });
 const handlerGenerateRequirements = async () => {
   isGenerating.value = true;
@@ -190,10 +197,9 @@ const collectTimeDate = computed<DateValue | undefined>({
                       <FormControl>
                         <Input
                           v-bind="componentField"
-                          :model-value="rawRequirement.title ?? ''"
                           placeholder="请输入标题"
                           class="h-9 flex-1"
-                          @update:model-value="(val) => rawRequirement.title = typeof val === 'string' ? val || null : null"
+                          @update:model-value="(val: string | number) => { componentField.onChange(val); rawRequirement.title = typeof val === 'string' ? val || null : null; }"
                         />
                       </FormControl>
                       <Button
@@ -218,9 +224,9 @@ const collectTimeDate = computed<DateValue | undefined>({
                       <FormControl>
                         <Input
                           v-bind="componentField"
-                          v-model="rawRequirement.source"
                           placeholder="名字/职位/部门"
                           class="h-9"
+                          @update:model-value="(val: string | number) => { componentField.onChange(val); rawRequirement.source = String(val); }"
                         />
                       </FormControl>
                       <FormMessage v-if="errorMessage" class="text-xs" />
@@ -233,7 +239,8 @@ const collectTimeDate = computed<DateValue | undefined>({
                       <FormControl>
                         <Select
                           v-bind="componentField"
-                          v-model="rawRequirement.collectionType"
+                          :model-value="rawRequirement.collectionType"
+                          @update:model-value="(val) => { componentField.onChange(val); rawRequirement.collectionType = val as CollectionType; }"
                         >
                           <SelectTrigger class="h-9">
                             <SelectValue :placeholder="getCollectionTypeLabel(rawRequirement.collectionType) || '选择采集方式'" />
@@ -286,9 +293,9 @@ const collectTimeDate = computed<DateValue | undefined>({
                     <FormControl>
                       <Textarea
                         v-bind="componentField"
-                        v-model="rawRequirement.content"
                         placeholder="请输入原始需求内容"
                         :rows="6"
+                        @update:model-value="(val: string | number) => { componentField.onChange(val); rawRequirement.content = String(val); }"
                       />
                     </FormControl>
                     <FormMessage v-if="errorMessage" class="text-xs" />

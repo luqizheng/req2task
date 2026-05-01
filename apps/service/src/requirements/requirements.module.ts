@@ -20,6 +20,7 @@ import { RawRequirementModule } from '../raw-requirement/raw-requirement.module'
 import { AiModule } from '../ai/ai.module';
 import { ProjectsModule } from 'src/projects/projects.module';
 import { EntityKeyModule } from '../common/entity-key.module';
+import { FeatureModulesModule } from '../feature-modules/feature-modules.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { EntityKeyModule } from '../common/entity-key.module';
     forwardRef(() => AiModule),
     forwardRef(() => ProjectsModule),
     EntityKeyModule,
+    FeatureModulesModule,
   ],
   controllers: [RequirementsController, UserStoriesController, AcceptanceCriteriaController],
   providers: [

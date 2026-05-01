@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { useForm } from 'vee-validate'
+import { useForm, useField } from 'vee-validate'
 import { toTypedSchema } from '@vee-validate/zod'
 import { z } from 'zod'
 import { Wand2, User, Lock, Mail, UserCircle } from 'lucide-vue-next'
@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { authApi } from '@/api/auth'
 
 const router = useRouter()
 const loading = ref(false)
@@ -27,7 +28,7 @@ const registerSchema = toTypedSchema(z.object({
   path: ['confirmPassword']
 }))
 
-const { values, errors, handleSubmit } = useForm({
+const { errors, handleSubmit } = useForm({
   validationSchema: registerSchema,
   initialValues: {
     username: '',
@@ -39,6 +40,13 @@ const { values, errors, handleSubmit } = useForm({
   }
 })
 
+const { value: username } = useField<string>('username')
+const { value: email } = useField<string>('email')
+const { value: displayName } = useField<string>('displayName')
+const { value: password } = useField<string>('password')
+const { value: confirmPassword } = useField<string>('confirmPassword')
+const { value: agree } = useField<boolean>('agree')
+
 const onSubmit = handleSubmit(async (values) => {
   if (!values.agree) {
     toast.warning('请先同意用户协议')
@@ -47,11 +55,17 @@ const onSubmit = handleSubmit(async (values) => {
   
   loading.value = true
   try {
-    console.log('注册:', values)
+    await authApi.register({
+      username: values.username,
+      email: values.email,
+      displayName: values.displayName || values.username,
+      password: values.password,
+    })
     toast.success('注册成功，请登录')
     router.push('/login')
-  } catch (error) {
-    toast.error('注册失败')
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : '注册失败'
+    toast.error(message)
   } finally {
     loading.value = false
   }
@@ -88,7 +102,7 @@ const goToLogin = () => {
               <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 id="username"
-                v-model="values.username"
+                v-model="username"
                 placeholder="用户名（3-20个字符）"
                 class="pl-10 h-11"
                 :class="{ 'border-red-500': errors.username }"
@@ -103,7 +117,7 @@ const goToLogin = () => {
               <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 id="email"
-                v-model="values.email"
+                v-model="email"
                 type="email"
                 placeholder="请输入邮箱"
                 class="pl-10 h-11"
@@ -119,7 +133,7 @@ const goToLogin = () => {
               <UserCircle class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 id="displayName"
-                v-model="values.displayName"
+                v-model="displayName"
                 placeholder="显示名称（可选）"
                 class="pl-10 h-11"
               />
@@ -132,8 +146,9 @@ const goToLogin = () => {
               <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 id="password"
-                v-model="values.password"
+                v-model="password"
                 type="password"
+                autocomplete="new-password"
                 placeholder="密码（至少6位）"
                 class="pl-10 h-11"
                 :class="{ 'border-red-500': errors.password }"
@@ -148,8 +163,9 @@ const goToLogin = () => {
               <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <Input
                 id="confirmPassword"
-                v-model="values.confirmPassword"
+                v-model="confirmPassword"
                 type="password"
+                autocomplete="new-password"
                 placeholder="请再次输入密码"
                 class="pl-10 h-11"
                 :class="{ 'border-red-500': errors.confirmPassword }"
@@ -159,7 +175,7 @@ const goToLogin = () => {
           </div>
 
           <div class="flex items-start space-x-2">
-            <Checkbox id="agree" v-model="values.agree" />
+            <Checkbox id="agree" v-model="agree" />
             <Label for="agree" class="text-sm text-slate-600 cursor-pointer leading-normal">
               我已阅读并同意
               <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm">《用户协议》</Button>

@@ -11,6 +11,7 @@ import {
   AcceptanceCriteria,
   RawRequirement,
   Task,
+  Notification,
 } from "@req2task/core";
 
 @Module({

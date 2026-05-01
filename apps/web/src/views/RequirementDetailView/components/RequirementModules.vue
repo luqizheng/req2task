@@ -7,7 +7,7 @@ import { FolderOpen, Layers } from "lucide-vue-next";
 const props = defineProps<{
   requirement: RequirementResponseDto;
 }>();
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 void props;
 </script>
 

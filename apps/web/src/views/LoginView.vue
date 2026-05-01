@@ -54,6 +54,10 @@ const onSubmit = handleSubmit(async (values) => {
     loading.value = false
   }
 })
+
+const goToRegister = () => {
+  router.push('/register')
+}
 </script>
 
 <template>
@@ -129,7 +133,7 @@ const onSubmit = handleSubmit(async (values) => {
           </div>
           <p class="text-sm text-slate-500">
             还没有账号？
-            <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm">
+            <Button variant="link" class="text-blue-600 hover:text-blue-700 p-0 h-auto text-sm" @click="goToRegister">
               立即注册
             </Button>
           </p>

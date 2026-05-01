@@ -12,7 +12,7 @@ const props = defineProps<{
   conflicts: ConflictDto[];
   isLoading?: boolean;
 }>();
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+ 
 void props;
 
 const emit = defineEmits<{

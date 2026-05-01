@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-04-17
+last_updated: 2026-05-02
 status: active
 owner: req2task团队
 ---
@@ -8,7 +8,7 @@ owner: req2task团队
 
 ## 1. 技术栈
 
-- **包管理器**: pnpm@9.0.0
+- **包管理器**: pnpm@10.33.0
 - **前端**: Vue 3 + Vite + Pinia + Vue Router
 - **后端**: NestJS + TypeORM + PostgreSQL
 - **缓存**: Redis
@@ -32,7 +32,14 @@ owner: req2task团队
 │  │  auth │ users │ projects │ requirements │ tasks │ AI  │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └──────┬─────────────────────────────────────────────────────────┘
-       │
+       │ HTTP/SSE
+       ▼
+┌──────┬─────────────────────────────────────────────────────────┐
+│      │              AI Chat Service                           │
+│      │            (apps/ai-chat-service)                      │
+│      │         LLM 对话 / Stream 响应                         │
+│      └─────────────────────────────────────────────────────────┘
+│
 ┌──────▼─────────────────────────────────────────────────────────┐
 │                     数据层                                      │
 ├──────────┬──────────┬──────────┬──────────────────────────────┤
@@ -46,19 +53,20 @@ owner: req2task团队
 ```
 req2task/
 ├── apps/
-│   ├── web/           # Vue 3 前端
-│   └── service/       # NestJS 后端
+│   ├── web/                # Vue 3 前端
+│   ├── service/            # NestJS 后端
+│   └── ai-chat-service/    # AI 聊天服务
 ├── packages/
-│   ├── core/          # 后端核心业务代码（实体、服务）
-│   └── dto/           # 前后端共享 DTO 定义
-├── docs/              # 项目文档
-│   ├── architecture/  # 架构文档
-│   ├── conventions/   # 规范文档
-│   ├── design/        # 设计文档
-│   ├── prd/           # PRD 文档
-│   ├── plans/         # 计划文档
-│   └── reference/     # 参考文档
-└── .agents/           # Agent 配置和规则
+│   ├── core/               # 后端核心业务代码（实体、服务）
+│   └── dto/                # 前后端共享 DTO 定义
+├── docs/                   # 项目文档
+│   ├── architecture/       # 架构文档
+│   ├── conventions/        # 规范文档
+│   ├── design/             # 设计文档
+│   ├── prd/                # PRD 文档
+│   ├── plans/              # 计划文档
+│   └── reference/          # 参考文档
+└── .agents/                # Agent 配置和规则
 ```
 
 ## 4. 模块依赖关系
@@ -109,6 +117,7 @@ req2task/
 | 需求管理 | 需求全生命周期 | 原始需求收集、结构化转换、评审审批、版本控制 |
 | 任务管理 | 任务执行跟踪 | 任务分解、分配、状态流转、依赖管理 |
 | AI服务 | 智能辅助决策 | 需求生成、任务拆解、工作估算、相似推荐 |
+| AI Chat | 对话交互 | LLM 对话、流式响应、上下文管理 |
 | 变更追溯 | 变更全程记录 | 变更日志、版本对比、影响分析、基线管理 |
 | 验收管理 | 质量把控 | 验收条件定义、测试关联、执行跟踪 |
 | 报表中心 | 数据可视化 | 进度看板、燃尽图、趋势分析 |
@@ -128,5 +137,3 @@ req2task/
 | TaskDependency | 任务依赖 | prerequisiteTaskId, dependentTaskId |
 | ProjectMember | 项目参与者 | projectId, userId, role |
 | RequirementChangeLog | 变更追溯 | requirementId, changeType, oldValue, newValue |
-
-

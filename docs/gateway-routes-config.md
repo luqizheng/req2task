@@ -6,7 +6,7 @@
 |--------|------------|------|---------|
 | 主服务 | `req2task.service` | 4000 | /api |
 | AI聊天服务 | `req2task.ai-chat-service` | 4001 | /api |
-| 文件转换服务 | `req2task.file-conversion` | 4002 | /api |
+
 
 ## 路由规则
 
@@ -35,15 +35,6 @@
 | `/api/ai/text/*` | 文本处理 | text.routes.js |
 | `/api/llm-configs/*` | LLM配置 | llm-config.routes.js |
 | `/api/ai/llm-configs/*` | LLM配置 | llm-config.routes.js |
-
-### File Conversion Service
-
-| 路由前缀 | 功能模块 | 文件 |
-|---------|---------|------|
-| `/api/convert/*` | 文件转换 | convert.routes.js |
-| `/api/convert/sync` | 同步转换 | - |
-| `/api/convert/async` | 异步转换 | - |
-| `/api/convert/supported-types` | 支持的类型 | - |
 
 ## 完整配置示例
 

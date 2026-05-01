@@ -3,7 +3,6 @@
   "defaultStrategy": "roundRobin",
   "strategies": {
     "req2task.service": "weightedRoundRobin",
-    "req2task.ai-chat-service": "weightedRandom",
-    "req2task.file-conversion": "roundRobin"
+    "req2task.ai-chat-service": "weightedRandom"
   }
 }

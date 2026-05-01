@@ -8,7 +8,6 @@
 |------|------|
 | [overview.md](overview.md) | 系统架构概览 |
 | [ai-chat-service.md](ai-chat-service.md) | AI Chat Service 详细设计 |
-| [file-conversion-service.md](file-conversion-service.md) | File Conversion Service 详细设计 |
 | [service-communication.md](service-communication.md) | 服务间通信设计 |
 | [deployment.md](deployment.md) | 部署配置 |
 
@@ -24,24 +23,22 @@
                                  │ HTTP / SSE
                                  ▼
 ┌─────────────────────────────────────────────────────────────────────────┐
-│                    API Gateway / Main Service                           │
-│                        (NestJS)                                        │
+│                        Main Service (NestJS)                            │
 │  ┌──────────────┐ ┌──────────────┐ ┌──────────────┐ ┌──────────────┐  │
 │  │   Auth       │ │  Projects    │ │ Requirements │ │  Collections │  │
 │  │   Module     │ │   Module     │ │   Module     │ │   Module     │  │
 │  └──────────────┘ └──────────────┘ └──────────────┘ └──────────────┘  │
 └────────────────────────────────┬────────────────────────────────────────┘
                                  │ HTTP / SSE
-              ┌──────────────────┴──────────────────┐
-              ▼                                     ▼
-┌─────────────────────────┐           ┌─────────────────────────┐
-│    AI Chat Service      │           │  File Conversion Svc    │
-│    (独立 HTTP 服务)      │           │    (独立 HTTP 服务)      │
-│                         │           │                        │
-│  • LLM 对话             │           │  • PDF → TXT           │
-│  • LLM 配置管理          │           │  • DOCX → TXT          │
-│  • Stream 响应          │           │  • Audio → TXT         │
-└─────────────────────────┘           └─────────────────────────┘
+                                 ▼
+┌─────────────────────────────────────────────────────────────────────────┐
+│                        AI Chat Service                                  │
+│                           (独立 HTTP 服务)                              │
+│                                                                         │
+│  • LLM 对话                                                            │
+│  • LLM 配置管理                                                         │
+│  • Stream 响应                                                          │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -71,10 +68,6 @@
 
 详见 [ai-chat-service.md](ai-chat-service.md)
 
-### 2.3 File Conversion Service
-
-详见 [file-conversion-service.md](file-conversion-service.md)
-
 ---
 
 ## 3. 服务间通信
@@ -96,8 +89,7 @@ req2task/
 ├── apps/
 │   ├── web/                 # Vue 3 前端
 │   ├── service/             # NestJS 主服务
-│   ├── ai-chat-service/     # AI Chat 独立服务
-│   └── file-conversion/     # 文件转换服务
+│   └── ai-chat-service/     # AI Chat 独立服务
 ├── packages/
 │   ├── core/                # 共享实体、服务
 │   ├── dto/                 # 共享 DTO

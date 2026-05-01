@@ -177,17 +177,6 @@
       "isRegex": false
     },
     {
-      "id": "convert",
-      "name": "File Conversion Service",
-      "priority": 10,
-      "serviceName": "req2task.file-conversion",
-      "pathPattern": "/api/convert/*",
-      "methods": ["ALL"],
-      "targetService": "req2task.file-conversion",
-      "targetPort": 4002,
-      "isRegex": false
-    },
-    {
       "id": "health",
       "name": "Health Check",
       "priority": 100,

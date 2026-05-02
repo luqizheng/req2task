@@ -50,6 +50,7 @@
     "@swc/core": "^1.15.26",
     "axios": "catalog:",
     "chromadb": "^1.8.1",
+    "chromadb-default-embed": "^2.14.0",
     "mammoth": "catalog:",
     "openai": "catalog:",
     "pdf-parse": "catalog:",

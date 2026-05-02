@@ -18,7 +18,7 @@ import {
 } from "@req2task/dto";
 import { ProjectsService } from "src/projects/projects.service";
 
-@Controller("ai/generation")
+@Controller("llm/generation")
 export class AiGenerationController {
   private readonly logger = new Logger(AiGenerationController.name);
 

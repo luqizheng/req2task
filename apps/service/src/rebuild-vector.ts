@@ -73,7 +73,7 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
       documents.push({
         id: `requirement:${req.id}`,
         content,
-        metadata: { projectId: req.projectId, moduleId: req.moduleId || undefined, type: 'requirement' },
+        metadata: { projectId: req.projectId, moduleId: req.moduleId || undefined, type: 'requirement' } as Record<string, unknown>,
       });
     }
 
@@ -82,7 +82,7 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
       documents.push({
         id: `raw_requirement:${rr.id}`,
         content,
-        metadata: { projectId: rr.projectId, type: 'raw_requirement' },
+        metadata: { projectId: rr.projectId, type: 'raw_requirement' } as Record<string, unknown>,
       });
     }
 

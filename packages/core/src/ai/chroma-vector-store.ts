@@ -48,6 +48,7 @@ export class ChromaVectorStore implements VectorStore {
       this.collection = await this.client.getOrCreateCollection({
         name: this.collectionName,
         metadata: { description: `Vector store for ${this.collectionName}` },
+        embeddingFunction: this.embeddingFunction,
       });
       console.warn(`Connected to ChromaDB collection: ${this.collectionName}`);
     } catch (error) {
@@ -63,7 +64,7 @@ export class ChromaVectorStore implements VectorStore {
 
     const ids = documents.map((d) => d.id);
     const texts = documents.map((d) => d.content);
-    const metadatas = documents.map((d) => d.metadata || {});
+    const metadatas = documents.map((d) => d.metadata || {}) as Record<string, string | number | boolean>[];
 
     await this.collection.add({
       ids,

@@ -48,6 +48,9 @@ export class RawRequirement {
   @Column({ name: 'original_content', type: 'text' })
   originalContent!: string;
 
+  @Column({ name: 'clarified_content', type: 'text', nullable: true })
+  clarifiedContent!: string | null;
+
   @Column({
     type: 'enum',
     enum: RawRequirementStatus,

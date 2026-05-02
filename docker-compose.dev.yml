@@ -113,7 +113,7 @@ services:
       - PERSIST_DIRECTORY=/chroma/chroma
       - ANONYMIZED_TELEMETRY=FALSE
       - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
-      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_AUTH_TOKEN}
+      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_AUTH_TOKEN:-default-token-for-dev}
       - CHROMA_SERVER_AUTHZ_PROVIDER=chromadb.auth.basic_authz.BasicAuthorizationServerProvider
     # healthcheck:
     #   test: ["CMD", "curl", "-f", "http://chromadb:8000/api/v2/heartbeat"]

@@ -26,6 +26,7 @@ import ProjectRequirementsCard from "./components/ProjectRequirementsCard.vue";
 import ProjectTasksCard from "./components/ProjectTasksCard.vue";
 import ProjectBaselinesCard from "./components/ProjectBaselinesCard.vue";
 import ProjectRawRequirementsCard from "./components/ProjectRawRequirementsCard.vue";
+import VectorRebuildCard from "./components/VectorRebuildCard.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -257,11 +258,12 @@ onMounted(() => {
             <ProjectRawRequirementsCard :project-id="projectId" />
           </TabsContent>
 
-          <TabsContent value="settings" class="mt-6">
+          <TabsContent value="settings" class="mt-6 space-y-6">
             <ProjectInfoCard
               :project="project"
               :is-settings="true"
             />
+            <VectorRebuildCard :project-id="projectId" />
           </TabsContent>
         </Tabs>
       </template>

@@ -79,6 +79,12 @@ export class Requirement {
   @OneToMany(() => Requirement, (req) => req.parent)
   children!: Requirement[];
 
+  @Column({ name: 'project_id', type: 'uuid' })
+  projectId!: string;
+
+  @Column({ name: 'module_id', type: 'uuid', nullable: true })
+  moduleId!: string | null;
+
   @Column({ name: 'source_raw_requirement_id', type: 'uuid', nullable: true })
   sourceRawRequirementId!: string | null;
 

@@ -406,7 +406,7 @@ export class AiPersistenceService {
       projectId,
     });
 
-    const saved = await manager.save(module);
+    const saved = await manager.save<FeatureModule>(module);
 
     const children = data.children;
     if (Array.isArray(children)) {

@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from "typeorm";
 
-export class Init1777607203498 implements MigrationInterface {
-    name = 'Init1777607203498'
+export class Init1777741892659 implements MigrationInterface {
+    name = 'Init1777741892659'
 
     public async up(queryRunner: QueryRunner): Promise<void> {
         await queryRunner.query(`CREATE TYPE "public"."conversations_status_enum" AS ENUM('active', 'archived')`);

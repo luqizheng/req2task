@@ -1,4 +1,4 @@
-import type { ChatRequestDto, CreateRawRequirementDto } from '@req2task/dto';
+import type { ChatRequestDto, CreateRawRequirementDto, RebuildVectorRequestDto, RebuildVectorResponseDto } from '@req2task/dto';
 import api from './axios';
 
 export interface ChatResponse {
@@ -109,7 +109,7 @@ export const aiApi = {
     context?: string
   ) => {
     return api.post<{ userStories: GeneratedUserStory[]; rawContent: string }>(
-      `/ai/generation/user-stories/${requirementId}`,
+      `/llm/generation/user-stories/${requirementId}`,
       { featurePoints, context },
       { params: { projectId } }
     );
@@ -122,7 +122,7 @@ export const aiApi = {
     context?: string
   ) => {
     return api.post<{ tasks: GeneratedTask[]; rawContent: string }>(
-      `/ai/generation/tasks/${requirementId}`,
+      `/llm/generation/tasks/${requirementId}`,
       { featurePoints, context },
       { params: { projectId } }
     );
@@ -140,7 +140,7 @@ export const aiApi = {
     context?: string
   ) => {
     return api.post<{ acceptanceCriteria: GeneratedAcceptanceCriteria[]; rawContent: string }>(
-      `/ai/generation/acceptance-criteria/${userStoryId}`,
+      `/llm/generation/acceptance-criteria/${userStoryId}`,
       { context }
     );
   },
@@ -163,6 +163,10 @@ export const aiApi = {
       `/ai/raw-requirements/${id}/generate`,
       { configId }
     );
+  },
+
+  rebuildVector: (data: RebuildVectorRequestDto) => {
+    return api.post<RebuildVectorResponseDto>('/llm/vector/rebuild', data);
   },
 };
 

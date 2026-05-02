@@ -34,7 +34,7 @@ export class RequirementVectorService implements OnModuleInit {
     const document: VectorDocument = {
       id: `requirement:${requirement.id}`,
       content,
-      metadata,
+      metadata: metadata as unknown as Record<string, unknown>,
     };
 
     await this.vectorStore.add([document]);
@@ -50,7 +50,7 @@ export class RequirementVectorService implements OnModuleInit {
     const document: VectorDocument = {
       id: `raw_requirement:${rawRequirement.id}`,
       content,
-      metadata,
+      metadata: metadata as unknown as Record<string, unknown>,
     };
 
     await this.vectorStore.add([document]);
@@ -106,7 +106,7 @@ export class RequirementVectorService implements OnModuleInit {
       documents.push({
         id: `requirement:${req.id}`,
         content: this.buildRequirementContent(req),
-        metadata: { projectId: req.projectId, moduleId: req.moduleId || undefined, type: 'requirement' },
+        metadata: { projectId: req.projectId, moduleId: req.moduleId || undefined, type: 'requirement' } as Record<string, unknown>,
       });
     }
 
@@ -115,7 +115,7 @@ export class RequirementVectorService implements OnModuleInit {
       documents.push({
         id: `raw_requirement:${rr.id}`,
         content,
-        metadata: { projectId: rr.projectId, type: 'raw_requirement' },
+        metadata: { projectId: rr.projectId, type: 'raw_requirement' } as Record<string, unknown>,
       });
     }
 

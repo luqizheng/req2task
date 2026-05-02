@@ -1,7 +1,7 @@
 import { Module, forwardRef, OnModuleInit } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { HttpModule } from '@nestjs/axios';
-import { ConfigService } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement, ChromaVectorStore } from '@req2task/core';
 import { PromptModule } from '@req2task/core';
 import { AiService } from './ai.service';
@@ -12,6 +12,7 @@ import { RequirementVectorService } from './requirement-vector.service';
 import { RequirementRelationDetectionService } from './requirement-relation-detection.service';
 import { AiGenerationController } from './ai-generation.controller';
 import { AiRawRequirementController } from './ai-raw-requirement.controller';
+import { AiVectorController } from './ai-vector.controller';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { EntityKeyModule } from '../common/entity-key.module';
@@ -19,6 +20,7 @@ import { createChromaVectorStore, initializeVectorStore } from './vector-store.p
 
 @Module({
   imports: [
+    ConfigModule,
     TypeOrmModule.forFeature([Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement]),
     HttpModule,
     PromptModule,
@@ -26,7 +28,7 @@ import { createChromaVectorStore, initializeVectorStore } from './vector-store.p
     ProjectsModule,
     EntityKeyModule,
   ],
-  controllers: [AiGenerationController, AiRawRequirementController],
+  controllers: [AiGenerationController, AiRawRequirementController, AiVectorController],
   providers: [
     {
       provide: ChromaVectorStore,

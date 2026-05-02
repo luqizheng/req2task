@@ -23,6 +23,7 @@ import {
   TaskPriority,
   NotificationType,
   CriteriaType,
+  UserRole,
 } from "@req2task/dto";
 
 @Injectable()
@@ -40,15 +41,16 @@ export class SeedService {
     try {
       this.logger.log("Starting database seed...");
 
-      const user = await this.getOrCreateDefaultUser(queryRunner);
-      const project = await this.createProject(queryRunner, user.id);
+      const users = await this.createUsers(queryRunner);
+      const adminUser = users[0];
+      const project = await this.createProject(queryRunner, adminUser.id);
       await this.initEntityKeyCounters(queryRunner, project.projectKey);
       const modules = await this.createFeatureModules(queryRunner, project.id);
-      const requirements = await this.createRequirements(queryRunner, project.projectKey, modules, user.id);
-      await this.createUserStories(queryRunner, requirements, user.id);
-      await this.createRawRequirements(queryRunner, project.id, user.id);
-      await this.createTasks(queryRunner, project.projectKey, requirements, user.id);
-      await this.createNotifications(queryRunner, user.id);
+      const requirements = await this.createRequirements(queryRunner, project, modules, adminUser.id);
+      await this.createUserStories(queryRunner, requirements, adminUser.id);
+      await this.createRawRequirements(queryRunner, project, adminUser.id);
+      await this.createTasks(queryRunner, project.projectKey, requirements, users);
+      await this.createNotifications(queryRunner, users);
 
       await queryRunner.commitTransaction();
       this.logger.log("Database seed completed successfully!");
@@ -94,43 +96,73 @@ export class SeedService {
     return `${prefix}-${counter}`;
   }
 
-  private async getOrCreateDefaultUser(
-    queryRunner: any
-  ): Promise<{ id: string }> {
-    let user = await queryRunner.manager.findOne(User, {
-      where: { username: "admin" },
-    });
-
-    if (!user) {
-      user = queryRunner.manager.create(User, {
+  private async createUsers(queryRunner: any): Promise<User[]> {
+    const usersData = [
+      {
         username: "admin",
         email: "admin@example.com",
-        passwordHash: "$2b$10$rQZ5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v",
-        displayName: "Administrator",
-        role: 'admin',
-      });
-      await queryRunner.manager.save(user);
-      this.logger.log("Created default admin user");
-    }
+        displayName: "系统管理员",
+        role: UserRole.ADMIN,
+      },
+      {
+        username: "pm",
+        email: "pm@example.com",
+        displayName: "产品经理",
+        role: UserRole.PROJECT_MANAGER,
+      },
+      {
+        username: "dev1",
+        email: "dev1@example.com",
+        displayName: "开发工程师-张三",
+        role: UserRole.USER,
+      },
+      {
+        username: "dev2",
+        email: "dev2@example.com",
+        displayName: "开发工程师-李四",
+        role: UserRole.USER,
+      },
+      {
+        username: "analyst",
+        email: "analyst@example.com",
+        displayName: "需求分析师",
+        role: UserRole.USER,
+      },
+    ];
 
-    return user;
+    const users: User[] = [];
+    for (const userData of usersData) {
+      let user = await queryRunner.manager.findOne(User, {
+        where: { username: userData.username },
+      });
+
+      if (!user) {
+        user = queryRunner.manager.create(User, {
+          ...userData,
+          passwordHash: "$2b$10$rQZ5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v5Z5x8v",
+        });
+        await queryRunner.manager.save(user);
+        this.logger.log(`Created user: ${userData.displayName}`);
+      } else {
+        this.logger.log(`User ${userData.displayName} already exists, skipping...`);
+      }
+      users.push(user);
+    }
+    return users;
   }
 
-  private async createProject(
-    queryRunner: any,
-    ownerId: string
-  ): Promise<Project> {
+  private async createProject(queryRunner: any, ownerId: string): Promise<Project> {
     let project = await queryRunner.manager.findOne(Project, {
       where: { projectKey: "REQ2TASK" },
     });
 
     if (!project) {
       project = queryRunner.manager.create(Project, {
-        name: "req2task",
+        name: "req2task 需求管理系统",
         projectKey: "REQ2TASK",
         description:
-          "需求转任务系统 - 软件需求管理系统，支持需求全生命周期管理、多维度信息关联、AI辅助需求生成、变更追溯、项目进度可视化和项目知识库构建",
-        status: ProjectStatus.PLANNING,
+          "需求转任务系统 - 软件需求管理系统，支持需求全生命周期管理、多维度信息关联、AI辅助需求生成、变更追溯、项目进度可视化和项目知识库构建，为项目经理提供决策支持。",
+        status: ProjectStatus.ACTIVE,
         startDate: new Date("2024-01-01"),
         endDate: new Date("2024-12-31"),
         ownerId,
@@ -144,46 +176,49 @@ export class SeedService {
     return project;
   }
 
-  private async createFeatureModules(
-    queryRunner: any,
-    projectId: string
-  ): Promise<Map<string, FeatureModule>> {
+  private async createFeatureModules(queryRunner: any, projectId: string): Promise<Map<string, FeatureModule>> {
     const moduleConfigs = [
       {
         name: "需求管理",
         moduleKey: "REQ-MGMT",
         description: "需求的全生命周期管理，包括需求的创建、编辑、审核、变更、追踪和归档",
         sort: 1,
+        keywords: ["需求", "requirement", "功能", "feature"],
       },
       {
         name: "任务管理",
         moduleKey: "TASK-MGMT",
         description: "任务的全生命周期管理，支持任务拆解、分配、执行和验收",
         sort: 2,
+        keywords: ["任务", "task", "工作", "work"],
       },
       {
         name: "AI辅助",
         moduleKey: "AI-ASSIST",
-        description: "AI辅助需求分析和任务生成功能",
+        description: "AI辅助需求分析和任务生成功能，包括需求分析、任务拆分、影响分析等",
         sort: 3,
+        keywords: ["AI", "智能", "分析", "生成"],
       },
       {
         name: "项目管理",
         moduleKey: "PROJ-MGMT",
-        description: "项目整体管理和进度可视化",
+        description: "项目整体管理和进度可视化，包括成员管理、进度追踪、报表统计",
         sort: 4,
+        keywords: ["项目", "project", "进度", "管理"],
       },
       {
         name: "用户管理",
         moduleKey: "USER-MGMT",
-        description: "用户账户和权限管理",
+        description: "用户账户和权限管理，支持角色分配和权限控制",
         sort: 5,
+        keywords: ["用户", "user", "权限", "角色"],
       },
       {
         name: "知识库",
         moduleKey: "KNOWLEDGE",
-        description: "项目知识库构建和维护",
+        description: "项目知识库构建和维护，支持文档管理、检索和关联",
         sort: 6,
+        keywords: ["文档", "知识", "knowledge", "文档管理"],
       },
     ];
 
@@ -198,6 +233,7 @@ export class SeedService {
         module = queryRunner.manager.create(FeatureModule, {
           ...config,
           projectId,
+          aliases: [config.name, config.moduleKey],
         });
         await queryRunner.manager.save(module);
         this.logger.log(`Created module: ${config.name}`);
@@ -213,7 +249,7 @@ export class SeedService {
 
   private async createRequirements(
     queryRunner: any,
-    projectKey: string,
+    project: Project,
     modules: Map<string, FeatureModule>,
     userId: string
   ): Promise<Requirement[]> {
@@ -221,34 +257,218 @@ export class SeedService {
       moduleKey: string;
       title: string;
       priority: Priority;
-      description?: string;
+      status: RequirementStatus;
+      description: string;
+      storyPoints: number;
     }> = [
-      { moduleKey: "REQ-MGMT", title: "需求CRUD操作", priority: Priority.HIGH },
-      { moduleKey: "REQ-MGMT", title: "需求状态流转", priority: Priority.HIGH },
-      { moduleKey: "REQ-MGMT", title: "需求版本管理", priority: Priority.MEDIUM },
-      { moduleKey: "REQ-MGMT", title: "需求变更记录", priority: Priority.HIGH },
-      { moduleKey: "REQ-MGMT", title: "需求优先级管理", priority: Priority.MEDIUM },
-      { moduleKey: "REQ-MGMT", title: "需求导入导出", priority: Priority.LOW },
-      { moduleKey: "TASK-MGMT", title: "任务CRUD操作", priority: Priority.HIGH },
-      { moduleKey: "TASK-MGMT", title: "任务分配", priority: Priority.HIGH },
-      { moduleKey: "TASK-MGMT", title: "任务状态流转", priority: Priority.HIGH },
-      { moduleKey: "TASK-MGMT", title: "任务进度追踪", priority: Priority.MEDIUM },
-      { moduleKey: "TASK-MGMT", title: "任务依赖关系", priority: Priority.MEDIUM },
-      { moduleKey: "AI-ASSIST", title: "AI需求分析", priority: Priority.HIGH },
-      { moduleKey: "AI-ASSIST", title: "AI任务拆分", priority: Priority.HIGH },
-      { moduleKey: "AI-ASSIST", title: "AI需求补全", priority: Priority.MEDIUM },
-      { moduleKey: "AI-ASSIST", title: "AI变更影响分析", priority: Priority.MEDIUM },
-      { moduleKey: "AI-ASSIST", title: "多模型支持", priority: Priority.MEDIUM },
-      { moduleKey: "PROJ-MGMT", title: "项目CRUD操作", priority: Priority.HIGH },
-      { moduleKey: "PROJ-MGMT", title: "项目成员管理", priority: Priority.HIGH },
-      { moduleKey: "PROJ-MGMT", title: "项目进度仪表盘", priority: Priority.MEDIUM },
-      { moduleKey: "PROJ-MGMT", title: "项目甘特图", priority: Priority.LOW },
-      { moduleKey: "USER-MGMT", title: "用户认证", priority: Priority.HIGH },
-      { moduleKey: "USER-MGMT", title: "用户授权", priority: Priority.HIGH },
-      { moduleKey: "USER-MGMT", title: "用户角色管理", priority: Priority.MEDIUM },
-      { moduleKey: "KNOWLEDGE", title: "文档管理", priority: Priority.MEDIUM },
-      { moduleKey: "KNOWLEDGE", title: "文档检索", priority: Priority.MEDIUM },
-      { moduleKey: "KNOWLEDGE", title: "文档关联", priority: Priority.LOW },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求CRUD操作",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持需求的创建、查询、更新、删除操作，包括批量操作功能",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求状态流转",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持需求从草稿到评审中、已批准、已实现、已关闭的完整状态流转",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求版本管理",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "记录需求的每次变更，支持版本对比和回滚",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求变更记录",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "自动记录需求的变更历史，包括变更人、变更时间、变更内容",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求优先级管理",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持高、中、低三级优先级，可自定义优先级规则",
+        storyPoints: 3,
+      },
+      {
+        moduleKey: "REQ-MGMT",
+        title: "需求导入导出",
+        priority: Priority.LOW,
+        status: RequirementStatus.DRAFT,
+        description: "支持Excel、CSV格式的需求导入导出",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "TASK-MGMT",
+        title: "任务CRUD操作",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持任务的创建、查询、更新、删除，包括子任务管理",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "TASK-MGMT",
+        title: "任务分配",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持将任务分配给项目成员，支持批量分配",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "TASK-MGMT",
+        title: "任务状态流转",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持任务从待办到进行中、待审核、已完成的完整状态流转",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "TASK-MGMT",
+        title: "任务进度追踪",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持任务进度百分比设置，自动计算项目整体进度",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "TASK-MGMT",
+        title: "任务依赖关系",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持设置任务之间的前后依赖关系，自动检测循环依赖",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "AI-ASSIST",
+        title: "AI需求分析",
+        priority: Priority.HIGH,
+        status: RequirementStatus.REVIEWED,
+        description: "使用AI分析需求的完整性、可行性，提供改进建议",
+        storyPoints: 13,
+      },
+      {
+        moduleKey: "AI-ASSIST",
+        title: "AI任务拆分",
+        priority: Priority.HIGH,
+        status: RequirementStatus.REVIEWED,
+        description: "自动将需求拆分为可执行的任务，估算工时",
+        storyPoints: 13,
+      },
+      {
+        moduleKey: "AI-ASSIST",
+        title: "AI需求补全",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "根据需求标题自动补全需求描述和关键要素",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "AI-ASSIST",
+        title: "AI变更影响分析",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "分析需求变更对关联需求和任务的影响范围",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "AI-ASSIST",
+        title: "多模型支持",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持OpenAI、Claude、Ollama等多种LLM模型",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "PROJ-MGMT",
+        title: "项目CRUD操作",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持项目的创建、查询、更新、删除，包括项目模板",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "PROJ-MGMT",
+        title: "项目成员管理",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持添加、移除项目成员，设置成员角色和权限",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "PROJ-MGMT",
+        title: "项目进度仪表盘",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "可视化展示项目需求、任务完成情况，支持多维度统计",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "PROJ-MGMT",
+        title: "项目甘特图",
+        priority: Priority.LOW,
+        status: RequirementStatus.DRAFT,
+        description: "以甘特图形式展示任务时间安排和依赖关系",
+        storyPoints: 13,
+      },
+      {
+        moduleKey: "USER-MGMT",
+        title: "用户认证",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "支持用户名密码登录、JWT Token认证",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "USER-MGMT",
+        title: "用户授权",
+        priority: Priority.HIGH,
+        status: RequirementStatus.APPROVED,
+        description: "基于RBAC的权限控制，支持角色和权限配置",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "USER-MGMT",
+        title: "用户角色管理",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持自定义角色，灵活配置角色权限",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "KNOWLEDGE",
+        title: "文档管理",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持文档上传、下载、版本管理，支持多种格式",
+        storyPoints: 8,
+      },
+      {
+        moduleKey: "KNOWLEDGE",
+        title: "文档检索",
+        priority: Priority.MEDIUM,
+        status: RequirementStatus.DRAFT,
+        description: "支持全文检索、标签筛选、快速定位文档",
+        storyPoints: 5,
+      },
+      {
+        moduleKey: "KNOWLEDGE",
+        title: "文档关联",
+        priority: Priority.LOW,
+        status: RequirementStatus.DRAFT,
+        description: "支持将文档与需求、任务关联，建立知识网络",
+        storyPoints: 5,
+      },
     ];
 
     const requirements: Requirement[] = [];
@@ -266,14 +486,16 @@ export class SeedService {
 
       if (!existing) {
         const requirement = queryRunner.manager.create(Requirement, {
-          entityKey: this.generateEntityKey(projectKey, "REQ"),
+          entityKey: this.generateEntityKey(project.projectKey, "REQ"),
+          projectId: project.id,
           modules: [module],
           title: reqData.title,
-          description: reqData.description || null,
+          description: reqData.description,
+          content: reqData.description,
           priority: reqData.priority,
           source: RequirementSource.MANUAL,
-          status: RequirementStatus.DRAFT,
-          storyPoints: 0,
+          status: reqData.status,
+          storyPoints: reqData.storyPoints,
           createdById: userId,
         });
         await queryRunner.manager.save(requirement);
@@ -289,7 +511,7 @@ export class SeedService {
 
   private async createRawRequirements(
     queryRunner: any,
-    projectId: string,
+    project: Project,
     userId: string
   ): Promise<void> {
     const rawRequirementsData: Array<{
@@ -297,16 +519,18 @@ export class SeedService {
       source: string;
       collectionType: CollectionType;
       status: RawRequirementStatus;
+      keyElements?: string[];
       questionAndAnswers?: Array<{
         question: string;
         answer: string | null;
       }>;
     }> = [
       {
-        content: "我们需要一个需求管理系统，能够管理需求的完整生命周期",
-        source: "用户访谈",
+        content: "我们需要一个需求管理系统，能够管理需求的完整生命周期，从创建到关闭的整个过程都要有记录",
+        source: "用户访谈 - 产品经理",
         collectionType: CollectionType.INTERVIEW,
-        status: RawRequirementStatus.PENDING,
+        status: RawRequirementStatus.COMPLETED,
+        keyElements: ["需求管理", "生命周期", "记录"],
         questionAndAnswers: [
           {
             question: "需求的生命周期包括哪些阶段？",
@@ -319,10 +543,11 @@ export class SeedService {
         ],
       },
       {
-        content: "系统应该支持需求的创建、编辑、审核、变更和归档",
-        source: "用户访谈",
+        content: "系统应该支持需求的创建、编辑、审核、变更和归档，操作要简单直观",
+        source: "用户访谈 - 项目经理",
         collectionType: CollectionType.INTERVIEW,
-        status: RawRequirementStatus.PENDING,
+        status: RawRequirementStatus.COMPLETED,
+        keyElements: ["需求CRUD", "审核", "变更"],
         questionAndAnswers: [
           {
             question: "审核流程需要几级审批？",
@@ -331,10 +556,11 @@ export class SeedService {
         ],
       },
       {
-        content: "希望系统能够通过AI辅助生成需求分析",
-        source: "产品规划",
+        content: "希望系统能够通过AI辅助生成需求分析，帮我们快速识别需求中的问题",
+        source: "产品规划会议",
         collectionType: CollectionType.OTHER,
-        status: RawRequirementStatus.PENDING,
+        status: RawRequirementStatus.COMPLETED,
+        keyElements: ["AI辅助", "需求分析", "问题识别"],
         questionAndAnswers: [
           {
             question: "AI需要分析哪些维度？",
@@ -343,16 +569,18 @@ export class SeedService {
         ],
       },
       {
-        content: "AI应该能够理解自然语言需求并生成结构化需求",
-        source: "产品规划",
+        content: "AI应该能够理解自然语言需求并生成结构化需求，减少人工整理的工作量",
+        source: "产品规划会议",
         collectionType: CollectionType.OTHER,
-        status: RawRequirementStatus.PENDING,
+        status: RawRequirementStatus.PROCESSING,
+        keyElements: ["AI", "自然语言", "结构化"],
       },
       {
-        content: "希望AI能够自动生成用户故事和验收标准",
-        source: "产品规划",
+        content: "希望AI能够自动生成用户故事和验收标准，按照标准格式输出",
+        source: "产品规划会议",
         collectionType: CollectionType.OTHER,
         status: RawRequirementStatus.COMPLETED,
+        keyElements: ["AI生成", "用户故事", "验收标准"],
         questionAndAnswers: [
           {
             question: "用户故事需要包含哪些字段？",
@@ -365,10 +593,11 @@ export class SeedService {
         ],
       },
       {
-        content: "系统应该能够将需求拆分成可执行的任务",
-        source: "技术评审",
+        content: "系统应该能够将需求拆分成可执行的任务，每个任务粒度要合适",
+        source: "技术评审会议",
         collectionType: CollectionType.DOCUMENT,
         status: RawRequirementStatus.COMPLETED,
+        keyElements: ["需求拆分", "任务", "粒度"],
         questionAndAnswers: [
           {
             question: "任务拆分粒度是什么？",
@@ -377,10 +606,11 @@ export class SeedService {
         ],
       },
       {
-        content: "任务应该支持分配给团队成员，并追踪执行进度",
-        source: "技术评审",
+        content: "任务应该支持分配给团队成员，并追踪执行进度，逾期要有提醒",
+        source: "技术评审会议",
         collectionType: CollectionType.DOCUMENT,
         status: RawRequirementStatus.COMPLETED,
+        keyElements: ["任务分配", "进度追踪", "逾期提醒"],
         questionAndAnswers: [
           {
             question: "需要支持哪些任务状态？",
@@ -388,13 +618,25 @@ export class SeedService {
           },
         ],
       },
+      {
+        content: "需要一个可视化的项目仪表盘，能够直观展示项目整体进度",
+        source: "管理层反馈",
+        collectionType: CollectionType.OTHER,
+        status: RawRequirementStatus.PENDING,
+        keyElements: ["仪表盘", "可视化", "项目进度"],
+      },
+      {
+        content: "系统要支持多项目并行管理，每个项目有独立的成员和权限",
+        source: "管理层反馈",
+        collectionType: CollectionType.OTHER,
+        status: RawRequirementStatus.PENDING,
+        keyElements: ["多项目", "成员管理", "权限"],
+      },
     ];
-
-    const projectKey = "REQ2TASK";
 
     for (const rawData of rawRequirementsData) {
       const existing = await queryRunner.manager.findOne(RawRequirement, {
-        where: { projectId, originalContent: rawData.content },
+        where: { projectId: project.id, originalContent: rawData.content },
       });
 
       if (!existing) {
@@ -407,18 +649,18 @@ export class SeedService {
         })) || null;
 
         const rawRequirement = queryRunner.manager.create(RawRequirement, {
-          entityKey: this.generateEntityKey(projectKey, "RAW"),
-          projectId,
+          entityKey: this.generateEntityKey(project.projectKey, "RAW"),
+          projectId: project.id,
           collectionType: rawData.collectionType,
           originalContent: rawData.content,
           source: rawData.source,
           status: rawData.status,
           createdById: userId,
           questionAndAnswers,
-          keyElements: [],
+          keyElements: rawData.keyElements || [],
         });
         await queryRunner.manager.save(rawRequirement);
-        this.logger.log(`Created raw requirement: ${rawData.content.substring(0, 30)}...`);
+        this.logger.log(`Created raw requirement: ${rawData.content.substring(0, 40)}...`);
       } else {
         this.logger.log(`Raw requirement already exists, skipping...`);
       }
@@ -428,7 +670,7 @@ export class SeedService {
   private async createUserStories(
     queryRunner: any,
     requirements: Requirement[],
-    _userId: string
+    userId: string
   ): Promise<void> {
     const userStoriesData: Array<{
       requirementTitle: string;
@@ -604,8 +846,12 @@ export class SeedService {
     queryRunner: any,
     projectKey: string,
     requirements: Requirement[],
-    userId: string
+    users: User[]
   ): Promise<void> {
+    const adminUser = users[0];
+    const dev1 = users[2];
+    const dev2 = users[3];
+
     const tasksData: Array<{
       requirementTitle: string;
       title: string;
@@ -614,6 +860,7 @@ export class SeedService {
       priority: TaskPriority;
       estimatedHours: number;
       dueDate?: string;
+      assignedToId?: string;
     }> = [
       {
         requirementTitle: "需求CRUD操作",
@@ -623,6 +870,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 4,
         dueDate: "2024-03-15",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -632,6 +880,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 8,
         dueDate: "2024-03-20",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -641,6 +890,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 6,
         dueDate: "2024-03-22",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -650,6 +900,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 4,
         dueDate: "2024-03-25",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -659,6 +910,7 @@ export class SeedService {
         priority: TaskPriority.MEDIUM,
         estimatedHours: 2,
         dueDate: "2024-03-28",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -668,6 +920,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 8,
         dueDate: "2024-03-30",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "需求CRUD操作",
@@ -677,6 +930,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 6,
         dueDate: "2024-04-05",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "AI需求分析",
@@ -686,6 +940,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 4,
         dueDate: "2024-04-01",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "AI需求分析",
@@ -695,6 +950,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 12,
         dueDate: "2024-04-10",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "AI需求分析",
@@ -704,6 +960,7 @@ export class SeedService {
         priority: TaskPriority.MEDIUM,
         estimatedHours: 8,
         dueDate: "2024-04-15",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "AI任务拆分",
@@ -713,6 +970,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 6,
         dueDate: "2024-04-05",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "AI任务拆分",
@@ -722,24 +980,27 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 16,
         dueDate: "2024-04-20",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "任务分配",
         title: "实现任务分配功能",
         description: "支持将任务分配给项目成员",
-        status: TaskStatus.TODO,
+        status: TaskStatus.DONE,
         priority: TaskPriority.HIGH,
         estimatedHours: 4,
         dueDate: "2024-04-12",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "任务分配",
         title: "实现通知功能",
         description: "任务分配时发送站内通知",
-        status: TaskStatus.TODO,
+        status: TaskStatus.IN_PROGRESS,
         priority: TaskPriority.MEDIUM,
         estimatedHours: 6,
         dueDate: "2024-04-18",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "任务进度追踪",
@@ -749,6 +1010,7 @@ export class SeedService {
         priority: TaskPriority.HIGH,
         estimatedHours: 12,
         dueDate: "2024-04-25",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "任务进度追踪",
@@ -758,15 +1020,17 @@ export class SeedService {
         priority: TaskPriority.MEDIUM,
         estimatedHours: 8,
         dueDate: "2024-04-30",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "项目进度仪表盘",
         title: "设计仪表盘数据接口",
         description: "定义项目统计数据的聚合查询",
-        status: TaskStatus.TODO,
+        status: TaskStatus.IN_PROGRESS,
         priority: TaskPriority.MEDIUM,
         estimatedHours: 4,
         dueDate: "2024-05-05",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "项目进度仪表盘",
@@ -776,33 +1040,37 @@ export class SeedService {
         priority: TaskPriority.MEDIUM,
         estimatedHours: 10,
         dueDate: "2024-05-12",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "用户认证",
         title: "实现JWT认证",
         description: "使用JWT实现无状态认证",
-        status: TaskStatus.BLOCKED,
+        status: TaskStatus.DONE,
         priority: TaskPriority.HIGH,
         estimatedHours: 8,
         dueDate: "2024-05-01",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "用户认证",
         title: "实现登录接口",
         description: "POST /api/auth/login 登录接口",
-        status: TaskStatus.TODO,
+        status: TaskStatus.DONE,
         priority: TaskPriority.HIGH,
         estimatedHours: 4,
         dueDate: "2024-05-08",
+        assignedToId: dev2.id,
       },
       {
         requirementTitle: "文档管理",
         title: "集成MinIO对象存储",
         description: "配置MinIO实现文件上传下载",
-        status: TaskStatus.TODO,
+        status: TaskStatus.IN_PROGRESS,
         priority: TaskPriority.MEDIUM,
         estimatedHours: 8,
         dueDate: "2024-05-15",
+        assignedToId: dev1.id,
       },
       {
         requirementTitle: "文档管理",
@@ -812,6 +1080,7 @@ export class SeedService {
         priority: TaskPriority.MEDIUM,
         estimatedHours: 10,
         dueDate: "2024-05-22",
+        assignedToId: dev2.id,
       },
     ];
 
@@ -819,41 +1088,49 @@ export class SeedService {
       const requirement = requirements.find((r) => r.title === taskData.requirementTitle);
       if (!requirement) continue;
 
+      const entityKey = this.generateEntityKey(projectKey, "TSK");
       const taskNo = `TSK-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 5).toUpperCase()}`;
 
       const existing = await queryRunner.manager.findOne(Task, {
-        where: { entityKey: this.generateEntityKey(projectKey, "TSK") },
+        where: { title: taskData.title, requirementId: requirement.id },
       });
 
       if (!existing) {
+        const actualHours = taskData.status === TaskStatus.DONE
+          ? Number((taskData.estimatedHours * (0.8 + Math.random() * 0.4)).toFixed(2))
+          : null;
+
         const task = queryRunner.manager.create(Task, {
           taskNo,
-          entityKey: this.generateEntityKey(projectKey, "TSK"),
+          entityKey,
           title: taskData.title,
           description: taskData.description || null,
           requirementId: requirement.id,
           status: taskData.status,
           priority: taskData.priority,
-          assignedToId: null,
+          assignedToId: taskData.assignedToId || null,
           estimatedHours: taskData.estimatedHours,
-          actualHours: taskData.status === TaskStatus.DONE ? taskData.estimatedHours * (0.8 + Math.random() * 0.4) : null,
+          actualHours,
           dueDate: taskData.dueDate ? new Date(taskData.dueDate) : null,
           parentTaskId: null,
-          createdById: userId,
+          createdById: adminUser.id,
         });
         await queryRunner.manager.save(task);
         this.logger.log(`Created task: ${taskData.title}`);
       } else {
-        this.logger.log(`Task already exists, skipping...`);
+        this.logger.log(`Task ${taskData.title} already exists, skipping...`);
       }
     }
   }
 
-  private async createNotifications(
-    queryRunner: any,
-    userId: string
-  ): Promise<void> {
+  private async createNotifications(queryRunner: any, users: User[]): Promise<void> {
+    const adminUser = users[0];
+    const pmUser = users[1];
+    const dev1 = users[2];
+    const dev2 = users[3];
+
     const notificationsData: Array<{
+      userId: string;
       type: NotificationType;
       title: string;
       message: string;
@@ -861,6 +1138,7 @@ export class SeedService {
       data?: Record<string, unknown>;
     }> = [
       {
+        userId: dev1.id,
         type: NotificationType.TASK_ASSIGNED,
         title: "新任务分配",
         message: "您被分配了任务：实现需求创建API",
@@ -868,20 +1146,31 @@ export class SeedService {
         data: { taskId: "sample-task-1", requirementTitle: "需求CRUD操作" },
       },
       {
+        userId: dev1.id,
         type: NotificationType.TASK_UPDATED,
         title: "任务状态变更",
         message: "任务「设计需求数据模型」已完成",
-        isRead: false,
+        isRead: true,
         data: { taskId: "sample-task-2", oldStatus: "in_progress", newStatus: "done" },
       },
       {
+        userId: dev2.id,
+        type: NotificationType.TASK_ASSIGNED,
+        title: "新任务分配",
+        message: "您被分配了任务：实现需求查询API",
+        isRead: false,
+        data: { taskId: "sample-task-3", requirementTitle: "需求CRUD操作" },
+      },
+      {
+        userId: pmUser.id,
         type: NotificationType.REQUIREMENT_CREATED,
         title: "新需求创建",
-        message: "项目管理员创建了「AI任务拆分」需求",
+        message: "需求分析师创建了「AI任务拆分」需求",
         isRead: true,
         data: { requirementId: "sample-req-1" },
       },
       {
+        userId: pmUser.id,
         type: NotificationType.REQUIREMENT_REVIEW,
         title: "需求待评审",
         message: "需求「AI需求分析」需要您进行评审",
@@ -889,20 +1178,23 @@ export class SeedService {
         data: { requirementId: "sample-req-2" },
       },
       {
+        userId: dev1.id,
         type: NotificationType.TASK_COMPLETED,
         title: "任务完成提醒",
-        message: "您负责的任务「实现需求查询API」已标记完成",
+        message: "您负责的任务「实现JWT认证」已标记完成",
         isRead: true,
-        data: { taskId: "sample-task-3" },
+        data: { taskId: "sample-task-4" },
       },
       {
+        userId: dev2.id,
         type: NotificationType.TASK_UPDATED,
         title: "任务优先级调整",
         message: "任务「实现需求更新API」优先级已调整为高",
         isRead: false,
-        data: { taskId: "sample-task-4", oldPriority: "medium", newPriority: "high" },
+        data: { taskId: "sample-task-5", oldPriority: "medium", newPriority: "high" },
       },
       {
+        userId: pmUser.id,
         type: NotificationType.REQUIREMENT_CHANGED,
         title: "需求变更通知",
         message: "需求「AI任务拆分」的内容已更新",
@@ -910,6 +1202,15 @@ export class SeedService {
         data: { requirementId: "sample-req-3", changeType: "content_update" },
       },
       {
+        userId: dev1.id,
+        type: NotificationType.PROJECT_MEMBER_ADDED,
+        title: "项目邀请",
+        message: "您已被添加为「req2task」项目的成员",
+        isRead: true,
+        data: { projectId: "sample-project-1", inviter: "admin" },
+      },
+      {
+        userId: dev2.id,
         type: NotificationType.PROJECT_MEMBER_ADDED,
         title: "项目邀请",
         message: "您已被添加为「req2task」项目的成员",
@@ -920,12 +1221,12 @@ export class SeedService {
 
     for (const notifData of notificationsData) {
       const existing = await queryRunner.manager.findOne(Notification, {
-        where: { userId, title: notifData.title, message: notifData.message },
+        where: { userId: notifData.userId, title: notifData.title, message: notifData.message },
       });
 
       if (!existing) {
         const notification = queryRunner.manager.create(Notification, {
-          userId,
+          userId: notifData.userId,
           type: notifData.type,
           title: notifData.title,
           message: notifData.message,
@@ -933,7 +1234,7 @@ export class SeedService {
           isRead: notifData.isRead,
         });
         await queryRunner.manager.save(notification);
-        this.logger.log(`Created notification: ${notifData.title}`);
+        this.logger.log(`Created notification: ${notifData.title} for user ${notifData.userId.substring(0, 8)}...`);
       } else {
         this.logger.log(`Notification already exists, skipping...`);
       }

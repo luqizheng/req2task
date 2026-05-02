@@ -125,6 +125,27 @@ services:
     networks:
       - ai-sowf-dev-network
 
+  # Ollama Embedding 服务
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   hostname: ollama
+  #   container_name: ai-sowf-ollama
+  #   ports:
+  #     - "${OLLAMA_PORT:-11434}:11434"
+  #   volumes:
+  #     - ollama_data:/root/.ollama
+  #   environment:
+  #     - OLLAMA_HOST=0.0.0.0:11434
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+  #     interval: 30s
+  #     timeout: 10s
+  #     retries: 5
+  #     start_period: 60s
+  #   restart: unless-stopped
+  #   networks:
+  #     - ai-sowf-dev-network
+
 volumes:
   postgres_dev_data:
     name: ai-sowf-postgres-dev-data
@@ -135,9 +156,11 @@ volumes:
   rustfs_data:
     name: ai-sowf-rustfs-dev-data
   rustfs_logs:
-    name: ai-sowf-rustfs-dev-logs
+    name: ai-sowf-rustfs-logs
   chromadb_data:
     name: ai-sowf-chromadb-data
+  # ollama_data:
+  #   name: ai-sowf-ollama-data
 
 networks:
   ai-sowf-dev-network:

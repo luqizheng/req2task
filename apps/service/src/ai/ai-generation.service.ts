@@ -15,6 +15,7 @@ import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
 import { LLmClientService, LLMStreamChunk } from "./llm-client.service";
 import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
 import { AiPersistenceService } from "./ai-persistence.service";
+import { RequirementRelationDetectionService, RelatedRequirement } from "./requirement-relation-detection.service";
 
 export interface GenerationResult {
   requirements?: Requirement[];
@@ -25,6 +26,7 @@ export interface GenerationResult {
   rawContent?: string;
   followUpQuestions?: string[];
   keyElements?: string[];
+  relatedRequirements?: RelatedRequirement[];
 }
 
 @Injectable()
@@ -32,7 +34,7 @@ export class AiGenerationService {
   private readonly logger = new Logger(AiGenerationService.name);
 
   constructor(
-    @InjectRepository(Requirement)
+    @InjectRepository( Requirement)
     private requirementRepository: Repository<Requirement>,
     @InjectRepository(UserStory)
     private userStoryRepository: Repository<UserStory>,
@@ -42,6 +44,7 @@ export class AiGenerationService {
     private readonly llmClient: LLmClientService,
     private readonly rawRequirementService: RawRequirementService,
     private readonly persistenceService: AiPersistenceService,
+    private readonly relationDetectionService: RequirementRelationDetectionService,
   ) {}
 
   async generateRawRequirement(
@@ -201,7 +204,7 @@ ${content}
     context?: string,
     moduleIds?: string[],
     persist: boolean = true,
-  ): Promise<{ requirements: Requirement[]; rawContent: string }> {
+  ): Promise<{ requirements: Requirement[]; rawContent: string; relatedRequirements?: RelatedRequirement[] }> {
     let existingRequirementsStr: string | undefined;
     if (rawRequirementId) {
       const existingRequirements = await this.requirementRepository.find({
@@ -218,11 +221,32 @@ ${content}
       }
     }
 
+    const relationResult = await this.relationDetectionService.detectRelations(
+      rawRequirement,
+      projectId,
+      3,
+    );
+
+    let relatedRequirementsStr: string | undefined;
+    if (relationResult.hasRelated) {
+      const allRelated = [
+        ...relationResult.conflictRequirements,
+        ...relationResult.relatedRequirements,
+      ];
+      relatedRequirementsStr = allRelated
+        .map(
+          (r) =>
+            `- [${r.relationType.toUpperCase()}] ${r.content} (相似度: ${(r.score * 100).toFixed(0)}%)`,
+        )
+        .join("\n");
+    }
+
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
       moduleIds,
       existingRequirements: existingRequirementsStr,
+      relatedRequirements: relatedRequirementsStr,
       rawRequirement,
     });
 
@@ -273,7 +297,13 @@ ${content}
       }
     }
 
-    return { requirements, rawContent: result.content };
+    return {
+      requirements,
+      rawContent: result.content,
+      relatedRequirements: relationResult.hasRelated
+        ? [...relationResult.conflictRequirements, ...relationResult.relatedRequirements]
+        : undefined,
+    };
   }
 
   async generateUserStories(

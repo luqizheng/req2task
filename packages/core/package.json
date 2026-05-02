@@ -49,6 +49,7 @@
     "@req2task/dto": "workspace:^",
     "@swc/core": "^1.15.26",
     "axios": "catalog:",
+    "chromadb": "^1.8.1",
     "mammoth": "catalog:",
     "openai": "catalog:",
     "pdf-parse": "catalog:",

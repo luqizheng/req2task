@@ -11,6 +11,7 @@ import {
 } from "@req2task/core";
 import { TaskStatus, CriteriaType, RawRequirementStatus, TaskPriority, Priority, RequirementStatus, RequirementSource } from "@req2task/dto";
 import { EntityKeyService, EntityKeyType } from "../common/services/entity-key.service";
+import { RequirementVectorService } from "./requirement-vector.service";
 
 @Injectable()
 export class AiPersistenceService {
@@ -31,6 +32,7 @@ export class AiPersistenceService {
     private rawRequirementRepository: Repository<RawRequirement>,
     private readonly dataSource: DataSource,
     private readonly entityKeyService: EntityKeyService,
+    private readonly vectorService: RequirementVectorService,
   ) {}
 
   extractJsonArray(content: string): any[] {
@@ -165,7 +167,9 @@ export class AiPersistenceService {
         for (const item of data) {
           const requirement = queryRunner.manager.create(Requirement, {
             title: item.title,
+            content: item.content || item.description || null,
             description: item.description || null,
+            keyElements: item.keyElements || null,
             priority: item.priority?.toUpperCase() || Priority.MEDIUM,
             source: RequirementSource.AI_GENERATED,
             status: RequirementStatus.DRAFT,
@@ -184,6 +188,14 @@ export class AiPersistenceService {
         this.logger.log(
           `Created ${requirements.length} requirements for project ${projectId}`,
         );
+
+        for (const req of requirements) {
+          try {
+            await this.vectorService.indexRequirement(req);
+          } catch (vectorError) {
+            this.logger.warn(`Failed to index requirement ${req.id} to vector store: ${vectorError}`);
+          }
+        }
 
         return requirements;
       } catch (error) {

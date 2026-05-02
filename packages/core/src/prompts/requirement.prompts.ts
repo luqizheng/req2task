@@ -28,6 +28,12 @@ export const requirementPrompts: PromptTemplate[] = [
 3. 新生成的需求应与已有需求保持一致性和连贯性
 4. 如有冲突或重复，请生成差异化的需求
 
+关联需求分析规则：
+1. 如果提供了关联需求列表，请分析新需求与关联需求的关系
+2. 对于标记为[CONFLICT]的需求，检查是否存在逻辑冲突
+3. 对于标记为[SIMILAR]的需求，确保不生成重复内容
+4. 如有关联需求，新需求应该补充或扩展已有需求，而不是重复
+
 模块匹配规则：
 1. 从提供的现有模块列表中选择最匹配的模块ID
 2. 匹配标准：需求的核心功能必须被该模块的职责覆盖
@@ -45,6 +51,9 @@ export const requirementPrompts: PromptTemplate[] = [
 
 {{/if}}{{#if existingRequirements}}## 已从这个原始需求生成的需求（请参考风格和粒度，避免重复）
 {{existingRequirements}}
+
+{{/if}}{{#if relatedRequirements}}## 关联需求分析（请分析以下需求与新需求的关系）
+{{relatedRequirements}}
 
 {{/if}}请根据以下原始需求，生成结构化的需求列表。
 
@@ -100,6 +109,11 @@ JSON格式：
         name: "existingRequirements",
         type: "string",
         description: "已从这个原始需求生成的需求列表，用于参考风格和避免重复",
+      },
+      {
+        name: "relatedRequirements",
+        type: "string",
+        description: "关联需求列表，包含相似需求和冲突需求，用于分析关联关系",
       },
       {
         name: "rawRequirement",

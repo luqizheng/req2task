@@ -1,101 +1,185 @@
+import { ChromaClient, Collection, IEmbeddingFunction } from 'chromadb';
 import { VectorStore, VectorDocument, SearchResult } from './vector-store.interface';
 
+const DEFAULT_COLLECTION_NAME = 'requirements';
 const DEFAULT_SEARCH_LIMIT = 5;
-const MIN_SIMILARITY_THRESHOLD = 0.1;
+
+export interface ChromaConfig {
+  host: string;
+  port: number;
+  authToken?: string;
+}
 
 export class ChromaVectorStore implements VectorStore {
-  private readonly documents: Map<string, VectorDocument> = new Map();
+  private client: ChromaClient | null = null;
+  private collection: Collection | null = null;
+  private embeddingFunction: IEmbeddingFunction;
+  private config: ChromaConfig;
+  private collectionName: string;
+
+  constructor(config: ChromaConfig, collectionName: string = DEFAULT_COLLECTION_NAME) {
+    this.config = config;
+    this.collectionName = collectionName;
+    this.embeddingFunction = this.createEmbeddingFunction();
+  }
+
+  private createEmbeddingFunction(): IEmbeddingFunction {
+    return {
+      name: 'ollama-embedding',
+      generate: async (texts: string[]): Promise<number[][]> => {
+        const { generateEmbeddings } = await import('./ollama-embedding');
+        return generateEmbeddings(texts);
+      },
+    } as IEmbeddingFunction;
+  }
+
+  async connect(): Promise<void> {
+    const url = `http://${this.config.host}:${this.config.port}`;
+    const authHeader = this.config.authToken
+      ? { Authorization: `Bearer ${this.config.authToken}` }
+      : undefined;
+
+    this.client = new ChromaClient({
+      path: url,
+      fetchOptions: authHeader ? { headers: authHeader } : undefined,
+    });
+
+    try {
+      this.collection = await this.client.getOrCreateCollection({
+        name: this.collectionName,
+        metadata: { description: `Vector store for ${this.collectionName}` },
+      });
+      console.warn(`Connected to ChromaDB collection: ${this.collectionName}`);
+    } catch (error) {
+      console.error(`Failed to connect to ChromaDB: ${error}`);
+      throw error;
+    }
+  }
 
   async add(documents: VectorDocument[]): Promise<void> {
-    const addedCount = documents.length;
-    for (const doc of documents) {
-      this.documents.set(doc.id, doc);
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
-    console.log(`Added ${addedCount} documents to vector store`);
+
+    const ids = documents.map((d) => d.id);
+    const texts = documents.map((d) => d.content);
+    const metadatas = documents.map((d) => d.metadata || {});
+
+    await this.collection.add({
+      ids,
+      documents: texts,
+      metadatas,
+    });
+
+    console.warn(`Added ${documents.length} documents to ChromaDB`);
   }
 
   async search(query: string, limit: number = DEFAULT_SEARCH_LIMIT): Promise<SearchResult[]> {
-    const results: SearchResult[] = [];
-
-    for (const [id, doc] of this.documents.entries()) {
-      const score = this.calculateSimilarity(query, doc.content);
-
-      if (score > MIN_SIMILARITY_THRESHOLD) {
-        results.push({
-          id,
-          content: doc.content,
-          score,
-          metadata: doc.metadata,
-        });
-      }
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
 
-    results.sort((a, b) => b.score - a.score);
-    const limitedResults = results.slice(0, limit);
-    
-    console.debug(`Search for "${query.substring(0, 50)}..." returned ${limitedResults.length} results`);
-    return limitedResults;
+    const results = await this.collection.query({
+      queryTexts: [query],
+      nResults: limit,
+    });
+
+    const searchResults: SearchResult[] = [];
+    const distances = results.distances?.[0] || [];
+    const documents = results.documents?.[0] || [];
+    const metadatas = results.metadatas?.[0] || [];
+    const ids = results.ids?.[0] || [];
+
+    for (let i = 0; i < ids.length; i++) {
+      const distance = distances[i] ?? 1;
+      const score = 1 - Math.min(distance, 1);
+
+      searchResults.push({
+        id: ids[i],
+        content: documents[i] || '',
+        score,
+        metadata: metadatas[i] as Record<string, unknown>,
+      });
+    }
+
+    return searchResults;
+  }
+
+  async searchWithFilter(
+    query: string,
+    filter: Record<string, unknown>,
+    limit: number = DEFAULT_SEARCH_LIMIT,
+  ): Promise<SearchResult[]> {
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
+    }
+
+    const results = await this.collection.query({
+      queryTexts: [query],
+      nResults: limit,
+      where: filter,
+    });
+
+    const searchResults: SearchResult[] = [];
+    const distances = results.distances?.[0] || [];
+    const documents = results.documents?.[0] || [];
+    const metadatas = results.metadatas?.[0] || [];
+    const ids = results.ids?.[0] || [];
+
+    for (let i = 0; i < ids.length; i++) {
+      const distance = distances[i] ?? 1;
+      const score = 1 - Math.min(distance, 1);
+
+      searchResults.push({
+        id: ids[i],
+        content: documents[i] || '',
+        score,
+        metadata: metadatas[i] as Record<string, unknown>,
+      });
+    }
+
+    return searchResults;
   }
 
   async delete(ids: string[]): Promise<void> {
-    let deletedCount = 0;
-    for (const id of ids) {
-      if (this.documents.delete(id)) {
-        deletedCount++;
-      }
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
-    console.log(`Deleted ${deletedCount} documents from vector store`);
+
+    await this.collection.delete({
+      ids,
+    });
+
+    console.warn(`Deleted ${ids.length} documents from ChromaDB`);
   }
 
   async deleteByFilter(filter: Record<string, unknown>): Promise<void> {
-    const toDelete: string[] = [];
-
-    for (const [id, doc] of this.documents.entries()) {
-      if (this.matchesFilter(doc, filter)) {
-        toDelete.push(id);
-      }
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
 
-    for (const id of toDelete) {
-      this.documents.delete(id);
-    }
-    
-    console.log(`Deleted ${toDelete.length} documents matching filter`);
+    await this.collection.delete({
+      where: filter,
+    });
+
+    console.warn(`Deleted documents matching filter from ChromaDB`);
   }
 
-  private matchesFilter(doc: VectorDocument, filter: Record<string, unknown>): boolean {
-    for (const [key, value] of Object.entries(filter)) {
-      if (doc.metadata?.[key] !== value) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private calculateSimilarity(query: string, content: string): number {
-    const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 0);
-    const contentWords = content.toLowerCase().split(/\s+/);
-
-    if (queryWords.length === 0) {
-      return 0;
+  async getCount(): Promise<number> {
+    if (!this.collection) {
+      throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
 
-    let matchCount = 0;
-    for (const queryWord of queryWords) {
-      if (contentWords.some((w) => w.includes(queryWord))) {
-        matchCount++;
-      }
-    }
-
-    return matchCount / queryWords.length;
+    return await this.collection.count();
   }
 
-  getDocumentCount(): number {
-    return this.documents.size;
+  async close(): Promise<void> {
+    this.collection = null;
+    this.client = null;
+    console.warn('ChromaDB connection closed');
   }
 
-  clear(): void {
-    this.documents.clear();
-    console.log('Vector store cleared');
+  isConnected(): boolean {
+    return this.client !== null && this.collection !== null;
   }
 }

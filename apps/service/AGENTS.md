@@ -70,6 +70,55 @@ cd apps/service && npx tsx ../../scripts/remove-unused-imports.ts --fix
 - `src/app.controller.ts` - 根控制器
 - `src/app.service.ts` - 根服务
 
+## AI 服务模块
+
+### 目录结构
+
+```
+src/ai/
+├── ai.module.ts                      # AI 模块根模块
+├── ai.service.ts                     # 基础 AI 服务
+├── ai-generation.service.ts          # 需求生成服务
+├── ai-persistence.service.ts         # 持久化服务
+├── llm-client.service.ts             # LLM 客户端
+├── requirement-vector.service.ts      # 需求向量化服务
+├── requirement-relation-detection.service.ts  # 关联检测服务
+├── vector-store.providers.ts         # 向量存储 DI 配置
+├── prompts/                          # Prompt 模板
+└── ...
+```
+
+### 核心服务
+
+| 服务 | 职责 |
+|------|------|
+| AiGenerationService | 需求生成流程编排 |
+| AiPersistenceService | 需求持久化 + 向量索引 |
+| RequirementVectorService | 需求向量化存储/检索 |
+| RequirementRelationDetectionService | 相似/冲突需求检测 |
+
+### 需求关联检测流程
+
+```
+1. generateRequirements() 调用 detectRelations()
+2. RequirementVectorService.searchSimilarRequirements() 向量搜索
+3. RequirementRelationDetectionService 分析冲突关键词
+4. 返回 relatedRequirements + conflictRequirements
+5. 注入到 prompt 的 relatedRequirements 参数
+6. AI 生成需求时考虑关联关系
+7. persistRequirements() 时自动索引新需求
+```
+
+### 向量重建命令
+
+```bash
+# 重建所有向量
+pnpm rebuild:vector
+
+# 仅重建指定项目
+pnpm rebuild:vector -p <project-id>
+```
+
 ## SSE 通信规范
 
 **强制要求**：所有 SSE (Server-Sent Events) 通信必须严格遵守 [SSE 通信协议](../../docs/reference/sse-protocol.md)。

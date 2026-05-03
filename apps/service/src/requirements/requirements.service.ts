@@ -43,7 +43,7 @@ export class RequirementsService {
     const push = [];
     for (const item of create) {
       const i = entityKeyIds.shift() || "";
-      const t = await this.create(item, createdById, i);
+      const t = await this.create(item, createdById, i, projectId);
       push.push(t);
     }
     for (const item of update) {
@@ -67,6 +67,7 @@ export class RequirementsService {
     createDto: RequirementDto,
     createdById: string,
     entityKeySetting?: string,
+    batchProjectId?: string,
   ): Promise<RequirementResponseDto> {
     if (createDto.sourceRawRequirementId) {
       const existing = await this.requirementRepository.findOne({
@@ -77,14 +78,14 @@ export class RequirementsService {
       }
     }
 
-    let projectId: string | null = null;
+    let projectId: string | null = batchProjectId || null;
     const moduleIds = createDto.moduleIds || [];
 
     if (moduleIds.length > 0) {
       const modules = await this.featureModuleRepository.findBy({
         id: In(moduleIds),
       });
-      projectId = modules[0]?.projectId || null;
+      projectId = modules[0]?.projectId || batchProjectId || null;
     }
 
     const MAX_RETRIES = 3;

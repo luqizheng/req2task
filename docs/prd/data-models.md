@@ -7,7 +7,7 @@
 | RawRequirementCollection | 原始需求收集 | projectId, title, collectionType, collectedAt |
 | RawRequirement | 原始需求 | content, source, status |
 | RawRequirementCollectionRequirement | 原始需求关联 | collectionId, rawRequirementId |
-| Requirement | 需求 | moduleId, title, priority, estimatedManDays, storyPoints, status |
+| Requirement | 需求 | projectId, moduleIds, title, priority, estimatedManDays, storyPoints, status |
 | UserStory | 用户故事 | requirementId, role, goal, benefit, storyPoints |
 | AcceptanceCriteria | 验收条件 | userStoryId, content, criteriaType |
 | Task | 可执行任务 | requirementId, title, assigneeType, estimatedHours, estimatedManDays |

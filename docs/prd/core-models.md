@@ -21,20 +21,22 @@ Project（项目）
     │
     ├── FeatureModule（功能模块）
     │       │
-    │       ├── Requirement（需求）
-    │       │       │
-    │       │       ├── UserStory（用户故事）
-    │       │       │       │
-    │       │       │       └── AcceptanceCriteria（验收条件）
-    │       │       │
-    │       │       └── Task（任务）
-    │       │               │
-    │       │               └── SubTask（子任务）
-    │       │
     │       └── ProjectMember（项目成员）
     │
+    ├── Requirement（需求）────◀────┐
+    │       │                       │
+    │       ├── UserStory（用户故事）│
+    │       │       │               │
+    │       │       └── AcceptanceCriteria（验收条件）
+    │       │                       │
+    │       └── Task（任务）        │（多对多关系）
+    │               │               │
+    │               └── SubTask（子任务）
+    │                               │
     ├── RequirementChangeLog（变更记录）
     └── TaskDependency（任务依赖）
+
+注：Requirement 与 FeatureModule 为多对多关系，通过 requirement_modules 关联表实现
 ```
 
 ## 2.3 实体字段定义
@@ -72,8 +74,9 @@ Project（项目）
 | 字段名              | 类型        | 必填 | 说明           | 业务规则                                |
 | ------------------- | ----------- | ---- | -------------- | --------------------------------------- |
 | id                  | UUID        | 是   | 需求的唯一编号 | 系统自动生成                            |
-| moduleId            | UUID        | 是   | 所属功能模块ID | 必须引用有效模块                        |
-| title               | string(255) | 是   | 需求标题       | 同一模块下标题不可重复                  |
+| projectId           | UUID        | 是   | 所属项目ID     | 必须引用有效项目                        |
+| moduleIds           | UUID[]      | 否   | 关联功能模块ID列表 | 通过多对多关系关联模块，可为空        |
+| title               | string(255) | 是   | 需求标题       | 同一项目下标题不可重复                  |
 | description         | string      | 是   | 需求描述       | 必须描述清楚功能点                      |
 | priority            | enum        | 是   | 需求优先级     | critical / high / medium / low          |
 | source              | enum        | 是   | 需求来源       | manual / ai_generated / document_import |
@@ -83,6 +86,8 @@ Project（项目）
 | createdById         | UUID        | 是   | 创建人ID       | 必须引用有效用户                        |
 | createdAt           | datetime    | 是   | 创建时间       | 系统自动生成                            |
 | updatedAt           | datetime    | 是   | 更新时间       | 系统自动更新                            |
+
+> **关系说明**：Requirement 与 FeatureModule 为多对多关系，通过 `requirement_modules` 关联表实现。一个需求可关联多个模块，也可不关联任何模块。
 
 ### UserStory（用户故事）
 

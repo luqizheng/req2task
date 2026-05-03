@@ -66,7 +66,7 @@
         <!-- Skipped Hint -->
         <div
           v-else-if="isSkipped(qa)"
-          class="flex items-center gap-2 text-xs text-amber-600 bg-amber-50 rounded-md p-2 mt-2"
+          class="flex items-center gap-2 text-xs text-destructive bg-destructive/10 rounded-md p-2 mt-2"
         >
           <AlertCircle class="h-3.5 w-3.5" />
           <span>此问题已跳过，将在下次提交时保留</span>
@@ -75,7 +75,7 @@
         <!-- Answered Display -->
         <div
           v-else-if="isAnswered(qa)"
-          class="text-xs text-green-700 bg-green-50 rounded-md p-2 mt-2"
+          class="text-xs text-chart-3 bg-chart-3/10 rounded-md p-2 mt-2"
         >
           {{ qa.answer }}
         </div>
@@ -141,35 +141,35 @@ const getStatusTag = (qa: RawRequirementQADto) => {
 
 const getCardClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "border-primary bg-primary/5";
-  if (isSkipped(qa)) return "border-amber-200 bg-amber-50/30";
-  if (isAnswered(qa)) return "border-green-200 bg-green-50/30";
+  if (isSkipped(qa)) return "border-destructive/30 bg-destructive/5";
+  if (isAnswered(qa)) return "border-chart-3/30 bg-chart-3/5";
   return "border-border hover:border-muted-foreground/50";
 };
 
 const getBadgeClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "bg-primary text-primary-foreground";
-  if (isSkipped(qa)) return "bg-amber-100 text-amber-700";
-  if (isAnswered(qa)) return "bg-green-100 text-green-700";
+  if (isSkipped(qa)) return "bg-destructive/20 text-destructive";
+  if (isAnswered(qa)) return "bg-chart-3/20 text-chart-3";
   return "bg-muted text-muted-foreground";
 };
 
 const getStatusTextClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "text-primary";
-  if (isSkipped(qa)) return "text-amber-600";
-  if (isAnswered(qa)) return "text-green-600";
+  if (isSkipped(qa)) return "text-destructive";
+  if (isAnswered(qa)) return "text-chart-3";
   return "text-muted-foreground";
 };
 
 const getTagClass = (qa: RawRequirementQADto) => {
-  if (isSkipped(qa)) return "border-amber-200 text-amber-600";
-  if (isAnswered(qa)) return "border-green-200 text-green-600";
+  if (isSkipped(qa)) return "border-destructive/30 text-destructive";
+  if (isAnswered(qa)) return "border-chart-3/30 text-chart-3";
   return "";
 };
 
 const getPurposeClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "bg-primary/10 text-primary";
-  if (isSkipped(qa)) return "bg-amber-100/50 text-amber-700";
-  if (isAnswered(qa)) return "bg-green-100/50 text-green-700";
+  if (isSkipped(qa)) return "bg-destructive/10 text-destructive";
+  if (isAnswered(qa)) return "bg-chart-3/10 text-chart-3";
   return "bg-muted text-muted-foreground";
 };
 

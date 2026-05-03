@@ -65,6 +65,7 @@ owner: req2task团队
 
 **关键变更说明：**
 - Requirement 与 FeatureModule 改为 **多对多关系**，通过 `requirement_modules` 关联表实现
+- 一个需求可关联多个模块，也可不关联任何模块（模块非必填）
 - FeatureModule 新增 `aliases`、`keywords`、`path`、`module_key` 字段，支持 LLM 匹配和层级路径展示
 
 ---
@@ -191,7 +192,7 @@ CREATE INDEX idx_requirement_modules_requirement ON requirement_modules(requirem
 CREATE INDEX idx_requirement_modules_module ON requirement_modules(module_id);
 ```
 
-**说明：** Requirement 与 FeatureModule 的多对多关联表，一个需求可关联多个模块。
+**说明：** Requirement 与 FeatureModule 的多对多关联表，一个需求可关联多个模块，也可不关联任何模块（模块非必填）。
 
 ### 2.6 需求表 (requirements)
 

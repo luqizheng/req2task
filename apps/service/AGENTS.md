@@ -6,17 +6,12 @@
 
 ```bash
 pnpm dev:service
-# 或直接
-cd apps/service
-pnpm start:dev
 ```
 
 ### 构建
 
 ```bash
 pnpm build:service
-# 或
-cd apps/service && pnpm build
 ```
 
 ## 测试
@@ -33,7 +28,7 @@ pnpm test:e2e           # 运行端到端测试
 ```bash
 pnpm lint
 # 或
-cd apps/service && pnpm lint
+pnpm --filter @req2task/service lint
 ```
 
 ### 自动修复未使用的导入

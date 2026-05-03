@@ -5,22 +5,21 @@
 ### 启动开发服务器
 
 ```bash
-cd apps/web
-pnpm dev
+pnpm dev:web
 ```
 
 ### 构建
 
 ```bash
-cd apps/web
-pnpm build
+pnpm build:web
 ```
 
 ### 代码检查
 
 ```bash
-cd apps/web
 pnpm lint
+# 或
+pnpm --filter @req2task/web lint
 ```
 
 ### 自动修复未使用的导入
@@ -52,8 +51,7 @@ cd apps/web && npx tsx ../../scripts/remove-unused-imports.ts --web --fix
 ### 类型检查
 
 ```bash
-cd apps/web
-pnpm type-check
+pnpm --filter @req2task/web type-check
 ```
 
 ## 技术栈
@@ -71,7 +69,7 @@ pnpm type-check
 ## 目录结构
 
 ```
-apps/web-shadcn/src/
+apps/web/src/
 ├── components/
 │   └── ui/           # shadcn-vue UI 组件
 │       ├── button/

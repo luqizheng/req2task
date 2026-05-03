@@ -203,7 +203,7 @@ ${content}
     context?: string,
     moduleIds?: string[],
     persist: boolean = true,
-  ): Promise<{ requirements: Requirement[]; rawContent: string; filteredCount?: number }> {
+  ): Promise<{ requirements: Requirement[]; rawContent: string; filteredCount?: number; conflictCount?: number }> {
     let existingRequirementsStr: string | undefined;
     if (rawRequirementId) {
       const existingRequirements = await this.requirementRepository.find({

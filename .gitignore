@@ -27,3 +27,6 @@ req2task-runner/Cargo.lock
 apps/api-gateway/target/
 # Added by code-review-graph
 .code-review-graph/
+
+# ollama
+docker-data/**/*

@@ -70,27 +70,19 @@ services:
     image: rustfs/rustfs:latest
     container_name: req2task-rustfs
     ports:
-      - "${MINIO_PORT:-9000}:9000"
-      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+      - "${RUSTFS_PORT:-9000}:9000"
+      - "${RUSTFS_CONSOLE_PORT:-9001}:9001"
     volumes:
       - rustfs_data:/data
       - rustfs_logs:/logs
     environment:
-      - RUSTFS_ROOT_USER=${MINIO_ACCESS_KEY}
-      - RUSTFS_ROOT_PASSWORD=${MINIO_SECRET_KEY}
+      - RUSTFS_ROOT_USER=${RUSTFS_ACCESS_KEY}
+      - RUSTFS_ROOT_PASSWORD=${RUSTFS_SECRET_KEY}
       - RUSTFS_ADDRESS=:9000
       - RUSTFS_CONSOLE_ENABLE=true
       - RUSTFS_CONSOLE_ADDRESS=0.0.0.0:9001
     healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:9000/",
-        ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9000/" ]
       interval: 30s
       timeout: 20s
       retries: 3
@@ -101,50 +93,55 @@ services:
 
   # ChromaDB 向量数据库服务
   chromadb:
-    image: zhcoder-docker-registry.com:8000/official/chromadb/chroma:latest
-    hostname: chromadb
-    container_name: ai-sowf-chromadb
+    image: zhcoder-docker-registry.com:8000/official/chromadb/chroma:latest # 建议指定具体版本，避免latest引入未知变更
+    container_name: chromadb
+    restart: unless-stopped
     ports:
-      - "${CHROMA_PORT}:8000"
+      - "8000:8000"
     volumes:
+      # 使用名称为 chroma_data 的 Docker 卷，数据管理更规范
       - chromadb_data:/chroma/chroma
     environment:
-      - IS_PERSISTENT=TRUE
-      - PERSIST_DIRECTORY=/chroma/chroma
-      - ANONYMIZED_TELEMETRY=FALSE
-      - CHROMA_SERVER_AUTHN_PROVIDER=chromadb.auth.token_authn.TokenAuthenticationServerProvider
-      - CHROMA_SERVER_AUTHN_CREDENTIALS=${CHROMA_AUTH_TOKEN:-default-token-for-dev}
-      - CHROMA_SERVER_AUTHZ_PROVIDER=chromadb.auth.basic_authz.BasicAuthorizationServerProvider
-    # healthcheck:
-    #   test: ["CMD", "curl", "-f", "http://chromadb:8000/api/v2/heartbeat"]
-    #   interval: 30s
-    #   timeout: 10s
-    #   retries: 3
-    #   start_period: 30s
-    # restart: unless-stopped
+      - IS_PERSISTENT=TRUE # 开启数据持久化
+      - ANONYMIZED_TELEMETRY=FALSE # 推荐关闭匿名遥测
+      - ALLOW_RESET=FALSE # 生产环境强烈建议设为FALSE，防止通过API误删除所有数据[reference:0]
+    healthcheck:
+      # 通过心跳接口检查服务健康状态
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/api/v1/heartbeat" ]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 2G
     networks:
       - ai-sowf-dev-network
 
-  # Ollama Embedding 服务
-  # ollama:
-  #   image: ollama/ollama:latest
-  #   hostname: ollama
-  #   container_name: ai-sowf-ollama
-  #   ports:
-  #     - "${OLLAMA_PORT:-11434}:11434"
-  #   volumes:
-  #     - ollama_data:/root/.ollama
-  #   environment:
-  #     - OLLAMA_HOST=0.0.0.0:11434
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 5
-  #     start_period: 60s
-  #   restart: unless-stopped
-  #   networks:
-  #     - ai-sowf-dev-network
+  # Ollama LLM 服务
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-sowf-ollama
+    ports:
+      - "${OLLAMA_PORT:-11435}:11434"
+    volumes:
+      - ./docker-data/ollama:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_ORIGINS=*
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/tags" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    restart: unless-stopped
+    networks:
+      - ai-sowf-dev-network
+    deploy:
+      resources:
+        limits:
+          memory: 8G
 
 volumes:
   postgres_dev_data:
@@ -159,8 +156,6 @@ volumes:
     name: ai-sowf-rustfs-logs
   chromadb_data:
     name: ai-sowf-chromadb-data
-  # ollama_data:
-  #   name: ai-sowf-ollama-data
 
 networks:
   ai-sowf-dev-network:

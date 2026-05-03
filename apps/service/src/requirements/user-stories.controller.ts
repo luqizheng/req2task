@@ -93,6 +93,7 @@ export class UserStoriesController {
           benefit: us.benefit,
           storyPoints: us.storyPoints,
           createdAt: us.createdAt,
+          updatedAt: us.updatedAt,
         })),
         rawContent: result.rawContent,
       },

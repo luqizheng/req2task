@@ -69,15 +69,7 @@ export class RequirementsService {
     entityKeySetting?: string,
     batchProjectId?: string,
   ): Promise<RequirementResponseDto> {
-    if (createDto.sourceRawRequirementId) {
-      const existing = await this.requirementRepository.findOne({
-        where: { sourceRawRequirementId: createDto.sourceRawRequirementId },
-      });
-      if (existing) {
-        return this.findById(existing.id);
-      }
-    }
-
+   
     let projectId: string | null = batchProjectId || null;
     const moduleIds = createDto.moduleIds || [];
 
@@ -101,6 +93,7 @@ export class RequirementsService {
         projectId,
         EntityKeyType.REQ,
       );
+   
       const requirement = this.requirementRepository.create({
         title: createDto.title,
         description: createDto.description || null,
@@ -177,19 +170,13 @@ export class RequirementsService {
     page: number = 1,
     limit: number = 20,
   ): Promise<RequirementListResponseDto> {
-    const query = this.requirementRepository
-      .createQueryBuilder("req")
-      .innerJoin("req.modules", "module", "module.projectId = :projectId", {
-        projectId,
-      })
-      .leftJoinAndSelect("req.createdBy", "createdBy")
-      .leftJoinAndSelect("req.userStories", "userStories")
-      .leftJoinAndSelect("req.children", "children")
-      .skip((page - 1) * limit)
-      .take(limit)
-      .orderBy("req.createdAt", "DESC");
-
-    const [items, total] = await query.getManyAndCount();
+    const [items, total] = await this.requirementRepository.findAndCount({
+      where: { projectId },
+      relations: ["createdBy", "userStories", "children", "modules"],
+      skip: (page - 1) * limit,
+      take: limit,
+      order: { createdAt: "DESC" },
+    });
 
     return {
       items: items.map((r) => this.toListItemDto(r)),

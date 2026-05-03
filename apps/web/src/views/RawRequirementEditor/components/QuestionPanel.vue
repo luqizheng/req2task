@@ -75,7 +75,7 @@
         <!-- Answered Display -->
         <div
           v-else-if="isAnswered(qa)"
-          class="text-xs text-chart-3 bg-chart-3/10 rounded-md p-2 mt-2"
+          class="text-xs text-card-foreground bg-background rounded-md p-2 mt-2"
         >
           {{ qa.answer }}
         </div>
@@ -142,7 +142,7 @@ const getStatusTag = (qa: RawRequirementQADto) => {
 const getCardClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "border-primary bg-primary/5";
   if (isSkipped(qa)) return "border-destructive/30 bg-destructive/5";
-  if (isAnswered(qa)) return "border-chart-3/30 bg-chart-3/5";
+  if (isAnswered(qa)) return "border-card bg-background";
   return "border-border hover:border-muted-foreground/50";
 };
 
@@ -169,7 +169,7 @@ const getTagClass = (qa: RawRequirementQADto) => {
 const getPurposeClass = (qa: RawRequirementQADto) => {
   if (isSelected(qa)) return "bg-primary/10 text-primary";
   if (isSkipped(qa)) return "bg-destructive/10 text-destructive";
-  if (isAnswered(qa)) return "bg-chart-3/10 text-chart-3";
+  if (isAnswered(qa)) return "bg-background text-card-foreground";
   return "bg-muted text-muted-foreground";
 };
 

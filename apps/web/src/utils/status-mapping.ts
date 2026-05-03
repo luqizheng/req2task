@@ -35,7 +35,7 @@ export const getStatusColor = (status: string): string => {
 };
 
 export const mapStatusesToOptions = (statuses: string[]): StatusOption[] => {
-  debugger;
+
   return statuses.map((status) => ({
     to: status,
     label: STATUS_LABELS[status] || status,

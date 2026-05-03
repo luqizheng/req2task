@@ -115,6 +115,7 @@ const handleGenerateTitle = async () => {
     return;
   }
   await rawRequirementSubmitHelper.generateTitle();
+  form.setFieldValue("title", rawRequirement.value.title);
 };
 
 const questionCount = computed(() => {

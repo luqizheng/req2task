@@ -102,7 +102,8 @@ apps/web-shadcn/src/
 | `Card` | 卡片容器（Card, CardHeader, CardContent 等） |
 | `Dialog` | 对话框 |
 | `DropdownMenu` | 下拉菜单 |
-| `Form` | 表单（FormField, FormItem, FormLabel 等） |
+| `Field` | 表单字段容器（Field, FieldLabel, FieldError 等）✅ 推荐 |
+| ~~`Form`~~ | ~~表单（已废弃，禁止使用）~~ ❌ |
 | `Input` | 输入框 |
 | `Label` | 标签 |
 | `Popover` | 弹出框 |
@@ -164,9 +165,41 @@ npx shadcn-vue@latest add [component-name]
 例如：
 ```bash
 npx shadcn-vue@latest add dialog
-npx shadcn-vue@latest add form
+npx shadcn-vue@latest add field    # ✅ 表单字段（推荐）
 npx shadcn-vue@latest add select
 ```
+
+## 表单组件规范
+
+### 必须使用 Field 组件
+
+**禁止**使用已废弃的 `Form` 组件（FormField, FormItem, FormLabel 等）。
+
+**必须**使用 `Field` 组件体系：
+
+```vue
+<script setup lang="ts">
+import { Field, FieldLabel, FieldError, FieldDescription } from '@/components/ui/field'
+import { Field as VeeField } from 'vee-validate'
+</script>
+
+<template>
+  <VeeField v-slot="{ field, errors }" name="email">
+    <Field :data-invalid="!!errors.length">
+      <FieldLabel for="email">邮箱</FieldLabel>
+      <Input id="email" v-bind="field" :aria-invalid="!!errors.length" />
+      <FieldDescription>请输入有效的邮箱地址</FieldDescription>
+      <FieldError v-if="errors.length" :errors="errors" />
+    </Field>
+  </VeeField>
+</template>
+```
+
+### Field 组件优势
+
+- 与表单库解耦，可配合 VeeValidate、TanStack Form 或原生表单使用
+- 更灵活的布局支持（vertical/horizontal/responsive）
+- 官方推荐，Form 组件已废弃
 
 ## 开发规范
 

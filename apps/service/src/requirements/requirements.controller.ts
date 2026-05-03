@@ -146,13 +146,13 @@ export class RequirementsController {
   @Get("requirements/:id/allowed-transitions")
   async getAllowedTransitions(
     @Param("id") id: string,
-  ): Promise<ApiResponse<AllowedTransitionsDto>> {
+  ): Promise<ApiResponse<string[]>> {
     const requirement = await this.requirementsService.findById(id);
     const allowedTransitions =
       await this.requirementStateService.getAllowedTransitions(
         requirement.status,
       );
-    return { code: 0, data: { allowedTransitions } };
+    return { code: 0, data: allowedTransitions };
   }
 
   @Get("requirements/:id/change-history")

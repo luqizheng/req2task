@@ -22,7 +22,7 @@ const emit = defineEmits<{
 
 const isEditing = ref(false);
 const editedTitle = ref(props.requirement.title);
-const editInputRef = ref<InstanceType<typeof Input> | null>(null);
+const editInputRef = ref<{ $el: HTMLInputElement } | null>(null);
 
 watch(() => props.requirement.title, (newTitle) => {
   editedTitle.value = newTitle;
@@ -32,7 +32,7 @@ const startEditing = async () => {
   editedTitle.value = props.requirement.title;
   isEditing.value = true;
   await nextTick();
-  editInputRef.value?.focus?.();
+  editInputRef.value?.$el?.focus();
 };
 
 const saveTitle = () => {
@@ -129,6 +129,7 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
           >
             {{ priorityConfig[requirement.priority]?.label }}
           </Badge>
+     
           <ButtonGroup>
             <Button
               variant="outline"
@@ -146,6 +147,7 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
             >
               {{ statusConfig[requirement.status]?.label }}
             </Button>
+         
             <Button
               v-for="transition in allowedTransitions"
               :key="transition.to"
@@ -155,6 +157,7 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
               :disabled="isTransitioning"
               @click="handleStatusChange(transition.to)"
             >
+        
               <span
                 class="w-2 h-2 rounded-full mr-1.5"
                 :style="{ backgroundColor: transition.color }"

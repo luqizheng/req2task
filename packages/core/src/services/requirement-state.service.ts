@@ -3,11 +3,7 @@ import { Requirement, RequirementChangeLog } from '../entities';
 import { RequirementStatus, ChangeType } from '@req2task/dto';
 import { NotFoundException, ValidationException } from '../exceptions/business.exception';
 
-export interface AllowedTransitionOption {
-  to: RequirementStatus;
-  label: string;
-  color: string;
-}
+
 
 const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.DRAFT]: [
@@ -35,25 +31,7 @@ const STATUS_TRANSITIONS: Record<RequirementStatus, RequirementStatus[]> = {
   [RequirementStatus.CANCELLED]: [RequirementStatus.DRAFT],
 };
 
-const STATUS_LABELS: Record<RequirementStatus, string> = {
-  [RequirementStatus.DRAFT]: '草稿',
-  [RequirementStatus.REVIEWED]: '已评审',
-  [RequirementStatus.APPROVED]: '已批准',
-  [RequirementStatus.REJECTED]: '已拒绝',
-  [RequirementStatus.PROCESSING]: '处理中',
-  [RequirementStatus.COMPLETED]: '已完成',
-  [RequirementStatus.CANCELLED]: '已取消',
-};
 
-const STATUS_COLORS: Record<RequirementStatus, string> = {
-  [RequirementStatus.DRAFT]: '#94a3b8',
-  [RequirementStatus.REVIEWED]: '#8b5cf6',
-  [RequirementStatus.APPROVED]: '#2563eb',
-  [RequirementStatus.REJECTED]: '#dc2626',
-  [RequirementStatus.PROCESSING]: '#f59e0b',
-  [RequirementStatus.COMPLETED]: '#16a34a',
-  [RequirementStatus.CANCELLED]: '#6b7280',
-};
 
 export class RequirementStateService {
   constructor(
@@ -112,13 +90,8 @@ export class RequirementStateService {
     return updated;
   }
 
-  async getAllowedTransitions(currentStatus: RequirementStatus): Promise<AllowedTransitionOption[]> {
-    const statuses = STATUS_TRANSITIONS[currentStatus] || [];
-    return statuses.map((status) => ({
-      to: status,
-      label: STATUS_LABELS[status],
-      color: STATUS_COLORS[status],
-    }));
+  async getAllowedTransitions(currentStatus: RequirementStatus): Promise<string[]> {
+    return STATUS_TRANSITIONS[currentStatus] || [];
   }
 
   async getChangeHistory(requirementId: string): Promise<RequirementChangeLog[]> {

@@ -8,8 +8,8 @@ import type {
   CreateAcceptanceCriteriaDto,
   UpdateAcceptanceCriteriaDto,
   AcceptanceCriteriaResponseDto,
-} from '@req2task/dto';
-import api from './axios';
+} from "@req2task/dto";
+import api from "./axios";
 
 export interface RequirementListParams {
   page?: number;
@@ -45,7 +45,7 @@ export type TransitionOption = string;
 export const requirementsApi = {
   getByRawRequirement: (rawRequirementId: string) => {
     return api.get<RequirementResponseDto[]>(
-      `/requirements/raw-requirement/${rawRequirementId}/requirements`
+      `/requirements/raw-requirement/${rawRequirementId}/requirements`,
     );
   },
 
@@ -53,7 +53,7 @@ export const requirementsApi = {
     const { page = 1, limit = 20, ...rest } = params || {};
     return api.get<RequirementListResponseDto>(
       `/requirements/projects/${projectId}/requirements`,
-      { params: { page, limit, ...rest } }
+      { params: { page, limit, ...rest } },
     );
   },
 
@@ -61,7 +61,7 @@ export const requirementsApi = {
     const { page = 1, limit = 20, ...rest } = params || {};
     return api.get<RequirementListResponseDto>(
       `/requirements/modules/${moduleId}/requirements`,
-      { params: { page, limit, ...rest } }
+      { params: { page, limit, ...rest } },
     );
   },
 
@@ -83,15 +83,9 @@ export const requirementsApi = {
     api.get<ChangeHistoryResponse>(`/requirements/${id}/change-history`),
 
   getAllowedTransitions: (id: string) =>
-    api.get<{ allowedTransitions: TransitionOption[] }>(
-      `/requirements/${id}/allowed-transitions`
-    ),
+    api.get<string[]>(`/requirements/${id}/allowed-transitions`),
 
-  transitionStatus: (
-    id: string,
-    targetStatus: string,
-    comment?: string
-  ) =>
+  transitionStatus: (id: string, targetStatus: string, comment?: string) =>
     api.post<RequirementResponseDto>(`/requirements/${id}/transition`, {
       targetStatus,
       comment,
@@ -108,12 +102,12 @@ export const userStoriesApi = {
   create: (requirementId: string, data: CreateUserStoryDto) =>
     api.post<UserStoryResponseDto>(
       `/user-stories/${requirementId}/user-stories`,
-      data
+      data,
     ),
 
   getByRequirement: (requirementId: string) =>
     api.get<UserStoryResponseDto[]>(
-      `/user-stories/${requirementId}/user-stories`
+      `/user-stories/${requirementId}/user-stories`,
     ),
 
   update: (id: string, data: UpdateUserStoryDto) =>
@@ -126,19 +120,16 @@ export const acceptanceCriteriaApi = {
   create: (userStoryId: string, data: CreateAcceptanceCriteriaDto) =>
     api.post<AcceptanceCriteriaResponseDto>(
       `/acceptance-criteria/${userStoryId}/acceptance-criteria`,
-      data
+      data,
     ),
 
   getByUserStory: (userStoryId: string) =>
     api.get<AcceptanceCriteriaResponseDto[]>(
-      `/acceptance-criteria/${userStoryId}/acceptance-criteria`
+      `/acceptance-criteria/${userStoryId}/acceptance-criteria`,
     ),
 
   update: (id: string, data: UpdateAcceptanceCriteriaDto) =>
-    api.put<AcceptanceCriteriaResponseDto>(
-      `/acceptance-criteria/${id}`,
-      data
-    ),
+    api.put<AcceptanceCriteriaResponseDto>(`/acceptance-criteria/${id}`, data),
 
   delete: (id: string) => api.delete(`/acceptance-criteria/${id}`),
 };

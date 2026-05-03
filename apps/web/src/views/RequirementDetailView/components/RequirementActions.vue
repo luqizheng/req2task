@@ -16,7 +16,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Trash2, Download } from "lucide-vue-next";
 
-const props = defineProps<{
+defineProps<{
   requirement: RequirementResponseDto;
   isDeleting?: boolean;
   isExporting?: boolean;

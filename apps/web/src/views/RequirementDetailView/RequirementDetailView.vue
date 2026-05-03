@@ -43,6 +43,7 @@ const allowedTransitionsRaw = ref<TransitionOption[]>([]);
 const conflicts = ref<ConflictDto[]>([]);
 
 const allowedTransitions = computed<TransitionOptionWithLabel[]>(() => {
+  
   return mapStatusesToOptions(allowedTransitionsRaw.value);
 });
 
@@ -59,9 +60,9 @@ const fetchRequirement = async () => {
       requirementsApi.getById(requirementId),
       requirementsApi.getAllowedTransitions(requirementId),
     ]);
-
+   
     requirement.value = reqData;
-    allowedTransitionsRaw.value = transitionsData.allowedTransitions || [];
+    allowedTransitionsRaw.value = transitionsData|| [];
   } catch (error) {
     toast.error("加载失败", {
       description: error instanceof Error ? error.message : "无法加载需求详情",

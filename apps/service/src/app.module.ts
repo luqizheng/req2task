@@ -34,7 +34,6 @@ import { ProjectAttachmentModule } from "./project-attachment/project-attachment
 import { AiModule } from "./ai/ai.module";
 import { RustFSModule } from "./rustfs/rustfs.module";
 import { FileDataModule } from "./file-data/file-data.module";
-import * as os from "os";
 
 @Module({
   imports: [
@@ -85,24 +84,4 @@ import * as os from "os";
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule implements OnModuleInit {
-  async onModuleInit() {
-    try {
-      await nacosClient.ready();
-      const serviceName = "req2task.service";
-
-      // registry instance
-      await nacosClient.registerInstance(serviceName, {
-        ip: getIP(),
-        port: 3000,
-        instanceId: getIP(),
-        weight: 1,
-        healthy: false,
-        enabled: true,
-      });
-      console.warn("Nacos naming client connected successfully");
-    } catch (error) {
-      console.warn("Nacos naming client connection failed:", error);
-    }
-  }
-}
+export class AppModule {}

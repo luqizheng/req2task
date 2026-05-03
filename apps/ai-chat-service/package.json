@@ -27,7 +27,6 @@
     "dotenv": "catalog:",
     "express": "catalog:",
     "mammoth": "catalog:",
-    "nacos": "catalog:",
     "pg": "catalog:",
     "pino": "catalog:",
     "pino-pretty": "catalog:",

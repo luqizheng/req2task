@@ -24,20 +24,20 @@ const handleRebuild = async () => {
   lastResult.value = null;
 
   try {
-    const response = await aiApi.rebuildVector({ projectId: props.projectId });
+    const result = await aiApi.rebuildVector({ projectId: props.projectId });
 
-    if (response.data.success && response.data.data) {
+    if (result.success && result.data) {
       lastResult.value = {
         success: true,
-        requirements: response.data.data.requirements,
-        rawRequirements: response.data.data.rawRequirements,
-        total: response.data.data.total,
+        requirements: result.data.requirements,
+        rawRequirements: result.data.rawRequirements,
+        total: result.data.total,
       };
       toast.success("向量存储重建成功", {
-        description: `已索引 ${response.data.data.total} 条需求`,
+        description: `已索引 ${result.data.total} 条需求`,
       });
     } else {
-      throw new Error(response.data.message || "重建失败");
+      throw new Error(result.message || "重建失败");
     }
   } catch (error) {
     const message = error instanceof Error ? error.message : "重建过程中发生错误";

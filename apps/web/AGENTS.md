@@ -177,3 +177,36 @@ npx shadcn-vue@latest add select
 5. 支持 TSX 语法（需要使用 `@vitejs/plugin-vue-jsx`）
 6. 运行 `pnpm lint` 检查代码后再提交
 7. 运行 `pnpm build`（包含类型检查）后再提交
+
+## API 响应处理规则
+
+项目的 axios 实例配置了响应拦截器，会自动解包后端返回的统一响应格式：
+
+```typescript
+// 后端返回格式
+{
+  success: boolean
+  message: string
+  data: T
+}
+
+// axios 拦截器会自动解包，API 调用直接得到 data
+const result = await api.post('/some-endpoint', data)
+// result 类型就是 T，而不是 { data: T }
+```
+
+**重要**：调用 API 时直接使用返回值，不要再访问 `.data`：
+
+```typescript
+// ✅ 正确
+const result = await aiApi.rebuildVector({ projectId })
+if (result.success) {
+  console.log(result.data.requirements)
+}
+
+// ❌ 错误（重复访问 .data）
+const response = await aiApi.rebuildVector({ projectId })
+if (response.data.success) {  // 错误！response 已经是解包后的数据
+  console.log(response.data.data.requirements)
+}
+```

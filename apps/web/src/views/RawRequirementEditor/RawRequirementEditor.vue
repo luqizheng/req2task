@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { useRoute } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import RustFSUploader from "@/components/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 import QuestionPanel from "./components/QuestionPanel.vue";
@@ -60,6 +60,7 @@ import dayjs from "dayjs";
 import { parseDate, DateValue } from "@internationalized/date";
 
 const route = useRoute();
+const router = useRouter();
 const projectId = route.params.projectId as string;
 const rawRequirementId = route.params.rawRequirementId as string | undefined;
 
@@ -70,6 +71,7 @@ const { rawRequirement } = storeToRefs(store);
 const loading = ref(false);
 const isSaving = ref(false);
 const isGenerating = ref(false);
+const isAnalyzing = ref(false);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -96,6 +98,11 @@ const collectionTypeOptions = [
 ];
 
 onMounted(async () => {
+  // 新创建模式，不需要加载数据
+  if (rawRequirementId === "new") {
+    return;
+  }
+
   if (rawRequirementId) {
     loading.value = true;
     try {
@@ -124,15 +131,26 @@ onMounted(async () => {
 const onSubmit = handleSubmit(async () => {
   isSaving.value = true;
   try {
+    const isNew = !store.rawRequirement.id;
     await rawRequirementSubmitHelper.save();
     await rawRequirementSubmitHelper.saveAllRequirements();
+
+    // 如果是新创建，保存成功后导航到编辑页面
+    if (isNew && store.rawRequirement.id) {
+      await router.push(`/projects/${projectId}/raw-requirements/${store.rawRequirement.id}`);
+    }
   } finally {
     isSaving.value = false;
   }
 });
 
 const handleAnalyze = async () => {
-  await rawRequirementSubmitHelper.rawRequirementAnalyze();
+  isAnalyzing.value = true;
+  try {
+    await rawRequirementSubmitHelper.rawRequirementAnalyze();
+  } finally {
+    isAnalyzing.value = false;
+  }
 };
 
 const handleGenerateTitle = async () => {
@@ -205,9 +223,7 @@ const collectTimeDate = computed<DateValue | undefined>({
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <FileText class="h-5 w-5 text-primary" />
-              <CardTitle class="text-base font-semibold"
-                >原始需求输入</CardTitle
-              >
+              <CardTitle class="text-base font-semibold">原始需求输入</CardTitle>
             </div>
           </div>
         </CardHeader>
@@ -215,29 +231,34 @@ const collectTimeDate = computed<DateValue | undefined>({
           <ScrollArea class="h-full px-4 py-4 bg-transparent">
             <form style="padding: 10px" @submit="onSubmit">
               <FieldGroup>
+                <VeeField v-slot="{ errors }" name="content">
+                  <Field :data-invalid="!!errors.length">
+                    <FieldLabel>原始内容</FieldLabel>
+                    <Textarea :model-value="rawRequirement.content" placeholder="请输入原始需求内容" :rows="6"
+                      :aria-invalid="!!errors.length" @update:model-value="
+                        (val) => {
+                          rawRequirement.content = String(val);
+                          setFieldValue('content', String(val));
+                        }
+                      " />
+                    <FieldError v-if="errors.length" :errors="errors" />
+                  </Field>
+                </VeeField>
                 <VeeField v-slot="{ errors }" name="title">
                   <Field :data-invalid="!!errors.length">
+
                     <FieldLabel>标题</FieldLabel>
                     <InputGroup>
-                      <InputGroupInput
-                        :model-value="rawRequirement.title ?? ''"
-                        placeholder="请输入标题"
-                        :aria-invalid="!!errors.length"
-                        @update:model-value="
+                      <InputGroupInput :model-value="rawRequirement.title ?? ''" placeholder="请输入标题"
+                        :aria-invalid="!!errors.length" @update:model-value="
                           (val) => {
                             rawRequirement.title = val || null;
                             setFieldValue('title', val || null);
                           }
-                        "
-                      />
+                        " />
                       <InputGroupAddon align="inline-end">
-                        <InputGroupButton
-                          type="button"
-                          variant="outline"
-                          :disabled="!rawRequirement.content?.trim()"
-                          title="AI 生成标题"
-                          @click="handleGenerateTitle"
-                        >
+                        <InputGroupButton type="button" variant="outline" :disabled="!rawRequirement.content?.trim()"
+                          title="AI 生成标题" @click="handleGenerateTitle">
                           <Sparkles />
                         </InputGroupButton>
                       </InputGroupAddon>
@@ -249,17 +270,13 @@ const collectTimeDate = computed<DateValue | undefined>({
                 <VeeField v-slot="{ errors }" name="source">
                   <Field :data-invalid="!!errors.length">
                     <FieldLabel>来源</FieldLabel>
-                    <Input
-                      :model-value="rawRequirement.source"
-                      placeholder="名字/职位/部门"
-                      :aria-invalid="!!errors.length"
+                    <Input :model-value="rawRequirement.source" placeholder="名字/职位/部门" :aria-invalid="!!errors.length"
                       @update:model-value="
                         (val) => {
                           rawRequirement.source = String(val);
                           setFieldValue('source', String(val));
                         }
-                      "
-                    />
+                      " />
                     <FieldError v-if="errors.length" :errors="errors" />
                   </Field>
                 </VeeField>
@@ -267,31 +284,21 @@ const collectTimeDate = computed<DateValue | undefined>({
                 <VeeField v-slot="{ errors }" name="collectionType">
                   <Field :data-invalid="!!errors.length">
                     <FieldLabel>收集类型</FieldLabel>
-                    <Select
-                      :model-value="rawRequirement.collectionType"
-                      :aria-invalid="!!errors.length"
+                    <Select :model-value="rawRequirement.collectionType" :aria-invalid="!!errors.length"
                       @update:model-value="
                         (val) => {
                           rawRequirement.collectionType = val as CollectionType;
                           setFieldValue('collectionType', val);
                         }
-                      "
-                    >
+                      ">
                       <SelectTrigger>
-                        <SelectValue
-                          :placeholder="
-                            getCollectionTypeLabel(
-                              rawRequirement.collectionType,
-                            ) || '选择采集方式'
-                          "
-                        />
+                        <SelectValue :placeholder="getCollectionTypeLabel(
+                          rawRequirement.collectionType,
+                        ) || '选择采集方式'
+                          " />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem
-                          v-for="opt in collectionTypeOptions"
-                          :key="opt.value"
-                          :value="opt.value"
-                        >
+                        <SelectItem v-for="opt in collectionTypeOptions" :key="opt.value" :value="opt.value">
                           {{ opt.label }}
                         </SelectItem>
                       </SelectContent>
@@ -305,13 +312,9 @@ const collectTimeDate = computed<DateValue | undefined>({
                     <FieldLabel>收集时间</FieldLabel>
                     <Popover>
                       <PopoverTrigger as-child>
-                        <Button
-                          variant="outline"
-                          :class="
-                            !rawRequirement.collectTime &&
-                            'text-muted-foreground'
-                          "
-                        >
+                        <Button variant="outline" :class="!rawRequirement.collectTime &&
+                          'text-muted-foreground'
+                          ">
                           <CalendarIcon />
                           {{
                             rawRequirement.collectTime
@@ -328,24 +331,7 @@ const collectTimeDate = computed<DateValue | undefined>({
                   </Field>
                 </VeeField>
 
-                <VeeField v-slot="{ errors }" name="content">
-                  <Field :data-invalid="!!errors.length">
-                    <FieldLabel>原始内容</FieldLabel>
-                    <Textarea
-                      :model-value="rawRequirement.content"
-                      placeholder="请输入原始需求内容"
-                      :rows="6"
-                      :aria-invalid="!!errors.length"
-                      @update:model-value="
-                        (val) => {
-                          rawRequirement.content = String(val);
-                          setFieldValue('content', String(val));
-                        }
-                      "
-                    />
-                    <FieldError v-if="errors.length" :errors="errors" />
-                  </Field>
-                </VeeField>
+
 
                 <Field>
                   <FieldLabel>上传文件</FieldLabel>
@@ -356,23 +342,15 @@ const collectTimeDate = computed<DateValue | undefined>({
           </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button
-            variant="outline"
-            class="flex-1 h-9"
-            :disabled="isSaving"
-            @click.stop="onSubmit"
-          >
+          <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click.stop="onSubmit">
             <Loader2 v-if="isSaving" class="w-4 h-4 mr-2 animate-spin" />
             <Save v-else class="w-4 h-4 mr-2" />
             {{ isSaving ? "保存中..." : "保存" }}
           </Button>
-          <Button
-            class="flex-1 h-9"
-            :disabled="isSaving"
-            @click="handleAnalyze"
-          >
-            <Play class="w-4 h-4 mr-2" />
-            分析
+          <Button class="flex-1 h-9" :disabled="isSaving || isAnalyzing" @click="handleAnalyze">
+            <Loader2 v-if="isAnalyzing" class="w-4 h-4 mr-2 animate-spin" />
+            <Play v-else class="w-4 h-4 mr-2" />
+            {{ isAnalyzing ? "分析中..." : "分析" }}
           </Button>
         </div>
       </Card>
@@ -386,13 +364,9 @@ const collectTimeDate = computed<DateValue | undefined>({
               <CardTitle class="text-base font-semibold">追问与澄清</CardTitle>
             </div>
             <div class="flex items-center gap-2 text-xs">
-              <span class="text-muted-foreground"
-                >{{ questionCount }} 个问题</span
-              >
+              <span class="text-muted-foreground">{{ questionCount }} 个问题</span>
               <span class="text-muted-foreground">|</span>
-              <span class="text-primary"
-                >{{ doneQuestionCount }}/{{ questionCount }} 已回答</span
-              >
+              <span class="text-primary">{{ doneQuestionCount }}/{{ questionCount }} 已回答</span>
             </div>
           </div>
         </CardHeader>
@@ -402,11 +376,7 @@ const collectTimeDate = computed<DateValue | undefined>({
           </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0">
-          <Button
-            class="w-full h-9"
-            :disabled="isGenerating"
-            @click="handleGenerateRequirements"
-          >
+          <Button class="w-full h-9" :disabled="isGenerating" @click="handleGenerateRequirements">
             <Loader2 v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
             <ListTodo v-else class="w-4 h-4 mr-2" />
             {{ isGenerating ? "生成中..." : "生成需求" }}
@@ -420,9 +390,7 @@ const collectTimeDate = computed<DateValue | undefined>({
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-2">
               <ListTodo class="h-5 w-5 text-primary" />
-              <CardTitle class="text-base font-semibold"
-                >{{ store.requirements.length }} 条需求</CardTitle
-              >
+              <CardTitle class="text-base font-semibold">{{ store.requirements.length }} 条需求</CardTitle>
             </div>
             <span class="text-xs text-muted-foreground">步骤 3/3</span>
           </div>
@@ -433,12 +401,7 @@ const collectTimeDate = computed<DateValue | undefined>({
           </ScrollArea>
         </CardContent>
         <div class="p-4 border-t shrink-0 flex gap-2">
-          <Button
-            variant="outline"
-            class="flex-1 h-9"
-            :disabled="isSaving"
-            @click="handleGenerateRequirements"
-          >
+          <Button variant="outline" class="flex-1 h-9" :disabled="isSaving" @click="handleGenerateRequirements">
             <RotateCcw class="w-4 h-4 mr-2" />
             重新生成
           </Button>

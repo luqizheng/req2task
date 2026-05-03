@@ -107,49 +107,57 @@ export function useRequirementSubmit(
     }
   };
 
-  const rawRequirementAnalyze = () => {
-    const analyzerData = {
-      conversationText: store.rawRequirement.content,
-      previousQuestions: store.rawRequirement.questionAndAnswers,
-    } as GenerateRawRequirementByLLMDto;
+  const rawRequirementAnalyze = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const analyzerData = {
+        conversationText: store.rawRequirement.content,
+        previousQuestions: store.rawRequirement.questionAndAnswers,
+      } as GenerateRawRequirementByLLMDto;
 
-    sseGenerateQuestionStream.submitStream(analyzerData, {
-      onAnalyzeStart: (event) => {
-        store.rawRequirement.conversationId = event.collectionId;
-      },
-      onConversationStart: () => {},
-      onContent: (content) => {
-        jsonHelperQuestAndAnswer.feed(content);
-      },
-      onMessage: () => {},
-      onDone: () => {
-        toast.success("分析完成");
-      },
-      onError: (error) => {
-        toast.error(error.message || "分析失败");
-      },
+      sseGenerateQuestionStream.submitStream(analyzerData, {
+        onAnalyzeStart: (event) => {
+          store.rawRequirement.conversationId = event.collectionId;
+        },
+        onConversationStart: () => {},
+        onContent: (content) => {
+          jsonHelperQuestAndAnswer.feed(content);
+        },
+        onMessage: () => {},
+        onDone: () => {
+          toast.success("分析完成");
+          resolve();
+        },
+        onError: (error) => {
+          toast.error(error.message || "分析失败");
+          reject(new Error(error.message || "分析失败"));
+        },
+      });
     });
   };
 
-  const generateRequirements = () => {
-    const data = {
-      rawRequirementId: store.rawRequirement.id,
-    };
-    sseGenerateRequirementsStream.submitStream(data, {
-      onAnalyzeStart: (event) => {
-        store.rawRequirement.conversationId = event.collectionId;
-      },
-      onConversationStart: () => {},
-      onContent: (content) => {
-        jsonHelperRequirements.feed(content);
-      },
-      onMessage: () => {},
-      onDone: () => {
-        toast.success("生成需求完成");
-      },
-      onError: (error) => {
-        toast.error(error.message || "生成需求失败");
-      },
+  const generateRequirements = (): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const data = {
+        rawRequirementId: store.rawRequirement.id,
+      };
+      sseGenerateRequirementsStream.submitStream(data, {
+        onAnalyzeStart: (event) => {
+          store.rawRequirement.conversationId = event.collectionId;
+        },
+        onConversationStart: () => {},
+        onContent: (content) => {
+          jsonHelperRequirements.feed(content);
+        },
+        onMessage: () => {},
+        onDone: () => {
+          toast.success("生成需求完成");
+          resolve();
+        },
+        onError: (error) => {
+          toast.error(error.message || "生成需求失败");
+          reject(new Error(error.message || "生成需求失败"));
+        },
+      });
     });
   };
 
@@ -173,15 +181,6 @@ export function useRequirementSubmit(
     requirement: AiGeneratedRequirementDto,
   ): Promise<boolean> => {
     try {
-      const moduleId = requirement.moduleId === "NEW" || !requirement.moduleId
-        ? undefined
-        : requirement.moduleId;
-
-      if (!moduleId) {
-        toast.error("需求缺少模块信息，无法保存");
-        return false;
-      }
-
       const createDto: RequirementDto = {
         title: requirement.title,
         description: requirement.content,
@@ -189,7 +188,9 @@ export function useRequirementSubmit(
         source: requirement.source,
         parentRequirementId: requirement.parentId || undefined,
         sourceRawRequirementId: store.rawRequirement.id || undefined,
-        moduleIds: [moduleId],
+        moduleIds: requirement.moduleId && requirement.moduleId !== "NEW"
+          ? [requirement.moduleId]
+          : undefined,
       };
 
       const result = await requirementsApi.create(createDto);
@@ -211,36 +212,23 @@ export function useRequirementSubmit(
       return false;
     }
 
-    const groupedByModule = new Map<string, AiGeneratedRequirementDto[]>();
-    for (const req of unsavedRequirements) {
-      const moduleId = req.moduleId === "NEW" || !req.moduleId ? null : req.moduleId;
-      if (!moduleId) {
-        toast.error(`需求"${req.title}"缺少模块信息，无法保存`);
-        return false;
-      }
-      if (!groupedByModule.has(moduleId)) {
-        groupedByModule.set(moduleId, []);
-      }
-      groupedByModule.get(moduleId)!.push(req);
-    }
-
     try {
-      for (const [moduleId, reqs] of groupedByModule) {
-        const dtos: RequirementDto[] = reqs.map((req) => ({
-          title: req.title,
-          description: req.content,
-          priority: req.priority,
-          source: req.source,
-          parentRequirementId: req.parentId || undefined,
-          sourceRawRequirementId: store.rawRequirement.id || undefined,
-          moduleIds: [moduleId],
-        }));
+      const dtos: RequirementDto[] = unsavedRequirements.map((req) => ({
+        title: req.title,
+        description: req.content,
+        priority: req.priority,
+        source: req.source,
+        parentRequirementId: req.parentId || undefined,
+        sourceRawRequirementId: store.rawRequirement.id || undefined,
+        moduleIds: req.moduleId && req.moduleId !== "NEW"
+          ? [req.moduleId]
+          : undefined,
+      }));
 
-        const results = await requirementsApi.batchCreate(dtos);
-        for (let i = 0; i < reqs.length; i++) {
-          if (results[i]) {
-            store.updateRequirementId(reqs[i].id, results[i].id);
-          }
+      const results = await requirementsApi.batchCreate(dtos);
+      for (let i = 0; i < unsavedRequirements.length; i++) {
+        if (results[i]) {
+          store.updateRequirementId(unsavedRequirements[i].id, results[i].id);
         }
       }
       toast.success(`成功保存 ${unsavedRequirements.length} 个需求`);

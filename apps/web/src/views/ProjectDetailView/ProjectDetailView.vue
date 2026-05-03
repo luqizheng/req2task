@@ -18,6 +18,7 @@ import {
   FileText,
   Settings,
   RefreshCw,
+  Plus,
 } from "lucide-vue-next";
 import ProjectInfoCard from "./components/ProjectInfoCard.vue";
 import ProjectProgressCard from "./components/ProjectProgressCard.vue";
@@ -113,6 +114,14 @@ const goBack = () => {
   router.push("/projects");
 };
 
+const createRawRequirement = () => {
+  router.push(`/projects/${projectId}/raw-requirements/new`);
+};
+
+const createRequirement = () => {
+  router.push(`/projects/${projectId}/requirements/create`);
+};
+
 onMounted(() => {
   fetchProjectData();
 });
@@ -187,6 +196,22 @@ onMounted(() => {
               <p class="text-sm text-slate-500 font-mono">{{ project.projectKey }}</p>
             </div>
             <div class="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                @click="createRawRequirement"
+              >
+                <Plus class="w-4 h-4 mr-2" />
+                新建原始需求
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                @click="createRequirement"
+              >
+                <Plus class="w-4 h-4 mr-2" />
+                新建需求
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

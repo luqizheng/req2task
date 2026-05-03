@@ -88,17 +88,19 @@ export class RequirementsService {
       projectId = modules[0]?.projectId || batchProjectId || null;
     }
 
+    // 确保 projectId 不为 null
+    if (!projectId) {
+      throw new Error("无法确定需求所属项目");
+    }
+
     const MAX_RETRIES = 3;
     let saved: Requirement;
 
     for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-      const entityKey =
-        (entityKeySetting ?? projectId)
-          ? await this.entityKeyService.generateEntityKey(
-              projectId,
-              EntityKeyType.REQ,
-            )
-          : [""];
+      const entityKey = await this.entityKeyService.generateEntityKey(
+        projectId,
+        EntityKeyType.REQ,
+      );
       const requirement = this.requirementRepository.create({
         title: createDto.title,
         description: createDto.description || null,
@@ -107,6 +109,7 @@ export class RequirementsService {
         status: RequirementStatus.DRAFT,
         parentId: createDto.parentRequirementId || null,
         sourceRawRequirementId: createDto.sourceRawRequirementId || null,
+        projectId,
         createdById,
         storyPoints: 0,
         entityKey: entityKey[0],

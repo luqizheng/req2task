@@ -305,6 +305,9 @@ export class RequirementsController {
 
     const rawRequirement =
       await this.rawRequirementService.getRawRequirementById(firstRawReqId);
+    if (!rawRequirement) {
+      return { code: 404, message: "原始需求不存在" };
+    }
     const result = await this.requirementsService.saveBatch(
       rawRequirement.projectId,
       requirements,

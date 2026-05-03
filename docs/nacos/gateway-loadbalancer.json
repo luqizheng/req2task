@@ -1,8 +1,0 @@
-{
-  "comment": "网关负载均衡配置 - Data ID: gateway-loadbalancer, Group: DEFAULT_GROUP",
-  "defaultStrategy": "roundRobin",
-  "strategies": {
-    "req2task.service": "weightedRoundRobin",
-    "req2task.ai-chat-service": "weightedRandom"
-  }
-}

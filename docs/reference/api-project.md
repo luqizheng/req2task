@@ -1,36 +1,92 @@
-# 项目管理 API
+# 项目 API
+
+项目管理接口，支持项目 CRUD、成员管理、进度追踪和基线管理。
+
+---
 
 ## 端点总览
 
+### 项目管理
+
 | 接口 | 方法 | 功能描述 |
 |------|------|----------|
-| `/projects` | POST | 创建项目 |
 | `/projects` | GET | 获取项目列表 |
+| `/projects` | POST | 创建项目 |
 | `/projects/:id` | GET | 获取项目详情 |
+| `/projects/key/:projectKey` | GET | 根据项目标识获取项目 |
 | `/projects/:id` | PUT | 更新项目 |
 | `/projects/:id` | DELETE | 删除项目 |
-| `/projects/:id/members` | POST | 添加项目成员 |
+
+### 成员管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
 | `/projects/:id/members` | GET | 获取项目成员 |
-| `/projects/:id/members/:userId` | DELETE | 移除项目成员 |
-| `/projects/:id/baselines` | GET | 获取项目基线列表 |
-| `/projects/:id/baselines` | POST | 创建新基线 |
-| `/projects/:id/baselines/:baselineId` | GET | 获取基线详情 |
-| `/projects/:id/baselines/:baselineId/restore` | POST | 恢复到基线 |
+| `/projects/:id/members` | POST | 添加成员 |
+| `/projects/:id/members/:userId` | DELETE | 移除成员 |
+
+### 进度追踪
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/projects/:id/progress` | GET | 获取项目进度 |
+| `/projects/:id/burndown` | GET | 获取燃尽图数据 |
+| `/projects/modules/:moduleId/progress` | GET | 获取模块进度 |
+
+### 基线管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/projects/:id/baselines` | GET | 获取基线列表 |
+| `/projects/:id/baselines` | POST | 创建基线 |
+| `/projects/baselines/:baselineId` | GET | 获取基线详情 |
+| `/projects/baselines/:baselineId/restore` | POST | 恢复基线 |
+| `/projects/baselines/:baselineId` | DELETE | 删除基线 |
+| `/projects/baselines/:id1/compare/:id2` | GET | 对比基线 |
 
 ---
 
 ## 项目管理
 
+### 获取项目列表
+
+```http
+GET /projects?page=1&limit=10
+Authorization: Bearer <token>
+```
+
+**响应：**
+
+```json
+{
+  "items": [
+    {
+      "id": "uuid",
+      "name": "项目名称",
+      "key": "PROJ",
+      "description": "项目描述",
+      "status": "active",
+      "createdAt": "2026-04-20T10:00:00Z",
+      "updatedAt": "2026-04-20T12:00:00Z"
+    }
+  ],
+  "total": 50,
+  "page": 1,
+  "limit": 10
+}
+```
+
 ### 创建项目
 
 ```http
 POST /projects
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "name": "项目名称",
-  "description": "项目描述",
-  "key": "PROJECT_KEY"             // 项目标识符
+  "key": "PROJ",
+  "description": "项目描述"
 }
 ```
 
@@ -38,38 +94,39 @@ Content-Type: application/json
 
 ```json
 {
-  "code": 0,
-  "data": {
-    "id": "uuid",
-    "name": "项目名称",
-    "description": "项目描述",
-    "key": "PROJECT_KEY",
-    "createdAt": "2026-04-20T10:00:00Z"
-  }
+  "id": "uuid",
+  "name": "项目名称",
+  "key": "PROJ",
+  "description": "项目描述",
+  "status": "active",
+  "createdAt": "2026-04-20T10:00:00Z"
 }
-```
-
-### 获取项目列表
-
-```http
-GET /projects
 ```
 
 ### 获取项目详情
 
 ```http
 GET /projects/:id
+Authorization: Bearer <token>
+```
+
+### 根据项目标识获取项目
+
+```http
+GET /projects/key/:projectKey
+Authorization: Bearer <token>
 ```
 
 ### 更新项目
 
 ```http
 PUT /projects/:id
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "name": "更新后的名称",
-  "description": "更新后的描述"
+  "name": "新名称",
+  "description": "新描述"
 }
 ```
 
@@ -77,50 +134,78 @@ Content-Type: application/json
 
 ```http
 DELETE /projects/:id
+Authorization: Bearer <token>
 ```
+
+**响应：** 204 No Content
 
 ---
 
-## 项目成员管理
-
-### 添加项目成员
-
-```http
-POST /projects/:id/members
-Content-Type: application/json
-
-{
-  "userId": "uuid",
-  "role": "developer"               // developer | analyst | viewer
-}
-```
+## 成员管理
 
 ### 获取项目成员
 
 ```http
 GET /projects/:id/members
+Authorization: Bearer <token>
 ```
 
 **响应：**
 
 ```json
+[
+  {
+    "id": "uuid",
+    "username": "user1",
+    "displayName": "用户1",
+    "role": "member"
+  }
+]
+```
+
+### 添加成员
+
+```http
+POST /projects/:id/members
+Authorization: Bearer <token>
+Content-Type: application/json
+
 {
-  "code": 0,
-  "data": [
-    {
-      "userId": "uuid",
-      "displayName": "张三",
-      "role": "developer",
-      "joinedAt": "2026-04-20T10:00:00Z"
-    }
-  ]
+  "userId": "uuid",
+  "role": "member"
 }
 ```
 
-### 移除项目成员
+### 移除成员
 
 ```http
 DELETE /projects/:id/members/:userId
+Authorization: Bearer <token>
+```
+
+---
+
+## 进度追踪
+
+### 获取项目进度
+
+```http
+GET /projects/:id/progress
+Authorization: Bearer <token>
+```
+
+### 获取燃尽图数据
+
+```http
+GET /projects/:id/burndown?startDate=2026-01-01&endDate=2026-01-31
+Authorization: Bearer <token>
+```
+
+### 获取模块进度
+
+```http
+GET /projects/modules/:moduleId/progress
+Authorization: Bearer <token>
 ```
 
 ---
@@ -131,45 +216,50 @@ DELETE /projects/:id/members/:userId
 
 ```http
 GET /projects/:id/baselines
+Authorization: Bearer <token>
 ```
 
 ### 创建基线
 
 ```http
 POST /projects/:id/baselines
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "name": "基线名称",
-  "description": "基线描述"
+  "name": "v1.0 基线",
+  "description": "里程碑版本"
 }
 ```
 
 ### 获取基线详情
 
 ```http
-GET /projects/:id/baselines/:baselineId
+GET /projects/baselines/:baselineId
+Authorization: Bearer <token>
 ```
 
-### 恢复到基线
+### 恢复基线
 
 ```http
-POST /projects/:id/baselines/:baselineId/restore
+POST /projects/baselines/:baselineId/restore
+Authorization: Bearer <token>
 ```
 
----
+**响应：** 204 No Content
 
-## 数据模型
+### 删除基线
 
-### ProjectMemberRole 枚举
-
-```typescript
-type ProjectMemberRole = 'owner' | 'developer' | 'analyst' | 'viewer';
+```http
+DELETE /projects/baselines/:baselineId
+Authorization: Bearer <token>
 ```
 
-| 值 | 说明 |
-|----|------|
-| `owner` | 所有者 |
-| `developer` | 开发人员 |
-| `analyst` | 需求分析师 |
-| `viewer` | 查看者 |
+**响应：** 204 No Content
+
+### 对比基线
+
+```http
+GET /projects/baselines/:baselineId1/compare/:baselineId2
+Authorization: Bearer <token>
+```

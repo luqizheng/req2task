@@ -1,80 +1,44 @@
-# 需求管理 API
+# 需求 API
 
-## 端点总览
-
-| 接口 | 方法 | 功能描述 |
-|------|------|----------|
-| `/modules/:projectId/modules` | POST | 创建功能模块 |
-| `/modules/:projectId/modules` | GET | 获取功能模块列表 |
-| `/modules/:id` | GET | 获取功能模块详情 |
-| `/modules/:id` | PUT | 更新功能模块 |
-| `/modules/:id` | DELETE | 删除功能模块 |
-| `/requirements/modules/:moduleId/requirements` | POST | 创建需求 |
-| `/requirements/modules/:moduleId/requirements` | GET | 获取需求列表 |
-| `/requirements/:id` | GET | 获取需求详情 |
-| `/requirements/:id` | PUT | 更新需求 |
-| `/requirements/:id` | DELETE | 删除需求 |
-| `/requirements/:id/approve` | POST | 审批需求 |
-| `/requirements/:id/changes` | GET | 获取需求变更历史 |
-| `/requirements/:id/versions` | GET | 获取需求版本列表 |
-| `/requirements/:id/versions/:version` | GET | 获取特定版本内容 |
-| `/requirements/:id/versions/:version/restore` | POST | 恢复到指定版本 |
-| `/user-stories/:requirementId/user-stories` | POST | 创建用户故事 |
-| `/user-stories/:requirementId/user-stories` | GET | 获取用户故事列表 |
-| `/user-stories/:id` | GET | 获取用户故事详情 |
-| `/user-stories/:id` | PUT | 更新用户故事 |
-| `/user-stories/:id` | DELETE | 删除用户故事 |
-| `/acceptance-criteria/:userStoryId/acceptance-criteria` | POST | 创建验收条件 |
-| `/acceptance-criteria/:userStoryId/acceptance-criteria` | GET | 获取验收条件列表 |
-| `/acceptance-criteria/:id` | PUT | 更新验收条件 |
-| `/acceptance-criteria/:id` | DELETE | 删除验收条件 |
+需求管理接口，支持需求 CRUD、状态流转、变更历史和 AI 生成。
 
 ---
 
-## 功能模块管理
+## 端点总览
 
-### 创建功能模块
+### 需求管理
 
-```http
-POST /modules/:projectId/modules
-Content-Type: application/json
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/requirements` | POST | 创建需求 |
+| `/requirements` | GET | 获取需求列表（需配合查询参数） |
+| `/requirements/:id` | GET | 获取需求详情 |
+| `/requirements/:id` | PUT | 更新需求 |
+| `/requirements/:id` | DELETE | 删除需求 |
+| `/requirements/batch` | POST | 批量创建需求 |
 
-{
-  "name": "模块名称",
-  "description": "模块描述",
-  "parentId": "uuid"               // 可选：父模块ID
-}
-```
+### 按关联查询
 
-### 获取功能模块列表
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/requirements/modules/:moduleId/requirements` | GET | 获取模块下的需求 |
+| `/requirements/projects/:projectId/requirements` | GET | 获取项目下的需求 |
+| `/requirements/raw-requirement/:rawRequirementId/requirements` | GET | 获取原始需求关联的需求 |
 
-```http
-GET /modules/:projectId/modules
-```
+### 状态管理
 
-### 获取功能模块详情
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/requirements/:id/transition` | POST | 状态流转 |
+| `/requirements/:id/allowed-transitions` | GET | 获取允许的状态流转 |
+| `/requirements/:id/review` | POST | 评审需求 |
+| `/requirements/:id/change-history` | GET | 获取变更历史 |
 
-```http
-GET /modules/:id
-```
+### AI 生成
 
-### 更新功能模块
-
-```http
-PUT /modules/:id
-Content-Type: application/json
-
-{
-  "name": "更新后的名称",
-  "description": "更新后的描述"
-}
-```
-
-### 删除功能模块
-
-```http
-DELETE /modules/:id
-```
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/requirements/generate/stream` | POST | 流式生成需求（SSE） |
 
 ---
 
@@ -83,14 +47,17 @@ DELETE /modules/:id
 ### 创建需求
 
 ```http
-POST /requirements/modules/:moduleId/requirements
+POST /requirements
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "title": "需求标题",
   "description": "需求描述",
-  "priority": "high",               // high | medium | low
-  "type": "feature"                // feature | performance | security | interface
+  "type": "功能需求",
+  "priority": "高",
+  "moduleId": "uuid",
+  "sourceRawRequirementId": "uuid"
 }
 ```
 
@@ -103,37 +70,55 @@ Content-Type: application/json
     "id": "uuid",
     "title": "需求标题",
     "description": "需求描述",
-    "priority": "high",
-    "type": "feature",
+    "type": "功能需求",
+    "priority": "高",
     "status": "draft",
-    "version": 1,
     "createdAt": "2026-04-20T10:00:00Z"
   }
 }
 ```
 
-### 获取需求列表
+### 批量创建需求
 
 ```http
-GET /requirements/modules/:moduleId/requirements
+POST /requirements/batch
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "requirements": [
+    {
+      "title": "需求1",
+      "description": "描述1",
+      "sourceRawRequirementId": "uuid"
+    },
+    {
+      "title": "需求2",
+      "description": "描述2",
+      "sourceRawRequirementId": "uuid"
+    }
+  ]
+}
 ```
 
 ### 获取需求详情
 
 ```http
 GET /requirements/:id
+Authorization: Bearer <token>
 ```
 
 ### 更新需求
 
 ```http
 PUT /requirements/:id
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "title": "更新后的标题",
-  "description": "更新后的描述",
-  "priority": "medium"
+  "title": "新标题",
+  "description": "新描述",
+  "priority": "中"
 }
 ```
 
@@ -141,28 +126,49 @@ Content-Type: application/json
 
 ```http
 DELETE /requirements/:id
-```
-
-### 审批需求
-
-```http
-POST /requirements/:id/approve
-Content-Type: application/json
-
-{
-  "approved": true,
-  "comment": "审批意见（可选）"
-}
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 需求版本管理
+## 按关联查询
 
-### 获取需求变更历史
+### 获取模块下的需求
 
 ```http
-GET /requirements/:id/changes
+GET /requirements/modules/:moduleId/requirements?page=1&limit=20
+Authorization: Bearer <token>
+```
+
+### 获取项目下的需求
+
+```http
+GET /requirements/projects/:projectId/requirements?page=1&limit=20
+Authorization: Bearer <token>
+```
+
+### 获取原始需求关联的需求
+
+```http
+GET /requirements/raw-requirement/:rawRequirementId/requirements
+Authorization: Bearer <token>
+```
+
+---
+
+## 状态管理
+
+### 状态流转
+
+```http
+POST /requirements/:id/transition
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "targetStatus": "in_review",
+  "comment": "提交评审"
+}
 ```
 
 **响应：**
@@ -170,175 +176,142 @@ GET /requirements/:id/changes
 ```json
 {
   "code": 0,
-  "data": [
-    {
-      "id": "uuid",
-      "field": "description",
-      "oldValue": "旧值",
-      "newValue": "新值",
-      "changedBy": "张三",
-      "changedAt": "2026-04-20T10:00:00Z"
-    }
-  ]
+  "data": {
+    "id": "uuid",
+    "status": "in_review",
+    "updatedAt": "2026-04-20T12:00:00Z"
+  }
 }
 ```
 
-### 获取需求版本列表
+### 获取允许的状态流转
 
 ```http
-GET /requirements/:id/versions
+GET /requirements/:id/allowed-transitions
+Authorization: Bearer <token>
 ```
 
-### 获取特定版本内容
+**响应：**
 
-```http
-GET /requirements/:id/versions/:version
+```json
+{
+  "code": 0,
+  "data": {
+    "allowedTransitions": ["in_review", "cancelled"]
+  }
+}
 ```
 
-### 恢复到指定版本
+### 评审需求
 
 ```http
-POST /requirements/:id/versions/:version/restore
+POST /requirements/:id/review
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "approved": true,
+  "comment": "评审通过"
+}
+```
+
+### 获取变更历史
+
+```http
+GET /requirements/:id/change-history
+Authorization: Bearer <token>
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "logs": [
+      {
+        "id": "uuid",
+        "requirementId": "uuid",
+        "changeType": "status",
+        "oldValue": "draft",
+        "newValue": "in_review",
+        "comment": "提交评审",
+        "changedBy": {
+          "id": "uuid",
+          "displayName": "用户1",
+          "username": "user1"
+        },
+        "createdAt": "2026-04-20T12:00:00Z"
+      }
+    ],
+    "total": 5
+  }
+}
 ```
 
 ---
 
-## 用户故事管理
+## AI 生成
 
-### 创建用户故事
+### 流式生成需求
+
+根据原始需求内容流式生成结构化需求。
 
 ```http
-POST /user-stories/:requirementId/user-stories
+POST /requirements/generate/stream
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "title": "用户故事标题",
-  "asA": "作为产品经理",
-  "iWant": "我想要...",
-  "soThat": "以便..."
+  "rawRequirementId": "uuid"
 }
 ```
 
-### 获取用户故事列表
+**SSE 响应：**
 
-```http
-GET /user-stories/:requirementId/user-stories
 ```
+data: {"type": "content", "content": "需求分析中..."}
 
-### 获取用户故事详情
+data: {"type": "content", "content": "1. 需求标题: ..."}
 
-```http
-GET /user-stories/:id
-```
+data: {"type": "requirements", "requirements": [{"title": "...", "description": "..."}]}
 
-### 更新用户故事
+data: {"type": "done"}
 
-```http
-PUT /user-stories/:id
-Content-Type: application/json
-
-{
-  "title": "更新后的标题",
-  "asA": "作为...",
-  "iWant": "我想要...",
-  "soThat": "以便..."
-}
-```
-
-### 删除用户故事
-
-```http
-DELETE /user-stories/:id
-```
-
----
-
-## 验收条件管理
-
-### 创建验收条件
-
-```http
-POST /acceptance-criteria/:userStoryId/acceptance-criteria
-Content-Type: application/json
-
-{
-  "content": "验收条件内容",
-  "priority": 1,
-  "status": "pending"              // pending | passed | failed
-}
-```
-
-### 获取验收条件列表
-
-```http
-GET /acceptance-criteria/:userStoryId/acceptance-criteria
-```
-
-### 更新验收条件
-
-```http
-PUT /acceptance-criteria/:id
-Content-Type: application/json
-
-{
-  "content": "更新后的内容",
-  "status": "passed"
-}
-```
-
-### 删除验收条件
-
-```http
-DELETE /acceptance-criteria/:id
+data: [DONE]
 ```
 
 ---
 
 ## 数据模型
 
-### RequirementStatus 枚举
+### 需求状态
 
-```typescript
-type RequirementStatus = 'draft' | 'pending' | 'approved' | 'implemented' | 'archived';
-```
-
-| 值 | 说明 |
-|----|------|
+| 状态 | 说明 |
+|------|------|
 | `draft` | 草稿 |
-| `pending` | 待审批 |
-| `approved` | 已审批 |
+| `in_review` | 评审中 |
+| `approved` | 已批准 |
+| `rejected` | 已拒绝 |
 | `implemented` | 已实现 |
-| `archived` | 已归档 |
+| `verified` | 已验证 |
+| `cancelled` | 已取消 |
 
-### RequirementPriority 枚举
+### 需求类型
 
-```typescript
-type RequirementPriority = 'high' | 'medium' | 'low';
-```
+| 类型 | 说明 |
+|------|------|
+| `功能需求` | 功能性需求 |
+| `性能需求` | 性能相关需求 |
+| `安全需求` | 安全性需求 |
+| `接口需求` | 接口相关需求 |
+| `数据需求` | 数据相关需求 |
+| `其他` | 其他类型 |
 
-### RequirementType 枚举
+### 优先级
 
-```typescript
-type RequirementType = 'feature' | 'performance' | 'security' | 'interface' | 'data' | 'ux';
-```
-
-| 值 | 说明 |
-|----|------|
-| `feature` | 功能需求 |
-| `performance` | 性能需求 |
-| `security` | 安全需求 |
-| `interface` | 接口需求 |
-| `data` | 数据需求 |
-| `ux` | 用户体验需求 |
-
-### UserStoryStatus 枚举
-
-```typescript
-type UserStoryStatus = 'pending' | 'in_progress' | 'completed';
-```
-
-### AcceptanceCriteriaStatus 枚举
-
-```typescript
-type AcceptanceCriteriaStatus = 'pending' | 'passed' | 'failed';
-```
+| 优先级 | 说明 |
+|--------|------|
+| `高` | 高优先级 |
+| `中` | 中优先级 |
+| `低` | 低优先级 |

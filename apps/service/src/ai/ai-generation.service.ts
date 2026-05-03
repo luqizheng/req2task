@@ -15,7 +15,7 @@ import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
 import { LLmClientService, LLMStreamChunk } from "./llm-client.service";
 import { RawRequirementService } from "src/raw-requirement/raw-requirement.service";
 import { AiPersistenceService } from "./ai-persistence.service";
-import { RequirementRelationDetectionService, RelatedRequirement } from "./requirement-relation-detection.service";
+import { RequirementVectorService } from "./requirement-vector.service";
 
 export interface GenerationResult {
   requirements?: Requirement[];
@@ -26,7 +26,6 @@ export interface GenerationResult {
   rawContent?: string;
   followUpQuestions?: string[];
   keyElements?: string[];
-  relatedRequirements?: RelatedRequirement[];
 }
 
 @Injectable()
@@ -44,7 +43,7 @@ export class AiGenerationService {
     private readonly llmClient: LLmClientService,
     private readonly rawRequirementService: RawRequirementService,
     private readonly persistenceService: AiPersistenceService,
-    private readonly relationDetectionService: RequirementRelationDetectionService,
+    private readonly vectorService: RequirementVectorService,
   ) {}
 
   async generateRawRequirement(
@@ -204,7 +203,7 @@ ${content}
     context?: string,
     moduleIds?: string[],
     persist: boolean = true,
-  ): Promise<{ requirements: Requirement[]; rawContent: string; relatedRequirements?: RelatedRequirement[] }> {
+  ): Promise<{ requirements: Requirement[]; rawContent: string; filteredCount?: number }> {
     let existingRequirementsStr: string | undefined;
     if (rawRequirementId) {
       const existingRequirements = await this.requirementRepository.find({
@@ -221,32 +220,11 @@ ${content}
       }
     }
 
-    const relationResult = await this.relationDetectionService.detectRelations(
-      rawRequirement,
-      projectId,
-      3,
-    );
-
-    let relatedRequirementsStr: string | undefined;
-    if (relationResult.hasRelated) {
-      const allRelated = [
-        ...relationResult.conflictRequirements,
-        ...relationResult.relatedRequirements,
-      ];
-      relatedRequirementsStr = allRelated
-        .map(
-          (r) =>
-            `- [${r.relationType.toUpperCase()}] ${r.content} (相似度: ${(r.score * 100).toFixed(0)}%)`,
-        )
-        .join("\n");
-    }
-
     const rendered = this.promptService.render("REQUIREMENT_GENERATION", {
       projectId,
       context,
       moduleIds,
       existingRequirements: existingRequirementsStr,
-      relatedRequirements: relatedRequirementsStr,
       rawRequirement,
     });
 
@@ -299,13 +277,119 @@ ${content}
       }
     }
 
+    // 生成后相似度过滤和冲突检测
+    const HIGH_SIMILARITY_THRESHOLD = 0.8;
+    const MEDIUM_SIMILARITY_THRESHOLD = 0.6;
+    const filteredRequirements: Array<Requirement & { conflictWarning?: string; relatedRequirementIds?: string[] }> = [];
+    let filteredCount = 0;
+    let conflictCount = 0;
+
+    for (const req of requirements) {
+      const reqContent = `${req.title} ${req.content || ""}`;
+      const similarResults = await this.vectorService.searchSimilarRequirements(
+        reqContent,
+        projectId,
+        3,
+      );
+
+      // 1. 高相似度（>80%）→ 过滤
+      const highSimilarity = similarResults.filter((s) => s.score >= HIGH_SIMILARITY_THRESHOLD);
+      if (highSimilarity.length > 0) {
+        this.logger.warn(
+          `Filtering out similar requirement: "${req.title}" (similarity: ${(highSimilarity[0].score * 100).toFixed(1)}%)`,
+        );
+        filteredCount++;
+        continue;
+      }
+
+      // 2. 中等相似度（60%-80%）→ 冲突检测
+      const mediumSimilarity = similarResults.filter(
+        (s) => s.score >= MEDIUM_SIMILARITY_THRESHOLD && s.score < HIGH_SIMILARITY_THRESHOLD,
+      );
+
+      if (mediumSimilarity.length > 0) {
+        const conflictResult = await this.detectConflictWithLLM(
+          req,
+          mediumSimilarity,
+        );
+
+        if (conflictResult.hasConflict) {
+          (req as Requirement & { conflictWarning?: string }).conflictWarning =
+            conflictResult.conflictDescription || "可能与现有需求存在逻辑冲突";
+          (req as Requirement & { relatedRequirementIds?: string[] }).relatedRequirementIds =
+            mediumSimilarity.map((s) => s.id);
+          conflictCount++;
+        }
+      }
+
+      filteredRequirements.push(req);
+    }
+
+    if (filteredCount > 0) {
+      this.logger.warn(`Filtered ${filteredCount} requirements due to high similarity`);
+    }
+    if (conflictCount > 0) {
+      this.logger.warn(`Detected ${conflictCount} requirements with potential conflicts`);
+    }
+
     return {
-      requirements,
+      requirements: filteredRequirements,
       rawContent: result.content,
-      relatedRequirements: relationResult.hasRelated
-        ? [...relationResult.conflictRequirements, ...relationResult.relatedRequirements]
-        : undefined,
+      filteredCount: filteredCount > 0 ? filteredCount : undefined,
+      conflictCount: conflictCount > 0 ? conflictCount : undefined,
     };
+  }
+
+  private async detectConflictWithLLM(
+    newRequirement: Requirement,
+    similarRequirements: Array<{ id: string; content: string; score: number }>,
+  ): Promise<{ hasConflict: boolean; conflictDescription?: string }> {
+    try {
+      const newReqContent = `${newRequirement.title}\n${newRequirement.content || ""}`;
+      const existingReqsContent = similarRequirements
+        .map((r, i) => `[${i + 1}] ${r.content}`)
+        .join("\n\n");
+
+      const systemPrompt = `你是需求冲突检测专家。分析新需求与现有需求是否存在逻辑冲突。
+
+冲突类型包括：
+1. 逻辑矛盾：两个需求不能同时成立
+2. 互斥：实现一个需求会阻止另一个需求的实现
+3. 边界冲突：功能范围重叠但定义不一致
+4. 非冲突：需求互补、扩展或只是相似
+
+输出格式：
+{\n  "hasConflict": true/false,\n  "conflictDescription": "如果存在冲突，描述冲突点；如果不冲突，说明关系"\n}`;
+
+      const userPrompt = `新需求：
+${newReqContent}
+
+相似的现有需求：
+${existingReqsContent}
+
+请分析新需求与现有需求的关系，返回JSON格式结果。`;
+
+      const result = await this.llmClient.generate({
+        systemPrompt,
+        userPrompt,
+        temperature: 0.2,
+        maxTokens: 500,
+      });
+
+      const jsonMatch = result.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const parsed = JSON.parse(jsonMatch[0]);
+        return {
+          hasConflict: parsed.hasConflict === true,
+          conflictDescription: parsed.conflictDescription,
+        };
+      }
+
+      return { hasConflict: false };
+    } catch (error) {
+      this.logger.error("Conflict detection failed", error instanceof Error ? error.stack : String(error));
+      return { hasConflict: false };
+    }
   }
 
   async generateUserStories(

@@ -1,20 +1,70 @@
-# 任务管理 API
+# 任务 API
+
+任务管理接口，支持任务 CRUD、看板视图、依赖管理和 AI 生成。
+
+---
 
 ## 端点总览
 
+### 任务管理
+
 | 接口 | 方法 | 功能描述 |
 |------|------|----------|
-| `/tasks/:requirementId/tasks` | POST | 创建任务 |
-| `/tasks/:requirementId/tasks` | GET | 获取需求下的任务 |
+| `/requirements/:requirementId/tasks` | POST | 创建任务 |
+| `/requirements/:requirementId/tasks` | GET | 获取需求下的任务 |
 | `/tasks/:id` | GET | 获取任务详情 |
 | `/tasks/:id` | PUT | 更新任务 |
 | `/tasks/:id` | DELETE | 删除任务 |
-| `/tasks/:id/status` | PUT | 更新任务状态 |
-| `/tasks/:id/assign` | POST | 分配任务 |
-| `/tasks/:id/dependencies` | POST | 添加任务依赖 |
-| `/tasks/:id/dependencies` | GET | 获取任务依赖列表 |
-| `/tasks/:id/dependencies/:depId` | DELETE | 移除任务依赖 |
-| `/tasks/kanban/:projectId` | GET | 获取项目看板数据 |
+
+### 按关联查询
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/modules/:moduleId/tasks` | GET | 获取模块下的任务 |
+| `/projects/:projectId/tasks` | GET | 获取项目下的任务 |
+
+### 看板管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/requirements/:requirementId/kanban` | GET | 获取需求看板 |
+| `/requirements/:requirementId/task-statistics` | GET | 获取需求任务统计 |
+| `/projects/:projectId/kanban` | GET | 获取项目看板 |
+| `/projects/:projectId/task-statistics` | GET | 获取项目任务统计 |
+
+### 状态管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/tasks/:id/transition` | POST | 状态流转 |
+| `/tasks/:id/allowed-transitions` | GET | 获取允许的状态流转 |
+
+### 依赖管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/tasks/:id/dependencies` | POST | 添加依赖 |
+| `/tasks/:id/dependencies/:dependencyTaskId` | DELETE | 移除依赖 |
+
+### 任务替换/取消
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/tasks/:id/mark-replaced` | POST | 标记为已替换 |
+| `/tasks/:id/mark-cancelled` | POST | 标记为已取消 |
+| `/tasks/:id/replaced-tasks` | GET | 获取替换任务 |
+
+### 工作量统计
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/projects/:projectId/workload-stats` | GET | 获取项目工作量统计 |
+
+### AI 生成
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/llm/generation/tasks/:requirementId` | POST | AI 生成任务 |
 
 ---
 
@@ -23,15 +73,16 @@
 ### 创建任务
 
 ```http
-POST /tasks/:requirementId/tasks
+POST /requirements/:requirementId/tasks
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
   "title": "任务标题",
   "description": "任务描述",
-  "priority": 1,                    // 1-10，1最高
+  "priority": 1,
   "estimatedHours": 8,
-  "assignedTo": "uuid"             // 可选
+  "moduleId": "uuid"
 }
 ```
 
@@ -42,43 +93,35 @@ Content-Type: application/json
   "code": 0,
   "data": {
     "id": "uuid",
+    "taskNo": "TASK-001",
     "title": "任务标题",
     "description": "任务描述",
-    "priority": 1,
     "status": "todo",
+    "priority": 1,
     "estimatedHours": 8,
-    "actualHours": 0,
-    "assignedTo": {
-      "id": "uuid",
-      "displayName": "张三"
-    },
+    "requirementId": "uuid",
     "createdAt": "2026-04-20T10:00:00Z"
   }
 }
-```
-
-### 获取需求下的任务
-
-```http
-GET /tasks/:requirementId/tasks
 ```
 
 ### 获取任务详情
 
 ```http
 GET /tasks/:id
+Authorization: Bearer <token>
 ```
 
 ### 更新任务
 
 ```http
 PUT /tasks/:id
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "title": "更新后的标题",
-  "description": "更新后的描述",
-  "priority": 2,
+  "title": "新标题",
+  "description": "新描述",
   "estimatedHours": 16
 }
 ```
@@ -87,21 +130,79 @@ Content-Type: application/json
 
 ```http
 DELETE /tasks/:id
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 任务状态与分配
+## 按关联查询
 
-### 更新任务状态
+### 获取需求下的任务
 
 ```http
-PUT /tasks/:id/status
+GET /requirements/:requirementId/tasks?page=1&limit=20
+Authorization: Bearer <token>
+```
+
+### 获取模块下的任务
+
+```http
+GET /modules/:moduleId/tasks?page=1&limit=20
+Authorization: Bearer <token>
+```
+
+### 获取项目下的任务
+
+```http
+GET /projects/:projectId/tasks?page=1&limit=20
+Authorization: Bearer <token>
+```
+
+---
+
+## 看板管理
+
+### 获取需求看板
+
+```http
+GET /requirements/:requirementId/kanban
+Authorization: Bearer <token>
+```
+
+### 获取需求任务统计
+
+```http
+GET /requirements/:requirementId/task-statistics
+Authorization: Bearer <token>
+```
+
+### 获取项目看板
+
+```http
+GET /projects/:projectId/kanban
+Authorization: Bearer <token>
+```
+
+### 获取项目任务统计
+
+```http
+GET /projects/:projectId/task-statistics
+Authorization: Bearer <token>
+```
+
+---
+
+## 状态管理
+
+### 状态流转
+
+```http
+POST /tasks/:id/transition
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "status": "in_progress",
-  "actualHours": 4                  // 可选：实际工时
+  "targetStatus": "in_progress"
 }
 ```
 
@@ -112,102 +213,116 @@ Content-Type: application/json
   "code": 0,
   "data": {
     "id": "uuid",
-    "status": "in_progress",
-    "actualHours": 4
+    "status": "in_progress"
   }
 }
 ```
 
-### 分配任务
+### 获取允许的状态流转
 
 ```http
-POST /tasks/:id/assign
-Content-Type: application/json
+GET /tasks/:id/allowed-transitions
+Authorization: Bearer <token>
+```
 
+**响应：**
+
+```json
 {
-  "userId": "uuid"
+  "code": 0,
+  "data": {
+    "allowedTransitions": ["in_progress", "cancelled"]
+  }
 }
 ```
 
 ---
 
-## 任务依赖管理
+## 依赖管理
 
-### 添加任务依赖
+### 添加依赖
 
 ```http
 POST /tasks/:id/dependencies
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "dependsOnId": "uuid",            // 依赖的任务ID
-  "type": "blocks"                  // blocks | blocked_by
+  "dependencyTaskId": "uuid"
 }
 ```
 
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "id": "uuid",
-    "taskId": "uuid",
-    "dependsOnId": "uuid",
-    "type": "blocks",
-    "createdAt": "2026-04-20T10:00:00Z"
-  }
-}
-```
-
-### 获取任务依赖列表
+### 移除依赖
 
 ```http
-GET /tasks/:id/dependencies
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "blocks": [
-      {
-        "id": "uuid",
-        "task": {
-          "id": "uuid",
-          "title": "被阻塞的任务"
-        }
-      }
-    ],
-    "blockedBy": [
-      {
-        "id": "uuid",
-        "task": {
-          "id": "uuid",
-          "title": "阻塞的任务"
-        }
-      }
-    ]
-  }
-}
-```
-
-### 移除任务依赖
-
-```http
-DELETE /tasks/:id/dependencies/:depId
+DELETE /tasks/:id/dependencies/:dependencyTaskId
+Authorization: Bearer <token>
 ```
 
 ---
 
-## 看板视图
+## 任务替换/取消
 
-### 获取项目看板数据
+### 标记为已替换
 
 ```http
-GET /tasks/kanban/:projectId
+POST /tasks/:id/mark-replaced
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "replacedByTaskId": "uuid",
+  "reason": "需求变更"
+}
+```
+
+### 标记为已取消
+
+```http
+POST /tasks/:id/mark-cancelled
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "reason": "需求取消"
+}
+```
+
+### 获取替换任务
+
+```http
+GET /tasks/:id/replaced-tasks
+Authorization: Bearer <token>
+```
+
+---
+
+## 工作量统计
+
+### 获取项目工作量统计
+
+```http
+GET /projects/:projectId/workload-stats
+Authorization: Bearer <token>
+```
+
+---
+
+## AI 生成
+
+### AI 生成任务
+
+根据需求功能点 AI 生成任务列表。
+
+```http
+POST /llm/generation/tasks/:requirementId
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "featurePoints": ["功能点1", "功能点2"],
+  "context": "额外上下文"
+}
 ```
 
 **响应：**
@@ -216,37 +331,18 @@ GET /tasks/kanban/:projectId
 {
   "code": 0,
   "data": {
-    "columns": [
+    "tasks": [
       {
+        "id": "uuid",
+        "taskNo": "TASK-001",
+        "title": "任务标题",
+        "description": "任务描述",
         "status": "todo",
-        "title": "待办",
-        "tasks": [
-          {
-            "id": "uuid",
-            "title": "任务1",
-            "priority": 1,
-            "assignedTo": { "displayName": "张三" },
-            "estimatedHours": 8
-          }
-        ]
-      },
-      {
-        "status": "in_progress",
-        "title": "进行中",
-        "tasks": []
-      },
-      {
-        "status": "done",
-        "title": "已完成",
-        "tasks": []
+        "priority": 1,
+        "estimatedHours": 8
       }
     ],
-    "summary": {
-      "totalTasks": 10,
-      "completedTasks": 3,
-      "totalEstimatedHours": 80,
-      "totalActualHours": 24
-    }
+    "rawContent": "AI 生成的原始内容"
   }
 }
 ```
@@ -255,34 +351,22 @@ GET /tasks/kanban/:projectId
 
 ## 数据模型
 
-### TaskStatus 枚举
+### 任务状态
 
-```typescript
-type TaskStatus = 'todo' | 'in_progress' | 'done' | 'cancelled';
-```
-
-| 值 | 说明 |
-|----|------|
+| 状态 | 说明 |
+|------|------|
 | `todo` | 待办 |
 | `in_progress` | 进行中 |
 | `done` | 已完成 |
 | `cancelled` | 已取消 |
+| `replaced` | 已替换 |
 
-### TaskPriority 枚举
+### 优先级
 
-```typescript
-type TaskPriority = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10;
-```
-
-数值越小优先级越高。
-
-### DependencyType 枚举
-
-```typescript
-type DependencyType = 'blocks' | 'blocked_by';
-```
-
-| 值 | 说明 |
-|----|------|
-| `blocks` | 阻塞（当前任务完成后，被依赖任务才能开始） |
-| `blocked_by` | 被阻塞（当前任务依赖的任务完成后才能开始） |
+| 优先级 | 说明 |
+|--------|------|
+| `1` | 最高 |
+| `2` | 高 |
+| `3` | 中 |
+| `4` | 低 |
+| `5` | 最低 |

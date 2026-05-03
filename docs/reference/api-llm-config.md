@@ -1,14 +1,8 @@
-# LLM 配置管理 API
+# LLM 配置 API
 
-LLM 配置服务提供 AI 大模型的配置管理能力，支持多模型、多提供商配置。
+AI Chat 服务提供的 LLM 配置管理接口。
 
-**注意**：LLM 配置管理 API 仅在 ai-chat-service 提供，service 应用通过 HTTP 调用获取配置。
-
-## 服务地址
-
-| 服务 | 端口 | 说明 |
-|------|------|------|
-| ai-chat-service | 4001 | LLM 配置管理 API + AI 对话服务 |
+**基础路径**: `/api/ai/llm-configs`
 
 ---
 
@@ -16,19 +10,20 @@ LLM 配置服务提供 AI 大模型的配置管理能力，支持多模型、多
 
 | 接口 | 方法 | 功能描述 |
 |------|------|----------|
-| `/api/llm-configs` | GET | 获取所有配置 |
-| `/api/llm-configs` | POST | 创建配置 |
-| `/api/llm-configs/:id` | GET | 获取单个配置 |
-| `/api/llm-configs/:id` | PUT | 更新配置 |
-| `/api/llm-configs/:id` | DELETE | 删除配置 |
-| `/api/llm-configs/:id/test` | POST | 测试配置连接 |
+| `/api/ai/llm-configs` | GET | 获取配置列表 |
+| `/api/ai/llm-configs` | POST | 创建配置 |
+| `/api/ai/llm-configs/:id` | GET | 获取配置详情 |
+| `/api/ai/llm-configs/:id` | PUT | 更新配置 |
+| `/api/ai/llm-configs/:id` | DELETE | 删除配置 |
 
 ---
 
-## 获取所有配置
+## 配置管理
+
+### 获取配置列表
 
 ```http
-GET /api/llm-configs
+GET /api/ai/llm-configs
 ```
 
 **响应：**
@@ -41,40 +36,89 @@ GET /api/llm-configs
       {
         "id": "uuid",
         "name": "OpenAI GPT-4",
-        "provider": "openai",
-        "modelName": "gpt-4",
+        "modelName": "gpt-4o",
         "baseUrl": "https://api.openai.com/v1",
-        "maxTokens": 4096,
-        "temperature": 0.7,
-        "topP": 1.0,
-        "isActive": true,
+        "apiKey": "sk-****",
         "isDefault": true,
         "createdAt": "2026-04-20T10:00:00Z",
-        "updatedAt": "2026-04-20T10:00:00Z"
+        "updatedAt": "2026-04-20T12:00:00Z"
       }
     ],
-    "total": 1
-  }
+    "total": 5
+  },
+  "success": true
 }
 ```
 
----
-
-## 创建配置
+### 创建配置
 
 ```http
-POST /api/llm-configs
+POST /api/ai/llm-configs
 Content-Type: application/json
 
 {
-  "name": "OpenAI GPT-4",
-  "provider": "openai",
-  "apiKey": "sk-xxx",
-  "modelName": "gpt-4",
+  "name": "配置名称",
+  "modelName": "gpt-4o-mini",
   "baseUrl": "https://api.openai.com/v1",
-  "maxTokens": 4096,
-  "temperature": 0.7,
-  "topP": 1.0,
+  "apiKey": "sk-...",
+  "isDefault": false
+}
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "id": "uuid",
+    "name": "配置名称",
+    "modelName": "gpt-4o-mini",
+    "baseUrl": "https://api.openai.com/v1",
+    "apiKey": "sk-****",
+    "isDefault": false,
+    "createdAt": "2026-04-20T10:00:00Z"
+  },
+  "success": true
+}
+```
+
+### 获取配置详情
+
+```http
+GET /api/ai/llm-configs/:id
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "id": "uuid",
+    "name": "配置名称",
+    "modelName": "gpt-4o-mini",
+    "baseUrl": "https://api.openai.com/v1",
+    "apiKey": "sk-****",
+    "isDefault": false,
+    "createdAt": "2026-04-20T10:00:00Z",
+    "updatedAt": "2026-04-20T12:00:00Z"
+  },
+  "success": true
+}
+```
+
+### 更新配置
+
+```http
+PUT /api/ai/llm-configs/:id
+Content-Type: application/json
+
+{
+  "name": "新名称",
+  "modelName": "gpt-4o",
+  "baseUrl": "https://api.openai.com/v1",
+  "apiKey": "sk-...",
   "isDefault": true
 }
 ```
@@ -86,291 +130,51 @@ Content-Type: application/json
   "code": 0,
   "data": {
     "id": "uuid",
-    "name": "OpenAI GPT-4",
-    "provider": "openai",
-    "modelName": "gpt-4",
-    "apiKey": "[ENCRYPTED]",
-    "isDefault": true,
-    "createdAt": "2026-04-20T10:00:00Z"
-  }
-}
-```
-
----
-
-## 获取单个配置
-
-```http
-GET /api/llm-configs/:id
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "id": "uuid",
-    "name": "OpenAI GPT-4",
-    "provider": "openai",
-    "modelName": "gpt-4",
-    "apiKey": "[ENCRYPTED]",
+    "name": "新名称",
+    "modelName": "gpt-4o",
     "baseUrl": "https://api.openai.com/v1",
-    "maxTokens": 4096,
-    "temperature": 0.7,
-    "topP": 1.0,
-    "isActive": true,
+    "apiKey": "sk-****",
     "isDefault": true,
-    "createdAt": "2026-04-20T10:00:00Z",
-    "updatedAt": "2026-04-20T10:00:00Z"
-  }
+    "updatedAt": "2026-04-20T12:00:00Z"
+  },
+  "success": true
 }
 ```
 
----
-
-## 更新配置
+### 删除配置
 
 ```http
-PUT /api/llm-configs/:id
-Content-Type: application/json
-
-{
-  "name": "更新后的名称",
-  "temperature": 0.5,
-  "maxTokens": 3000
-}
+DELETE /api/ai/llm-configs/:id
 ```
 
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "id": "uuid",
-    "name": "更新后的名称",
-    "provider": "openai",
-    "modelName": "gpt-4",
-    "apiKey": "[ENCRYPTED]",
-    "maxTokens": 3000,
-    "temperature": 0.5,
-    "updatedAt": "2026-04-20T11:00:00Z"
-  }
-}
-```
-
----
-
-## 删除配置
-
-```http
-DELETE /api/llm-configs/:id
-```
-
-**响应：** `204 No Content`
-
-**失败响应：**
-
-```json
-{
-  "code": 1,
-  "message": "LLM config not found"
-}
-```
-
----
-
-## 测试配置连接
-
-```http
-POST /api/llm-configs/:id/test
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "success": true,
-    "message": "Deepseek connection successful"
-  }
-}
-```
-
-**失败响应：**
-
-```json
-{
-  "code": 1,
-  "data": {
-    "success": false,
-    "message": "Connection failed: Invalid API key"
-  }
-}
-```
+**响应：** 204 No Content
 
 ---
 
 ## 数据模型
 
-### LLMProviderType 枚举
+### LLMConfig
 
 ```typescript
-enum LLMProviderType {
-  OPENAI = 'openai',
-  DEEPSEEK = 'deepseek',
-  OLLAMA = 'ollama'
-}
-```
-
-| 值 | 说明 |
-|----|------|
-| `openai` | OpenAI GPT 系列 |
-| `deepseek` | DeepSeek |
-| `ollama` | Ollama 本地模型 |
-
-### LlmConfigResponseDto
-
-```typescript
-interface LlmConfigResponseDto {
+interface LLMConfig {
   id: string;
   name: string;
-  provider: LLMProviderType;
   modelName: string;
-  baseUrl: string | null;
-  maxTokens: number;
-  temperature: number;
-  topP: number;
-  isActive: boolean;
+  baseUrl?: string;
+  apiKey?: string;
   isDefault: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: string;
+  updatedAt: string;
 }
 ```
 
-### LlmConfigDetailResponseDto
+### 支持的模型
 
-```typescript
-interface LlmConfigDetailResponseDto extends LlmConfigResponseDto {
-  apiKey: string | null;  // "[ENCRYPTED]" 或 null
-}
-```
-
-### LlmConfigListResponseDto
-
-```typescript
-interface LlmConfigListResponseDto {
-  configs: LlmConfigResponseDto[];
-  total: number;
-}
-```
-
-### CreateLlmConfigDto
-
-```typescript
-interface CreateLlmConfigDto {
-  name: string;
-  provider: LLMProviderType;
-  modelName?: string;
-  apiKey?: string;
-  baseUrl?: string;
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  isDefault?: boolean;
-}
-```
-
-### UpdateLlmConfigDto
-
-```typescript
-interface UpdateLlmConfigDto {
-  name?: string;
-  provider?: LLMProviderType;
-  modelName?: string;
-  apiKey?: string;
-  baseUrl?: string;
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  isActive?: boolean;
-  isDefault?: boolean;
-}
-```
-
----
-
-## 配置示例
-
-### OpenAI 配置
-
-```json
-{
-  "name": "OpenAI GPT-4",
-  "provider": "openai",
-  "apiKey": "sk-xxx",
-  "modelName": "gpt-4",
-  "baseUrl": "https://api.openai.com/v1",
-  "maxTokens": 4096,
-  "temperature": 0.7,
-  "topP": 1.0,
-  "isActive": true,
-  "isDefault": true
-}
-```
-
-### DeepSeek 配置
-
-```json
-{
-  "name": "DeepSeek Chat",
-  "provider": "deepseek",
-  "apiKey": "sk-xxx",
-  "modelName": "deepseek-chat",
-  "baseUrl": "https://api.deepseek.com",
-  "maxTokens": 4096,
-  "temperature": 0.7,
-  "topP": 1.0,
-  "isActive": true,
-  "isDefault": false
-}
-```
-
-### Ollama 本地配置
-
-```json
-{
-  "name": "Ollama Local",
-  "provider": "ollama",
-  "apiKey": "",
-  "modelName": "llama3",
-  "baseUrl": "http://localhost:11434",
-  "maxTokens": 4096,
-  "temperature": 0.7,
-  "topP": 1.0,
-  "isActive": true,
-  "isDefault": false
-}
-```
-
----
-
-## 安全说明
-
-### 加密存储
-
-LLM 配置 API 使用 AES-256-CBC 加密 API Key：
-
-- 加密密钥由环境变量 `LLM_CONFIG_ENCRYPTION_KEY` 提供
-- 响应中 API Key 显示为 `[ENCRYPTED]`
-- 测试连接时自动解密进行验证
-
-### 环境变量
-
-ai-chat-service 需要配置：
-
-```env
-LLM_CONFIG_ENCRYPTION_KEY=your-32-character-secret-key
-```
+| 模型名称 | 说明 |
+|----------|------|
+| `gpt-4o` | OpenAI GPT-4o |
+| `gpt-4o-mini` | OpenAI GPT-4o Mini |
+| `claude-3-opus` | Anthropic Claude 3 Opus |
+| `claude-3-sonnet` | Anthropic Claude 3 Sonnet |
+| `deepseek-chat` | DeepSeek Chat |
+| `qwen-turbo` | 通义千问 Turbo |

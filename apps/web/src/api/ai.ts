@@ -109,7 +109,7 @@ export const aiApi = {
     context?: string
   ) => {
     return api.post<{ userStories: GeneratedUserStory[]; rawContent: string }>(
-      `/llm/generation/user-stories/${requirementId}`,
+      `/requirements/${requirementId}/user-stories/generate`,
       { featurePoints, context },
       { params: { projectId } }
     );

@@ -1,41 +1,43 @@
-# 原始需求收集 API
+# 原始需求 API
 
-## 端点总览
-
-| 接口 | 方法 | 功能描述 |
-|------|------|----------|
-| `/collections` | POST | 创建收集 |
-| `/collections` | GET | 获取项目下的收集列表 |
-| `/collections/:id` | GET | 获取收集详情 |
-| `/collections/:id` | PUT | 更新收集 |
-| `/collections/:id` | DELETE | 删除收集 |
-| `/collections/:id/complete` | POST | 完成收集 |
-| `/collections/:id/raw-requirements` | POST | 添加原始需求 |
-| `/collections/:id/raw-requirements` | GET | 获取原始需求列表 |
-| `/collections/:id/analyze` | POST | 需求分析（组合提示词） |
-| `/collections/:id/analyze/stream` | SSE | 需求分析（SSE流） |
-| `/collections/:id/chat` | POST | 在收集内对话 |
-| `/collections/:id/stream` | SSE | 流式对话 |
-| `/collections/raw-requirements/:id` | GET | 获取原始需求详情 |
-| `/collections/raw-requirements/:id/chat` | POST | 原始需求对话 |
-| `/collections/raw-requirements/:id/stream` | SSE | 流式对话 |
-| `/collections/raw-requirements/:id` | DELETE | 删除原始需求 |
+原始需求管理接口，支持原始需求 CRUD、AI 流式生成和标题生成。
 
 ---
 
-## 收集管理
+## 端点总览
 
-### 创建收集
+### 原始需求管理
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/raw-requirements/:projectId` | POST | 创建原始需求 |
+| `/raw-requirements/:rawRequirementId` | GET | 获取原始需求详情 |
+| `/raw-requirements/:rawRequirementId` | PUT | 更新原始需求 |
+| `/raw-requirements/:rawRequirementId` | DELETE | 删除原始需求 |
+| `/raw-requirements/:projectId/raw-requirements` | GET | 获取项目下的原始需求 |
+
+### AI 生成
+
+| 接口 | 方法 | 功能描述 |
+|------|------|----------|
+| `/raw-requirements/:projectId/stream` | POST | 流式生成原始需求（SSE） |
+| `/raw-requirements/generate-title` | POST | 生成标题 |
+
+---
+
+## 原始需求管理
+
+### 创建原始需求
 
 ```http
-POST /collections
+POST /raw-requirements/:projectId
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "projectId": "uuid",
-  "title": "Q1 需求调研",
-  "collectionType": "interview",
-  "meetingMinutes": "会议纪要内容（可选）"
+  "title": "原始需求标题",
+  "content": "原始需求内容",
+  "source": "manual"
 }
 ```
 
@@ -46,21 +48,88 @@ Content-Type: application/json
   "code": 0,
   "data": {
     "id": "uuid",
+    "title": "原始需求标题",
+    "content": "原始需求内容",
+    "source": "manual",
     "projectId": "uuid",
-    "title": "Q1 需求调研",
-    "collectionType": "interview",
-    "status": "active",
-    "rawRequirementCount": 0,
-    "chatRoundCount": 0,
+    "createdAt": "2026-04-20T10:00:00Z"
+  },
+  "message": "创建成功"
+}
+```
+
+### 获取原始需求详情
+
+```http
+GET /raw-requirements/:rawRequirementId
+Authorization: Bearer <token>
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "id": "uuid",
+    "title": "原始需求标题",
+    "content": "原始需求内容",
+    "source": "manual",
+    "projectId": "uuid",
+    "questionAndAnswers": [],
     "createdAt": "2026-04-20T10:00:00Z"
   }
 }
 ```
 
-### 获取收集列表
+### 更新原始需求
 
 ```http
-GET /collections?projectId=uuid
+PUT /raw-requirements/:rawRequirementId
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "title": "新标题",
+  "content": "新内容"
+}
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "data": {
+    "id": "uuid",
+    "title": "新标题",
+    "content": "新内容"
+  },
+  "message": "更新成功"
+}
+```
+
+### 删除原始需求
+
+```http
+DELETE /raw-requirements/:rawRequirementId
+Authorization: Bearer <token>
+```
+
+**响应：**
+
+```json
+{
+  "code": 0,
+  "message": "删除成功"
+}
+```
+
+### 获取项目下的原始需求
+
+```http
+GET /raw-requirements/:projectId/raw-requirements?page=1&limit=20
+Authorization: Bearer <token>
 ```
 
 **响应：**
@@ -71,146 +140,61 @@ GET /collections?projectId=uuid
   "data": [
     {
       "id": "uuid",
-      "title": "Q1 需求调研",
-      "collectionType": "interview",
-      "status": "active",
-      "rawRequirementCount": 5,
-      "chatRoundCount": 12,
+      "title": "原始需求标题",
+      "content": "原始需求内容",
+      "source": "manual",
       "createdAt": "2026-04-20T10:00:00Z"
     }
   ]
 }
 ```
 
-### 获取收集详情
-
-```http
-GET /collections/:id
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "id": "uuid",
-    "projectId": "uuid",
-    "title": "Q1 需求调研",
-    "collectionType": "interview",
-    "status": "active",
-    "collectedBy": {
-      "id": "uuid",
-      "displayName": "张三"
-    },
-    "rawRequirementCount": 5,
-    "chatRoundCount": 12,
-    "rawRequirements": [
-      {
-        "id": "uuid",
-        "content": "需求内容...",
-        "status": "pending",
-        "questionAndAnswers": [],
-        "keyElements": [],
-        "createdAt": "2026-04-20T10:00:00Z"
-      }
-    ],
-    "createdAt": "2026-04-20T10:00:00Z",
-    "updatedAt": "2026-04-20T12:00:00Z"
-  }
-}
-```
-
-### 更新收集
-
-```http
-PUT /collections/:id
-Content-Type: application/json
-
-{
-  "title": "更新后的标题",
-  "meetingMinutes": "更新后的会议纪要"
-}
-```
-
-### 删除收集
-
-```http
-DELETE /collections/:id
-```
-
-### 完成收集
-
-```http
-POST /collections/:id/complete
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "success": true,
-    "message": "收集已完成"
-  }
-}
-```
-
 ---
 
-## 原始需求管理
+## AI 生成
 
-### 添加原始需求
+### 流式生成原始需求
+
+通过对话方式流式生成结构化原始需求。
 
 ```http
-POST /collections/:id/raw-requirements
+POST /raw-requirements/:projectId/stream
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "content": "需求内容",
-  "source": "用户访谈"
+  "conversationText": "用户输入的对话内容",
+  "previousQuestions": ["之前的追问1", "之前的追问2"]
 }
 ```
 
-### 获取原始需求列表
+**SSE 响应：**
 
-```http
-GET /collections/:id/raw-requirements
+```
+data: {"type": "content", "content": "正在分析需求..."}
+
+data: {"type": "content", "content": "追问：您能否详细描述一下..."}
+
+data: {"type": "question", "question": "您能否详细描述一下功能的具体场景？"}
+
+data: {"type": "raw_requirement", "rawRequirement": {"title": "...", "content": "..."}}
+
+data: {"type": "done"}
+
+data: [DONE]
 ```
 
-### 获取原始需求详情
+### 生成标题
+
+根据原始需求内容自动生成标题。
 
 ```http
-GET /collections/raw-requirements/:id
-```
-
-### 删除原始需求
-
-```http
-DELETE /collections/raw-requirements/:id
-```
-
----
-
-## 需求分析与对话
-
-### 需求分析（组合提示词）
-
-使用 `requirement.prompts.ts` 中的 `RAW_REQUIREMENT_ANALYSIS` 提示词模板进行分析。
-
-```http
-POST /collections/:id/analyze
+POST /raw-requirements/generate-title
+Authorization: Bearer <token>
 Content-Type: application/json
 
 {
-  "rawRequirement": "原始需求内容",
-  "projectContext": "项目背景（可选）",
-  "previousQuestions": [
-    { "question": "追问问题1", "answer": "用户回答1" },
-    { "question": "追问问题2", "answer": "用户回答2" }
-  ],
-  "configId": "uuid"
+  "content": "原始需求内容"
 }
 ```
 
@@ -220,116 +204,8 @@ Content-Type: application/json
 {
   "code": 0,
   "data": {
-    "systemPrompt": "你是一个专业的需求分析师...",
-    "userPrompt": "原始需求：...\n项目背景：...\n之前的追问问题和回答：..."
+    "title": "生成的标题"
   }
-}
-```
-
-### 需求分析（SSE 流）
-
-```http
-POST /collections/:id/analyze/stream
-Content-Type: application/json
-
-{
-  "rawRequirement": "原始需求内容",
-  "projectContext": "项目背景（可选）",
-  "previousQuestions": [],
-  "configId": "uuid"
-}
-```
-
-**SSE 事件：**
-
-```json
-// 元数据事件（包含组合后的提示词）
-data: {"type": "metadata", "collectionId": "xxx", "prompts": {...}}
-
-// 对话创建事件
-data: {"type": "metadata", "conversationId": "xxx", "isNewConversation": true}
-
-// AI 响应内容
-data: {"type": "content", "content": "分析结果..."}
-
-// 结束事件
-data: {"type": "done"}
-```
-
-### 在收集内对话
-
-```http
-POST /collections/:id/chat
-Content-Type: application/json
-
-{
-  "message": "用户消息",
-  "configId": "uuid",
-  "files": [
-    {
-      "type": "docx",
-      "data": "base64编码内容",
-      "name": "需求文档.docx"
-    }
-  ],
-  "systemPrompt": "自定义系统提示（可选）"
-}
-```
-
-**响应：**
-
-```json
-{
-  "code": 0,
-  "data": {
-    "rawRequirementId": "uuid",
-    "conversationId": "uuid",
-    "assistantMessage": "AI 回复内容",
-    "followUpQuestions": ["追问问题1", "追问问题2"],
-    "isComplete": false,
-    "questionCount": 3
-  }
-}
-```
-
-### 流式对话
-
-```http
-POST /collections/:id/stream?message=用户消息&configId=uuid
-```
-
-**SSE 事件：**
-
-```json
-data: {"type": "metadata", "isNewConversation": true, "rawRequirementId": "xxx", "conversationId": "yyy"}
-data: {"type": "content", "content": "AI 回复内容..."}
-data: {"type": "metadata", "followUpQuestions": ["问题1?"]}
-data: {"type": "done"}
-```
-
-### 原始需求对话
-
-```http
-POST /collections/raw-requirements/:id/chat
-Content-Type: application/json
-
-{
-  "message": "用户消息",
-  "configId": "uuid",
-  "files": [],
-  "systemPrompt": "自定义系统提示（可选）"
-}
-```
-
-### 原始需求流式对话
-
-```http
-POST /collections/raw-requirements/:id/stream
-Content-Type: application/json
-
-{
-  "message": "用户消息",
-  "configId": "uuid"
 }
 ```
 
@@ -337,39 +213,10 @@ Content-Type: application/json
 
 ## 数据模型
 
-### CollectionType 枚举
+### 原始需求来源
 
-```typescript
-type CollectionType = 'interview' | 'workshop' | 'document' | 'other';
-```
-
-| 值 | 说明 |
-|----|------|
-| `interview` | 用户访谈 |
-| `workshop` | 工作坊 |
-| `document` | 文档收集 |
-| `other` | 其他 |
-
-### CollectionStatus 枚举
-
-```typescript
-type CollectionStatus = 'active' | 'completed';
-```
-
-| 值 | 说明 |
-|----|------|
-| `active` | 进行中 |
-| `completed` | 已完成 |
-
-### RawRequirementStatus 枚举
-
-```typescript
-type RawRequirementStatus = 'pending' | 'processing' | 'clarified' | 'archived';
-```
-
-| 值 | 说明 |
-|----|------|
-| `pending` | 待澄清 |
-| `processing` | 澄清中 |
-| `clarified` | 已澄清 |
-| `archived` | 已归档 |
+| 来源 | 说明 |
+|------|------|
+| `manual` | 手动创建 |
+| `ai_generated` | AI 生成 |
+| `imported` | 导入 |

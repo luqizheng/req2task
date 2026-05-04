@@ -286,7 +286,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-full overflow-auto bg-slate-50">
+  <div class="h-full overflow-auto bg-muted">
     <div class="max-w-7xl mx-auto p-6 space-y-6">
       <div v-if="loading" class="space-y-6">
         <div class="space-y-4">
@@ -312,7 +312,7 @@ onMounted(() => {
             返回
           </Button>
           <Separator orientation="vertical" class="h-6" />
-          <span class="text-sm text-slate-500"> 需求详情 </span>
+          <span class="text-sm text-muted-foreground"> 需求详情 </span>
         </div>
 
         <RequirementHeader
@@ -376,8 +376,8 @@ onMounted(() => {
               </CardHeader>
               <CardContent class="space-y-3">
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">需求编号</p>
-                  <p class="text-sm font-mono text-slate-800">
+                  <p class="text-xs text-muted-foreground">需求编号</p>
+                  <p class="text-sm font-mono text-foreground">
                     {{ requirement.entityKey }}
                   </p>
                 </div>
@@ -385,8 +385,8 @@ onMounted(() => {
                 <Separator />
 
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">创建者</p>
-                  <p class="text-sm text-slate-800">
+                  <p class="text-xs text-muted-foreground">创建者</p>
+                  <p class="text-sm text-foreground">
                     {{ requirement.createdBy?.displayName || "未知" }}
                   </p>
                 </div>
@@ -394,8 +394,8 @@ onMounted(() => {
                 <Separator />
 
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">创建时间</p>
-                  <p class="text-sm text-slate-800">
+                  <p class="text-xs text-muted-foreground">创建时间</p>
+                  <p class="text-sm text-foreground">
                     {{ formatDateTime(requirement.createdAt) }}
                   </p>
                 </div>
@@ -403,8 +403,8 @@ onMounted(() => {
                 <Separator />
 
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">更新时间</p>
-                  <p class="text-sm text-slate-800">
+                  <p class="text-xs text-muted-foreground">更新时间</p>
+                  <p class="text-sm text-foreground">
                     {{ formatDateTime(requirement.updatedAt) }}
                   </p>
                 </div>
@@ -412,8 +412,8 @@ onMounted(() => {
                 <Separator />
 
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">用户故事</p>
-                  <p class="text-sm text-slate-800">
+                  <p class="text-xs text-muted-foreground">用户故事</p>
+                  <p class="text-sm text-foreground">
                     {{ requirement.userStoryCount || 0 }} 个
                   </p>
                 </div>
@@ -421,8 +421,8 @@ onMounted(() => {
                 <Separator />
 
                 <div class="space-y-2">
-                  <p class="text-xs text-slate-500">子需求</p>
-                  <p class="text-sm text-slate-800">
+                  <p class="text-xs text-muted-foreground">子需求</p>
+                  <p class="text-sm text-foreground">
                     {{ requirement.childCount || 0 }} 个
                   </p>
                 </div>
@@ -439,9 +439,9 @@ onMounted(() => {
 
       <template v-else>
         <div class="text-center py-12">
-          <AlertTriangle class="w-12 h-12 mx-auto mb-4 text-slate-300" />
-          <h3 class="text-lg font-medium text-slate-700 mb-2">需求不存在</h3>
-          <p class="text-slate-500 mb-4">该需求可能已被删除或不存在</p>
+          <AlertTriangle class="w-12 h-12 mx-auto mb-4 text-muted-foreground/40" />
+          <h3 class="text-lg font-medium text-foreground mb-2">需求不存在</h3>
+          <p class="text-muted-foreground mb-4">该需求可能已被删除或不存在</p>
           <Button @click="goBack">
             <ArrowLeft class="w-4 h-4 mr-2" />
             返回项目

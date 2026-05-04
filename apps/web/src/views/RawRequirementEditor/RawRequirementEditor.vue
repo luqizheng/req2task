@@ -287,8 +287,9 @@ const collectTimeDate = computed<DateValue | undefined>({
                     <Select :model-value="rawRequirement.collectionType" :aria-invalid="!!errors.length"
                       @update:model-value="
                         (val) => {
-                          rawRequirement.collectionType = val as CollectionType;
-                          setFieldValue('collectionType', val);
+                          const casted = val as CollectionType;
+                          rawRequirement.collectionType = casted;
+                          setFieldValue('collectionType', casted);
                         }
                       ">
                       <SelectTrigger>

@@ -1,14 +1,24 @@
-import { Controller, Post, Body, UseGuards, Logger } from '@nestjs/common';
+import { Controller, Post, Get, Body, UseGuards, Logger } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { RequirementVectorService } from './requirement-vector.service';
-import { RebuildVectorRequestDto, RebuildVectorResponseDto } from '@req2task/dto';
+import { RebuildVectorRequestDto, RebuildVectorResponseDto, RequirementCheckRequestDto } from '@req2task/dto';
 
-@Controller('llm/vector')
+@Controller('vector')
 @UseGuards(AuthGuard('jwt'))
 export class AiVectorController {
   private readonly logger = new Logger(AiVectorController.name);
 
   constructor(private readonly vectorService: RequirementVectorService) {}
+
+  @Get('debug')
+  async getDebugInfo() {
+    try {
+      const info = await this.vectorService.getCollectionInfo();
+      return { code: 0, data: info };
+    } catch (error) {
+      return { code: 1, error: String(error) };
+    }
+  }
 
   @Post('rebuild')
   async rebuildVector(
@@ -36,6 +46,53 @@ export class AiVectorController {
       return {
         success: false,
         message: error instanceof Error ? error.message : 'Unknown error occurred',
+      };
+    }
+  }
+
+  @Post('check')
+  async checkRequirements(
+    @Body() dto: RequirementCheckRequestDto,
+  ): Promise<{
+    code: number;
+    data: {
+      results: Array<{
+        requirementId: string;
+        hasDuplicate: boolean;
+        duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+        hasConflict: boolean;
+        conflictDescription?: string;
+        conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+      }>;
+      totalDuplicates: number;
+      totalConflicts: number;
+    };
+  }> {
+    this.logger.log(`Checking ${dto.requirements.length} requirements for duplicates/conflicts`);
+
+    try {
+      const results = await this.vectorService.checkRequirements(dto.projectId, dto.requirements);
+
+      const totalDuplicates = results.filter((r) => r.hasDuplicate).length;
+      const totalConflicts = results.filter((r) => r.hasConflict).length;
+
+      return {
+        code: 0,
+        data: {
+          results,
+          totalDuplicates,
+          totalConflicts,
+        },
+      };
+    } catch (error) {
+      this.logger.error('Failed to check requirements', error instanceof Error ? error.stack : String(error));
+      return {
+        code: 1,
+        data: {
+          results: [],
+          totalDuplicates: 0,
+          totalConflicts: 0,
+        },
       };
     }
   }

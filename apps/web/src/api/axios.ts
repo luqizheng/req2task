@@ -19,6 +19,14 @@ interface ApiResponse<T = unknown> {
   body?: Record<string, unknown>
 }
 
+interface CodeResponse<T = unknown> {
+  code: number
+  message?: string
+  data: T
+}
+
+type ApiResult = ApiResponse | CodeResponse | Record<string, unknown>;
+
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('accessToken');
@@ -31,16 +39,31 @@ axiosInstance.interceptors.request.use(
 );
 
 axiosInstance.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
+  (response: AxiosResponse<ApiResult>) => {
     const apiResponse = response.data;
-    if (!apiResponse.success) {
-      return Promise.reject(new Error(apiResponse.message));
+    if ('success' in apiResponse) {
+      const stdResponse = apiResponse as ApiResponse;
+      if (!stdResponse.success) {
+        return Promise.reject(new Error(stdResponse.message));
+      }
+      let data = stdResponse.data;
+      while (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+        data = (data as { code: number; data: unknown }).data;
+      }
+      return data as never;
     }
-    let data = apiResponse.data;
-    while (data && typeof data === 'object' && 'code' in data && 'data' in data) {
-      data = (data as { code: number; data: unknown }).data;
+    if ('code' in apiResponse) {
+      const codeResponse = apiResponse as CodeResponse<unknown>;
+      if (codeResponse.code !== 0) {
+        return Promise.reject(new Error(codeResponse.message || `Error code: ${codeResponse.code}`));
+      }
+      let data = codeResponse.data;
+      while (data && typeof data === 'object' && 'code' in data && 'data' in data) {
+        data = (data as { code: number; data: unknown }).data;
+      }
+      return data as never;
     }
-    return data as never;
+    return apiResponse as never;
   },
   (error: AxiosError<ApiResponse>) => {
     if (error.response?.status === 401) {

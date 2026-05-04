@@ -14,6 +14,11 @@ export function createChromaVectorStore(configService: ConfigService): ChromaVec
     model: configService.get<string>('OLLAMA_EMBEDDING_MODEL', 'nomic-embed-text'),
   };
 
+  console.warn('VectorStore Config:', {
+    chroma: `${chromaConfig.host}:${chromaConfig.port}`,
+    ollama: `${ollamaConfig.host}:${ollamaConfig.port}/${ollamaConfig.model}`,
+  });
+
   initOllamaClient(ollamaConfig);
 
   const collectionName = configService.get<string>('CHROMA_COLLECTION', 'requirements');

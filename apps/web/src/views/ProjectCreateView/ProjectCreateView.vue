@@ -80,7 +80,9 @@ watch(projectKey, (val) => {
 })
 
 // 项目标识校验状态
-const projectKeyStatus = computed(() => {
+type ProjectKeyStatus = 'empty' | 'invalid-start' | 'invalid-format' | 'too-long' | 'valid'
+
+const projectKeyStatus = computed<ProjectKeyStatus>(() => {
   const val = values.projectKey
   if (!val) return 'empty'
   if (!/^[A-Z]/.test(val)) return 'invalid-start'
@@ -257,7 +259,7 @@ const prevStep = () => {
                     class="h-4 w-4 text-chart-3 transition-all duration-200"
                   />
                   <AlertCircle
-                    v-else-if="projectKeyStatus !== 'empty' && projectKeyStatus !== 'valid'"
+                    v-else-if="projectKeyStatus !== 'empty'"
                     class="h-4 w-4 text-destructive transition-all duration-200"
                   />
                 </div>
@@ -273,7 +275,7 @@ const prevStep = () => {
                 >
                   {{ projectKeyStatus === 'empty' ? '用于唯一标识项目，创建后不可修改' : projectKeyStatusText }}
                 </p>
-                <span class="text-xs text-muted-foreground">{{ projectKey.length }}/20</span>
+                <span class="text-xs text-muted-foreground">{{ (projectKey ?? '').length }}/20</span>
               </div>
               <FieldError v-if="errors.projectKey">{{ errors.projectKey }}</FieldError>
             </Field>

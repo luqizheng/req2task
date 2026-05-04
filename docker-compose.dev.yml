@@ -98,9 +98,9 @@ services:
     restart: unless-stopped
     ports:
       - "8000:8000"
-    volumes:
-      # 使用名称为 chroma_data 的 Docker 卷，数据管理更规范
-      - chromadb_data:/chroma/chroma
+    # volumes:
+    #   # 使用名称为 chroma_data 的 Docker 卷，数据管理更规范
+    #   - chromadb_data:/chroma/chroma
     environment:
       - IS_PERSISTENT=TRUE # 开启数据持久化
       - ANONYMIZED_TELEMETRY=FALSE # 推荐关闭匿名遥测

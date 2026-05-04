@@ -1,4 +1,4 @@
-import type { ChatRequestDto, CreateRawRequirementDto, RebuildVectorRequestDto, RebuildVectorResponseDto } from '@req2task/dto';
+import type { ChatRequestDto, CreateRawRequirementDto, RebuildVectorRequestDto, RebuildVectorResponseDto, RequirementCheckRequestDto, RequirementCheckResponseDto } from '@req2task/dto';
 import api from './axios';
 
 export interface ChatResponse {
@@ -166,7 +166,11 @@ export const aiApi = {
   },
 
   rebuildVector: (data: RebuildVectorRequestDto) => {
-    return api.post<RebuildVectorResponseDto>('/llm/vector/rebuild', data);
+    return api.post<RebuildVectorResponseDto>('/vector/rebuild', data);
+  },
+
+  checkRequirements: (data: RequirementCheckRequestDto) => {
+    return api.post<RequirementCheckResponseDto>('/vector/check', data);
   },
 };
 

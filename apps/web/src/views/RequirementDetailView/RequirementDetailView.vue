@@ -5,9 +5,12 @@ import type {
   RequirementResponseDto,
   RequirementDto as UpdateRequirementDto,
   ConflictDto,
+  SimilarRequirementDto,
+  RequirementCheckRequestDto,
 } from "@req2task/dto";
-import { RequirementStatus } from "@req2task/dto";
+import { RequirementStatus, ConflictType } from "@req2task/dto";
 import { requirementsApi, type TransitionOption } from "@/api/requirements";
+import { aiApi } from "@/api/ai";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +55,14 @@ const isDeleting = ref(false);
 const isTransitioning = ref(false);
 const isExporting = ref(false);
 const isLoadingConflicts = ref(false);
+const isCheckingConflicts = ref(false);
+const checkResults = ref<{
+  hasDuplicate: boolean;
+  hasConflict: boolean;
+  duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+  conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+  conflictDescription?: string;
+} | null>(null);
 
 const fetchRequirement = async () => {
   try {
@@ -173,6 +184,98 @@ const handleEdit = () => {
   router.push(`/projects/${projectId}/requirements/${requirementId}/edit`);
 };
 
+const handleCheckConflicts = async () => {
+  if (!requirement.value) return;
+
+  try {
+    isCheckingConflicts.value = true;
+    toast("正在检查重复和冲突...", {
+      description: "请稍候",
+    });
+
+    const response = await aiApi.checkRequirements({
+      projectId: projectId,
+      requirements: [
+        {
+          id: requirementId,
+          title: requirement.value.title,
+          content: requirement.value.description || "",
+        },
+      ],
+    } as RequirementCheckRequestDto);
+
+    if (response.results && response.results.length > 0) {
+      const result = response.results[0];
+      checkResults.value = {
+        hasDuplicate: result.hasDuplicate,
+        hasConflict: result.hasConflict,
+        duplicateRequirements: result.duplicateRequirements,
+        conflictRequirements: result.conflictRequirements,
+        conflictDescription: result.conflictDescription,
+      };
+
+      const newConflicts: ConflictDto[] = [];
+
+      if (result.hasDuplicate) {
+        result.duplicateRequirements.forEach((dup: SimilarRequirementDto) => {
+          newConflicts.push({
+            requirement1: {
+              id: requirementId,
+              content: requirement.value!.description || "",
+            },
+            requirement2: {
+              id: dup.id,
+              content: dup.content,
+            },
+            type: ConflictType.FUNCTIONAL,
+            description: `与需求"${dup.title}"存在重复，相似度 ${(dup.score * 100).toFixed(0)}%`,
+            suggestion: `建议保留其中一个需求，或合并重复内容`,
+          });
+        });
+      }
+
+      if (result.hasConflict) {
+        result.conflictRequirements.forEach((conflict: SimilarRequirementDto) => {
+          newConflicts.push({
+            requirement1: {
+              id: requirementId,
+              content: requirement.value!.description || "",
+            },
+            requirement2: {
+              id: conflict.id,
+              content: conflict.content,
+            },
+            type: ConflictType.LOGICAL,
+            description: result.conflictDescription || `与需求"${conflict.title}"存在逻辑冲突，相似度 ${(conflict.score * 100).toFixed(0)}%`,
+            suggestion: `建议与相关方讨论确认需求优先级和范围`,
+          });
+        });
+      }
+
+      conflicts.value = newConflicts;
+
+      if (result.hasDuplicate || result.hasConflict) {
+        toast.warning(
+          `发现 ${result.hasDuplicate ? "重复" : ""}${result.hasDuplicate && result.hasConflict ? "和" : ""}${result.hasConflict ? "冲突" : ""}需求`,
+          {
+            description: "请查看详情",
+          }
+        );
+      } else {
+        toast.success("检查完成", {
+          description: "未发现重复或冲突",
+        });
+      }
+    }
+  } catch (error) {
+    toast.error("检查失败", {
+      description: error instanceof Error ? error.message : "无法检查重复和冲突",
+    });
+  } finally {
+    isCheckingConflicts.value = false;
+  }
+};
+
 const goBack = () => {
   router.push(`/projects/${projectId}`);
 };
@@ -253,10 +356,13 @@ onMounted(() => {
               :is-deleting="isDeleting"
               :is-transitioning="isTransitioning"
               :is-exporting="isExporting"
+              :is-checking-conflicts="isCheckingConflicts"
+              :check-results="checkResults"
               @edit="handleEdit"
               @delete="handleDelete"
               @status-change="handleStatusChange"
               @export="handleExport"
+              @check-conflicts="handleCheckConflicts"
             />
 
             <RequirementModules :requirement="requirement" />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import type { RequirementResponseDto } from "@req2task/dto";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,17 +14,26 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Trash2, Download } from "lucide-vue-next";
+import { Loader2, Trash2, Download, AlertTriangle, AlertCircle } from "lucide-vue-next";
 
-defineProps<{
+const props = defineProps<{
   requirement: RequirementResponseDto;
   isDeleting?: boolean;
   isExporting?: boolean;
+  isCheckingConflicts?: boolean;
+  checkResults?: {
+    hasDuplicate: boolean;
+    hasConflict: boolean;
+    duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+    conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+    conflictDescription?: string;
+  } | null;
 }>();
 
 const emit = defineEmits<{
   (e: "delete"): void;
   (e: "export"): void;
+  (e: "check-conflicts"): void;
 }>();
 
 const showDeleteDialog = ref(false);
@@ -33,6 +42,10 @@ const confirmDelete = () => {
   emit("delete");
   showDeleteDialog.value = false;
 };
+
+const hasIssues = computed(() => {
+  return props.checkResults?.hasDuplicate || props.checkResults?.hasConflict;
+});
 </script>
 
 <template>
@@ -56,6 +69,18 @@ const confirmDelete = () => {
       </CardTitle>
     </CardHeader>
     <CardContent class="space-y-4">
+      <Button
+        variant="outline"
+        class="w-full justify-start"
+        :disabled="isCheckingConflicts"
+        @click="emit('check-conflicts')"
+      >
+        <Loader2 v-if="isCheckingConflicts" class="w-4 h-4 mr-2 animate-spin" />
+        <AlertTriangle v-else-if="hasIssues" class="w-4 h-4 mr-2 text-orange-500" />
+        <AlertCircle v-else class="w-4 h-4 mr-2" />
+        检查重复和冲突
+      </Button>
+
       <Button
         variant="outline"
         class="w-full justify-start"

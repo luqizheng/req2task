@@ -6,20 +6,36 @@ const envPath = path.join(process.cwd(), '.env');
 dotenv.config({ path: envPath });
 
 import { DataSource } from 'typeorm';
-import { Requirement, RawRequirement, ChromaVectorStore, VectorDocument } from '@req2task/core';
+import {
+  Requirement,
+  RawRequirement,
+  ChromaVectorStore,
+  VectorDocument,
+  Project,
+  User,
+  FeatureModule,
+  Conversation,
+  ConversationMessage,
+  RequirementChangeLog,
+  UserStory,
+  AcceptanceCriteria,
+  Task,
+} from '@req2task/core';
 import { initOllamaClient } from '@req2task/core';
 
 interface RebuildVectorOptions {
   projectId?: string;
+  clean?: boolean;
 }
 
 async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> {
   console.log('Starting vector store rebuild...');
   console.log(`Project filter: ${options.projectId || 'all'}`);
+  console.log(`Clean rebuild: ${options.clean ? 'YES (delete collection first)' : 'NO'}`);
 
   initOllamaClient({
     host: process.env.OLLAMA_HOST || 'localhost',
-    port: parseInt(process.env.OLLAMA_PORT || '11434'),
+    port: parseInt(process.env.OLLAMA_PORT || '11435'),
     model: process.env.OLLAMA_EMBEDDING_MODEL || 'nomic-embed-text',
   });
 
@@ -32,6 +48,11 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
   await vectorStore.connect();
   console.log('Connected to ChromaDB');
 
+  if (options.clean) {
+    console.log('Performing clean rebuild (deleting collection first)...');
+    await vectorStore.recreateCollection();
+  }
+
   const dataSource = new DataSource({
     type: 'postgres',
     host: process.env.DB_HOST || 'localhost',
@@ -39,7 +60,19 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
     username: process.env.DB_USER || 'postgres',
     password: process.env.DB_PASSWORD || 'postgres',
     database: process.env.DB_NAME || 'req2task',
-    entities: [Requirement, RawRequirement],
+    entities: [
+      Requirement,
+      RawRequirement,
+      Project,
+      User,
+      FeatureModule,
+      Conversation,
+      ConversationMessage,
+      RequirementChangeLog,
+      UserStory,
+      AcceptanceCriteria,
+      Task,
+    ],
   });
 
   await dataSource.initialize();
@@ -69,7 +102,11 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
     const documents: VectorDocument[] = [];
 
     for (const req of requirements) {
-      const content = [req.title, req.content, req.keyElements?.join(', ')].filter(Boolean).join('\n');
+      const parts: string[] = [req.title, req.content];
+      if (req.keyElements && req.keyElements.length > 0) {
+        parts.push(`关键要素: ${req.keyElements.join(", ")}`);
+      }
+      const content = parts.join('\n');
       documents.push({
         id: `requirement:${req.id}`,
         content,
@@ -103,15 +140,17 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
 
 const args = process.argv.slice(2);
 let projectId: string | undefined;
+let clean = false;
 
 for (let i = 0; i < args.length; i++) {
   if (args[i] === '-p' || args[i] === '--project-id') {
     projectId = args[i + 1];
-    break;
+  } else if (args[i] === '--clean') {
+    clean = true;
   }
 }
 
-rebuildVector({ projectId }).catch((error) => {
+rebuildVector({ projectId, clean }).catch((error) => {
   console.error('Rebuild failed:', error);
   process.exit(1);
 });

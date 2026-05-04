@@ -10,6 +10,7 @@ import {
 import { useJsonStream } from "../../utils/useJson";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 import { requirementsApi } from "@/api/requirements";
+import { aiApi } from "@/api/ai";
 import { useSSEStream } from "@/utils/useSSEStream";
 
 export function useRequirementSubmit(
@@ -149,8 +150,13 @@ export function useRequirementSubmit(
           jsonHelperRequirements.feed(content);
         },
         onMessage: () => {},
-        onDone: () => {
+        onDone: async () => {
           toast.success("生成需求完成");
+          try {
+            await checkConflictsAndDuplicates();
+          } catch (e) {
+            console.warn("冲突检查失败:", e);
+          }
           resolve();
         },
         onError: (error) => {
@@ -159,6 +165,34 @@ export function useRequirementSubmit(
         },
       });
     });
+  };
+
+  const checkConflictsAndDuplicates = async () => {
+    const unsavedRequirements = store.requirements.filter(
+      (r) => !r.id || r.id.startsWith("rq_"),
+    );
+
+    if (unsavedRequirements.length === 0) {
+      return;
+    }
+
+    const requirements = unsavedRequirements.map((r) => ({
+      id: r.id,
+      title: r.title,
+      content: r.content || "",
+    }));
+
+    const response = await aiApi.checkRequirements({
+      projectId: store.projectId,
+      requirements,
+    });
+
+    store.setRequirementCheckResult(response);
+    if (response.totalDuplicates > 0 || response.totalConflicts > 0) {
+      toast.warning(
+        `发现 ${response.totalDuplicates} 个重复，${response.totalConflicts} 个冲突`,
+      );
+    }
   };
 
   const generateTitle = async () => {
@@ -248,5 +282,6 @@ export function useRequirementSubmit(
     generateTitle,
     saveRequirement,
     saveAllRequirements,
+    checkConflictsAndDuplicates,
   };
 }

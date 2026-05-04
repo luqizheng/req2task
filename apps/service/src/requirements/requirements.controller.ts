@@ -25,7 +25,6 @@ import {
   RequirementResponseDto,
   RequirementListResponseDto,
   ChangeHistoryResponseDto,
-  AllowedTransitionsDto,
   UpdateRequirementDto,
 } from "@req2task/dto";
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";

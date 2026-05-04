@@ -10,6 +10,28 @@ import { RawRequirementStatus } from "@req2task/dto";
 
 export type AiQuestion = Pick<RawRequirementQADto, "question" | "purpose">;
 
+export interface SimilarRequirement {
+  id: string;
+  title: string;
+  content: string;
+  score: number;
+}
+
+export interface RequirementCheckResult {
+  requirementId: string;
+  hasDuplicate: boolean;
+  duplicateRequirements: SimilarRequirement[];
+  hasConflict: boolean;
+  conflictDescription?: string;
+  conflictRequirements: SimilarRequirement[];
+}
+
+export interface RequirementCheckSummary {
+  results: RequirementCheckResult[];
+  totalDuplicates: number;
+  totalConflicts: number;
+}
+
 function createDefaultRawRequirement(): RawRequirementResponseDto {
   return {
     entityKey: '',
@@ -63,6 +85,7 @@ export const useRawRequirementCreateStore = defineStore(
     const questionFilter = ref<"all" | "pending" | "answered">("all");
     const messageHistory = ref<Array<{ role: "user"; content: string }>>([]);
     const requirements = ref<AiGeneratedRequirementDto[]>([]);
+    const requirementCheckResult = ref<RequirementCheckSummary | null>(null);
 
     const allVisibleQuestions = computed(() =>
       rawRequirement.value.questionAndAnswers.filter(
@@ -268,6 +291,20 @@ export const useRawRequirementCreateStore = defineStore(
       requirements.value = data.map(convertToAiGeneratedRequirement);
     };
 
+    const setRequirementCheckResult = (result: RequirementCheckSummary | null) => {
+      requirementCheckResult.value = result;
+    };
+
+    const getCheckResultForRequirement = (requirementId: string) => {
+      return requirementCheckResult.value?.results.find(
+        (r) => r.requirementId === requirementId,
+      );
+    };
+
+    const clearRequirementCheckResult = () => {
+      requirementCheckResult.value = null;
+    };
+
     return {
       requirements,
       rawRequirement,
@@ -299,6 +336,10 @@ export const useRawRequirementCreateStore = defineStore(
       clearRequirements,
       updateRequirementId,
       loadRequirementsByRawRequirement,
+      requirementCheckResult,
+      setRequirementCheckResult,
+      getCheckResultForRequirement,
+      clearRequirementCheckResult,
     };
   },
 );

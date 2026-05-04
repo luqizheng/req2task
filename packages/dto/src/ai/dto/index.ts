@@ -3,3 +3,4 @@ export * from './requirement-generation.dto';
 export * from './task-decomposition.dto';
 export * from './conflict-detection.dto';
 export * from './vector-rebuild.dto';
+export * from './requirement-check.dto';

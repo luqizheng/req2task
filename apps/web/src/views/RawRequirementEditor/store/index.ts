@@ -13,7 +13,7 @@ export type AiQuestion = Pick<RawRequirementQADto, "question" | "purpose">;
 export interface SimilarRequirement {
   id: string;
   title: string;
-  content: string;
+  description: string;
   score: number;
 }
 
@@ -62,7 +62,7 @@ function convertToAiGeneratedRequirement(
     id: dto.id,
     entityKey: dto.entityKey,
     title: dto.title,
-    content: dto.description || "",
+    description: dto.description || "",
     keyElements: [],
     priority: dto.priority,
     source: dto.source,

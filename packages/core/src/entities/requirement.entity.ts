@@ -36,9 +36,6 @@ export class Requirement {
   title!: string;
 
   @Column({ type: 'text', nullable: true })
-  content!: string | null;
-
-  @Column({ type: 'text', nullable: true })
   description!: string | null;
 
   @Column({ name: 'key_elements', type: 'simple-array', nullable: true })

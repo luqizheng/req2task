@@ -137,6 +137,7 @@ export class ChromaVectorStore implements VectorStore {
       throw new Error('ChromaVectorStore not connected. Call connect() first.');
     }
 
+    console.warn("ChromaDB searchWithFilter - filter:", filter);
     const results = await this.collection.query({
       queryTexts: [query],
       nResults: limit,
@@ -246,7 +247,10 @@ export class ChromaVectorStore implements VectorStore {
     await this.deleteCollection();
     this.collection = await this.client!.getOrCreateCollection({
       name: this.collectionName,
-      metadata: { description: `Vector store for ${this.collectionName}` },
+      metadata: {
+        description: `Vector store for ${this.collectionName}`,
+        "hnsw:space": "cosine",
+      },
       embeddingFunction: this.embeddingFunction,
     });
     console.warn(`Recreated ChromaDB collection: ${this.collectionName}`);

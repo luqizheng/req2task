@@ -102,7 +102,7 @@ async function rebuildVector(options: RebuildVectorOptions = {}): Promise<void> 
     const documents: VectorDocument[] = [];
 
     for (const req of requirements) {
-      const parts: string[] = [req.title, req.content];
+      const parts: string[] = [req.title, req.description];
       if (req.keyElements && req.keyElements.length > 0) {
         parts.push(`关键要素: ${req.keyElements.join(", ")}`);
       }

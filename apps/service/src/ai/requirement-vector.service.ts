@@ -105,7 +105,12 @@ export class RequirementVectorService implements OnModuleInit {
 
   async rebuildAll(
     projectId?: string,
+    clean?: boolean,
   ): Promise<{ requirements: number; rawRequirements: number }> {
+    if (clean) {
+      await this.vectorStore.recreateCollection();
+    }
+
     let requirementQuery = this.requirementRepo.createQueryBuilder("r");
     let rawRequirementQuery = this.rawRequirementRepo.createQueryBuilder("rr");
 
@@ -122,12 +127,14 @@ export class RequirementVectorService implements OnModuleInit {
     const requirements = await requirementQuery.getMany();
     const rawRequirements = await rawRequirementQuery.getMany();
 
-    if (projectId) {
-      await this.vectorStore.deleteByFilter({ projectId });
-    } else {
-      const count = await this.vectorStore.getCount();
-      if (count > 0) {
-        console.warn("Clearing all vector store entries for full rebuild");
+    if (!clean) {
+      if (projectId) {
+        await this.vectorStore.deleteByFilter({ projectId });
+      } else {
+        const count = await this.vectorStore.getCount();
+        if (count > 0) {
+          console.warn("Clearing all vector store entries for full rebuild");
+        }
       }
     }
 
@@ -168,18 +175,20 @@ export class RequirementVectorService implements OnModuleInit {
   }
 
   private buildRequirementContent(requirement: Requirement): string {
-    const parts: string[] = [requirement.title, requirement.content];
+    const parts: string[] = [requirement.title, requirement.description];
 
     if (requirement.keyElements && requirement.keyElements.length > 0) {
       parts.push(`关键要素: ${requirement.keyElements.join(", ")}`);
     }
 
-    return parts.join("\n");
+    const result= parts.join("\n");
+    console.log('需求向量内容', result);
+    return result;
   }
 
   async checkRequirements(
     projectId: string,
-    requirements: Array<{ id: string; title: string; content: string }>,
+    requirements: Array<{ id: string; title: string; description: string }>,
   ): Promise<
     Array<{
       requirementId: string;
@@ -187,7 +196,7 @@ export class RequirementVectorService implements OnModuleInit {
       duplicateRequirements: Array<{
         id: string;
         title: string;
-        content: string;
+        description: string;
         score: number;
       }>;
       hasConflict: boolean;
@@ -195,17 +204,17 @@ export class RequirementVectorService implements OnModuleInit {
       conflictRequirements: Array<{
         id: string;
         title: string;
-        content: string;
+        description: string;
         score: number;
       }>;
     }>
   > {
     const results = [];
-    const SIMILARITY_THRESHOLD = 0.6;
-    const DUPLICATE_THRESHOLD = 0.8;
+    const SIMILARITY_THRESHOLD = 0.65;
+    const DUPLICATE_THRESHOLD = 0.85;
 
     for (const req of requirements) {
-      const query = `${req.title} ${req.content}`;
+      const query = `${req.title} ${req.description}`;
       console.log("checkRequirements - 处理需求:", { reqId: req.id, reqTitle: req.title });
       console.log("checkRequirements - 查询内容:", query);
       
@@ -227,7 +236,7 @@ export class RequirementVectorService implements OnModuleInit {
         .map((r) => ({
           id: r.id,
           title: this.extractTitle(r.content),
-          content: r.content,
+          description: r.content,
           score: r.score,
         }));
 
@@ -258,7 +267,7 @@ export class RequirementVectorService implements OnModuleInit {
         ];
         const hasConflictKeyword = conflictKeywords.some(
           (keyword) =>
-            req.content.includes(keyword) ||
+            req.description.includes(keyword) ||
             potentialConflicts.some((c) => c.content.includes(keyword)),
         );
 
@@ -277,7 +286,7 @@ export class RequirementVectorService implements OnModuleInit {
         conflictRequirements: potentialConflicts.map((r) => ({
           id: r.id,
           title: this.extractTitle(r.content),
-          content: r.content,
+          description: r.content,
           score: r.score,
         })),
       });

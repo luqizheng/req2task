@@ -1,5 +1,6 @@
 export interface RebuildVectorRequestDto {
   projectId?: string;
+  clean?: boolean;
 }
 
 export interface RebuildVectorResponseDto {

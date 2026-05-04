@@ -12,6 +12,7 @@ const props = defineProps<{
 }>();
 
 const isRebuilding = ref(false);
+const cleanRebuild = ref(false);
 const lastResult = ref<{
   success: boolean;
   requirements: number;
@@ -24,7 +25,7 @@ const handleRebuild = async () => {
   lastResult.value = null;
 
   try {
-    const result = await aiApi.rebuildVector({ projectId: props.projectId });
+    const result = await aiApi.rebuildVector({ projectId: props.projectId, clean: cleanRebuild.value });
 
     if (result.success && result.data) {
       lastResult.value = {
@@ -73,6 +74,14 @@ const handleRebuild = async () => {
           <p class="text-xs text-slate-500">
             重新计算所有需求的向量表示，用于需求关联检测
           </p>
+          <label class="flex items-center gap-2 mt-2 cursor-pointer">
+            <input
+              v-model="cleanRebuild"
+              type="checkbox"
+              class="w-3.5 h-3.5 rounded border-slate-300 text-violet-600 cursor-pointer"
+            />
+            <span class="text-xs text-slate-500">Clean rebuild（删除并重建 collection）</span>
+          </label>
         </div>
         <Button
           variant="outline"

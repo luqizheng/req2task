@@ -24,10 +24,10 @@ export class AiVectorController {
   async rebuildVector(
     @Body() dto: RebuildVectorRequestDto,
   ): Promise<RebuildVectorResponseDto> {
-    this.logger.warn(`Starting vector rebuild${dto.projectId ? ` for project ${dto.projectId}` : ' for all projects'}`);
+    this.logger.warn(`Starting vector rebuild${dto.projectId ? ` for project ${dto.projectId}` : ' for all projects'}${dto.clean ? ' (clean mode)' : ''}`);
 
     try {
-      const result = await this.vectorService.rebuildAll(dto.projectId);
+      const result = await this.vectorService.rebuildAll(dto.projectId, dto.clean);
 
       this.logger.warn(`Vector rebuild completed: ${result.requirements} requirements, ${result.rawRequirements} raw requirements`);
 
@@ -59,10 +59,10 @@ export class AiVectorController {
       results: Array<{
         requirementId: string;
         hasDuplicate: boolean;
-        duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+        duplicateRequirements: Array<{ id: string; title: string; description: string; score: number }>;
         hasConflict: boolean;
         conflictDescription?: string;
-        conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+        conflictRequirements: Array<{ id: string; title: string; description: string; score: number }>;
       }>;
       totalDuplicates: number;
       totalConflicts: number;

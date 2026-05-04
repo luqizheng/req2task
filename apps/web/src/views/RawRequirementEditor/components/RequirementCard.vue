@@ -61,7 +61,7 @@
       <p
         class="text-xs text-muted-foreground leading-relaxed mb-3 line-clamp-3"
       >
-        {{ props.requirement.content }}
+        {{ props.requirement.description }}
       </p>
 
       <!-- Tags -->
@@ -151,7 +151,7 @@
         <div class="p-4 border rounded-lg bg-red-50">
           <h4 class="font-medium text-sm mb-2">当前需求</h4>
           <p class="text-sm font-semibold">{{ props.requirement.title }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ props.requirement.content }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ props.requirement.description }}</p>
         </div>
         <div class="border-t pt-4">
           <h4 class="font-medium text-sm mb-3 text-muted-foreground">相似需求</h4>
@@ -167,7 +167,7 @@
                   相似度 {{ (dup.score * 100).toFixed(0) }}%
                 </Badge>
               </div>
-              <p class="text-xs text-muted-foreground">{{ dup.content }}</p>
+              <p class="text-xs text-muted-foreground">{{ dup.description }}</p>
             </div>
           </div>
         </div>
@@ -200,7 +200,7 @@
         <div class="p-4 border rounded-lg bg-orange-50">
           <h4 class="font-medium text-sm mb-2">当前需求</h4>
           <p class="text-sm font-semibold">{{ props.requirement.title }}</p>
-          <p class="text-xs text-muted-foreground mt-1">{{ props.requirement.content }}</p>
+          <p class="text-xs text-muted-foreground mt-1">{{ props.requirement.description }}</p>
         </div>
         <div class="border-t pt-4">
           <h4 class="font-medium text-sm mb-3 text-muted-foreground">冲突需求</h4>
@@ -216,7 +216,7 @@
                   相似度 {{ (conflict.score * 100).toFixed(0) }}%
                 </Badge>
               </div>
-              <p class="text-xs text-muted-foreground">{{ conflict.content }}</p>
+              <p class="text-xs text-muted-foreground">{{ conflict.description }}</p>
             </div>
           </div>
         </div>
@@ -283,7 +283,7 @@ const isPersisted = computed(() => {
 
 const enterEditMode = () => {
   editingTitle.value = props.requirement.title || "";
-  editingContent.value = props.requirement.content || "";
+  editingContent.value = props.requirement.description || "";
   isEditing.value = true;
 };
 
@@ -294,7 +294,7 @@ const cancelEdit = () => {
 const saveEdit = async () => {
   store.updateRequirement(props.requirement.id, {
     title: editingTitle.value,
-    content: editingContent.value,
+    description: editingContent.value,
   });
   toast.success("需求更新成功");
   isEditing.value = false;

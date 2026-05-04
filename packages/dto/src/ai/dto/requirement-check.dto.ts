@@ -9,13 +9,13 @@ export class RequirementCheckItemDto {
   title!: string;
 
   @IsString()
-  content!: string;
+  description!: string;
 }
 
 export class SimilarRequirementDto {
   id!: string;
   title!: string;
-  content!: string;
+  description!: string;
   score!: number;
 }
 

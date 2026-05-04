@@ -59,8 +59,8 @@ const isCheckingConflicts = ref(false);
 const checkResults = ref<{
   hasDuplicate: boolean;
   hasConflict: boolean;
-  duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
-  conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+  duplicateRequirements: Array<{ id: string; title: string; description: string; score: number }>;
+  conflictRequirements: Array<{ id: string; title: string; description: string; score: number }>;
   conflictDescription?: string;
 } | null>(null);
 
@@ -199,7 +199,7 @@ const handleCheckConflicts = async () => {
         {
           id: requirementId,
           title: requirement.value.title,
-          content: requirement.value.description || "",
+          description: requirement.value.description || "",
         },
       ],
     } as RequirementCheckRequestDto);
@@ -225,7 +225,7 @@ const handleCheckConflicts = async () => {
             },
             requirement2: {
               id: dup.id,
-              content: dup.content,
+              content: dup.description,
             },
             type: ConflictType.FUNCTIONAL,
             description: `与需求"${dup.title}"存在重复，相似度 ${(dup.score * 100).toFixed(0)}%`,
@@ -243,7 +243,7 @@ const handleCheckConflicts = async () => {
             },
             requirement2: {
               id: conflict.id,
-              content: conflict.content,
+              content: conflict.description,
             },
             type: ConflictType.LOGICAL,
             description: result.conflictDescription || `与需求"${conflict.title}"存在逻辑冲突，相似度 ${(conflict.score * 100).toFixed(0)}%`,

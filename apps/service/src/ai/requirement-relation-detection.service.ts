@@ -5,7 +5,7 @@ export interface RelatedRequirement {
   id: string;
   entityKey: string;
   title: string;
-  content: string;
+  description: string;
   score: number;
   relationType: 'similar' | 'conflict' | 'extends' | 'depends';
 }
@@ -54,7 +54,7 @@ export class RequirementRelationDetectionService {
           id: req.id,
           entityKey: '',
           title: '',
-          content: req.content,
+          description: req.content,
           score: req.score,
           relationType,
         };

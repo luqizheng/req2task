@@ -179,7 +179,7 @@ export function useRequirementSubmit(
     const requirements = unsavedRequirements.map((r) => ({
       id: r.id,
       title: r.title,
-      content: r.content || "",
+      description: r.description || "",
     }));
 
     const response = await aiApi.checkRequirements({
@@ -217,7 +217,7 @@ export function useRequirementSubmit(
     try {
       const createDto: RequirementDto = {
         title: requirement.title,
-        description: requirement.content,
+        description: requirement.description,
         priority: requirement.priority,
         source: requirement.source,
         parentRequirementId: requirement.parentId || undefined,
@@ -249,7 +249,7 @@ export function useRequirementSubmit(
     try {
       const dtos: RequirementDto[] = unsavedRequirements.map((req) => ({
         title: req.title,
-        description: req.content,
+        description: req.description,
         priority: req.priority,
         source: req.source,
         parentRequirementId: req.parentId || undefined,

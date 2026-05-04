@@ -24,8 +24,8 @@ const props = defineProps<{
   checkResults?: {
     hasDuplicate: boolean;
     hasConflict: boolean;
-    duplicateRequirements: Array<{ id: string; title: string; content: string; score: number }>;
-    conflictRequirements: Array<{ id: string; title: string; content: string; score: number }>;
+    duplicateRequirements: Array<{ id: string; title: string; description: string; score: number }>;
+    conflictRequirements: Array<{ id: string; title: string; description: string; score: number }>;
     conflictDescription?: string;
   } | null;
 }>();

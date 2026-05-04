@@ -13,7 +13,7 @@ export interface AiGeneratedRequirementDto {
   entityKey?: string;
   projectId?: string;
   title: string;
-  content: string;
+  description: string;
   keyElements: string[];
   priority: Priority;
   source: RequirementSource;

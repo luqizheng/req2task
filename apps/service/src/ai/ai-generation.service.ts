@@ -251,7 +251,6 @@ ${content}
           entityKey: "",
           modules: [],
           title: item.title,
-          content: item.content || item.description || null,
           description: item.description || null,
           keyElements: item.keyElements || null,
           priority: item.priority?.toUpperCase() || Priority.MEDIUM,
@@ -285,7 +284,7 @@ ${content}
     let conflictCount = 0;
 
     for (const req of requirements) {
-      const reqContent = `${req.title} ${req.content || ""}`;
+      const reqContent = `${req.title} ${req.description || ""}`;
       const similarResults = await this.vectorService.searchSimilarRequirements(
         reqContent,
         projectId,
@@ -345,7 +344,7 @@ ${content}
     similarRequirements: Array<{ id: string; content: string; score: number }>,
   ): Promise<{ hasConflict: boolean; conflictDescription?: string }> {
     try {
-      const newReqContent = `${newRequirement.title}\n${newRequirement.content || ""}`;
+      const newReqContent = `${newRequirement.title}\n${newRequirement.description || ""}`;
       const existingReqsContent = similarRequirements
         .map((r, i) => `[${i + 1}] ${r.content}`)
         .join("\n\n");

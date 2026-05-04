@@ -167,7 +167,6 @@ export class AiPersistenceService {
         for (const item of data) {
           const requirement = queryRunner.manager.create(Requirement, {
             title: item.title,
-            content: item.content || item.description || null,
             description: item.description || null,
             keyElements: item.keyElements || null,
             priority: item.priority?.toUpperCase() || Priority.MEDIUM,

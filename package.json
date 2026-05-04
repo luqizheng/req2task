@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev:web": "npx tsx scripts/dev-web.ts",
+    "dev:core": "pnpm --filter @req2task/core --filter @req2task/dto  run dev",
     "dev:service": "npx tsx scripts/dev-service.ts",
     "dev:ai-chat-service": "npx tsx scripts/dev-ai-chat-service.ts",
     "dev:api-gateway-stoma": "pnpm -F @req2task/api-gateway-stoma dev",

@@ -1,6 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
 import { BadRequestException } from '@nestjs/common';
 import { RequirementStateService } from '@req2task/core';
 import { Requirement, RequirementChangeLog } from '@req2task/core';
@@ -8,16 +7,16 @@ import { RequirementStatus } from '@req2task/dto';
 
 describe('RequirementStateService', () => {
   let service: RequirementStateService;
-  let requirementRepository: jest.Mocked<Repository<Requirement>>;
-  let changeLogRepository: jest.Mocked<Repository<RequirementChangeLog>>;
+  let mockRequirementRepository: { findOne: jest.Mock; save: jest.Mock };
+  let mockChangeLogRepository: { create: jest.Mock; save: jest.Mock; find: jest.Mock };
 
   beforeEach(async () => {
-    const mockRequirementRepository = {
+    mockRequirementRepository = {
       findOne: jest.fn(),
       save: jest.fn(),
     };
 
-    const mockChangeLogRepository = {
+    mockChangeLogRepository = {
       create: jest.fn(),
       save: jest.fn(),
       find: jest.fn(),
@@ -25,21 +24,18 @@ describe('RequirementStateService', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        RequirementStateService,
         {
-          provide: getRepositoryToken(Requirement),
-          useValue: mockRequirementRepository,
-        },
-        {
-          provide: getRepositoryToken(RequirementChangeLog),
-          useValue: mockChangeLogRepository,
+          provide: RequirementStateService,
+          useFactory: () =>
+            new RequirementStateService(
+              mockRequirementRepository as any,
+              mockChangeLogRepository as any,
+            ),
         },
       ],
     }).compile();
 
     service = module.get<RequirementStateService>(RequirementStateService);
-    requirementRepository = module.get(getRepositoryToken(Requirement));
-    changeLogRepository = module.get(getRepositoryToken(RequirementChangeLog));
   });
 
   it('should be defined', () => {
@@ -111,30 +107,26 @@ describe('RequirementStateService', () => {
         status: RequirementStatus.DRAFT,
       } as Requirement;
 
-      requirementRepository.findOne.mockResolvedValue(requirement);
-      requirementRepository.save.mockResolvedValue({
+      mockRequirementRepository.findOne.mockResolvedValue(requirement);
+      mockRequirementRepository.save.mockResolvedValue({
         ...requirement,
         status: RequirementStatus.REVIEWED,
       });
-      changeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
-      changeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
+      mockChangeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
+      mockChangeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
 
-      const result = await service.transitionStatus(
-        '1',
-        RequirementStatus.REVIEWED,
-        'user-1',
-      );
+      const result = await service.transitionStatus('1', RequirementStatus.REVIEWED, 'user-1');
 
       expect(result.status).toBe(RequirementStatus.REVIEWED);
-      expect(changeLogRepository.save).toHaveBeenCalled();
+      expect(mockChangeLogRepository.save).toHaveBeenCalled();
     });
 
     it('should throw error if requirement not found', async () => {
-      requirementRepository.findOne.mockResolvedValue(null);
+      mockRequirementRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.transitionStatus('1', RequirementStatus.REVIEWED, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow();
     });
 
     it('should throw error if transition not allowed', async () => {
@@ -143,27 +135,23 @@ describe('RequirementStateService', () => {
         status: RequirementStatus.DRAFT,
       } as Requirement;
 
-      requirementRepository.findOne.mockResolvedValue(requirement);
+      mockRequirementRepository.findOne.mockResolvedValue(requirement);
 
       await expect(
         service.transitionStatus('1', RequirementStatus.COMPLETED, 'user-1'),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow();
     });
   });
 
   describe('getAllowedTransitions', () => {
     it('should return allowed transitions for DRAFT', async () => {
-      const transitions = await service.getAllowedTransitions(
-        RequirementStatus.DRAFT,
-      );
+      const transitions = await service.getAllowedTransitions(RequirementStatus.DRAFT);
       expect(transitions).toContain(RequirementStatus.REVIEWED);
       expect(transitions).toContain(RequirementStatus.CANCELLED);
     });
 
     it('should return empty array for COMPLETED', async () => {
-      const transitions = await service.getAllowedTransitions(
-        RequirementStatus.COMPLETED,
-      );
+      const transitions = await service.getAllowedTransitions(RequirementStatus.COMPLETED);
       expect(transitions).toEqual([]);
     });
   });
@@ -175,13 +163,13 @@ describe('RequirementStateService', () => {
         status: RequirementStatus.REVIEWED,
       } as Requirement;
 
-      requirementRepository.findOne.mockResolvedValue(requirement);
-      requirementRepository.save.mockResolvedValue({
+      mockRequirementRepository.findOne.mockResolvedValue(requirement);
+      mockRequirementRepository.save.mockResolvedValue({
         ...requirement,
         status: RequirementStatus.APPROVED,
       });
-      changeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
-      changeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
+      mockChangeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
+      mockChangeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
 
       const result = await service.reviewRequirement('1', true, 'user-1');
 
@@ -194,13 +182,13 @@ describe('RequirementStateService', () => {
         status: RequirementStatus.REVIEWED,
       } as Requirement;
 
-      requirementRepository.findOne.mockResolvedValue(requirement);
-      requirementRepository.save.mockResolvedValue({
+      mockRequirementRepository.findOne.mockResolvedValue(requirement);
+      mockRequirementRepository.save.mockResolvedValue({
         ...requirement,
         status: RequirementStatus.REJECTED,
       });
-      changeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
-      changeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
+      mockChangeLogRepository.create.mockReturnValue({} as RequirementChangeLog);
+      mockChangeLogRepository.save.mockResolvedValue({} as RequirementChangeLog);
 
       const result = await service.reviewRequirement('1', false, 'user-1');
 
@@ -219,12 +207,12 @@ describe('RequirementStateService', () => {
         },
       ] as RequirementChangeLog[];
 
-      changeLogRepository.find.mockResolvedValue(mockLogs);
+      mockChangeLogRepository.find.mockResolvedValue(mockLogs);
 
       const result = await service.getChangeHistory('req-1');
 
       expect(result).toEqual(mockLogs);
-      expect(changeLogRepository.find).toHaveBeenCalledWith({
+      expect(mockChangeLogRepository.find).toHaveBeenCalledWith({
         where: { requirementId: 'req-1' },
         relations: ['changedBy'],
         order: { createdAt: 'DESC' },

@@ -14,10 +14,13 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Trash2, Download, AlertTriangle, AlertCircle } from "lucide-vue-next";
+import { Sparkles, Loader2, Trash2, Download, AlertTriangle, AlertCircle } from "lucide-vue-next";
+import { aiApi } from "@/api/ai";
+import { toast } from "vue-sonner";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
+  projectId: string;
   isDeleting?: boolean;
   isExporting?: boolean;
   isCheckingConflicts?: boolean;
@@ -34,6 +37,7 @@ const emit = defineEmits<{
   (e: "delete"): void;
   (e: "export"): void;
   (e: "check-conflicts"): void;
+  (e: "generated"): void;
 }>();
 
 const showDeleteDialog = ref(false);
@@ -46,6 +50,64 @@ const confirmDelete = () => {
 const hasIssues = computed(() => {
   return props.checkResults?.hasDuplicate || props.checkResults?.hasConflict;
 });
+
+const isGenerating = ref(false);
+
+const handleOneClickGenerate = async () => {
+  if (!props.requirement.title && !props.requirement.description) {
+    toast.error("需求标题或描述为空，无法生成");
+    return;
+  }
+
+  try {
+    isGenerating.value = true;
+
+    const featurePointsResult = await aiApi.generateFeaturePointsForRequirement(
+      props.requirement.id,
+    );
+    const featurePoints = featurePointsResult.featurePoints;
+
+    const [userStoriesResult, tasksResult] = await Promise.all([
+      aiApi.generateUserStoriesForRequirement(
+        props.requirement.id,
+        props.projectId,
+        featurePoints,
+      ),
+      aiApi.generateTasksForRequirement(
+        props.requirement.id,
+        props.projectId,
+        featurePoints,
+      ),
+    ]);
+
+    const userStories = userStoriesResult.userStories;
+    const tasks = tasksResult.tasks;
+
+    if (userStories.length > 0) {
+      const results = await Promise.allSettled(
+        userStories.map((story) =>
+          aiApi.generateAcceptanceCriteriaForUserStory(story.id),
+        ),
+      );
+      const successCount = results.filter((r) => r.status === "fulfilled").length;
+      const failCount = results.filter((r) => r.status === "rejected").length;
+      toast.success(
+        `已生成 ${userStories.length} 个用户故事、${tasks.length} 个任务、${successCount} 组验收条件` +
+          (failCount > 0 ? `（${failCount} 组失败）` : ""),
+      );
+    } else {
+      toast.success(`已生成 ${userStories.length} 个用户故事、${tasks.length} 个任务`);
+    }
+
+    emit("generated");
+  } catch (error) {
+    toast.error("一键生成失败", {
+      description: error instanceof Error ? error.message : "请稍后重试",
+    });
+  } finally {
+    isGenerating.value = false;
+  }
+};
 </script>
 
 <template>
@@ -69,6 +131,17 @@ const hasIssues = computed(() => {
       </CardTitle>
     </CardHeader>
     <CardContent class="space-y-4">
+      <Button
+        variant="default"
+        class="w-full justify-start gap-2"
+        :disabled="isGenerating"
+        @click="handleOneClickGenerate"
+      >
+        <Loader2 v-if="isGenerating" class="w-4 h-4 mr-2 animate-spin" />
+        <Sparkles v-else class="w-4 h-4 mr-2" />
+        {{ isGenerating ? '生成中...' : 'AI 一键生成' }}
+      </Button>
+
       <Button
         variant="outline"
         class="w-full justify-start"

@@ -114,56 +114,7 @@ JSON格式：
       { name: 'requirementDescription', type: 'string', description: '需求描述' },
     ],
   },
-  {
-    code: 'USER_STORY_GENERATION',
-    name: '用户故事生成',
-    category: 'user-story-generation',
-    description: '生成标准的用户故事格式',
-    systemPrompt: `你是一个资深的产品经理和敏捷开发专家，擅长将复杂需求转换为标准的用户故事格式。
 
-重要：UserStory业务对象字段（必须严格遵守）：
-- role: string (用户角色，如"系统管理员"、"普通用户"）
-- goal: string (用户想要完成的目标，如"创建新用户账号"）
-- benefit: string (用户期望获得的价值，如"以便新员工能够登录系统"）
-- storyPoints: number (故事点，使用斐波那契数列：1,2,3,5,8,13,21)
-
-用户故事标准格式：
-"作为 [角色]，我想要 [功能]，以便 [价值]"
-
-故事点估算标准：
-- 1: 极简单，1-2小时可完成
-- 2: 简单，半天可完成
-- 3: 中等，1-2天可完成
-- 5: 较复杂，3-5天可完成
-- 8: 复杂，1-2周可完成
-- 13: 非常复杂，3周以上可完成`,
-    userPromptTemplate: `## 原始需求
-{{requirementText}}
-
-{{#if projectId}}项目ID: {{projectId}}
-
-{{/if}}{{#if context}}## 上下文信息
-{{context}}
-
-{{/if}}## 生成要求
-1. 识别需求涉及的角色（最多3个不同角色）
-2. 每个角色生成1-2个用户故事
-3. story_points必须是数字：1, 2, 3, 5, 8, 13, 21
-4. 保持用户故事简洁明确，避免技术术语
-
-JSON格式：
-[
-    { "role": "角色名称", "goal": "功能描述", "benefit": "价值描述", "storyPoints": 3 }
-]`,
-    temperature: 0.7,
-    maxTokens: 3000,
-    isActive: true,
-    parameters: [
-      { name: 'projectId', type: 'string', description: '项目ID' },
-      { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'requirementText', type: 'string', required: true, description: '需求文本' },
-    ],
-  },
   {
     code: 'ACCEPTANCE_CRITERIA_GENERATION',
     name: '验收条件生成',

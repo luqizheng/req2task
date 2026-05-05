@@ -102,10 +102,20 @@ export const aiApi = {
     );
   },
 
+  generateFeaturePointsForRequirement: (
+    requirementId: string,
+    context?: string
+  ) => {
+    return api.post<{ featurePoints: string; rawContent: string }>(
+      `/requirements/${requirementId}/feature-points/generate`,
+      { context }
+    );
+  },
+
   generateUserStoriesForRequirement: (
     requirementId: string,
     projectId: string,
-    featurePoints: string,
+    featurePoints?: string,
     context?: string
   ) => {
     return api.post<{ userStories: GeneratedUserStory[]; rawContent: string }>(

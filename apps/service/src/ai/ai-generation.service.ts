@@ -391,12 +391,40 @@ ${existingReqsContent}
     }
   }
 
+  async generateFeaturePoints(
+    requirementId: string,
+    context?: string,
+  ): Promise<{ featurePoints: string; rawContent: string }> {
+    const requirement = await this.requirementRepository.findOne({
+      where: { id: requirementId },
+    });
+
+    if (!requirement) {
+      throw new BadRequestException("Requirement not found");
+    }
+
+    const rendered = this.promptService.render("FEATURE_POINT_GENERATION", {
+      requirementTitle: requirement.title,
+      requirementDescription: requirement.description,
+      context,
+    });
+
+    const result = await this.llmClient.generate({
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
+
+    return { featurePoints: result.content, rawContent: result.content };
+  }
+
   async generateUserStories(
     requirementId: string,
-    featurePoints: string,
     projectId: string,
     createdById: string,
     context?: string,
+    featurePoints?: string,
   ): Promise<{ userStories: UserStory[]; rawContent: string }> {
     const requirement = await this.requirementRepository.findOne({
       where: { id: requirementId },
@@ -406,12 +434,14 @@ ${existingReqsContent}
       throw new BadRequestException("Requirement not found");
     }
 
+    const content = featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
+
     const rendered = this.promptService.render("USER_STORY_GENERATION", {
       projectId,
       context,
       requirementTitle: requirement.title,
       requirementDescription: requirement.description,
-      featurePoints,
+      featurePoints: content,
     });
 
     const result = await this.llmClient.generate({

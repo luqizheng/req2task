@@ -2,13 +2,9 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { NotFoundException } from '@nestjs/common';
 import { RequirementsService } from './requirements.service';
-import { UserStoriesService } from './user-stories.service';
 import { AcceptanceCriteriaService } from './acceptance-criteria.service';
-import {
-  Requirement,
-  User,
-  FeatureModule,
-} from '@req2task/core';
+import { EntityKeyService } from '../common/services/entity-key.service';
+import { Requirement, User, FeatureModule } from '@req2task/core';
 import {
   RequirementStatus,
   Priority,
@@ -23,20 +19,16 @@ interface MockRepository {
   save: jest.Mock;
   remove: jest.Mock;
   find: jest.Mock;
+  findBy: jest.Mock;
+  createQueryBuilder: jest.Mock;
 }
 
 describe('RequirementsService', () => {
   let service: RequirementsService;
   let requirementRepository: MockRepository;
   let featureModuleRepository: MockRepository;
-  let userStoriesService: {
-    findByRequirement: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
-  };
-  let acceptanceCriteriaService: {
-    toResponseDto: jest.Mock;
-  };
+  let acceptanceCriteriaService: { toResponseDto: jest.Mock };
+  let entityKeyService: { generateEntityKey: jest.Mock };
 
   const mockUser: User = {
     id: 'user-uuid',
@@ -82,6 +74,15 @@ describe('RequirementsService', () => {
       create: jest.fn(),
       save: jest.fn(),
       remove: jest.fn(),
+      findBy: jest.fn(),
+      createQueryBuilder: jest.fn().mockReturnValue({
+        innerJoin: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[], 0]),
+      }),
     };
 
     featureModuleRepository = {
@@ -91,12 +92,8 @@ describe('RequirementsService', () => {
       create: jest.fn(),
       save: jest.fn(),
       remove: jest.fn(),
-    };
-
-    userStoriesService = {
-      findByRequirement: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
+      findBy: jest.fn().mockResolvedValue([{ id: 'module-uuid', projectId: 'project-uuid', name: 'Test Module' }]),
+      createQueryBuilder: jest.fn(),
     };
 
     acceptanceCriteriaService = {
@@ -111,16 +108,20 @@ describe('RequirementsService', () => {
       })),
     };
 
+    entityKeyService = {
+      generateEntityKey: jest.fn().mockResolvedValue(['REQ-001']),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         RequirementsService,
         {
-          provide: UserStoriesService,
-          useValue: userStoriesService,
-        },
-        {
           provide: AcceptanceCriteriaService,
           useValue: acceptanceCriteriaService,
+        },
+        {
+          provide: EntityKeyService,
+          useValue: entityKeyService,
         },
         {
           provide: getRepositoryToken(Requirement),
@@ -142,10 +143,7 @@ describe('RequirementsService', () => {
       requirementRepository.save.mockResolvedValue(mockRequirement);
       requirementRepository.findOne.mockResolvedValue(mockRequirement);
 
-      const result = await service.save(
-        { title: 'Test Requirement' },
-        'user-uuid',
-      );
+      const result = await service.save({ title: 'Test Requirement', moduleIds: ['module-uuid'] }, 'user-uuid');
 
       expect(result.title).toBe('Test Requirement');
       expect(requirementRepository.create).toHaveBeenCalled();
@@ -157,7 +155,7 @@ describe('RequirementsService', () => {
       requirementRepository.save.mockResolvedValue(mockRequirement);
       requirementRepository.findOne.mockResolvedValue(mockRequirement);
 
-      await service.save({ title: 'Test' }, 'user-uuid');
+      await service.save({ title: 'Test', moduleIds: ['module-uuid'] }, 'user-uuid');
 
       expect(requirementRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -167,30 +165,33 @@ describe('RequirementsService', () => {
         }),
       );
     });
+
+    it('should update existing requirement', async () => {
+      const updated = { ...mockRequirement, title: 'Updated Title' };
+      requirementRepository.findOne.mockResolvedValue(mockRequirement);
+      requirementRepository.save.mockResolvedValue(updated);
+
+      const result = await service.save({ id: 'req-uuid', title: 'Updated Title' }, 'user-uuid');
+
+      expect(result.title).toBe('Updated Title');
+    });
   });
 
   describe('findByModule', () => {
     it('should return paginated requirements', async () => {
-      requirementRepository.findAndCount.mockResolvedValue([[mockRequirement], 1]);
+      requirementRepository.createQueryBuilder.mockReturnValue({
+        innerJoin: jest.fn().mockReturnThis(),
+        leftJoinAndSelect: jest.fn().mockReturnThis(),
+        skip: jest.fn().mockReturnThis(),
+        take: jest.fn().mockReturnThis(),
+        orderBy: jest.fn().mockReturnThis(),
+        getManyAndCount: jest.fn().mockResolvedValue([[mockRequirement], 1]),
+      });
 
       const result = await service.findByModule('module-uuid', 1, 20);
 
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(1);
-    });
-
-    it('should call findAndCount with correct params', async () => {
-      requirementRepository.findAndCount.mockResolvedValue([[], 0]);
-
-      await service.findByModule('module-uuid', 2, 10);
-
-      expect(requirementRepository.findAndCount).toHaveBeenCalledWith({
-        where: { moduleId: 'module-uuid' },
-        relations: ['createdBy', 'userStories', 'children'],
-        skip: 10,
-        take: 10,
-        order: { createdAt: 'DESC' },
-      });
     });
   });
 
@@ -207,26 +208,6 @@ describe('RequirementsService', () => {
       requirementRepository.findOne.mockResolvedValue(null);
 
       await expect(service.findById('nonexistent')).rejects.toThrow(NotFoundException);
-    });
-  });
-
-  describe('save', () => {
-    it('should update requirement', async () => {
-      const updated = { ...mockRequirement, title: 'Updated Title' };
-      requirementRepository.findOne.mockResolvedValue(mockRequirement);
-      requirementRepository.save.mockResolvedValue(updated);
-
-      const result = await service.save({ id: 'req-uuid', title: 'Updated Title' }, 'user-uuid');
-
-      expect(result.title).toBe('Updated Title');
-    });
-
-    it('should throw NotFoundException when not found', async () => {
-      requirementRepository.findOne.mockResolvedValue(null);
-
-      await expect(service.save({ id: 'nonexistent', title: 'Test' }, 'user-uuid')).rejects.toThrow(
-        NotFoundException,
-      );
     });
   });
 

@@ -336,6 +336,44 @@ JSON格式：
     ],
   },
   {
+    code: "FEATURE_POINT_GENERATION",
+    name: "功能点生成",
+    category: "requirement-analysis",
+    description: "从需求描述生成功能点列表",
+    systemPrompt: `你是一个资深的产品经理和系统架构师。请分析需求描述，将其拆解为具体的功能点。
+
+功能点格式要求：
+- 每个功能点包含：功能模块 + 具体功能描述
+- 使用 MECE 原则（相互独立，完全穷尽）进行拆分
+- 功能点应该可独立测试和交付
+- 数量控制在 5-15 个功能点为宜
+
+功能点格式示例：
+- [用户认证] 用户登录功能
+- [用户认证] 用户登出功能
+- [用户管理] 管理员创建用户
+- [权限管理] 角色权限分配`,
+    userPromptTemplate: `## 需求标题
+{{requirementTitle}}
+
+{{#if requirementDescription}}## 需求描述
+{{requirementDescription}}
+{{/if}}{{#if context}}## 上下文信息
+{{context}}
+{{/if}}请生成功能点列表。
+
+格式要求：
+每行一个功能点，使用 [模块名] 功能描述 格式`,
+    temperature: 0.5,
+    maxTokens: 2000,
+    isActive: true,
+    parameters: [
+      { name: "requirementTitle", type: "string", required: true, description: "需求标题" },
+      { name: "requirementDescription", type: "string", description: "需求描述" },
+      { name: "context", type: "string", description: "上下文信息" },
+    ],
+  },
+  {
     code: "USER_STORY_GENERATION",
     name: "用户故事生成",
     category: "user-story-generation",

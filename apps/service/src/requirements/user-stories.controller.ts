@@ -76,10 +76,10 @@ export class UserStoriesController {
 
     const result = await this.aiGenerationService.generateUserStories(
       requirementId,
-      dto.featurePoints,
       projectId,
       createdById,
       dto.context,
+      dto.featurePoints,
     );
 
     return {

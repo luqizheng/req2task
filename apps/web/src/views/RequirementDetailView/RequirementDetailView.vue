@@ -352,6 +352,7 @@ onMounted(() => {
           <div class="space-y-6">
             <RequirementActions
               :requirement="requirement"
+              :project-id="projectId"
               :allowed-transitions="allowedTransitions"
               :is-deleting="isDeleting"
               :is-transitioning="isTransitioning"
@@ -363,6 +364,7 @@ onMounted(() => {
               @status-change="handleStatusChange"
               @export="handleExport"
               @check-conflicts="handleCheckConflicts"
+              @generated="fetchRequirement"
             />
 
             <RequirementModules :requirement="requirement" />

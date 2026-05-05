@@ -26,8 +26,9 @@ export class GenerateRequirementsDto {
 }
 
 export class GenerateUserStoriesDto {
+  @IsOptional()
   @IsString()
-  featurePoints!: string;
+  featurePoints?: string;
 
   @IsOptional()
   @IsString()
@@ -47,6 +48,12 @@ export class GenerateAcceptanceCriteriaDto {
   @IsString()
   userStoryId!: string;
 
+  @IsOptional()
+  @IsString()
+  context?: string;
+}
+
+export class GenerateFeaturePointsDto {
   @IsOptional()
   @IsString()
   context?: string;

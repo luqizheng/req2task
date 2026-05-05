@@ -1,21 +1,17 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { InjectRepository } from "@nestjs/typeorm";
-import { Repository, In } from "typeorm";
-import { Requirement, FeatureModule } from "@req2task/core";
-import {
-  EntityKeyService,
-  EntityKeyType,
-} from "../common/services/entity-key.service";
-import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { Requirement, FeatureModule } from '@req2task/core';
+import { EntityKeyService, EntityKeyType } from '../common/services/entity-key.service';
+import { RequirementStatus, Priority, RequirementSource } from '@req2task/dto';
 import {
   RequirementDto,
   RequirementResponseDto,
   RequirementListResponseDto,
   ModuleSummaryDto,
   UpdateRequirementDto,
-} from "@req2task/dto";
-import { UserStoriesService } from "./user-stories.service";
-import { AcceptanceCriteriaService } from "./acceptance-criteria.service";
+} from '@req2task/dto';
+import { AcceptanceCriteriaService } from './acceptance-criteria.service';
 
 @Injectable()
 export class RequirementsService {
@@ -24,10 +20,10 @@ export class RequirementsService {
     private requirementRepository: Repository<Requirement>,
     @InjectRepository(FeatureModule)
     private featureModuleRepository: Repository<FeatureModule>,
-    private userStoriesService: UserStoriesService,
     private acceptanceCriteriaService: AcceptanceCriteriaService,
     private entityKeyService: EntityKeyService,
   ) {}
+
   async saveBatch(
     projectId: string,
     dto: RequirementDto[],
@@ -40,23 +36,22 @@ export class RequirementsService {
       EntityKeyType.REQ,
       create.length,
     );
-    const push = [];
+
+    const results: RequirementResponseDto[] = [];
     for (const item of create) {
-      const i = entityKeyIds.shift() || "";
-      const t = await this.create(item, createdById, i, projectId);
-      push.push(t);
+      const entityKey = entityKeyIds.shift() || '';
+      const result = await this.create(item, createdById, entityKey, projectId);
+      results.push(result);
     }
     for (const item of update) {
-      const q = await this.update(item.id, item);
-      push.push(q);
+      const result = await this.update(item.id, item);
+      results.push(result);
     }
 
-    return push;
+    return results;
   }
-  async save(
-    dto: RequirementDto,
-    createdById: string,
-  ): Promise<RequirementResponseDto> {
+
+  async save(dto: RequirementDto, createdById: string): Promise<RequirementResponseDto> {
     if (dto.id) {
       return this.update(dto.id, dto);
     }
@@ -69,20 +64,16 @@ export class RequirementsService {
     entityKeySetting?: string,
     batchProjectId?: string,
   ): Promise<RequirementResponseDto> {
-   
     let projectId: string | null = batchProjectId || null;
     const moduleIds = createDto.moduleIds || [];
 
     if (moduleIds.length > 0) {
-      const modules = await this.featureModuleRepository.findBy({
-        id: In(moduleIds),
-      });
+      const modules = await this.featureModuleRepository.findBy({ id: In(moduleIds) });
       projectId = modules[0]?.projectId || batchProjectId || null;
     }
 
-    // 确保 projectId 不为 null
     if (!projectId) {
-      throw new Error("无法确定需求所属项目");
+      throw new Error('无法确定需求所属项目');
     }
 
     const MAX_RETRIES = 3;
@@ -93,7 +84,7 @@ export class RequirementsService {
         projectId,
         EntityKeyType.REQ,
       );
-   
+
       const requirement = this.requirementRepository.create({
         title: createDto.title,
         description: createDto.description || null,
@@ -114,9 +105,8 @@ export class RequirementsService {
       } catch (error: unknown) {
         const errMsg = String(error);
         const isEntityKeyConflict =
-          errMsg.includes("duplicate key") &&
-          (errMsg.includes("entity_key") ||
-            errMsg.includes("UQ_11df3ea432c3da480886b5033b3"));
+          errMsg.includes('duplicate key') &&
+          (errMsg.includes('entity_key') || errMsg.includes('UQ_11df3ea432c3da480886b5033b3'));
 
         console.warn(
           `[RequirementsService] Attempt ${attempt + 1} failed, isEntityKeyConflict: ${isEntityKeyConflict}, error: ${errMsg.substring(0, 200)}`,
@@ -130,14 +120,12 @@ export class RequirementsService {
     }
 
     if (moduleIds.length > 0) {
-      const modules = await this.featureModuleRepository.findBy({
-        id: In(moduleIds),
-      });
-      saved.modules = modules;
-      await this.requirementRepository.save(saved);
+      const modules = await this.featureModuleRepository.findBy({ id: In(moduleIds) });
+      saved!.modules = modules;
+      await this.requirementRepository.save(saved!);
     }
 
-    return this.findById(saved.id);
+    return this.findById(saved!.id);
   }
 
   async findByModule(
@@ -146,14 +134,14 @@ export class RequirementsService {
     limit: number = 20,
   ): Promise<RequirementListResponseDto> {
     const query = this.requirementRepository
-      .createQueryBuilder("req")
-      .innerJoin("req.modules", "module", "module.id = :moduleId", { moduleId })
-      .leftJoinAndSelect("req.createdBy", "createdBy")
-      .leftJoinAndSelect("req.userStories", "userStories")
-      .leftJoinAndSelect("req.children", "children")
+      .createQueryBuilder('req')
+      .innerJoin('req.modules', 'module', 'module.id = :moduleId', { moduleId })
+      .leftJoinAndSelect('req.createdBy', 'createdBy')
+      .leftJoinAndSelect('req.userStories', 'userStories')
+      .leftJoinAndSelect('req.children', 'children')
       .skip((page - 1) * limit)
       .take(limit)
-      .orderBy("req.createdAt", "DESC");
+      .orderBy('req.createdAt', 'DESC');
 
     const [items, total] = await query.getManyAndCount();
 
@@ -172,10 +160,10 @@ export class RequirementsService {
   ): Promise<RequirementListResponseDto> {
     const [items, total] = await this.requirementRepository.findAndCount({
       where: { projectId },
-      relations: ["createdBy", "userStories", "children", "modules"],
+      relations: ['createdBy', 'userStories', 'children', 'modules'],
       skip: (page - 1) * limit,
       take: limit,
-      order: { createdAt: "DESC" },
+      order: { createdAt: 'DESC' },
     });
 
     return {
@@ -186,13 +174,11 @@ export class RequirementsService {
     };
   }
 
-  async findByRawRequirement(
-    rawRequirementId: string,
-  ): Promise<RequirementResponseDto[]> {
+  async findByRawRequirement(rawRequirementId: string): Promise<RequirementResponseDto[]> {
     const requirements = await this.requirementRepository.find({
       where: { sourceRawRequirementId: rawRequirementId },
-      relations: ["createdBy", "modules"],
-      order: { createdAt: "DESC" },
+      relations: ['createdBy', 'modules'],
+      order: { createdAt: 'DESC' },
     });
     return requirements.map((r) => this.toResponseDto(r));
   }
@@ -201,12 +187,12 @@ export class RequirementsService {
     const requirement = await this.requirementRepository.findOne({
       where: { id },
       relations: [
-        "createdBy",
-        "userStories",
-        "userStories.acceptanceCriteria",
-        "children",
-        "parent",
-        "modules",
+        'createdBy',
+        'userStories',
+        'userStories.acceptanceCriteria',
+        'children',
+        'parent',
+        'modules',
       ],
     });
 
@@ -217,18 +203,15 @@ export class RequirementsService {
     return this.toResponseDto(requirement);
   }
 
-  async update(
-    id: string,
-    updateDto: UpdateRequirementDto,
-  ): Promise<RequirementResponseDto> {
+  async update(id: string, updateDto: UpdateRequirementDto): Promise<RequirementResponseDto> {
     const requirement = await this.requirementRepository.findOne({
       where: { id },
       relations: [
-        "createdBy",
-        "userStories",
-        "userStories.acceptanceCriteria",
-        "children",
-        "modules",
+        'createdBy',
+        'userStories',
+        'userStories.acceptanceCriteria',
+        'children',
+        'modules',
       ],
     });
 
@@ -237,48 +220,36 @@ export class RequirementsService {
     }
 
     if (updateDto.title !== undefined) requirement.title = updateDto.title;
-    if (updateDto.description !== undefined)
-      requirement.description = updateDto.description;
-    if (updateDto.priority !== undefined)
-      requirement.priority = updateDto.priority;
+    if (updateDto.description !== undefined) requirement.description = updateDto.description;
+    if (updateDto.priority !== undefined) requirement.priority = updateDto.priority;
     if (updateDto.status !== undefined) requirement.status = updateDto.status;
-    if (updateDto.storyPoints !== undefined)
-      requirement.storyPoints = updateDto.storyPoints;
+    if (updateDto.storyPoints !== undefined) requirement.storyPoints = updateDto.storyPoints;
 
     const updated = await this.requirementRepository.save(requirement);
     return this.findById(updated.id);
   }
 
-  async updateModules(
-    id: string,
-    moduleIds: string[],
-  ): Promise<RequirementResponseDto> {
+  async updateModules(id: string, moduleIds: string[]): Promise<RequirementResponseDto> {
     const requirement = await this.requirementRepository.findOne({
       where: { id },
-      relations: ["modules"],
+      relations: ['modules'],
     });
 
     if (!requirement) {
       throw new NotFoundException(`Requirement with ID ${id} not found`);
     }
 
-    if (moduleIds.length > 0) {
-      const modules = await this.featureModuleRepository.findBy({
-        id: In(moduleIds),
-      });
-      requirement.modules = modules;
-    } else {
-      requirement.modules = [];
-    }
+    requirement.modules =
+      moduleIds.length > 0
+        ? await this.featureModuleRepository.findBy({ id: In(moduleIds) })
+        : [];
 
     await this.requirementRepository.save(requirement);
     return this.findById(id);
   }
 
   async delete(id: string): Promise<void> {
-    const requirement = await this.requirementRepository.findOne({
-      where: { id },
-    });
+    const requirement = await this.requirementRepository.findOne({ where: { id } });
     if (!requirement) {
       throw new NotFoundException(`Requirement with ID ${id} not found`);
     }
@@ -294,13 +265,11 @@ export class RequirementsService {
     };
   }
 
-  private toResponseDto(requirement: Requirement): RequirementResponseDto {
-    const dto: RequirementResponseDto = {
+  private toBaseDto(requirement: Requirement): Partial<RequirementResponseDto> {
+    const dto: Partial<RequirementResponseDto> = {
       id: requirement.id,
       entityKey: requirement.entityKey,
-      modules: requirement.modules
-        ? requirement.modules.map((m) => this.toModuleSummaryDto(m))
-        : [],
+      modules: requirement.modules?.map((m) => this.toModuleSummaryDto(m)) || [],
       title: requirement.title,
       description: requirement.description,
       priority: requirement.priority,
@@ -320,6 +289,12 @@ export class RequirementsService {
         username: requirement.createdBy.username,
       };
     }
+
+    return dto;
+  }
+
+  private toResponseDto(requirement: Requirement): RequirementResponseDto {
+    const dto = this.toBaseDto(requirement) as RequirementResponseDto;
 
     if (requirement.userStories) {
       dto.userStories = requirement.userStories.map((us) => ({
@@ -350,31 +325,7 @@ export class RequirementsService {
   }
 
   private toListItemDto(requirement: Requirement): RequirementResponseDto {
-    const dto: RequirementResponseDto = {
-      id: requirement.id,
-      entityKey: requirement.entityKey,
-      modules: requirement.modules
-        ? requirement.modules.map((m) => this.toModuleSummaryDto(m))
-        : [],
-      title: requirement.title,
-      description: requirement.description,
-      priority: requirement.priority,
-      source: requirement.source,
-      status: requirement.status,
-      storyPoints: requirement.storyPoints,
-      parentId: requirement.parentId,
-      createdById: requirement.createdById,
-      createdAt: requirement.createdAt,
-      updatedAt: requirement.updatedAt,
-    };
-
-    if (requirement.createdBy) {
-      dto.createdBy = {
-        id: requirement.createdBy.id,
-        displayName: requirement.createdBy.displayName,
-        username: requirement.createdBy.username,
-      };
-    }
+    const dto = this.toBaseDto(requirement) as RequirementResponseDto;
 
     if (requirement.userStories) {
       dto.userStoryCount = requirement.userStories.length;

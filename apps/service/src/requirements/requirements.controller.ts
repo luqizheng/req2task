@@ -26,6 +26,7 @@ import {
   RequirementListResponseDto,
   ChangeHistoryResponseDto,
   UpdateRequirementDto,
+  GenerateFeaturePointsDto,
 } from "@req2task/dto";
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
 import { AiGenerationService } from "../ai/ai-generation.service";
@@ -313,6 +314,19 @@ export class RequirementsController {
       userId!,
     );
 
+    return { code: 0, data: result };
+  }
+
+  @Post("requirements/:id/feature-points/generate")
+  @HttpCode(HttpStatus.CREATED)
+  async generateFeaturePoints(
+    @Param("id") id: string,
+    @Body() dto: GenerateFeaturePointsDto,
+  ): Promise<ApiResponse<{ featurePoints: string; rawContent: string }>> {
+    const result = await this.aiGenerationService.generateFeaturePoints(
+      id,
+      dto.context,
+    );
     return { code: 0, data: result };
   }
 }

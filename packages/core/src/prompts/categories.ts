@@ -12,6 +12,11 @@ export const PROMPT_CATEGORIES: Record<PromptCategory, PromptCategoryConfig> = {
     name: '需求生成',
     description: '用于 AI 生成结构化需求的提示词',
   },
+  'requirement-analysis': {
+    code: 'requirement-analysis',
+    name: '需求分析',
+    description: '用于 AI 分析和拆解需求的提示词',
+  },
   'task-breakdown': {
     code: 'task-breakdown',
     name: '任务分解',

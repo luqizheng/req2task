@@ -1,5 +1,6 @@
 export type PromptCategory =
   | 'requirement-generation'
+  | 'requirement-analysis'
   | 'task-breakdown'
   | 'requirement-review'
   | 'user-story-generation'

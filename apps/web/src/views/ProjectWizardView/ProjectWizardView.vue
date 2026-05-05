@@ -20,6 +20,7 @@ import { Switch } from '@/components/ui/switch';
 import { Checkbox } from '@/components/ui/checkbox';
 import WizardProgress from '@/components/wizard/WizardProgress.vue';
 import TechStackCard from '@/components/wizard/TechStackCard.vue';
+import TechStackInput from '@/components/wizard/TechStackInput.vue';
 import { toast } from 'vue-sonner';
 import { Loader2, ArrowLeft, ArrowRight } from 'lucide-vue-next';
 
@@ -40,8 +41,11 @@ const formData = ref<Record<string, unknown>>({
   architectureType: undefined as string | undefined,
   isMicroservices: false,
   frontendFramework: '',
+  frontendLanguage: '',
+  frontendTechs: [] as string[],
   backendFramework: '',
   backendLanguage: '',
+  backendTechs: [] as string[],
   databaseTypes: [] as string[],
   backendOrm: '',
   cloudProvider: undefined as string | undefined,
@@ -193,17 +197,19 @@ async function handleSubmit() {
   isSubmitting.value = true;
   try {
     const techStack: Partial<TechStackDto> = {};
-    if (techStackFromSuggestion.value?.frontend || formData.value.frontendFramework) {
+    if (techStackFromSuggestion.value?.frontend || formData.value.frontendFramework || (formData.value.frontendTechs as string[])?.length) {
       techStack.frontend = {
         framework: formData.value.frontendFramework as string || techStackFromSuggestion.value?.frontend?.framework,
-        language: techStackFromSuggestion.value?.frontend?.language,
+        language: formData.value.frontendLanguage as string || techStackFromSuggestion.value?.frontend?.language,
+        otherTechnologies: (formData.value.frontendTechs as string[])?.length ? formData.value.frontendTechs as string[] : undefined,
       };
     }
-    if (techStackFromSuggestion.value?.backend || formData.value.backendFramework) {
+    if (techStackFromSuggestion.value?.backend || formData.value.backendFramework || (formData.value.backendTechs as string[])?.length) {
       techStack.backend = {
         framework: formData.value.backendFramework as string || techStackFromSuggestion.value?.backend?.framework,
         language: formData.value.backendLanguage as string || techStackFromSuggestion.value?.backend?.language,
         orm: formData.value.backendOrm as string || techStackFromSuggestion.value?.backend?.orm,
+        otherTechnologies: (formData.value.backendTechs as string[])?.length ? formData.value.backendTechs as string[] : undefined,
       };
     }
     if (techStackFromSuggestion.value?.infrastructure) {
@@ -416,65 +422,94 @@ watch(() => formData.value.systemType, (newVal) => {
             <CardDescription>{{ currentStep?.description }}</CardDescription>
           </CardHeader>
           <CardContent class="space-y-6">
-            <Field>
-              <FieldLabel>前端框架</FieldLabel>
-              <Select
-                :model-value="formData.frontendFramework as string"
-                @update:model-value="updateField('frontendFramework', $event)"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择前端框架" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Vue3">Vue 3</SelectItem>
-                  <SelectItem value="React">React</SelectItem>
-                  <SelectItem value="Angular">Angular</SelectItem>
-                  <SelectItem value="Svelte">Svelte</SelectItem>
-                  <SelectItem value="Next.js">Next.js</SelectItem>
-                  <SelectItem value="Nuxt">Nuxt</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+            <div class="grid grid-cols-2 gap-6">
+              <Field>
+                <FieldLabel>前端框架</FieldLabel>
+                <Select
+                  :model-value="formData.frontendFramework as string"
+                  @update:model-value="updateField('frontendFramework', $event)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择前端框架" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Vue3">Vue 3</SelectItem>
+                    <SelectItem value="React">React</SelectItem>
+                    <SelectItem value="Angular">Angular</SelectItem>
+                    <SelectItem value="Svelte">Svelte</SelectItem>
+                    <SelectItem value="Next.js">Next.js</SelectItem>
+                    <SelectItem value="Nuxt">Nuxt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
 
-            <Field>
-              <FieldLabel>后端框架</FieldLabel>
-              <Select
-                :model-value="formData.backendFramework as string"
-                @update:model-value="updateField('backendFramework', $event)"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择后端框架" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="NestJS">NestJS</SelectItem>
-                  <SelectItem value="Express">Express</SelectItem>
-                  <SelectItem value="Fastify">Fastify</SelectItem>
-                  <SelectItem value="Spring Boot">Spring Boot</SelectItem>
-                  <SelectItem value="Django">Django</SelectItem>
-                  <SelectItem value="Gin">Gin</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+              <Field>
+                <FieldLabel>前端语言</FieldLabel>
+                <Select
+                  :model-value="formData.frontendLanguage as string"
+                  @update:model-value="updateField('frontendLanguage', $event)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择前端语言" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TypeScript">TypeScript</SelectItem>
+                    <SelectItem value="JavaScript">JavaScript</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
 
-            <Field>
-              <FieldLabel>编程语言</FieldLabel>
-              <Select
-                :model-value="formData.backendLanguage as string"
-                @update:model-value="updateField('backendLanguage', $event)"
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="请选择编程语言" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="TypeScript">TypeScript</SelectItem>
-                  <SelectItem value="JavaScript">JavaScript</SelectItem>
-                  <SelectItem value="Java">Java</SelectItem>
-                  <SelectItem value="Python">Python</SelectItem>
-                  <SelectItem value="Go">Go</SelectItem>
-                  <SelectItem value="Rust">Rust</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
+              <Field>
+                <FieldLabel>后端框架</FieldLabel>
+                <Select
+                  :model-value="formData.backendFramework as string"
+                  @update:model-value="updateField('backendFramework', $event)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择后端框架" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NestJS">NestJS</SelectItem>
+                    <SelectItem value="Express">Express</SelectItem>
+                    <SelectItem value="Fastify">Fastify</SelectItem>
+                    <SelectItem value="Spring Boot">Spring Boot</SelectItem>
+                    <SelectItem value="Django">Django</SelectItem>
+                    <SelectItem value="Gin">Gin</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+
+              <Field>
+                <FieldLabel>后端语言</FieldLabel>
+                <Select
+                  :model-value="formData.backendLanguage as string"
+                  @update:model-value="updateField('backendLanguage', $event)"
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="请选择后端语言" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TypeScript">TypeScript</SelectItem>
+                    <SelectItem value="JavaScript">JavaScript</SelectItem>
+                    <SelectItem value="Java">Java</SelectItem>
+                    <SelectItem value="Python">Python</SelectItem>
+                    <SelectItem value="Go">Go</SelectItem>
+                    <SelectItem value="Rust">Rust</SelectItem>
+                  </SelectContent>
+                </Select>
+              </Field>
+            </div>
+
+            <TechStackInput
+              :model-value="{
+                frontend: formData.frontendTechs as string[],
+                backend: formData.backendTechs as string[]
+              }"
+              @update:model-value="(val) => {
+                updateField('frontendTechs', val.frontend);
+                updateField('backendTechs', val.backend);
+              }"
+            />
           </CardContent>
         </Card>
 

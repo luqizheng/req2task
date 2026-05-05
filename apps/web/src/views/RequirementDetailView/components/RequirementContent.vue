@@ -14,8 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
-import { ListTodo, Sparkles, Loader2, CheckCircle2 } from "lucide-vue-next";
+import { ListTodo, Sparkles, Loader2, CheckCircle2, Circle } from "lucide-vue-next";
 import { Separator } from "@/components/ui/separator";
 import { aiApi, type UserStoryDraft } from "@/api/ai";
 import { toast } from "vue-sonner";
@@ -223,33 +222,38 @@ const handleGenerateCriteria = async () => {
           />
           <div class="flex justify-end gap-2">
             <button
-              class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors"
+              class="px-4 py-2 text-sm transition-colors"
+              :style="{ color: 'var(--foreground)' }"
               @click="cancelEditingDescription"
             >
               取消
             </button>
             <button
-              class="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              class="px-4 py-2 text-sm rounded-md transition-colors"
+              :style="{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }"
               @click="saveDescription"
             >
               保存
             </button>
           </div>
         </div>
-        <div
-          v-else
+        <div v-else
           class="group cursor-pointer"
           @click="startEditingDescription"
         >
           <p
             v-if="requirement.description"
-            class="text-slate-700 whitespace-pre-wrap group-hover:text-blue-600 transition-colors"
+            class="whitespace-pre-wrap transition-colors"
+            :style="{ color: 'var(--foreground)' }"
+            :class="{ 'group-hover:text-[var(--primary)]': true }"
           >
             {{ requirement.description }}
           </p>
           <p
             v-else
-            class="text-slate-400 italic group-hover:text-blue-400 transition-colors"
+            class="italic transition-colors"
+            :style="{ color: 'var(--muted-foreground)' }"
+            :class="{ 'group-hover:text-[var(--primary)]': true }"
           >
             点击添加需求描述...
           </p>
@@ -305,13 +309,15 @@ const handleGenerateCriteria = async () => {
           />
           <div class="flex justify-end gap-2">
             <button
-              class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors"
+              class="px-4 py-2 text-sm transition-colors"
+              :style="{ color: 'var(--foreground)' }"
               @click="cancelEditingFeaturePoints"
             >
               取消
             </button>
             <button
-              class="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              class="px-4 py-2 text-sm rounded-md transition-colors"
+              :style="{ backgroundColor: 'var(--primary)', color: 'var(--primary-foreground)' }"
               @click="saveFeaturePoints"
             >
               保存
@@ -321,12 +327,15 @@ const handleGenerateCriteria = async () => {
         <div v-else>
           <pre
             v-if="requirement.featurePoints"
-            class="whitespace-pre-wrap text-sm text-slate-700 font-mono bg-slate-50 p-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors"
+            class="whitespace-pre-wrap text-sm font-mono p-3 rounded-md cursor-pointer transition-colors"
+            :style="{ color: 'var(--foreground)', backgroundColor: 'var(--muted)' }"
             @click="startEditingFeaturePoints"
           >{{ requirement.featurePoints }}</pre>
           <p
             v-else
-            class="text-slate-400 italic cursor-pointer hover:text-blue-400 transition-colors"
+            class="italic cursor-pointer transition-colors"
+            :style="{ color: 'var(--muted-foreground)' }"
+            :class="{ 'hover:text-[var(--primary)]': true }"
             @click="startEditingFeaturePoints"
           >
             点击添加功能点...
@@ -371,22 +380,25 @@ const handleGenerateCriteria = async () => {
         <div
           v-for="story in unsavedUserStories"
           :key="story.tempId"
-          class="p-4 border-2 border-dashed border-amber-300 rounded-lg space-y-3 bg-amber-50/50"
+          class="p-4 border-2 border-dashed rounded-lg space-y-3"
+          :style="{ borderColor: 'var(--accent-foreground)', backgroundColor: 'var(--accent)' }"
         >
           <div class="flex items-start gap-3">
             <div class="flex-1">
               <div class="flex items-center gap-2 mb-2">
-                <Badge variant="outline" class="bg-purple-50">
+                <Badge variant="outline" :style="{ backgroundColor: 'var(--accent)' }">
                   角色: {{ story.role }}
                 </Badge>
-                <Badge variant="outline" class="bg-blue-50">
+                <Badge variant="outline" :style="{ backgroundColor: 'var(--accent)' }">
                   {{ story.storyPoints }} SP
                 </Badge>
-                <Badge variant="outline" class="bg-amber-100 text-amber-700 border-amber-300">
+                <Badge variant="outline"
+                  :style="{ backgroundColor: 'var(--accent)', color: 'var(--accent-foreground)', borderColor: 'var(--accent-foreground)' }"
+                >
                   未保存
                 </Badge>
               </div>
-              <p class="text-slate-800">
+              <p :style="{ color: 'var(--foreground)' }">
                 <span class="font-medium">作为</span> {{ story.role }}
                 <span class="font-medium">，我想要</span> {{ story.goal }}
                 <span class="font-medium">，以便于</span> {{ story.benefit }}
@@ -405,7 +417,7 @@ const handleGenerateCriteria = async () => {
               <Button
                 variant="ghost"
                 size="sm"
-                class="text-red-500 hover:text-red-600 hover:bg-red-50"
+                :style="{ color: 'var(--destructive)' }"
                 @click="handleRemoveUserStory(story.tempId)"
               >
                 删除
@@ -414,15 +426,15 @@ const handleGenerateCriteria = async () => {
           </div>
           <div v-if="story.acceptanceCriteria && story.acceptanceCriteria.length > 0">
             <Separator class="my-2" />
-            <p class="text-xs font-medium text-slate-500 mb-1">验收条件:</p>
+            <p class="text-xs font-medium mb-1" :style="{ color: 'var(--muted-foreground)' }">验收条件:</p>
             <ul class="space-y-1">
               <li
                 v-for="(criteria, cIndex) in story.acceptanceCriteria"
                 :key="cIndex"
                 class="flex items-start gap-2"
               >
-                <CheckCircle2 class="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-500" />
-                <span class="text-xs text-slate-600">{{ criteria.content }}</span>
+                <CheckCircle2 class="w-3 h-3 mt-0.5 flex-shrink-0" :style="{ color: 'var(--accent-foreground)' }" />
+                <span class="text-xs" :style="{ color: 'var(--muted-foreground)' }">{{ criteria.content }}</span>
               </li>
             </ul>
           </div>
@@ -491,21 +503,23 @@ const handleGenerateCriteria = async () => {
           <div
             v-for="child in requirement.children"
             :key="child.id"
-            class="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors"
+            class="flex items-center justify-between p-3 border rounded-lg transition-colors"
+            :style="{ backgroundColor: 'var(--muted)' }"
+            :class="{ 'hover:bg-[var(--accent)]': true }"
           >
             <div class="flex items-center gap-3">
-              <Circle class="w-4 h-4 text-slate-400" />
-              <span class="text-slate-800">{{ child.title }}</span>
+              <Circle class="w-4 h-4" :style="{ color: 'var(--muted-foreground)' }" />
+              <span :style="{ color: 'var(--foreground)' }">{{ child.title }}</span>
             </div>
             <div class="flex items-center gap-2">
               <Badge
-                :class="cn(
-                  'text-xs',
-                  child.priority === 'critical' ? 'bg-red-100 text-red-700' :
-                  child.priority === 'high' ? 'bg-orange-100 text-orange-700' :
-                  child.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
-                  'bg-slate-100 text-slate-700'
-                )"
+                :style="{
+                  backgroundColor: child.priority === 'critical' ? 'var(--destructive)' :
+                    child.priority === 'high' ? 'var(--chart-4)' :
+                    child.priority === 'medium' ? 'var(--chart-3)' : 'var(--muted)',
+                  color: child.priority === 'critical' || child.priority === 'high' || child.priority === 'medium' ? 'var(--primary-foreground)' : 'var(--muted-foreground)'
+                }"
+                class="text-xs"
               >
                 {{ child.priority }}
               </Badge>

@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsEnum, IsDateString, IsBoolean, IsNumber } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
 import { ProjectStatus, SystemType, ArchitectureType, DatabaseType, CloudProvider, SecurityLevel, ProjectScale } from '../../enums';
 import { TechStackDto } from './wizard.dto';
 

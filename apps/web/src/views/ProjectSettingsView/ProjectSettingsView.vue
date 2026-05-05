@@ -26,6 +26,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import TechStackInput from '@/components/wizard/TechStackInput.vue';
 import { toast } from 'vue-sonner';
 import { Loader2, ArrowLeft, Save } from 'lucide-vue-next';
 
@@ -45,8 +46,11 @@ const formData = ref({
   architectureType: '' as string,
   isMicroservices: false,
   frontendFramework: '',
+  frontendLanguage: '',
+  frontendTechs: [] as string[],
   backendFramework: '',
   backendLanguage: '',
+  backendTechs: [] as string[],
   databaseTypes: [] as string[],
   backendOrm: '',
   cloudProvider: '' as string,
@@ -182,8 +186,11 @@ function initFormData() {
     architectureType: project.value.architectureType || '',
     isMicroservices: project.value.isMicroservices || false,
     frontendFramework: project.value.techStack?.frontend?.framework || '',
+    frontendLanguage: project.value.techStack?.frontend?.language || '',
+    frontendTechs: project.value.techStack?.frontend?.otherTechnologies || [],
     backendFramework: project.value.techStack?.backend?.framework || '',
     backendLanguage: project.value.techStack?.backend?.language || '',
+    backendTechs: project.value.techStack?.backend?.otherTechnologies || [],
     databaseTypes: project.value.databaseTypes || [],
     backendOrm: project.value.techStack?.backend?.orm || '',
     cloudProvider: project.value.cloudProvider || '',
@@ -353,6 +360,21 @@ onMounted(() => {
                   </Field>
 
                   <Field>
+                    <FieldLabel>前端语言</FieldLabel>
+                    <Select v-model="formData.frontendLanguage">
+                      <SelectTrigger>
+                        <SelectValue placeholder="请选择前端语言" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="TypeScript">TypeScript</SelectItem>
+                        <SelectItem value="JavaScript">JavaScript</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </Field>
+                </div>
+
+                <div class="grid grid-cols-2 gap-6">
+                  <Field>
                     <FieldLabel>后端框架</FieldLabel>
                     <Select v-model="formData.backendFramework">
                       <SelectTrigger>
@@ -369,7 +391,7 @@ onMounted(() => {
 
                 <div class="grid grid-cols-2 gap-6">
                   <Field>
-                    <FieldLabel>编程语言</FieldLabel>
+                    <FieldLabel>后端语言</FieldLabel>
                     <Select v-model="formData.backendLanguage">
                       <SelectTrigger>
                         <SelectValue placeholder="请选择编程语言" />
@@ -396,6 +418,17 @@ onMounted(() => {
                     </Select>
                   </Field>
                 </div>
+
+                <TechStackInput
+                  :model-value="{
+                    frontend: formData.frontendTechs,
+                    backend: formData.backendTechs,
+                  }"
+                  @update:model-value="(val) => {
+                    formData.frontendTechs = val.frontend;
+                    formData.backendTechs = val.backend;
+                  }"
+                />
 
                 <Field>
                   <FieldLabel>数据库类型</FieldLabel>

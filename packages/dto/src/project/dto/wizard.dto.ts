@@ -109,6 +109,11 @@ export class FrontendStackDto {
   @IsOptional()
   @IsString()
   language?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  otherTechnologies?: string[];
 }
 
 export class BackendStackDto {
@@ -135,6 +140,11 @@ export class BackendStackDto {
   @IsOptional()
   @IsArray()
   messageQueue?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  otherTechnologies?: string[];
 }
 
 export class InfrastructureStackDto {

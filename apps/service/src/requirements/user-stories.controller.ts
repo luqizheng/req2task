@@ -69,8 +69,6 @@ export class UserStoriesController {
   @HttpCode(HttpStatus.OK)
   async previewUserStories(
     @Param('requirementId') requirementId: string,
-    @Body() dto: GenerateUserStoriesDto,
-    @Query('projectId') projectId: string,
   ): Promise<ApiResponse<{
     userStories: Array<{
       role: string;
@@ -87,9 +85,6 @@ export class UserStoriesController {
   }>> {
     const result = await this.aiGenerationService.generateUserStoriesOnly(
       requirementId,
-      projectId,
-      dto.context,
-      dto.featurePoints,
     );
 
     return {

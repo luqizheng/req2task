@@ -473,9 +473,6 @@ ${existingReqsContent}
 
   async generateUserStoriesOnly(
     requirementId: string,
-    projectId: string,
-    context?: string,
-    featurePoints?: string,
   ): Promise<{
     userStories: Array<{
       role: string;
@@ -506,8 +503,7 @@ ${existingReqsContent}
     const content = requirement.featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
 
     const rendered = this.promptService.render("USER_STORY_GENERATION", {
-      projectId,
-      context,
+      projectId: requirement.projectId,
       requirementTitle: requirement.title,
       requirementDescription: requirement.description,
       featurePoints: content,

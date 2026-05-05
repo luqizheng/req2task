@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -14,7 +13,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { ListTodo, Sparkles, Loader2 } from "lucide-vue-next";
@@ -102,8 +100,6 @@ const handleGenerateFeaturePoints = async () => {
 };
 
 const isGeneratingUserStories = ref(false);
-const showUserStoryDialog = ref(false);
-const userStoryContext = ref("");
 
 const showPreviewDialog = ref(false);
 const previewUserStories = ref<UserStoryDraft[]>([]);
@@ -118,18 +114,11 @@ const showCriteriaDialog = ref(false);
 const handleGenerateUserStories = async () => {
   try {
     isGeneratingUserStories.value = true;
-    const response = await aiApi.previewUserStories(
-      props.requirement.id,
-      props.projectId,
-      undefined,
-      userStoryContext.value || undefined
-    );
+    const response = await aiApi.previewUserStories(props.requirement.id);
     
     previewUserStories.value = response.userStories;
     selectedUserStoryIndices.value = new Set(response.userStories.map((_, i) => i));
     showPreviewDialog.value = true;
-    showUserStoryDialog.value = false;
-    userStoryContext.value = "";
   } catch (error) {
     console.error("Failed to generate user stories:", error);
     toast.error("生成用户故事失败", {
@@ -362,59 +351,17 @@ const handleGenerateCriteria = async () => {
             </svg>
             用户故事 ({{ requirement.userStories?.length || 0 }})
           </CardTitle>
-          <Dialog v-model:open="showUserStoryDialog">
-            <DialogTrigger as-child>
-              <Button
-                variant="outline"
-                size="sm"
-                class="gap-2"
-                :disabled="!requirement.featurePoints"
-              >
-                <Sparkles class="w-4 h-4" />
-                AI 生成
-              </Button>
-            </DialogTrigger>
-            <DialogContent class="max-w-lg">
-              <DialogHeader>
-                <DialogTitle>AI 生成用户故事</DialogTitle>
-                <DialogDescription>
-                  基于功能点描述，AI 将自动生成用户故事
-                </DialogDescription>
-              </DialogHeader>
-              <div class="space-y-4 py-4">
-                <div class="space-y-2">
-                  <Label>功能点描述</Label>
-                  <div class="p-3 bg-slate-50 rounded-md text-sm text-slate-700 max-h-[200px] overflow-y-auto">
-                    <pre class="whitespace-pre-wrap font-mono">{{ requirement.featurePoints }}</pre>
-                  </div>
-                </div>
-                <div class="space-y-2">
-                  <Label for="context">附加上下文（可选）</Label>
-                  <Input
-                    id="context"
-                    v-model="userStoryContext"
-                    placeholder="补充项目背景、技术栈、约束条件等"
-                  />
-                </div>
-              </div>
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  :disabled="isGeneratingUserStories"
-                  @click="showUserStoryDialog = false"
-                >
-                  取消
-                </Button>
-                <Button
-                  :disabled="isGeneratingUserStories"
-                  @click="handleGenerateUserStories"
-                >
-                  <Loader2 v-if="isGeneratingUserStories" class="w-4 h-4 mr-2 animate-spin" />
-                  {{ isGeneratingUserStories ? '生成中...' : '生成用户故事' }}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button
+            variant="outline"
+            size="sm"
+            class="gap-2"
+            :disabled="isGeneratingUserStories || !requirement.featurePoints"
+            @click="handleGenerateUserStories"
+          >
+            <Loader2 v-if="isGeneratingUserStories" class="w-4 h-4 animate-spin" />
+            <Sparkles v-else class="w-4 h-4" />
+            {{ isGeneratingUserStories ? '生成中...' : 'AI 生成' }}
+          </Button>
         </div>
       </CardHeader>
       <CardContent v-if="requirement.userStories && requirement.userStories.length > 0" class="space-y-4">

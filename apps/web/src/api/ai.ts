@@ -137,16 +137,9 @@ export const aiApi = {
     );
   },
 
-  previewUserStories: (
-    requirementId: string,
-    projectId: string,
-    featurePoints?: string,
-    context?: string
-  ) => {
+  previewUserStories: (requirementId: string) => {
     return api.post<{ userStories: UserStoryDraft[]; rawContent: string }>(
-      `/requirements/${requirementId}/user-stories/preview`,
-      { featurePoints, context },
-      { params: { projectId } }
+      `/requirements/${requirementId}/user-stories/preview`
     );
   },
 

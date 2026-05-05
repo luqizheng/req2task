@@ -28,6 +28,7 @@ import ProjectTasksCard from "./components/ProjectTasksCard.vue";
 import ProjectBaselinesCard from "./components/ProjectBaselinesCard.vue";
 import ProjectRawRequirementsCard from "./components/ProjectRawRequirementsCard.vue";
 import VectorRebuildCard from "./components/VectorRebuildCard.vue";
+import ProjectTechInfoCard from "./components/ProjectTechInfoCard.vue";
 
 const route = useRoute();
 const router = useRouter();
@@ -224,7 +225,7 @@ onMounted(() => {
                 />
                 刷新
               </Button>
-              <Button size="sm">
+              <Button size="sm" @click="router.push(`/projects/${projectId}/settings`)">
                 <Settings class="w-4 h-4 mr-2" />
                 项目设置
               </Button>
@@ -259,8 +260,9 @@ onMounted(() => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" class="mt-6">
+          <TabsContent value="overview" class="mt-6 space-y-6">
             <ProjectProgressCard v-if="progress" :progress="progress" />
+            <ProjectTechInfoCard :project="project" />
           </TabsContent>
 
           <TabsContent value="modules" class="mt-6">

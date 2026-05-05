@@ -61,8 +61,10 @@ watch(() => props.refreshKey, () => {
 });
 
 const handleGenerateTasks = async () => {
-  if (!taskFeaturePoints.value.trim()) {
-    toast.error("请输入功能点描述");
+  const featurePoints = taskFeaturePoints.value.trim() || props.requirement.featurePoints;
+
+  if (!featurePoints) {
+    toast.error("功能点为空，请先生成功能点或手动输入");
     return;
   }
 
@@ -71,7 +73,7 @@ const handleGenerateTasks = async () => {
     const response = await aiApi.generateTasksForRequirement(
       props.requirement.id,
       props.projectId,
-      taskFeaturePoints.value,
+      featurePoints,
       taskContext.value || undefined
     );
     

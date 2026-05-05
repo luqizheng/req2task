@@ -9,6 +9,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FolderOpen,
+  Sparkles,
+  FileText,
 } from "lucide-vue-next";
 import { toast } from "vue-sonner";
 import { Button } from "@/components/ui/button";
@@ -17,6 +19,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import ProjectStatusSelect from "@/components/ProjectStatusSelect.vue";
 import ProjectCard from "./ProjectCard.vue";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const router = useRouter();
 const loading = ref(false);
@@ -75,10 +84,25 @@ onMounted(() => {
           </h1>
           <p class="text-slate-500 mt-1">共 {{ total }} 个项目</p>
         </div>
-        <Button class="gap-2" @click="router.push('/projects/create')">
-          <Plus class="w-4 h-4" />
-          新建项目
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger as-child>
+            <Button class="gap-2">
+              <Plus class="w-4 h-4" />
+              新建项目
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem @click="router.push('/projects/create')">
+              <FileText class="w-4 h-4 mr-2" />
+              快速创建
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem @click="router.push('/projects/new/wizard')">
+              <Sparkles class="w-4 h-4 mr-2" />
+              向导创建（推荐）
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <Card class="mb-6 border-slate-200/60 shadow-sm">

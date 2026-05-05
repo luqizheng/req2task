@@ -40,9 +40,19 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/ProjectCreateView/ProjectCreateView.vue'),
       },
       {
+        path: 'projects/new/wizard',
+        name: 'project-wizard',
+        component: () => import('@/views/ProjectWizardView/ProjectWizardView.vue'),
+      },
+      {
         path: 'projects/:id',
         name: 'project-detail',
         component: () => import('@/views/ProjectDetailView/ProjectDetailView.vue'),
+      },
+      {
+        path: 'projects/:id/settings',
+        name: 'project-settings',
+        component: () => import('@/views/ProjectSettingsView/ProjectSettingsView.vue'),
       },
       {
         path: 'projects/:projectId/requirements',

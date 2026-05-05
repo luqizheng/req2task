@@ -37,40 +37,69 @@ export class AiPersistenceService {
 
   extractJsonArray(content: string): any[] {
     try {
-      let cleanedContent = content.trim();
-      const codeBlockMatch = cleanedContent.match(/```(?:json)?\s*([\s\S]*?)```/);
+      const cleanedContent = content.trim();
+
+      let unescaped = cleanedContent;
+      try {
+        const testParse = JSON.parse(cleanedContent);
+        if (typeof testParse === 'string') {
+          unescaped = testParse;
+        }
+      } catch (_e) {
+        // ignore parse error
+      }
+
+      const codeBlockMatch = unescaped.match(/```(?:json)?\s*([\s\S]*?)```/);
       if (codeBlockMatch) {
-        cleanedContent = codeBlockMatch[1].trim();
+        unescaped = codeBlockMatch[1].trim();
       }
 
-      const jsonMatch = cleanedContent.match(/\[[\s\S]*\]/);
+      const jsonMatch = unescaped.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
-        const parsed = JSON.parse(jsonMatch[0]);
-        if (Array.isArray(parsed)) {
-          return parsed;
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+        } catch (_e) {
+          try {
+            const unescapeAgain = JSON.parse(jsonMatch[0]);
+            if (typeof unescapeAgain === 'string') {
+              const parsed = JSON.parse(unescapeAgain);
+              if (Array.isArray(parsed)) {
+                return parsed;
+              }
+            }
+          } catch (_e2) {
+            // ignore parse error
+          }
         }
       }
 
-      const jsonObjectMatch = cleanedContent.match(/\{[\s\S]*\}/);
+      const jsonObjectMatch = unescaped.match(/\{[\s\S]*\}/);
       if (jsonObjectMatch) {
-        const parsed = JSON.parse(jsonObjectMatch[0]);
-        if (Array.isArray(parsed)) {
-          return parsed;
-        }
-        if (Array.isArray(parsed.data)) {
-          return parsed.data;
-        }
-        if (Array.isArray(parsed.tasks)) {
-          return parsed.tasks;
-        }
-        if (parsed.data && Array.isArray(parsed.data.tasks)) {
-          return parsed.data.tasks;
-        }
-        if (Array.isArray(parsed.requirements)) {
-          return parsed.requirements;
-        }
-        if (Array.isArray(parsed.items)) {
-          return parsed.items;
+        try {
+          const parsed = JSON.parse(jsonObjectMatch[0]);
+          if (Array.isArray(parsed)) {
+            return parsed;
+          }
+          if (Array.isArray(parsed.data)) {
+            return parsed.data;
+          }
+          if (Array.isArray(parsed.tasks)) {
+            return parsed.tasks;
+          }
+          if (parsed.data && Array.isArray(parsed.data.tasks)) {
+            return parsed.data.tasks;
+          }
+          if (Array.isArray(parsed.requirements)) {
+            return parsed.requirements;
+          }
+          if (Array.isArray(parsed.items)) {
+            return parsed.items;
+          }
+        } catch (_e) {
+          // ignore parse error
         }
       }
 

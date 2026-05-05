@@ -3,7 +3,6 @@ import { ref, onMounted } from "vue";
 import type { RequirementResponseDto, TaskResponseDto } from "@req2task/dto";
 import { TaskPriority } from "@req2task/dto";
 import { tasksApi } from "@/api/tasks";
-import { requirementsApi } from "@/api/requirements";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -26,25 +25,18 @@ import { aiApi } from "@/api/ai";
 import { toast } from "vue-sonner";
 
 const props = defineProps<{
+  requirement: RequirementResponseDto;
   requirementId: string;
+  projectId: string;
+  refreshKey?: number;
 }>();
 
-const requirement = ref<RequirementResponseDto | null>(null);
 const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
 const showTaskDialog = ref(false);
 const isGeneratingTasks = ref(false);
 const taskFeaturePoints = ref("");
 const taskContext = ref("");
-
-const fetchRequirement = async () => {
-  try {
-    requirement.value = await requirementsApi.getById(props.requirementId);
-  } catch (error) {
-    console.error("Failed to fetch requirement:", error);
-    requirement.value = null;
-  }
-};
 
 const fetchTasks = async () => {
   try {
@@ -60,7 +52,7 @@ const fetchTasks = async () => {
 };
 
 const handleGenerateTasks = async () => {
-  const featurePoints = taskFeaturePoints.value.trim() || requirement.value?.featurePoints;
+  const featurePoints = taskFeaturePoints.value.trim() || props.requirement.featurePoints;
 
   if (!featurePoints) {
     toast.error("功能点为空，请先生成功能点或手动输入");
@@ -71,7 +63,7 @@ const handleGenerateTasks = async () => {
     isGeneratingTasks.value = true;
     const response = await aiApi.generateTasksForRequirement(
       props.requirementId,
-      requirement.value?.projectId || "",
+      props.projectId,
       featurePoints,
       taskContext.value || undefined
     );
@@ -92,13 +84,11 @@ const handleGenerateTasks = async () => {
 };
 
 onMounted(() => {
-  fetchRequirement();
   fetchTasks();
 });
 
 defineExpose({
   reload: () => {
-    fetchRequirement();
     fetchTasks();
   },
 });

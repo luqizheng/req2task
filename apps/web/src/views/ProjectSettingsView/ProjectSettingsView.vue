@@ -52,9 +52,9 @@ const formData = ref({
   cloudProvider: '' as string,
   securityLevel: '' as string,
   projectScale: '' as string,
-  teamSize: undefined as number | null | undefined,
-  expectedDurationMonths: undefined as number | null | undefined,
-  budget: undefined as number | null | undefined,
+  teamSize: undefined as number | undefined,
+  expectedDurationMonths: undefined as number | undefined,
+  budget: undefined as number | undefined,
   businessDomain: '',
 });
 
@@ -189,9 +189,9 @@ function initFormData() {
     cloudProvider: project.value.cloudProvider || '',
     securityLevel: project.value.securityLevel || '',
     projectScale: project.value.projectScale || '',
-    teamSize: project.value.teamSize,
-    expectedDurationMonths: project.value.expectedDurationMonths,
-    budget: project.value.budget,
+    teamSize: project.value.teamSize ?? undefined,
+    expectedDurationMonths: project.value.expectedDurationMonths ?? undefined,
+    budget: project.value.budget ?? undefined,
     businessDomain: project.value.businessDomain || '',
   };
 }

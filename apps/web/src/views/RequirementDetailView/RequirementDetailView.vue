@@ -349,6 +349,7 @@ onMounted(() => {
             <RequirementTasks
               v-if="requirement"
               :requirement="requirement"
+              :requirement-id="requirement.id"
               :project-id="projectId"
               :refresh-key="refreshTasksKey"
               @tasks-updated="fetchRequirement"

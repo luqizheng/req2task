@@ -9,10 +9,13 @@ import {
   Query,
   UseGuards,
   Request,
+  HttpCode,
+  HttpStatus,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { TasksService, MarkReplacedDto, MarkCancelledDto } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
+import { AiGenerationService } from '../ai/ai-generation.service';
 import {
   CreateTaskDto,
   UpdateTaskDto,
@@ -20,6 +23,7 @@ import {
   TaskResponseDto,
   TaskListResponseDto,
   WorkloadStatsDto,
+  GenerateTasksDto,
 } from '@req2task/dto';
 import { TaskStatus } from '@req2task/dto';
 
@@ -42,6 +46,7 @@ export class TasksController {
   constructor(
     private readonly tasksService: TasksService,
     private readonly taskKanbanService: TaskKanbanService,
+    private readonly aiGenerationService: AiGenerationService,
   ) {}
 
   @Post('requirements/:requirementId/tasks')
@@ -58,6 +63,44 @@ export class TasksController {
       userId!,
     );
     return { code: 0, data: result };
+  }
+
+  @Post('requirements/:requirementId/ai-generate-tasks')
+  @HttpCode(HttpStatus.CREATED)
+  async generateTasks(
+    @Param('requirementId') requirementId: string,
+    @Body() dto: GenerateTasksDto,
+    @Query('projectId') projectId: string,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const user = req.user as { id?: string; userId?: string };
+    const createdById = user?.id || 'system';
+
+    const result = await this.aiGenerationService.generateTasks(
+      requirementId,
+      dto.featurePoints,
+      projectId,
+      createdById,
+      dto.context,
+    );
+
+    return {
+      code: 0,
+      data: {
+        tasks: result.tasks.map((t) => ({
+          id: t.id,
+          taskNo: t.taskNo,
+          title: t.title,
+          description: t.description,
+          requirementId: t.requirementId,
+          status: t.status,
+          priority: t.priority,
+          estimatedHours: t.estimatedHours,
+          createdAt: t.createdAt,
+        })),
+        rawContent: result.rawContent,
+      },
+    };
   }
 
   @Get('requirements/:requirementId/tasks')

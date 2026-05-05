@@ -10,8 +10,10 @@ import {
   UseGuards,
   HttpCode,
   HttpStatus,
+  Request,
 } from '@nestjs/common';
 import { FeatureModulesService } from './feature-modules.service';
+import { AiGenerationService } from '../ai/ai-generation.service';
 import {
   CreateFeatureModuleDto,
   UpdateFeatureModuleDto,
@@ -20,13 +22,23 @@ import {
   RecommendModuleDto,
   ModuleRecommendResponseDto,
   CreateModuleFromRecommendationDto,
+  GenerateModulesDto,
 } from '@req2task/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
+
+interface AuthenticatedRequest {
+  user: {
+    id?: string;
+  };
+}
 
 @Controller('feature-modules')
 @UseGuards(JwtAuthGuard)
 export class FeatureModulesController {
-  constructor(private readonly featureModulesService: FeatureModulesService) {}
+  constructor(
+    private readonly featureModulesService: FeatureModulesService,
+    private readonly aiGenerationService: AiGenerationService,
+  ) {}
 
   @Get()
   async findByProject(
@@ -92,5 +104,40 @@ export class FeatureModulesController {
       aliases: createDto.aliases,
       keywords: createDto.keywords,
     });
+  }
+
+  @Post('projects/:projectId/ai-generate-modules')
+  @HttpCode(HttpStatus.CREATED)
+  async generateModules(
+    @Param('projectId') projectId: string,
+    @Body() dto: GenerateModulesDto,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    const createdById = req.user?.id || 'system';
+
+    const result = await this.aiGenerationService.generateModules(
+      projectId,
+      dto.requirements,
+      createdById,
+      dto.context,
+      dto.existingModulesTree,
+    );
+
+    return {
+      code: 0,
+      data: {
+        modules: result.modules.map((m) => ({
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          moduleKey: m.moduleKey,
+          sort: m.sort,
+          parentId: m.parentId,
+          projectId: m.projectId,
+          createdAt: m.createdAt,
+        })),
+        rawContent: result.rawContent,
+      },
+    };
   }
 }

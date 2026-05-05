@@ -50,6 +50,7 @@ cd apps/service && npx tsx ../../scripts/remove-unused-imports.ts --fix
 - **禁止 debugger**：使用断点调试
 - **禁止未使用的导入**：定期运行 `pnpm lint:remove-unused:fix`
 - **测试文件豁免**：`*.spec.ts` 文件豁免 console 和未使用变量检查
+- **禁止独立 AI Controller**：不得创建独立的 AI 相关 Controller（如 `*-controller.ts`），AI 能力必须集成到业务 Controller 中。例如：生成任务功能应放在 `tasks.controller.ts`，而非单独的 AI Controller
 
 ## 架构
 

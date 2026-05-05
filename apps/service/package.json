@@ -58,6 +58,7 @@
     "reflect-metadata": "catalog:",
     "rxjs": "catalog:",
     "socket.io": "^4.8.3",
+    "json-stream-handler": "^0.1.0",
     "typeorm": "catalog:",
     "uuid": "catalog:"
   },

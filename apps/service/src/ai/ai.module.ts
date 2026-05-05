@@ -4,15 +4,10 @@ import { HttpModule } from '@nestjs/axios';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { Requirement, UserStory, AcceptanceCriteria, Task, FeatureModule, RawRequirement, ChromaVectorStore } from '@req2task/core';
 import { PromptModule } from '@req2task/core';
-import { AiService } from './ai.service';
 import { LLmClientService } from './llm-client.service';
 import { AiGenerationService } from './ai-generation.service';
 import { AiPersistenceService } from './ai-persistence.service';
 import { RequirementVectorService } from './requirement-vector.service';
-import { RequirementRelationDetectionService } from './requirement-relation-detection.service';
-import { AiGenerationController } from './ai-generation.controller';
-import { AiRawRequirementController } from './ai-raw-requirement.controller';
-import { AiVectorController } from './ai-vector.controller';
 import { RawRequirementModule } from '../raw-requirement/raw-requirement.module';
 import { ProjectsModule } from '../projects/projects.module';
 import { EntityKeyModule } from '../common/entity-key.module';
@@ -28,7 +23,7 @@ import { createChromaVectorStore, initializeVectorStore } from './vector-store.p
     ProjectsModule,
     EntityKeyModule,
   ],
-  controllers: [AiGenerationController, AiRawRequirementController, AiVectorController],
+  controllers: [],
   providers: [
     {
       provide: ChromaVectorStore,
@@ -40,21 +35,17 @@ import { createChromaVectorStore, initializeVectorStore } from './vector-store.p
       useFactory: (vectorStore: ChromaVectorStore) => initializeVectorStore(vectorStore),
       inject: [ChromaVectorStore],
     },
-    AiService,
     LLmClientService,
     AiGenerationService,
     AiPersistenceService,
     RequirementVectorService,
-    RequirementRelationDetectionService,
   ],
   exports: [
     ChromaVectorStore,
-    AiService,
     LLmClientService,
     AiGenerationService,
     AiPersistenceService,
     RequirementVectorService,
-    RequirementRelationDetectionService,
   ],
 })
 export class AiModule implements OnModuleInit {

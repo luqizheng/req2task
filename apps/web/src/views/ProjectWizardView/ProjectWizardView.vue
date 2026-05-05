@@ -60,7 +60,7 @@ const isFirstStep = computed(() => currentStepIndex.value === 0);
 const isLastStep = computed(() => currentStepIndex.value === wizardSteps.value.length - 1);
 const canProceed = computed(() => validateCurrentStep());
 
-const projectKeyValidation = computed(() => {
+const projectKeyValidation = computed((): { valid: boolean; value: string } => {
   const name = formData.value.name as string;
   if (!name) return { valid: false, value: '' };
   const key = name
@@ -285,7 +285,7 @@ watch(() => formData.value.systemType, (newVal) => {
             <Field :data-invalid="!formData.name && currentStepIndex === 0">
               <FieldLabel>项目名称 <span class="text-destructive">*</span></FieldLabel>
               <Input
-                v-model="formData.name"
+                :model-value="String(formData.name || '')"
                 placeholder="请输入项目名称"
                 @update:model-value="updateField('name', $event)"
               />
@@ -295,7 +295,7 @@ watch(() => formData.value.systemType, (newVal) => {
             <Field>
               <FieldLabel>项目标识（自动生成）</FieldLabel>
               <Input
-                :model-value="projectKeyValidation.value.value"
+                :model-value="projectKeyValidation.value"
                 disabled
                 class="bg-muted/50"
               />
@@ -713,7 +713,7 @@ watch(() => formData.value.systemType, (newVal) => {
               <div class="flex items-center justify-between pb-4 border-b">
                 <span class="text-muted-foreground">项目标识</span>
                 <code class="px-2 py-1 bg-background rounded text-sm font-mono">
-                  {{ projectKeyValidation.value.value }}
+                  {{ projectKeyValidation.value }}
                 </code>
               </div>
               <div class="flex items-center justify-between pb-4 border-b">

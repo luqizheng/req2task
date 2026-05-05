@@ -7,7 +7,7 @@ import {
   AiGeneratedRequirementDto,
   RequirementDto,
 } from "@req2task/dto";
-import { useJsonStream } from "../../utils/useJson";
+import { useJsonStream } from "json-stream-handler";
 import { rawRequirementsApi } from "@/api/rawRequirements";
 import { requirementsApi } from "@/api/requirements";
 import { aiApi } from "@/api/ai";

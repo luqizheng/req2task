@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, watch } from "vue";
-import type { RequirementResponseDto } from "@req2task/dto";
+import type { RequirementResponseDto, UserStorySummaryDto } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -15,11 +15,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { ListTodo, Sparkles, Loader2 } from "lucide-vue-next";
+import { ListTodo, Sparkles, Loader2, CheckCircle2 } from "lucide-vue-next";
+import { Separator } from "@/components/ui/separator";
 import { aiApi, type UserStoryDraft } from "@/api/ai";
 import { toast } from "vue-sonner";
 import UserStoryCard from "./UserStoryCard.vue";
-import UserStoryPreviewCard from "./UserStoryPreviewCard.vue";
+
+interface UnSavedUserStory extends UserStoryDraft {
+  tempId: string;
+}
+
+const generateTempId = () => `temp-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
@@ -29,6 +35,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: "description-update", description: string): void;
   (e: "feature-points-update", featurePoints: string): void;
+  (e: "user-stories-added", stories: UserStorySummaryDto[]): void;
   (e: "user-stories-updated"): void;
   (e: "feature-points-generated"): void;
 }>();
@@ -100,11 +107,8 @@ const handleGenerateFeaturePoints = async () => {
 };
 
 const isGeneratingUserStories = ref(false);
-
-const showPreviewDialog = ref(false);
-const previewUserStories = ref<UserStoryDraft[]>([]);
-const selectedUserStoryIndices = ref<Set<number>>(new Set());
-const isSavingUserStories = ref(false);
+const unsavedUserStories = ref<UnSavedUserStory[]>([]);
+const savingStoryIds = ref<Set<string>>(new Set());
 
 const isGeneratingCriteria = ref<string | null>(null);
 const criteriaDialogUserStoryId = ref<string | null>(null);
@@ -116,9 +120,12 @@ const handleGenerateUserStories = async () => {
     isGeneratingUserStories.value = true;
     const response = await aiApi.previewUserStories(props.requirement.id);
     
-    previewUserStories.value = response.userStories;
-    selectedUserStoryIndices.value = new Set(response.userStories.map((_, i) => i));
-    showPreviewDialog.value = true;
+    const newStories: UnSavedUserStory[] = response.userStories.map(story => ({
+      ...story,
+      tempId: generateTempId(),
+    }));
+    unsavedUserStories.value = [...unsavedUserStories.value, ...newStories];
+    toast.success(`生成 ${newStories.length} 个用户故事`);
   } catch (error) {
     console.error("Failed to generate user stories:", error);
     toast.error("生成用户故事失败", {
@@ -129,54 +136,40 @@ const handleGenerateUserStories = async () => {
   }
 };
 
-const toggleUserStorySelection = (index: number) => {
-  if (selectedUserStoryIndices.value.has(index)) {
-    selectedUserStoryIndices.value.delete(index);
-  } else {
-    selectedUserStoryIndices.value.add(index);
-  }
-  selectedUserStoryIndices.value = new Set(selectedUserStoryIndices.value);
-};
-
-const selectAllUserStories = () => {
-  selectedUserStoryIndices.value = new Set(previewUserStories.value.map((_, i) => i));
-};
-
-const deselectAllUserStories = () => {
-  selectedUserStoryIndices.value = new Set();
-};
-
-const handleSaveSelectedUserStories = async () => {
-  if (selectedUserStoryIndices.value.size === 0) {
-    toast.error("请至少选择一个用户故事");
-    return;
-  }
-
+const handleSaveUserStory = async (story: UnSavedUserStory) => {
   try {
-    isSavingUserStories.value = true;
-    const storiesToSave = Array.from(selectedUserStoryIndices.value).map(
-      (index) => previewUserStories.value[index]
-    );
-    const response = await aiApi.saveUserStories(props.requirement.id, storiesToSave);
-    toast.success(`成功保存 ${response.userStories.length} 个用户故事`);
-    emit("user-stories-updated");
-    showPreviewDialog.value = false;
-    previewUserStories.value = [];
-    selectedUserStoryIndices.value = new Set();
+    savingStoryIds.value.add(story.tempId);
+    savingStoryIds.value = new Set(savingStoryIds.value);
+    
+    const response = await aiApi.saveUserStories(props.requirement.id, [story]);
+    toast.success("用户故事已保存");
+    unsavedUserStories.value = unsavedUserStories.value.filter(s => s.tempId !== story.tempId);
+    const now = new Date().toISOString();
+    const savedStories: UserStorySummaryDto[] = response.userStories.map(us => ({
+      id: us.id,
+      requirementId: props.requirement.id,
+      role: us.role,
+      goal: us.goal,
+      benefit: us.benefit,
+      storyPoints: us.storyPoints,
+      acceptanceCriteria: [],
+      createdAt: us.createdAt || now,
+      updatedAt: now,
+    }));
+    emit("user-stories-added", savedStories);
   } catch (error) {
-    console.error("Failed to save user stories:", error);
+    console.error("Failed to save user story:", error);
     toast.error("保存用户故事失败", {
       description: error instanceof Error ? error.message : "请稍后重试",
     });
   } finally {
-    isSavingUserStories.value = false;
+    savingStoryIds.value.delete(story.tempId);
+    savingStoryIds.value = new Set(savingStoryIds.value);
   }
 };
 
-const closePreviewDialog = () => {
-  showPreviewDialog.value = false;
-  previewUserStories.value = [];
-  selectedUserStoryIndices.value = new Set();
+const handleRemoveUserStory = (tempId: string) => {
+  unsavedUserStories.value = unsavedUserStories.value.filter(s => s.tempId !== tempId);
 };
 
 const openCriteriaDialog = (userStoryId: string) => {
@@ -349,7 +342,10 @@ const handleGenerateCriteria = async () => {
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
             </svg>
-            用户故事 ({{ requirement.userStories?.length || 0 }})
+            用户故事
+            <Badge v-if="unsavedUserStories.length > 0" variant="secondary" class="ml-2">
+              {{ unsavedUserStories.length }} 未保存
+            </Badge>
           </CardTitle>
           <Button
             variant="outline"
@@ -364,7 +360,7 @@ const handleGenerateCriteria = async () => {
           </Button>
         </div>
       </CardHeader>
-      <CardContent v-if="requirement.userStories && requirement.userStories.length > 0" class="space-y-4">
+      <CardContent v-if="requirement.userStories && requirement.userStories.length > 0 || unsavedUserStories.length > 0" class="space-y-4">
         <UserStoryCard
           v-for="story in requirement.userStories"
           :key="story.id"
@@ -372,6 +368,65 @@ const handleGenerateCriteria = async () => {
           :is-generating-criteria="isGeneratingCriteria === story.id"
           @generate-criteria="openCriteriaDialog"
         />
+        <div
+          v-for="story in unsavedUserStories"
+          :key="story.tempId"
+          class="p-4 border-2 border-dashed border-amber-300 rounded-lg space-y-3 bg-amber-50/50"
+        >
+          <div class="flex items-start gap-3">
+            <div class="flex-1">
+              <div class="flex items-center gap-2 mb-2">
+                <Badge variant="outline" class="bg-purple-50">
+                  角色: {{ story.role }}
+                </Badge>
+                <Badge variant="outline" class="bg-blue-50">
+                  {{ story.storyPoints }} SP
+                </Badge>
+                <Badge variant="outline" class="bg-amber-100 text-amber-700 border-amber-300">
+                  未保存
+                </Badge>
+              </div>
+              <p class="text-slate-800">
+                <span class="font-medium">作为</span> {{ story.role }}
+                <span class="font-medium">，我想要</span> {{ story.goal }}
+                <span class="font-medium">，以便于</span> {{ story.benefit }}
+              </p>
+            </div>
+            <div class="flex gap-2">
+              <Button
+                size="sm"
+                class="gap-1"
+                :disabled="savingStoryIds.has(story.tempId)"
+                @click="handleSaveUserStory(story)"
+              >
+                <Loader2 v-if="savingStoryIds.has(story.tempId)" class="w-4 h-4 animate-spin" />
+                保存
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                class="text-red-500 hover:text-red-600 hover:bg-red-50"
+                @click="handleRemoveUserStory(story.tempId)"
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+          <div v-if="story.acceptanceCriteria && story.acceptanceCriteria.length > 0">
+            <Separator class="my-2" />
+            <p class="text-xs font-medium text-slate-500 mb-1">验收条件:</p>
+            <ul class="space-y-1">
+              <li
+                v-for="(criteria, cIndex) in story.acceptanceCriteria"
+                :key="cIndex"
+                class="flex items-start gap-2"
+              >
+                <CheckCircle2 class="w-3 h-3 mt-0.5 flex-shrink-0 text-amber-500" />
+                <span class="text-xs text-slate-600">{{ criteria.content }}</span>
+              </li>
+            </ul>
+          </div>
+        </div>
       </CardContent>
       <CardContent v-else>
         <div class="text-center py-8 text-slate-400">
@@ -416,50 +471,6 @@ const handleGenerateCriteria = async () => {
             >
               <Loader2 v-if="isGeneratingCriteria !== null" class="w-4 h-4 mr-2 animate-spin" />
               {{ isGeneratingCriteria !== null ? '生成中...' : '生成验收条件' }}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog v-model:open="showPreviewDialog">
-        <DialogContent class="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>预览用户故事</DialogTitle>
-            <DialogDescription>
-              请选择要保存的用户故事，已选 {{ selectedUserStoryIndices.size }} 个
-            </DialogDescription>
-          </DialogHeader>
-          <div class="flex gap-2 mb-4">
-            <Button variant="outline" size="sm" @click="selectAllUserStories">
-              全选
-            </Button>
-            <Button variant="outline" size="sm" @click="deselectAllUserStories">
-              取消全选
-            </Button>
-          </div>
-          <div class="flex-1 overflow-y-auto space-y-3">
-            <UserStoryPreviewCard
-              v-for="(story, index) in previewUserStories"
-              :key="index"
-              :story="story"
-              :selected="selectedUserStoryIndices.has(index)"
-              @toggle="toggleUserStorySelection(index)"
-            />
-          </div>
-          <DialogFooter class="mt-4">
-            <Button
-              variant="outline"
-              :disabled="isSavingUserStories"
-              @click="closePreviewDialog"
-            >
-              取消
-            </Button>
-            <Button
-              :disabled="isSavingUserStories || selectedUserStoryIndices.size === 0"
-              @click="handleSaveSelectedUserStories"
-            >
-              <Loader2 v-if="isSavingUserStories" class="w-4 h-4 mr-2 animate-spin" />
-              {{ isSavingUserStories ? '保存中...' : `保存所选 (${selectedUserStoryIndices.size})` }}
             </Button>
           </DialogFooter>
         </DialogContent>

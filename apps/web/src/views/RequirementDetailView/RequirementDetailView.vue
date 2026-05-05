@@ -302,6 +302,12 @@ const handleTasksUpdated = () => {
   refreshTasksKey.value += 1;
 };
 
+const handleUserStoriesAdded = (stories: any[]) => {
+  if (requirement.value && requirement.value.userStories) {
+    requirement.value.userStories = [...requirement.value.userStories, ...stories];
+  }
+};
+
 onMounted(() => {
   fetchRequirement();
 });
@@ -361,7 +367,7 @@ onMounted(() => {
               @description-update="handleDescriptionUpdate"
               @feature-points-update="handleFeaturePointsUpdate"
               @feature-points-generated="fetchRequirement"
-              @user-stories-updated="fetchRequirement"
+              @user-stories-added="handleUserStoriesAdded"
               @tasks-updated="fetchRequirement"
             />
 

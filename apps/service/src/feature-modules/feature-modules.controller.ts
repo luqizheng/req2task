@@ -17,6 +17,9 @@ import {
   UpdateFeatureModuleDto,
   FeatureModuleResponseDto,
   FeatureModuleListResponseDto,
+  RecommendModuleDto,
+  ModuleRecommendResponseDto,
+  CreateModuleFromRecommendationDto,
 } from '@req2task/dto';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard';
 
@@ -63,5 +66,31 @@ export class FeatureModulesController {
   @HttpCode(HttpStatus.NO_CONTENT)
   async delete(@Param('id') id: string): Promise<void> {
     await this.featureModulesService.delete(id);
+  }
+
+  @Post('recommend/:projectId')
+  async recommendModules(
+    @Param('projectId') projectId: string,
+    @Body() recommendDto: RecommendModuleDto,
+  ): Promise<ModuleRecommendResponseDto> {
+    const recommendations = await this.featureModulesService.recommendModules(
+      projectId,
+      recommendDto.content,
+    );
+    return { recommendations };
+  }
+
+  @Post('create-from-recommendation')
+  async createFromRecommendation(
+    @Body() createDto: CreateModuleFromRecommendationDto,
+  ): Promise<FeatureModuleResponseDto> {
+    return this.featureModulesService.createFromRecommendation({
+      name: createDto.name,
+      description: createDto.description,
+      projectId: createDto.projectId,
+      parentId: createDto.parentId,
+      aliases: createDto.aliases,
+      keywords: createDto.keywords,
+    });
   }
 }

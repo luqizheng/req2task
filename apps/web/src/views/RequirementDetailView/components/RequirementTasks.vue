@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import type { RequirementResponseDto, TaskResponseDto } from "@req2task/dto";
 import { TaskPriority } from "@req2task/dto";
 import { tasksApi } from "@/api/tasks";
@@ -27,6 +27,7 @@ import { toast } from "vue-sonner";
 const props = defineProps<{
   requirement: RequirementResponseDto;
   projectId: string;
+  refreshKey?: number;
 }>();
 
 const emit = defineEmits<{
@@ -52,6 +53,12 @@ const fetchTasks = async () => {
     loading.value = false;
   }
 };
+
+watch(() => props.refreshKey, () => {
+  if (props.refreshKey) {
+    fetchTasks();
+  }
+});
 
 const handleGenerateTasks = async () => {
   if (!taskFeaturePoints.value.trim()) {

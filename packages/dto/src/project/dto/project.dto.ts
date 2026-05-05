@@ -1,5 +1,6 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
-import { ProjectStatus } from '../../enums';
+import { IsString, IsOptional, IsEnum, IsDateString, IsBoolean, IsNumber } from 'class-validator';
+import { ProjectStatus, SystemType, ArchitectureType, DatabaseType, CloudProvider, SecurityLevel, ProjectScale } from '../../enums';
+import { TechStackDto } from './wizard.dto';
 
 export class CreateProjectDto {
   @IsString()
@@ -66,6 +67,20 @@ export class ProjectResponseDto {
   members!: ProjectMemberDto[];
   createdAt!: Date;
   updatedAt!: Date;
+  systemType?: SystemType | null;
+  architectureType?: ArchitectureType | null;
+  techStack?: TechStackDto | null;
+  databaseTypes?: DatabaseType[];
+  cloudProvider?: CloudProvider | null;
+  securityLevel?: SecurityLevel | null;
+  projectScale?: ProjectScale | null;
+  teamSize?: number | null;
+  isMicroservices?: boolean;
+  expectedDurationMonths?: number | null;
+  budget?: number | null;
+  businessDomain?: string | null;
+  targetAudience?: string | null;
+  wizardCompleted?: boolean;
 }
 
 export class ProjectListResponseDto {

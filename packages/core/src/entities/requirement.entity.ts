@@ -41,6 +41,9 @@ export class Requirement {
   @Column({ name: 'key_elements', type: 'simple-array', nullable: true })
   keyElements!: string[] | null;
 
+  @Column({ name: 'feature_points', type: 'text', nullable: true })
+  featurePoints!: string | null;
+
   @Column({
     type: 'enum',
     enum: Priority,

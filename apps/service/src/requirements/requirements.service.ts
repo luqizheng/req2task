@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Requirement, FeatureModule } from '@req2task/core';
@@ -10,8 +10,11 @@ import {
   RequirementListResponseDto,
   ModuleSummaryDto,
   UpdateRequirementDto,
+  ConfirmAiModulesDto,
+  ConfirmAiModulesResponseDto,
 } from '@req2task/dto';
 import { AcceptanceCriteriaService } from './acceptance-criteria.service';
+import { FeatureModulesService } from '../feature-modules/feature-modules.service';
 
 @Injectable()
 export class RequirementsService {
@@ -22,6 +25,7 @@ export class RequirementsService {
     private featureModuleRepository: Repository<FeatureModule>,
     private acceptanceCriteriaService: AcceptanceCriteriaService,
     private entityKeyService: EntityKeyService,
+    private readonly featureModulesService: FeatureModulesService,
   ) {}
 
   async saveBatch(
@@ -221,6 +225,7 @@ export class RequirementsService {
 
     if (updateDto.title !== undefined) requirement.title = updateDto.title;
     if (updateDto.description !== undefined) requirement.description = updateDto.description;
+    if (updateDto.featurePoints !== undefined) requirement.featurePoints = updateDto.featurePoints;
     if (updateDto.priority !== undefined) requirement.priority = updateDto.priority;
     if (updateDto.status !== undefined) requirement.status = updateDto.status;
     if (updateDto.storyPoints !== undefined) requirement.storyPoints = updateDto.storyPoints;
@@ -272,6 +277,7 @@ export class RequirementsService {
       modules: requirement.modules?.map((m) => this.toModuleSummaryDto(m)) || [],
       title: requirement.title,
       description: requirement.description,
+      featurePoints: requirement.featurePoints,
       priority: requirement.priority,
       source: requirement.source,
       status: requirement.status,
@@ -336,5 +342,77 @@ export class RequirementsService {
     }
 
     return dto;
+  }
+
+  async confirmAiGeneratedModules(
+    dto: ConfirmAiModulesDto,
+  ): Promise<ConfirmAiModulesResponseDto> {
+    const { confirmations, newModules } = dto;
+
+    const needsNewModules = confirmations.some((c) => !c.moduleId);
+    if (needsNewModules && (!newModules || newModules.length === 0)) {
+      throw new BadRequestException(
+        '当有需求需要创建新模块时，必须提供 newModules 信息',
+      );
+    }
+
+    const createdModules: Array<{ moduleId: string; moduleName: string }> = [];
+    const moduleNameToId = new Map<string, string>();
+
+    if (newModules && newModules.length > 0) {
+      for (const newModule of newModules) {
+        const created = await this.featureModulesService.createFromRecommendation({
+          name: newModule.suggestedName,
+          description: newModule.suggestedDescription,
+          projectId: confirmations[0]?.moduleId
+            ? (
+                await this.featureModuleRepository.findOne({
+                  where: { id: confirmations[0].moduleId },
+                })
+              )?.projectId || ''
+            : '',
+          keywords: [newModule.suggestedName],
+        });
+
+        moduleNameToId.set(newModule.suggestedName, created.id);
+        createdModules.push({
+          moduleId: created.id,
+          moduleName: created.name,
+        });
+      }
+    }
+
+    const updatedRequirements: Array<{ requirementId: string; moduleId: string }> = [];
+
+    for (const confirmation of confirmations) {
+      let targetModuleId = confirmation.moduleId;
+
+      if (!targetModuleId) {
+        const confirmationReq = await this.requirementRepository.findOne({
+          where: { id: confirmation.requirementId },
+        });
+        if (!confirmationReq) continue;
+
+        const relatedNewModule = newModules?.find((m) =>
+          m.requirementIds.includes(confirmation.requirementId),
+        );
+        if (relatedNewModule) {
+          targetModuleId = moduleNameToId.get(relatedNewModule.suggestedName);
+        }
+      }
+
+      if (targetModuleId) {
+        await this.updateModules(confirmation.requirementId, [targetModuleId]);
+        updatedRequirements.push({
+          requirementId: confirmation.requirementId,
+          moduleId: targetModuleId,
+        });
+      }
+    }
+
+    return {
+      createdModules,
+      updatedRequirements,
+    };
   }
 }

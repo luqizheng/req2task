@@ -253,6 +253,7 @@ ${content}
           title: item.title,
           description: item.description || null,
           keyElements: item.keyElements || null,
+          featurePoints: item.featurePoints || null,
           priority: item.priority?.toUpperCase() || Priority.MEDIUM,
           source: RequirementSource.AI_GENERATED,
           status: RequirementStatus.DRAFT,
@@ -416,6 +417,9 @@ ${existingReqsContent}
       maxTokens: rendered.maxTokens,
     });
 
+    requirement.featurePoints = result.content;
+    await this.requirementRepository.save(requirement);
+
     return { featurePoints: result.content, rawContent: result.content };
   }
 
@@ -428,11 +432,16 @@ ${existingReqsContent}
   ): Promise<{ userStories: UserStory[]; rawContent: string }> {
     const requirement = await this.requirementRepository.findOne({
       where: { id: requirementId },
+      relations: ['userStories'],
     });
 
     if (!requirement) {
       throw new BadRequestException("Requirement not found");
     }
+
+    const existingUserStories = requirement.userStories
+      ?.map((us) => `【已有】作为${us.role}，我想要${us.goal}，以便${us.benefit}`)
+      .join('\n') || '无';
 
     const content = featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
 
@@ -442,6 +451,7 @@ ${existingReqsContent}
       requirementTitle: requirement.title,
       requirementDescription: requirement.description,
       featurePoints: content,
+      existingUserStories,
     });
 
     const result = await this.llmClient.generate({

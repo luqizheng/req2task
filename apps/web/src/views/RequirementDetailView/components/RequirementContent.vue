@@ -201,6 +201,20 @@ const getCriteriaTypeColor = (type: string) => {
       </CardContent>
     </Card>
 
+    <Card v-if="requirement.featurePoints">
+      <CardHeader>
+        <CardTitle class="text-lg flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+          </svg>
+          功能点
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <pre class="whitespace-pre-wrap text-sm text-slate-700 font-mono bg-slate-50 p-3 rounded-md">{{ requirement.featurePoints }}</pre>
+      </CardContent>
+    </Card>
+
     <Card>
       <CardHeader>
         <div class="flex items-center justify-between">

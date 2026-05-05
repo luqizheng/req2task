@@ -7,13 +7,19 @@ import {
   UpdateFeatureModuleDto,
   FeatureModuleResponseDto,
   FeatureModuleListResponseDto,
+  ModuleRecommendItemDto,
 } from '@req2task/dto';
+import { RequirementVectorService } from '../ai/requirement-vector.service';
 
 @Injectable()
 export class FeatureModulesService {
+  private readonly MIN_SCORE_THRESHOLD = 0.3;
+  private readonly RECOMMEND_LIMIT = 5;
+
   constructor(
     @InjectRepository(FeatureModule)
     private featureModuleRepository: Repository<FeatureModule>,
+    private readonly vectorService: RequirementVectorService,
   ) {}
 
   private toResponseDto(module: FeatureModule): FeatureModuleResponseDto {
@@ -182,5 +188,235 @@ export class FeatureModulesService {
     }
 
     await this.featureModuleRepository.remove(module);
+  }
+
+  async recommendModules(
+    projectId: string,
+    content: string,
+  ): Promise<ModuleRecommendItemDto[]> {
+    const [vectorResults, keywordResults] = await Promise.all([
+      this.searchByVector(content, projectId),
+      this.searchByKeywords(content, projectId),
+    ]);
+
+    const merged = this.mergeResults(vectorResults, keywordResults, content);
+    return merged;
+  }
+
+  private async searchByVector(
+    content: string,
+    projectId: string,
+  ): Promise<ModuleRecommendItemDto[]> {
+    try {
+      const similarRequirements = await this.vectorService.searchSimilarRequirements(
+        content,
+        projectId,
+        this.RECOMMEND_LIMIT,
+      );
+
+      const moduleScores = new Map<string, number>();
+
+      for (const result of similarRequirements) {
+        if (result.score < this.MIN_SCORE_THRESHOLD) continue;
+
+        const reqContent = result.content;
+        const modules = await this.featureModuleRepository.find({
+          where: { projectId },
+        });
+
+        for (const module of modules) {
+          const score = this.calculateContentMatchScore(module, reqContent);
+          const existingScore = moduleScores.get(module.id) || 0;
+          const combinedScore = (existingScore + result.score + score) / 3;
+          moduleScores.set(module.id, Math.max(existingScore, combinedScore));
+        }
+      }
+
+      return Array.from(moduleScores.entries())
+        .filter(([, score]) => score >= this.MIN_SCORE_THRESHOLD)
+        .sort(([, a], [, b]) => b - a)
+        .slice(0, this.RECOMMEND_LIMIT)
+        .map(([moduleId, score]) => {
+          const module = this.featureModuleRepository.findOne({ where: { id: moduleId } });
+          return {
+            moduleId,
+            moduleName: (module as unknown as FeatureModule)?.name || null,
+            score,
+            isNew: false,
+            suggestedName: null,
+            suggestedDescription: null,
+          } as ModuleRecommendItemDto;
+        });
+    } catch (error) {
+      console.warn('Vector search failed, falling back to keyword search:', error);
+      return [];
+    }
+  }
+
+  private async searchByKeywords(
+    content: string,
+    projectId: string,
+  ): Promise<ModuleRecommendItemDto[]> {
+    const keywords = this.extractKeywords(content);
+    const modules = await this.featureModuleRepository.find({
+      where: { projectId },
+    });
+
+    const results: ModuleRecommendItemDto[] = [];
+
+    for (const module of modules) {
+      const score = this.calculateKeywordScore(module, keywords);
+      if (score >= this.MIN_SCORE_THRESHOLD) {
+        results.push({
+          moduleId: module.id,
+          moduleName: module.name,
+          score,
+          isNew: false,
+          suggestedName: null,
+          suggestedDescription: null,
+        });
+      }
+    }
+
+    return results
+      .sort((a, b) => b.score - a.score)
+      .slice(0, this.RECOMMEND_LIMIT);
+  }
+
+  private mergeResults(
+    vectorResults: ModuleRecommendItemDto[],
+    keywordResults: ModuleRecommendItemDto[],
+    content: string,
+  ): ModuleRecommendItemDto[] {
+    const scoreMap = new Map<string, ModuleRecommendItemDto>();
+
+    for (const result of vectorResults) {
+      scoreMap.set(result.moduleId!, {
+        ...result,
+        score: result.score * 0.6,
+      });
+    }
+
+    for (const result of keywordResults) {
+      const existing = scoreMap.get(result.moduleId!);
+      if (existing) {
+        existing.score = Math.max(existing.score, result.score * 0.4 + existing.score * 0.6);
+      } else {
+        scoreMap.set(result.moduleId!, {
+          ...result,
+          score: result.score * 0.4,
+        });
+      }
+    }
+
+    const sorted = Array.from(scoreMap.values())
+      .sort((a, b) => b.score - a.score)
+      .slice(0, this.RECOMMEND_LIMIT);
+
+    if (sorted.length === 0 || sorted[0].score < 0.5) {
+      sorted.push({
+        moduleId: null,
+        moduleName: null,
+        score: 0,
+        isNew: true,
+        suggestedName: this.generateModuleName(content),
+        suggestedDescription: this.generateModuleDescription(content),
+      });
+    }
+
+    return sorted;
+  }
+
+  private extractKeywords(content: string): string[] {
+    const stopWords = new Set([
+      '的', '了', '和', '是', '在', '有', '个', '与', '对', '等',
+      'the', 'a', 'an', 'is', 'are', 'and', 'or', 'to', 'in',
+    ]);
+
+    return content
+      .split(/[\s,，。、()（）【】[""''『』]+/)
+      .filter((w) => w.length >= 2 && !stopWords.has(w.toLowerCase()))
+      .slice(0, 20);
+  }
+
+  private calculateKeywordScore(module: FeatureModule, keywords: string[]): number {
+    const searchableText = [
+      module.name,
+      module.description,
+      ...(module.aliases || []),
+      ...(module.keywords || []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    const matchedKeywords = keywords.filter((k) =>
+      searchableText.includes(k.toLowerCase()),
+    );
+
+    return keywords.length > 0 ? matchedKeywords.length / keywords.length : 0;
+  }
+
+  private calculateContentMatchScore(module: FeatureModule, content: string): number {
+    const moduleText = [
+      module.name,
+      module.description,
+      ...(module.aliases || []),
+      ...(module.keywords || []),
+    ]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+
+    const contentLower = content.toLowerCase();
+    const moduleWords = new Set(moduleText.split(/\s+/).filter((w) => w.length > 1));
+    const contentWords = new Set(contentLower.split(/\s+/).filter((w) => w.length > 1));
+
+    let matches = 0;
+    for (const word of moduleWords) {
+      if (contentWords.has(word) || contentLower.includes(word)) {
+        matches++;
+      }
+    }
+
+    return moduleWords.size > 0 ? matches / moduleWords.size : 0;
+  }
+
+  private generateModuleName(content: string): string {
+    const words = this.extractKeywords(content);
+    if (words.length === 0) return '新模块';
+    return words.slice(0, 3).join('') + '管理';
+  }
+
+  private generateModuleDescription(content: string): string {
+    return `基于需求"${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"创建的功能模块`;
+  }
+
+  async createFromRecommendation(
+    createDto: {
+      name: string;
+      description?: string;
+      projectId: string;
+      parentId?: string;
+      aliases?: string[];
+      keywords?: string[];
+    }
+  ): Promise<FeatureModuleResponseDto> {
+    const moduleKey = createDto.name
+      .toLowerCase()
+      .replace(/[^a-z0-9\u4e00-\u9fa5]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .replace(/_+/g, '_');
+
+    const dto = new CreateFeatureModuleDto();
+    dto.name = createDto.name;
+    dto.description = createDto.description;
+    dto.moduleKey = moduleKey || `module_${Date.now()}`;
+    dto.projectId = createDto.projectId;
+    dto.parentId = createDto.parentId;
+    dto.aliases = createDto.aliases;
+    dto.keywords = createDto.keywords;
+
+    return this.create(dto);
   }
 }

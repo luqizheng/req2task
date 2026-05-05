@@ -44,6 +44,7 @@ const projectId = route.params.projectId as string;
 const requirement = ref<RequirementResponseDto | null>(null);
 const allowedTransitionsRaw = ref<TransitionOption[]>([]);
 const conflicts = ref<ConflictDto[]>([]);
+const refreshTasksKey = ref(0);
 
 const allowedTransitions = computed<TransitionOptionWithLabel[]>(() => {
   
@@ -280,6 +281,10 @@ const goBack = () => {
   router.push(`/projects/${projectId}`);
 };
 
+const handleTasksUpdated = () => {
+  refreshTasksKey.value += 1;
+};
+
 onMounted(() => {
   fetchRequirement();
 });
@@ -345,6 +350,7 @@ onMounted(() => {
               v-if="requirement"
               :requirement="requirement"
               :project-id="projectId"
+              :refresh-key="refreshTasksKey"
               @tasks-updated="fetchRequirement"
             />
           </div>
@@ -365,6 +371,7 @@ onMounted(() => {
               @export="handleExport"
               @check-conflicts="handleCheckConflicts"
               @generated="fetchRequirement"
+              @tasks-updated="handleTasksUpdated"
             />
 
             <RequirementModules :requirement="requirement" />
@@ -408,6 +415,15 @@ onMounted(() => {
                   <p class="text-xs text-muted-foreground">更新时间</p>
                   <p class="text-sm text-foreground">
                     {{ formatDateTime(requirement.updatedAt) }}
+                  </p>
+                </div>
+
+                <Separator />
+
+                <div class="space-y-2">
+                  <p class="text-xs text-muted-foreground">功能点</p>
+                  <p class="text-sm text-foreground">
+                    {{ requirement.featurePoints ? '已生成' : '未生成' }}
                   </p>
                 </div>
 

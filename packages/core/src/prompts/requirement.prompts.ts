@@ -394,16 +394,25 @@ JSON格式：
 - 3: 中等，1-2天
 - 5: 较复杂，3-5天
 - 8: 复杂，1-2周
-- 13: 非常复杂，3周以上`,
-    userPromptTemplate: `## 功能点
+- 13: 非常复杂，3周以上
+
+重要规则：
+1. 生成的每个用户故事必须对应一个具体的功能点
+2. 不要重复已存在的用户故事
+3. 用户故事之间应相互独立，无重叠`,
+    userPromptTemplate: `## 已有用户故事（不要重复生成）
+{{existingUserStories}}
+
+## 功能点
 {{featurePoints}}
 
-{{#if requirementTitle}}需求标题：{{requirementTitle}}
-{{/if}}{{#if requirementDescription}}需求描述：{{requirementDescription}}
-{{/if}}{{#if projectId}}项目ID: {{projectId}}
+{{#if requirementTitle}}## 需求标题
+{{requirementTitle}}
+{{/if}}{{#if requirementDescription}}## 需求描述
+{{requirementDescription}}
 {{/if}}{{#if context}}## 上下文信息
 {{context}}
-{{/if}}请生成用户故事。
+{{/if}}请根据功能点生成新的用户故事，只生成不重复的故事。
 
 JSON格式：
 [
@@ -431,6 +440,11 @@ JSON格式：
         type: "string",
         required: true,
         description: "功能点列表",
+      },
+      {
+        name: "existingUserStories",
+        type: "string",
+        description: "已有用户故事列表，用于避免重复生成",
       },
     ],
   },

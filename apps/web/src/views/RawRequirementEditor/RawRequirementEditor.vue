@@ -3,6 +3,7 @@ import { useRoute, useRouter } from "vue-router";
 import RustFSUploader from "@/components/RustFSUploader.vue";
 import { useRawRequirementCreateStore } from "./store";
 import QuestionPanel from "./components/QuestionPanel.vue";
+import AiModuleConfirm from "./components/AiModuleConfirm.vue";
 import { CollectionType } from "@req2task/dto";
 import { useRequirementSubmit } from "./useRequirementSubmit";
 import { storeToRefs } from "pinia";
@@ -72,6 +73,7 @@ const loading = ref(false);
 const isSaving = ref(false);
 const isGenerating = ref(false);
 const isAnalyzing = ref(false);
+const showModuleConfirm = ref(false);
 
 const formSchema = toTypedSchema(
   z.object({
@@ -176,6 +178,13 @@ const handleGenerateRequirements = async () => {
       }
     }
     await rawRequirementSubmitHelper.generateRequirements();
+
+    const needsConfirm = store.requirements.some(
+      (r) => !r.moduleId || r.moduleId === 'NEW'
+    );
+    if (needsConfirm) {
+      showModuleConfirm.value = true;
+    }
   } finally {
     isGenerating.value = false;
   }
@@ -414,5 +423,12 @@ const collectTimeDate = computed<DateValue | undefined>({
         </div>
       </Card>
     </div>
+
+    <AiModuleConfirm
+      v-model:open="showModuleConfirm"
+      :requirements="store.requirements"
+      :project-id="projectId"
+      @confirmed="() => {}"
+    />
   </div>
 </template>

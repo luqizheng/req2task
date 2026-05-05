@@ -9,6 +9,41 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { ProjectStatus } from '@req2task/dto';
+import { SystemType, ArchitectureType, DatabaseType, CloudProvider, SecurityLevel, ProjectScale } from '@req2task/dto';
+
+export { SystemType, ArchitectureType, DatabaseType, CloudProvider, SecurityLevel, ProjectScale };
+
+export interface TechStack {
+  frontend?: {
+    framework?: string;
+    uiLibrary?: string;
+    stateManagement?: string;
+    buildTool?: string;
+    language?: string;
+  };
+  backend?: {
+    framework?: string;
+    language?: string;
+    orm?: string;
+    apiStyle?: string;
+    caching?: string[];
+    messageQueue?: string[];
+  };
+  infrastructure?: {
+    container?: string;
+    orchestration?: string;
+    reverseProxy?: string;
+    loadBalancer?: string;
+  };
+  devops?: {
+    ciCd?: string;
+    containerRegistry?: string;
+    monitoring?: string[];
+    logging?: string[];
+    tracing?: string;
+    codeQuality?: string[];
+  };
+}
 
 @Entity('projects')
 export class Project {
@@ -53,4 +88,80 @@ export class Project {
 
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt!: Date;
+
+  @Column({
+    type: 'enum',
+    enum: SystemType,
+    nullable: true,
+    name: 'system_type',
+  })
+  systemType!: SystemType | null;
+
+  @Column({
+    type: 'enum',
+    enum: ArchitectureType,
+    nullable: true,
+    name: 'architecture_type',
+  })
+  architectureType!: ArchitectureType | null;
+
+  @Column({ type: 'jsonb', nullable: true, name: 'tech_stack' })
+  techStack!: TechStack | null;
+
+  @Column({
+    type: 'enum',
+    enum: DatabaseType,
+    array: true,
+    nullable: true,
+    name: 'database_types',
+  })
+  databaseTypes!: DatabaseType[];
+
+  @Column({
+    type: 'enum',
+    enum: CloudProvider,
+    nullable: true,
+    name: 'cloud_provider',
+  })
+  cloudProvider!: CloudProvider | null;
+
+  @Column({
+    type: 'enum',
+    enum: SecurityLevel,
+    nullable: true,
+    name: 'security_level',
+  })
+  securityLevel!: SecurityLevel | null;
+
+  @Column({
+    type: 'enum',
+    enum: ProjectScale,
+    nullable: true,
+    name: 'project_scale',
+  })
+  projectScale!: ProjectScale | null;
+
+  @Column({ type: 'int', nullable: true, name: 'team_size' })
+  teamSize!: number | null;
+
+  @Column({ type: 'boolean', default: false, name: 'is_microservices' })
+  isMicroservices!: boolean;
+
+  @Column({ type: 'int', nullable: true, name: 'expected_duration_months' })
+  expectedDurationMonths!: number | null;
+
+  @Column({ type: 'numeric', nullable: true, name: 'budget' })
+  budget!: number | null;
+
+  @Column({ type: 'text', nullable: true, name: 'business_domain' })
+  businessDomain!: string | null;
+
+  @Column({ type: 'text', nullable: true, name: 'target_audience' })
+  targetAudience!: string | null;
+
+  @Column({ type: 'boolean', default: false, name: 'wizard_completed' })
+  wizardCompleted!: boolean;
+
+  @Column({ type: 'jsonb', nullable: true, name: 'wizard_config' })
+  wizardConfig!: Record<string, unknown> | null;
 }

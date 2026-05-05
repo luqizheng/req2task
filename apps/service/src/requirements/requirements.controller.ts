@@ -27,6 +27,8 @@ import {
   ChangeHistoryResponseDto,
   UpdateRequirementDto,
   GenerateFeaturePointsDto,
+  ConfirmAiModulesDto,
+  ConfirmAiModulesResponseDto,
 } from "@req2task/dto";
 import { RawRequirementService } from "../raw-requirement/raw-requirement.service";
 import { AiGenerationService } from "../ai/ai-generation.service";
@@ -327,6 +329,14 @@ export class RequirementsController {
       id,
       dto.context,
     );
+    return { code: 0, data: result };
+  }
+
+  @Post("requirements/ai-generated/confirm-modules")
+  async confirmAiModules(
+    @Body() dto: ConfirmAiModulesDto,
+  ): Promise<ApiResponse<ConfirmAiModulesResponseDto>> {
+    const result = await this.requirementsService.confirmAiGeneratedModules(dto);
     return { code: 0, data: result };
   }
 }

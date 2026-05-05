@@ -39,6 +39,20 @@ export class ProjectsService {
       })),
       createdAt: project.createdAt,
       updatedAt: project.updatedAt,
+      systemType: project.systemType,
+      architectureType: project.architectureType,
+      techStack: project.techStack,
+      databaseTypes: project.databaseTypes,
+      cloudProvider: project.cloudProvider,
+      securityLevel: project.securityLevel,
+      projectScale: project.projectScale,
+      teamSize: project.teamSize,
+      isMicroservices: project.isMicroservices,
+      expectedDurationMonths: project.expectedDurationMonths,
+      budget: project.budget,
+      businessDomain: project.businessDomain,
+      targetAudience: project.targetAudience,
+      wizardCompleted: project.wizardCompleted,
     };
   }
 
@@ -190,5 +204,60 @@ export class ProjectsService {
       displayName: m.displayName,
       email: m.email,
     }));
+  }
+
+  async createFromWizard(
+    projectData: {
+      name: string;
+      description?: string;
+      projectKey: string;
+      systemType?: any;
+      architectureType?: any;
+      techStack?: any;
+      databaseTypes?: any;
+      cloudProvider?: any;
+      securityLevel?: any;
+      projectScale?: any;
+      teamSize?: number;
+      isMicroservices?: boolean;
+      expectedDurationMonths?: number;
+      budget?: number;
+      businessDomain?: string;
+      targetAudience?: string;
+      wizardCompleted?: boolean;
+    },
+    ownerId: string,
+  ): Promise<Project> {
+    const existingProject = await this.projectRepository.findOne({
+      where: { projectKey: projectData.projectKey },
+    });
+    if (existingProject) {
+      throw new ConflictException('Project key already exists');
+    }
+
+    const project = this.projectRepository.create({
+      name: projectData.name,
+      description: projectData.description || null,
+      projectKey: projectData.projectKey,
+      status: ProjectStatus.PLANNING,
+      ownerId,
+      members: [],
+      systemType: projectData.systemType || null,
+      architectureType: projectData.architectureType || null,
+      techStack: projectData.techStack || null,
+      databaseTypes: projectData.databaseTypes || [],
+      cloudProvider: projectData.cloudProvider || null,
+      securityLevel: projectData.securityLevel || null,
+      projectScale: projectData.projectScale || null,
+      teamSize: projectData.teamSize || null,
+      isMicroservices: projectData.isMicroservices || false,
+      expectedDurationMonths: projectData.expectedDurationMonths || null,
+      budget: projectData.budget || null,
+      businessDomain: projectData.businessDomain || null,
+      targetAudience: projectData.targetAudience || null,
+      wizardCompleted: projectData.wizardCompleted || false,
+    });
+
+    return this.projectRepository.save(project);
   }
 }

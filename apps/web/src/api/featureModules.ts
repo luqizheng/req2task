@@ -3,6 +3,8 @@ import type {
   UpdateFeatureModuleDto,
   FeatureModuleResponseDto,
   FeatureModuleListResponseDto,
+  ModuleRecommendResponseDto,
+  CreateModuleFromRecommendationDto,
 } from '@req2task/dto';
 import api from './axios';
 
@@ -33,5 +35,19 @@ export const featureModulesApi = {
 
   getTree: (projectId: string) => {
     return api.get<FeatureModuleResponseDto[]>(`/feature-modules/tree/${projectId}`);
+  },
+
+  recommend: (projectId: string, content: string) => {
+    return api.post<ModuleRecommendResponseDto>(
+      `/feature-modules/recommend/${projectId}`,
+      { content }
+    );
+  },
+
+  createFromRecommendation: (data: CreateModuleFromRecommendationDto) => {
+    return api.post<FeatureModuleResponseDto>(
+      `/feature-modules/create-from-recommendation`,
+      data
+    );
   },
 };

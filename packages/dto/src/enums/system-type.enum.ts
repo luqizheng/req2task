@@ -1,0 +1,17 @@
+export enum SystemType {
+  ECOMMERCE = 'ECOMMERCE',
+  CMS = 'CMS',
+  ERP = 'ERP',
+  CRM = 'CRM',
+  OA = 'OA',
+  LMS = 'LMS',
+  MES = 'MES',
+  SCM = 'SCM',
+  HEALTHCARE = 'HEALTHCARE',
+  FINTECH = 'FINTECH',
+  IOT = 'IOT',
+  GAMING = 'GAMING',
+  SOCIAL = 'SOCIAL',
+  EDUCATION = 'EDUCATION',
+  CUSTOM = 'CUSTOM',
+}

@@ -62,6 +62,10 @@ export class RequirementDto {
   @IsArray()
   @IsString({ each: true })
   moduleIds?: string[];
+
+  @IsOptional()
+  @IsString()
+  featurePoints?: string;
 }
 
 export class UserSummaryDto {
@@ -92,6 +96,7 @@ export class RequirementResponseDto {
   modules!: ModuleSummaryDto[];
   title!: string;
   description!: string | null;
+  featurePoints!: string | null;
   priority!: Priority;
   source!: RequirementSource;
   status!: RequirementStatus;
@@ -132,6 +137,10 @@ export class UpdateRequirementDto {
   @IsOptional()
   @IsString()
   description?: string;
+
+  @IsOptional()
+  @IsString()
+  featurePoints?: string;
 
   @IsOptional()
   @IsEnum(Priority)

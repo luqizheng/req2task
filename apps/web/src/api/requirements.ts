@@ -8,6 +8,8 @@ import type {
   CreateAcceptanceCriteriaDto,
   UpdateAcceptanceCriteriaDto,
   AcceptanceCriteriaResponseDto,
+  ConfirmAiModulesDto,
+  ConfirmAiModulesResponseDto,
 } from "@req2task/dto";
 import api from "./axios";
 
@@ -96,6 +98,12 @@ export const requirementsApi = {
       approved,
       comment,
     }),
+
+  confirmAiModules: (data: ConfirmAiModulesDto) =>
+    api.post<ConfirmAiModulesResponseDto>(
+      `/requirements/ai-generated/confirm-modules`,
+      data,
+    ),
 };
 
 export const userStoriesApi = {

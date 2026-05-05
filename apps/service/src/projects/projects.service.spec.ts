@@ -29,7 +29,7 @@ describe('ProjectsService', () => {
     updatedAt: new Date(),
   };
 
-  const mockProject: Project = {
+  const mockProject = {
     id: 'project-uuid',
     name: 'Test Project',
     description: 'Test Description',
@@ -38,10 +38,10 @@ describe('ProjectsService', () => {
     startDate: null,
     endDate: null,
     ownerId: 'owner-uuid',
-    members: [],
+    members: [] as any[],
     createdAt: new Date(),
     updatedAt: new Date(),
-  };
+  } as Project;
 
   beforeEach(async () => {
     projectRepository = {

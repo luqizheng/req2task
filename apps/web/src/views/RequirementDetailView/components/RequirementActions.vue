@@ -38,6 +38,7 @@ const emit = defineEmits<{
   (e: "export"): void;
   (e: "check-conflicts"): void;
   (e: "generated"): void;
+  (e: "tasks-updated"): void;
 }>();
 
 const showDeleteDialog = ref(false);
@@ -100,6 +101,7 @@ const handleOneClickGenerate = async () => {
     }
 
     emit("generated");
+    emit("tasks-updated");
   } catch (error) {
     toast.error("一键生成失败", {
       description: error instanceof Error ? error.message : "请稍后重试",

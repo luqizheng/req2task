@@ -135,6 +135,20 @@ export class ProjectsService {
     if (updateProjectDto.startDate) project.startDate = new Date(updateProjectDto.startDate);
     if (updateProjectDto.endDate) project.endDate = new Date(updateProjectDto.endDate);
 
+    if (updateProjectDto.systemType !== undefined) project.systemType = updateProjectDto.systemType;
+    if (updateProjectDto.architectureType !== undefined) project.architectureType = updateProjectDto.architectureType;
+    if (updateProjectDto.techStack !== undefined) project.techStack = updateProjectDto.techStack;
+    if (updateProjectDto.databaseTypes !== undefined) project.databaseTypes = updateProjectDto.databaseTypes;
+    if (updateProjectDto.cloudProvider !== undefined) project.cloudProvider = updateProjectDto.cloudProvider;
+    if (updateProjectDto.securityLevel !== undefined) project.securityLevel = updateProjectDto.securityLevel;
+    if (updateProjectDto.projectScale !== undefined) project.projectScale = updateProjectDto.projectScale;
+    if (updateProjectDto.teamSize !== undefined) project.teamSize = updateProjectDto.teamSize;
+    if (updateProjectDto.isMicroservices !== undefined) project.isMicroservices = updateProjectDto.isMicroservices;
+    if (updateProjectDto.expectedDurationMonths !== undefined) project.expectedDurationMonths = updateProjectDto.expectedDurationMonths;
+    if (updateProjectDto.budget !== undefined) project.budget = updateProjectDto.budget;
+    if (updateProjectDto.businessDomain !== undefined) project.businessDomain = updateProjectDto.businessDomain;
+    if (updateProjectDto.targetAudience !== undefined) project.targetAudience = updateProjectDto.targetAudience;
+
     const updatedProject = await this.projectRepository.save(project);
     return this.toResponseDto(updatedProject);
   }

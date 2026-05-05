@@ -1,4 +1,5 @@
-import { IsString, IsOptional, IsEnum, IsDateString } from 'class-validator';
+import { IsString, IsOptional, IsEnum, IsDateString, IsNumber, IsBoolean, IsArray, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 import { ProjectStatus, SystemType, ArchitectureType, DatabaseType, CloudProvider, SecurityLevel, ProjectScale } from '../../enums';
 import { TechStackDto } from './wizard.dto';
 
@@ -46,6 +47,60 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsDateString()
   endDate?: string;
+
+  @IsOptional()
+  @IsEnum(SystemType)
+  systemType?: SystemType;
+
+  @IsOptional()
+  @IsEnum(ArchitectureType)
+  architectureType?: ArchitectureType;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => TechStackDto)
+  techStack?: TechStackDto;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(DatabaseType, { each: true })
+  databaseTypes?: DatabaseType[];
+
+  @IsOptional()
+  @IsEnum(CloudProvider)
+  cloudProvider?: CloudProvider;
+
+  @IsOptional()
+  @IsEnum(SecurityLevel)
+  securityLevel?: SecurityLevel;
+
+  @IsOptional()
+  @IsEnum(ProjectScale)
+  projectScale?: ProjectScale;
+
+  @IsOptional()
+  @IsNumber()
+  teamSize?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  isMicroservices?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  expectedDurationMonths?: number;
+
+  @IsOptional()
+  @IsNumber()
+  budget?: number;
+
+  @IsOptional()
+  @IsString()
+  businessDomain?: string;
+
+  @IsOptional()
+  @IsString()
+  targetAudience?: string;
 }
 
 export class ProjectMemberDto {

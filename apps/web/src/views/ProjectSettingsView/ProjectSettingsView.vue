@@ -214,6 +214,31 @@ async function handleSave() {
     await projectsApi.update(projectId, {
       name: formData.value.name,
       description: formData.value.description || undefined,
+      systemType: formData.value.systemType as any || undefined,
+      architectureType: formData.value.architectureType as any || undefined,
+      techStack: {
+        frontend: {
+          framework: formData.value.frontendFramework || undefined,
+          language: formData.value.frontendLanguage || undefined,
+          otherTechnologies: formData.value.frontendTechs?.length ? formData.value.frontendTechs : undefined,
+        },
+        backend: {
+          framework: formData.value.backendFramework || undefined,
+          language: formData.value.backendLanguage || undefined,
+          orm: formData.value.backendOrm || undefined,
+          otherTechnologies: formData.value.backendTechs?.length ? formData.value.backendTechs : undefined,
+        },
+      },
+      databaseTypes: formData.value.databaseTypes?.length ? formData.value.databaseTypes : undefined,
+      cloudProvider: formData.value.cloudProvider as any || undefined,
+      securityLevel: formData.value.securityLevel as any || undefined,
+      projectScale: formData.value.projectScale as any || undefined,
+      teamSize: formData.value.teamSize,
+      isMicroservices: formData.value.isMicroservices,
+      expectedDurationMonths: formData.value.expectedDurationMonths,
+      budget: formData.value.budget,
+      businessDomain: formData.value.businessDomain || undefined,
+      targetAudience: formData.value.targetAudience || undefined,
     });
 
     toast.success('项目设置已保存');

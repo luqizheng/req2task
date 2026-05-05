@@ -20,6 +20,7 @@ export interface TechStack {
     stateManagement?: string;
     buildTool?: string;
     language?: string;
+    otherTechnologies?: string[];
   };
   backend?: {
     framework?: string;
@@ -28,6 +29,7 @@ export interface TechStack {
     apiStyle?: string;
     caching?: string[];
     messageQueue?: string[];
+    otherTechnologies?: string[];
   };
   infrastructure?: {
     container?: string;

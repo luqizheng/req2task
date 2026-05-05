@@ -36,25 +36,145 @@ export class AiPersistenceService {
   ) {}
 
   extractJsonArray(content: string): any[] {
-    try {
-      const cleanedContent = content.trim();
+    const results: any[] = [];
+    let buffer = '';
+    let pos = 0;
+    let inString = false;
+    let escape = false;
+    const stack: Array<{ type: 'object' | 'array'; startPos?: number }> = [];
+    let foundArray = false;
 
-      let unescaped = cleanedContent;
-      try {
-        const testParse = JSON.parse(cleanedContent);
-        if (typeof testParse === 'string') {
-          unescaped = testParse;
+    const flushObject = () => {
+      if (stack.length > 0 && stack[stack.length - 1].type === 'object') {
+        const startPos = stack[stack.length - 1].startPos;
+        if (startPos !== undefined) {
+          try {
+            const jsonStr = buffer.substring(startPos, pos);
+            const parsed = JSON.parse(jsonStr);
+            if (foundArray && Array.isArray(parsed)) {
+              results.push(...parsed);
+            } else if (foundArray) {
+              results.push(parsed);
+            } else if (typeof parsed === 'object' && parsed !== null) {
+              if (Array.isArray(parsed.tasks)) {
+                results.push(...parsed.tasks);
+              } else if (Array.isArray(parsed.data)) {
+                results.push(...parsed.data);
+              } else if (Array.isArray(parsed.items)) {
+                results.push(...parsed.items);
+              } else if (Array.isArray(parsed.requirements)) {
+                results.push(...parsed.requirements);
+              } else if (Array.isArray(parsed.userStories)) {
+                results.push(...parsed.userStories);
+              } else if (Array.isArray(parsed.acceptanceCriteria)) {
+                results.push(...parsed.acceptanceCriteria);
+              } else {
+                results.push(parsed);
+              }
+            }
+          } catch (_e) {
+            // ignore parse error
+          }
         }
-      } catch (_e) {
-        // ignore parse error
+      }
+    };
+
+    const feed = (chunk: string) => {
+      buffer += chunk;
+      while (pos < buffer.length) {
+        const ch = buffer[pos];
+
+        if (inString) {
+          if (escape) escape = false;
+          else if (ch === '\\') escape = true;
+          else if (ch === '"') inString = false;
+          pos++;
+          continue;
+        }
+
+        if (ch === '"') {
+          inString = true;
+          pos++;
+          continue;
+        }
+
+        if (ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t') {
+          pos++;
+          continue;
+        }
+
+        if (ch === '{') {
+          if (!foundArray && stack.length === 0) {
+            const jsonMatch = buffer.substring(pos).match(/^\{[^{}]*\}/);
+            if (jsonMatch) {
+              try {
+                const parsed = JSON.parse(jsonMatch[0]);
+                if (Array.isArray(parsed)) {
+                  return parsed;
+                }
+                if (parsed.tasks) return parsed.tasks;
+                if (parsed.data) return Array.isArray(parsed.data) ? parsed.data : [];
+                if (parsed.items) return parsed.items;
+                if (parsed.requirements) return parsed.requirements;
+                if (parsed.userStories) return parsed.userStories;
+              } catch (_e) {
+                // ignore parse error
+              }
+            }
+          }
+          stack.push({ type: 'object', startPos: pos });
+          pos++;
+          continue;
+        }
+
+        if (ch === '[') {
+          foundArray = true;
+          stack.push({ type: 'array', startPos: pos });
+          pos++;
+          continue;
+        }
+
+        if (ch === '}') {
+          if (stack.length > 0 && stack[stack.length - 1].type === 'object') {
+            flushObject();
+            stack.pop();
+          }
+          pos++;
+          continue;
+        }
+
+        if (ch === ']') {
+          if (stack.length > 0 && stack[stack.length - 1].type === 'array') {
+            const startPos = stack[stack.length - 1].startPos;
+            if (startPos !== undefined) {
+              try {
+                const jsonStr = buffer.substring(startPos, pos + 1);
+                const parsed = JSON.parse(jsonStr);
+                if (Array.isArray(parsed)) {
+                  results.push(...parsed);
+                }
+              } catch (_e) {
+                // ignore parse error
+              }
+            }
+            stack.pop();
+          }
+          pos++;
+          continue;
+        }
+
+        pos++;
+      }
+    };
+
+    try {
+      feed(content);
+
+      if (results.length > 0) {
+        return results;
       }
 
-      const codeBlockMatch = unescaped.match(/```(?:json)?\s*([\s\S]*?)```/);
-      if (codeBlockMatch) {
-        unescaped = codeBlockMatch[1].trim();
-      }
-
-      const jsonMatch = unescaped.match(/\[[\s\S]*\]/);
+      const jsonMatch = content.match(/\[[\s\S]*\]/);
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
@@ -76,28 +196,15 @@ export class AiPersistenceService {
         }
       }
 
-      const jsonObjectMatch = unescaped.match(/\{[\s\S]*\}/);
+      const jsonObjectMatch = content.match(/\{[\s\S]*\}/);
       if (jsonObjectMatch) {
         try {
           const parsed = JSON.parse(jsonObjectMatch[0]);
-          if (Array.isArray(parsed)) {
-            return parsed;
-          }
-          if (Array.isArray(parsed.data)) {
-            return parsed.data;
-          }
-          if (Array.isArray(parsed.tasks)) {
-            return parsed.tasks;
-          }
-          if (parsed.data && Array.isArray(parsed.data.tasks)) {
-            return parsed.data.tasks;
-          }
-          if (Array.isArray(parsed.requirements)) {
-            return parsed.requirements;
-          }
-          if (Array.isArray(parsed.items)) {
-            return parsed.items;
-          }
+          if (Array.isArray(parsed)) return parsed;
+          if (parsed.data) return Array.isArray(parsed.data) ? parsed.data : [];
+          if (parsed.tasks) return parsed.tasks;
+          if (parsed.items) return parsed.items;
+          if (parsed.requirements) return parsed.requirements;
         } catch (_e) {
           // ignore parse error
         }
@@ -105,11 +212,8 @@ export class AiPersistenceService {
 
       return [];
     } catch (error) {
-      this.logger.error(
-        { error, content: content.substring(0, 500) },
-        "Failed to extract JSON from content",
-      );
-      return [];
+      this.logger.error({ error, content: content.substring(0, 500) }, "Failed to extract JSON");
+      return results.length > 0 ? results : [];
     }
   }
 

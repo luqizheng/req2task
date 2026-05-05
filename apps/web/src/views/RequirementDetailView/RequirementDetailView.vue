@@ -118,6 +118,23 @@ const handleDescriptionUpdate = async (newDescription: string) => {
   }
 };
 
+const handleFeaturePointsUpdate = async (newFeaturePoints: string) => {
+  if (!requirement.value) return;
+
+  try {
+    const updateData: UpdateRequirementDto = { featurePoints: newFeaturePoints };
+    const updated = await requirementsApi.update(requirementId, updateData);
+    requirement.value = updated;
+    toast.success("更新成功", {
+      description: "功能点已更新",
+    });
+  } catch (error) {
+    toast.error("更新失败", {
+      description: error instanceof Error ? error.message : "无法更新功能点",
+    });
+  }
+};
+
 const handleStatusChange = async (newStatus: RequirementStatus) => {
   if (!requirement.value) return;
 
@@ -342,6 +359,8 @@ onMounted(() => {
               :requirement="requirement"
               :project-id="projectId"
               @description-update="handleDescriptionUpdate"
+              @feature-points-update="handleFeaturePointsUpdate"
+              @feature-points-generated="fetchRequirement"
               @user-stories-updated="fetchRequirement"
               @tasks-updated="fetchRequirement"
             />

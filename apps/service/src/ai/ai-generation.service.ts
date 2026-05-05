@@ -445,7 +445,7 @@ ${existingReqsContent}
       ?.map((us) => `【已有】作为${us.role}，我想要${us.goal}，以便${us.benefit}`)
       .join('\n') || '无';
 
-    const content = featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
+    const content = requirement.featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
 
     const rendered = this.promptService.render("USER_STORY_GENERATION", {
       projectId,
@@ -503,7 +503,7 @@ ${existingReqsContent}
       ?.map((us) => `【已有】作为${us.role}，我想要${us.goal}，以便${us.benefit}`)
       .join('\n') || '无';
 
-    const content = featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
+    const content = requirement.featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
 
     const rendered = this.promptService.render("USER_STORY_GENERATION", {
       projectId,

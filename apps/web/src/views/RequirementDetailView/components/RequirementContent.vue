@@ -30,14 +30,22 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: "description-update", description: string): void;
+  (e: "feature-points-update", featurePoints: string): void;
   (e: "user-stories-updated"): void;
+  (e: "feature-points-generated"): void;
 }>();
 
 const isEditingDescription = ref(false);
 const editedDescription = ref(props.requirement.description || "");
+const isEditingFeaturePoints = ref(false);
+const editedFeaturePoints = ref(props.requirement.featurePoints || "");
 
 watch(() => props.requirement.description, (newDescription) => {
   editedDescription.value = newDescription || "";
+});
+
+watch(() => props.requirement.featurePoints, (newFeaturePoints) => {
+  editedFeaturePoints.value = newFeaturePoints || "";
 });
 
 const startEditingDescription = () => {
@@ -55,9 +63,46 @@ const cancelEditingDescription = () => {
   isEditingDescription.value = false;
 };
 
+const startEditingFeaturePoints = () => {
+  editedFeaturePoints.value = props.requirement.featurePoints || "";
+  isEditingFeaturePoints.value = true;
+};
+
+const saveFeaturePoints = () => {
+  emit("feature-points-update", editedFeaturePoints.value);
+  isEditingFeaturePoints.value = false;
+};
+
+const cancelEditingFeaturePoints = () => {
+  editedFeaturePoints.value = props.requirement.featurePoints || "";
+  isEditingFeaturePoints.value = false;
+};
+
+const isGeneratingFeaturePoints = ref(false);
+
+const handleGenerateFeaturePoints = async () => {
+  try {
+    isGeneratingFeaturePoints.value = true;
+    const result = await aiApi.generateFeaturePointsForRequirement(
+      props.requirement.id
+    );
+    editedFeaturePoints.value = result.featurePoints;
+    isEditingFeaturePoints.value = true;
+    toast.success("功能点已生成", {
+      description: "请检查并编辑生成的内容",
+    });
+  } catch (error) {
+    console.error("Failed to generate feature points:", error);
+    toast.error("生成功能点失败", {
+      description: error instanceof Error ? error.message : "请稍后重试",
+    });
+  } finally {
+    isGeneratingFeaturePoints.value = false;
+  }
+};
+
 const isGeneratingUserStories = ref(false);
 const showUserStoryDialog = ref(false);
-const userStoryFeaturePoints = ref("");
 const userStoryContext = ref("");
 
 const showPreviewDialog = ref(false);
@@ -71,17 +116,12 @@ const criteriaContext = ref("");
 const showCriteriaDialog = ref(false);
 
 const handleGenerateUserStories = async () => {
-  if (!userStoryFeaturePoints.value.trim()) {
-    toast.error("请输入功能点描述");
-    return;
-  }
-
   try {
     isGeneratingUserStories.value = true;
     const response = await aiApi.previewUserStories(
       props.requirement.id,
       props.projectId,
-      userStoryFeaturePoints.value,
+      undefined,
       userStoryContext.value || undefined
     );
     
@@ -89,7 +129,6 @@ const handleGenerateUserStories = async () => {
     selectedUserStoryIndices.value = new Set(response.userStories.map((_, i) => i));
     showPreviewDialog.value = true;
     showUserStoryDialog.value = false;
-    userStoryFeaturePoints.value = "";
     userStoryContext.value = "";
   } catch (error) {
     console.error("Failed to generate user stories:", error);
@@ -236,17 +275,81 @@ const handleGenerateCriteria = async () => {
       </CardContent>
     </Card>
 
-    <Card v-if="requirement.featurePoints">
+    <Card>
       <CardHeader>
-        <CardTitle class="text-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-          </svg>
-          功能点
-        </CardTitle>
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-lg flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+            </svg>
+            功能点
+          </CardTitle>
+          <div class="flex items-center gap-2">
+            <Button
+              v-if="!isEditingFeaturePoints"
+              variant="ghost"
+              size="sm"
+              class="gap-2"
+              @click="startEditingFeaturePoints"
+            >
+              {{ requirement.featurePoints ? '编辑' : '添加' }}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              class="gap-2"
+              :disabled="isGeneratingFeaturePoints"
+              @click="handleGenerateFeaturePoints"
+            >
+              <Loader2 v-if="isGeneratingFeaturePoints" class="w-4 h-4 animate-spin" />
+              <Sparkles v-else class="w-4 h-4" />
+              AI 生成
+            </Button>
+          </div>
+        </div>
       </CardHeader>
       <CardContent>
-        <pre class="whitespace-pre-wrap text-sm text-slate-700 font-mono bg-slate-50 p-3 rounded-md">{{ requirement.featurePoints }}</pre>
+        <div v-if="isEditingFeaturePoints" class="space-y-3">
+          <Textarea
+            v-model="editedFeaturePoints"
+            class="min-h-[150px] font-mono"
+            placeholder="请输入功能点描述，例如：
+1. 用户登录功能
+   - 支持账号密码登录
+   - 支持记住登录状态
+2. 用户管理功能
+   - 支持查看用户列表
+   - 支持编辑用户信息"
+          />
+          <div class="flex justify-end gap-2">
+            <button
+              class="px-4 py-2 text-sm text-slate-600 hover:text-slate-800 transition-colors"
+              @click="cancelEditingFeaturePoints"
+            >
+              取消
+            </button>
+            <button
+              class="px-4 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+              @click="saveFeaturePoints"
+            >
+              保存
+            </button>
+          </div>
+        </div>
+        <div v-else>
+          <pre
+            v-if="requirement.featurePoints"
+            class="whitespace-pre-wrap text-sm text-slate-700 font-mono bg-slate-50 p-3 rounded-md cursor-pointer hover:bg-slate-100 transition-colors"
+            @click="startEditingFeaturePoints"
+          >{{ requirement.featurePoints }}</pre>
+          <p
+            v-else
+            class="text-slate-400 italic cursor-pointer hover:text-blue-400 transition-colors"
+            @click="startEditingFeaturePoints"
+          >
+            点击添加功能点...
+          </p>
+        </div>
       </CardContent>
     </Card>
 
@@ -261,7 +364,12 @@ const handleGenerateCriteria = async () => {
           </CardTitle>
           <Dialog v-model:open="showUserStoryDialog">
             <DialogTrigger as-child>
-              <Button variant="outline" size="sm" class="gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                class="gap-2"
+                :disabled="!requirement.featurePoints"
+              >
                 <Sparkles class="w-4 h-4" />
                 AI 生成
               </Button>
@@ -270,18 +378,15 @@ const handleGenerateCriteria = async () => {
               <DialogHeader>
                 <DialogTitle>AI 生成用户故事</DialogTitle>
                 <DialogDescription>
-                  描述功能点，AI 将自动生成用户故事
+                  基于功能点描述，AI 将自动生成用户故事
                 </DialogDescription>
               </DialogHeader>
               <div class="space-y-4 py-4">
                 <div class="space-y-2">
-                  <Label for="feature-points">功能点描述 <span class="text-red-500">*</span></Label>
-                  <Textarea
-                    id="feature-points"
-                    v-model="userStoryFeaturePoints"
-                    placeholder="请描述需要实现的功能点，例如：用户登录功能，包括账号密码验证、记住登录状态..."
-                    class="min-h-[100px]"
-                  />
+                  <Label>功能点描述</Label>
+                  <div class="p-3 bg-slate-50 rounded-md text-sm text-slate-700 max-h-[200px] overflow-y-auto">
+                    <pre class="whitespace-pre-wrap font-mono">{{ requirement.featurePoints }}</pre>
+                  </div>
                 </div>
                 <div class="space-y-2">
                   <Label for="context">附加上下文（可选）</Label>
@@ -301,7 +406,7 @@ const handleGenerateCriteria = async () => {
                   取消
                 </Button>
                 <Button
-                  :disabled="isGeneratingUserStories || !userStoryFeaturePoints.trim()"
+                  :disabled="isGeneratingUserStories"
                   @click="handleGenerateUserStories"
                 >
                   <Loader2 v-if="isGeneratingUserStories" class="w-4 h-4 mr-2 animate-spin" />

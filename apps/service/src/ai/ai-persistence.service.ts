@@ -503,7 +503,7 @@ export class AiPersistenceService {
               AcceptanceCriteria,
               {
                 userStoryId: (saved as any).id,
-                criteriaType: criteria.criteriaType || CriteriaType.FUNCTIONAL,
+                criteriaType: (criteria.criteriaType as string) as CriteriaType || CriteriaType.FUNCTIONAL,
                 content: criteria.content,
                 testMethod: criteria.testMethod || null,
               },

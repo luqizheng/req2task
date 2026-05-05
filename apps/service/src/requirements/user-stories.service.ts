@@ -4,7 +4,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserStory, AcceptanceCriteria } from '@req2task/core';
+import { UserStory } from '@req2task/core';
 import {
   CreateUserStoryDto,
   UpdateUserStoryDto,
@@ -95,15 +95,15 @@ export class UserStoriesService {
       const saved = await this.userStoryRepository.save(userStory);
 
       if (draft.acceptanceCriteria && draft.acceptanceCriteria.length > 0) {
-        const criteria: Partial<AcceptanceCriteria>[] = draft.acceptanceCriteria.map(
+        const criteriaData = draft.acceptanceCriteria.map(
           (c) => ({
             userStoryId: saved.id,
-            criteriaType: (c.criteriaType as CriteriaType) || CriteriaType.FUNCTIONAL,
+            criteriaType: (c.criteriaType as string) as CriteriaType || CriteriaType.FUNCTIONAL,
             content: c.content,
             testMethod: c.testMethod || null,
           }),
         );
-        await this.acceptanceCriteriaService.createMany(criteria);
+        await this.acceptanceCriteriaService.createMany(criteriaData);
       }
 
       const withCriteria = await this.userStoryRepository.findOne({

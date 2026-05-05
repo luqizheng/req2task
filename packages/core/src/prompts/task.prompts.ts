@@ -16,12 +16,17 @@ export const taskPrompts: PromptTemplate[] = [
 - status: "todo" (固定值，初始状态)
 - conversationId: string | null (对话ID，由系统填充)
 
-注意：
+重要规则：
 1. estimatedHours为数字，如2.5表示2.5小时
 2. description可以是null
 3. status必须为"todo"
-4. 只返回JSON数组格式，不要其他内容`,
-    userPromptTemplate: `{{#if projectId}}项目ID: {{projectId}}
+4. 只返回JSON数组格式，不要其他内容
+5. 不要生成与已有任务重复的内容
+6. 每个任务要具体、可执行、无重叠`,
+    userPromptTemplate: `## 已有任务（不要重复生成）
+{{existingTasks}}
+
+{{#if projectId}}项目ID: {{projectId}}
 
 {{/if}}{{#if requirementId}}需求ID: {{requirementId}}
 
@@ -35,7 +40,7 @@ export const taskPrompts: PromptTemplate[] = [
 {{userStory}}
 {{/if}}{{#if acceptanceCriteria}}## 验收条件
 {{acceptanceCriteria}}
-{{/if}}请分解开发任务。
+{{/if}}请根据功能点生成新的开发任务，只生成不重复的任务。
 
 JSON格式：
 [
@@ -57,6 +62,7 @@ JSON格式：
       { name: 'featurePoints', type: 'string', required: true, description: '功能点列表' },
       { name: 'userStory', type: 'string', description: '用户故事' },
       { name: 'acceptanceCriteria', type: 'string', description: '验收条件' },
+      { name: 'existingTasks', type: 'string', description: '已有任务列表，用于避免重复生成' },
     ],
   },
   {
@@ -142,7 +148,8 @@ Then: 预期结果（系统应该返回的结果）
 {{/if}}{{#if context}}## 上下文信息
 {{context}}
 
-{{/if}}功能：{{feature}}
+{{/if}}## 用户故事
+{{userStory}}
 
 请生成验收条件。
 
@@ -165,7 +172,7 @@ JSON格式：
     parameters: [
       { name: 'projectId', type: 'string', description: '项目ID' },
       { name: 'context', type: 'string', description: '上下文信息' },
-      { name: 'feature', type: 'string', required: true, description: '功能描述' },
+      { name: 'userStory', type: 'string', required: true, description: '用户故事' },
     ],
   },
   {

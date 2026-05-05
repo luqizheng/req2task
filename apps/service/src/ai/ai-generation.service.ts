@@ -39,6 +39,8 @@ export class AiGenerationService {
     private userStoryRepository: Repository<UserStory>,
     @InjectRepository(AcceptanceCriteria)
     private acceptanceCriteriaRepository: Repository<AcceptanceCriteria>,
+    @InjectRepository(Task)
+    private taskRepository: Repository<Task>,
     private readonly promptService: PromptService,
     private readonly llmClient: LLmClientService,
     private readonly rawRequirementService: RawRequirementService,
@@ -484,12 +486,22 @@ ${existingReqsContent}
       throw new BadRequestException("Requirement not found");
     }
 
+    const existingTasks = await this.taskRepository.find({
+      where: { requirementId },
+      select: ['id', 'title', 'description'],
+    });
+
+    const existingTasksStr = existingTasks
+      .map((t) => `【已有】${t.title}${t.description ? ` - ${t.description}` : ''}`)
+      .join('\n') || '无';
+
     const rendered = this.promptService.render("TASK_BREAKDOWN", {
       projectId,
       requirementId,
       context,
       featurePoints,
       userStory: requirement.title,
+      existingTasks: existingTasksStr,
     });
 
     const result = await this.llmClient.generate({

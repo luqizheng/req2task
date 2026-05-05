@@ -45,9 +45,6 @@ export class GenerateTasksDto {
 }
 
 export class GenerateAcceptanceCriteriaDto {
-  @IsString()
-  userStoryId!: string;
-
   @IsOptional()
   @IsString()
   context?: string;

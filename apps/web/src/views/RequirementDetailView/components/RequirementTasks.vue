@@ -1,8 +1,9 @@
 <script setup lang="ts">
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted } from "vue";
 import type { RequirementResponseDto, TaskResponseDto } from "@req2task/dto";
 import { TaskPriority } from "@req2task/dto";
 import { tasksApi } from "@/api/tasks";
+import { requirementsApi } from "@/api/requirements";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,15 +26,10 @@ import { aiApi } from "@/api/ai";
 import { toast } from "vue-sonner";
 
 const props = defineProps<{
-  requirement: RequirementResponseDto;
-  projectId: string;
-  refreshKey?: number;
+  requirementId: string;
 }>();
 
-const emit = defineEmits<{
-  (e: "tasks-updated"): void;
-}>();
-
+const requirement = ref<RequirementResponseDto | null>(null);
 const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
 const showTaskDialog = ref(false);
@@ -41,10 +37,19 @@ const isGeneratingTasks = ref(false);
 const taskFeaturePoints = ref("");
 const taskContext = ref("");
 
+const fetchRequirement = async () => {
+  try {
+    requirement.value = await requirementsApi.getById(props.requirementId);
+  } catch (error) {
+    console.error("Failed to fetch requirement:", error);
+    requirement.value = null;
+  }
+};
+
 const fetchTasks = async () => {
   try {
     loading.value = true;
-    const response = await tasksApi.getListByRequirement(props.requirement.id);
+    const response = await tasksApi.getListByRequirement(props.requirementId);
     tasks.value = response.items || [];
   } catch (error) {
     console.error("Failed to fetch tasks:", error);
@@ -54,14 +59,8 @@ const fetchTasks = async () => {
   }
 };
 
-watch(() => props.refreshKey, () => {
-  if (props.refreshKey) {
-    fetchTasks();
-  }
-});
-
 const handleGenerateTasks = async () => {
-  const featurePoints = taskFeaturePoints.value.trim() || props.requirement.featurePoints;
+  const featurePoints = taskFeaturePoints.value.trim() || requirement.value?.featurePoints;
 
   if (!featurePoints) {
     toast.error("功能点为空，请先生成功能点或手动输入");
@@ -71,14 +70,13 @@ const handleGenerateTasks = async () => {
   try {
     isGeneratingTasks.value = true;
     const response = await aiApi.generateTasksForRequirement(
-      props.requirement.id,
-      props.projectId,
+      props.requirementId,
+      requirement.value?.projectId || "",
       featurePoints,
       taskContext.value || undefined
     );
     
     toast.success(`成功生成 ${response.tasks.length} 个任务`);
-    emit("tasks-updated");
     await fetchTasks();
     showTaskDialog.value = false;
     taskFeaturePoints.value = "";
@@ -94,7 +92,15 @@ const handleGenerateTasks = async () => {
 };
 
 onMounted(() => {
+  fetchRequirement();
   fetchTasks();
+});
+
+defineExpose({
+  reload: () => {
+    fetchRequirement();
+    fetchTasks();
+  },
 });
 </script>
 

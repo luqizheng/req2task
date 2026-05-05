@@ -2,8 +2,10 @@
 import { ref, onMounted, computed } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { projectsApi } from "@/api/projects";
+import { requirementsApi } from "@/api/requirements";
 import type { ProjectResponseDto, ProjectProgressDto } from "@req2task/dto";
-import { ProjectStatus } from "@req2task/dto";
+import { ProjectStatus, Priority, RequirementSource } from "@req2task/dto";
+import CreateRequirementDialog from "@/components/requirements/CreateRequirementDialog.vue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
@@ -39,6 +41,8 @@ const progress = ref<ProjectProgressDto | null>(null);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const isRefreshing = ref(false);
+const isCreateRequirementDialogOpen = ref(false);
+const isCreating = ref(false);
 
 const statusConfig: Record<ProjectStatus, { label: string; class: string; dot: string }> = {
   [ProjectStatus.PLANNING]: {
@@ -119,8 +123,31 @@ const createRawRequirement = () => {
   router.push(`/projects/${projectId}/raw-requirements/new`);
 };
 
-const createRequirement = () => {
-  router.push(`/projects/${projectId}/requirements/create`);
+const openCreateRequirementDialog = () => {
+  isCreateRequirementDialogOpen.value = true;
+};
+
+const handleCreateRequirement = async (data: {
+  title: string;
+  description: string;
+  priority: Priority;
+  storyPoints: number;
+}) => {
+  try {
+    isCreating.value = true;
+    await requirementsApi.createByProject(projectId, {
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      storyPoints: data.storyPoints,
+      source: RequirementSource.MANUAL,
+    });
+    await refresh();
+  } catch (err) {
+    console.error("创建需求失败:", err);
+  } finally {
+    isCreating.value = false;
+  }
 };
 
 onMounted(() => {
@@ -208,7 +235,7 @@ onMounted(() => {
               <Button
                 variant="outline"
                 size="sm"
-                @click="createRequirement"
+                @click="openCreateRequirementDialog"
               >
                 <Plus class="w-4 h-4 mr-2" />
                 新建需求
@@ -293,6 +320,13 @@ onMounted(() => {
             <VectorRebuildCard :project-id="projectId" />
           </TabsContent>
         </Tabs>
+
+        <CreateRequirementDialog
+          :open="isCreateRequirementDialogOpen"
+          :project-id="projectId"
+          @update:open="isCreateRequirementDialogOpen = $event"
+          @confirm="handleCreateRequirement"
+        />
       </template>
     </div>
   </div>

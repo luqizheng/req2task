@@ -19,6 +19,7 @@ import {
   UpdateUserStoryDto,
   UserStoryResponseDto,
   GenerateUserStoriesDto,
+  SaveUserStoriesDto,
 } from '@req2task/dto';
 import { ApiResponse } from '../common';
 import { AiGenerationService } from '../ai/ai-generation.service';
@@ -62,6 +63,58 @@ export class UserStoriesController {
   async deleteUserStory(@Param('id') id: string): Promise<ApiResponse<null>> {
     await this.userStoriesService.delete(id);
     return { code: 0, message: '删除成功' };
+  }
+
+  @Post('requirements/:requirementId/user-stories/preview')
+  @HttpCode(HttpStatus.OK)
+  async previewUserStories(
+    @Param('requirementId') requirementId: string,
+    @Body() dto: GenerateUserStoriesDto,
+    @Query('projectId') projectId: string,
+  ): Promise<ApiResponse<{
+    userStories: Array<{
+      role: string;
+      goal: string;
+      benefit: string;
+      storyPoints: number;
+      acceptanceCriteria?: Array<{
+        criteriaType: string;
+        content: string;
+        testMethod?: string;
+      }>;
+    }>;
+    rawContent: string;
+  }>> {
+    const result = await this.aiGenerationService.generateUserStoriesOnly(
+      requirementId,
+      projectId,
+      dto.context,
+      dto.featurePoints,
+    );
+
+    return {
+      code: 0,
+      data: result,
+    };
+  }
+
+  @Post('requirements/:requirementId/user-stories/save')
+  @HttpCode(HttpStatus.CREATED)
+  async saveUserStories(
+    @Param('requirementId') requirementId: string,
+    @Body() dto: SaveUserStoriesDto,
+  ): Promise<ApiResponse<{ userStories: UserStoryResponseDto[] }>> {
+    const savedUserStories = await this.userStoriesService.createFromDrafts(
+      requirementId,
+      dto.userStories,
+    );
+
+    return {
+      code: 0,
+      data: {
+        userStories: savedUserStories,
+      },
+    };
   }
 
   @Post('requirements/:requirementId/user-stories/generate')

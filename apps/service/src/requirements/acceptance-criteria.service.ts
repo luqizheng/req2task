@@ -32,6 +32,11 @@ export class AcceptanceCriteriaService {
     return this.toResponseDto(saved);
   }
 
+  async createMany(criteriaList: Partial<AcceptanceCriteria>[]): Promise<void> {
+    if (!criteriaList || criteriaList.length === 0) return;
+    await this.acceptanceCriteriaRepository.save(criteriaList as AcceptanceCriteria[]);
+  }
+
   async findByUserStory(userStoryId: string): Promise<AcceptanceCriteriaResponseDto[]> {
     const criteriaList = await this.acceptanceCriteriaRepository.find({
       where: { userStoryId },

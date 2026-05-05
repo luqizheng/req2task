@@ -62,6 +62,18 @@ export class RequirementsService {
     return this.create(dto, createdById);
   }
 
+  async createByProject(
+    projectId: string,
+    createDto: RequirementDto,
+    createdById: string,
+  ): Promise<RequirementResponseDto> {
+    const entityKey = await this.entityKeyService.generateEntityKey(
+      projectId,
+      EntityKeyType.REQ,
+    );
+    return this.create(createDto, createdById, entityKey[0], projectId);
+  }
+
   private async create(
     createDto: RequirementDto,
     createdById: string,

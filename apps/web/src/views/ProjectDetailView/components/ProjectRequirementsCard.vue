@@ -2,7 +2,7 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { RequirementResponseDto } from "@req2task/dto";
-import { RequirementStatus, Priority } from "@req2task/dto";
+import { RequirementStatus, Priority, RequirementSource } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,7 @@ import {
   RefreshCw,
 } from "lucide-vue-next";
 import { requirementsApi } from "@/api/requirements";
+import CreateRequirementDialog from "@/components/requirements/CreateRequirementDialog.vue";
 
 const props = defineProps<{
   projectId: string;
@@ -24,6 +25,7 @@ const requirements = ref<RequirementResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const isRefreshing = ref(false);
+const isCreateDialogOpen = ref(false);
 
 const statusConfig: Record<RequirementStatus, { label: string; class: string }> = {
   [RequirementStatus.DRAFT]: { label: "草稿", class: "bg-slate-100 text-slate-700" },
@@ -65,8 +67,28 @@ const goToRequirement = (requirementId: string) => {
   router.push(`/projects/${props.projectId}/requirements/${requirementId}`);
 };
 
-const goToCreate = () => {
-  router.push(`/projects/${props.projectId}/requirements/create`);
+const openCreateDialog = () => {
+  isCreateDialogOpen.value = true;
+};
+
+const handleCreateRequirement = async (data: {
+  title: string;
+  description: string;
+  priority: Priority;
+  storyPoints: number;
+}) => {
+  try {
+    await requirementsApi.createByProject(props.projectId, {
+      title: data.title,
+      description: data.description,
+      priority: data.priority,
+      storyPoints: data.storyPoints,
+      source: RequirementSource.MANUAL,
+    });
+    await fetchRequirements();
+  } catch (err) {
+    console.error("创建需求失败:", err);
+  }
 };
 
 onMounted(() => {
@@ -98,7 +120,7 @@ defineExpose({
           >
             <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': isRefreshing }" />
           </Button>
-          <Button size="sm" @click="goToCreate">
+          <Button size="sm" @click="openCreateDialog">
             <Plus class="w-4 h-4 mr-2" />
             新建需求
           </Button>
@@ -124,7 +146,7 @@ defineExpose({
         <FileText class="w-12 h-12 text-muted-foreground/30 mx-auto mb-4" />
         <p class="text-muted-foreground mb-2">暂无需求</p>
         <p class="text-muted-foreground/60 text-sm mb-4">开始创建项目需求</p>
-        <Button size="sm" @click="goToCreate">
+        <Button size="sm" @click="openCreateDialog">
           <Plus class="w-4 h-4 mr-2" />
           新建需求
         </Button>
@@ -164,4 +186,11 @@ defineExpose({
       </div>
     </CardContent>
   </Card>
+
+  <CreateRequirementDialog
+    :open="isCreateDialogOpen"
+    :project-id="projectId"
+    @update:open="isCreateDialogOpen = $event"
+    @confirm="handleCreateRequirement"
+  />
 </template>

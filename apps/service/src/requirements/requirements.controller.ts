@@ -68,6 +68,18 @@ export class RequirementsController {
     return { code: 0, data: result };
   }
 
+  @Post("requirements/projects/:projectId/requirements")
+  async createByProject(
+    @Param("projectId") projectId: string,
+    @Body() createDto: RequirementDto,
+    @Request() req: AuthenticatedRequest,
+  ): Promise<ApiResponse<RequirementResponseDto>> {
+    const user = req.user as { id?: string; userId?: string };
+    const userId = user.id || user.userId;
+    const result = await this.requirementsService.createByProject(projectId, createDto, userId!);
+    return { code: 0, data: result };
+  }
+
   @Get("requirements/modules/:moduleId/requirements")
   async findByModule(
     @Param("moduleId") moduleId: string,

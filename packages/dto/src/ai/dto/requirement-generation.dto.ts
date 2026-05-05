@@ -4,7 +4,10 @@ import {
   IsArray,
   IsEnum,
   IsDateString,
+  ValidateNested,
+  IsNumber,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { Priority, CollectionType } from "../../enums";
 import { QuestionAndAnswerDto } from "../../conversation/dto";
 import { RawRequirementQADto } from "../../raw-requirement";
@@ -33,6 +36,47 @@ export class GenerateUserStoriesDto {
   @IsOptional()
   @IsString()
   context?: string;
+}
+
+export class UserStoryDraftDto {
+  @IsString()
+  role!: string;
+
+  @IsString()
+  goal!: string;
+
+  @IsString()
+  benefit!: string;
+
+  @IsOptional()
+  @IsNumber()
+  storyPoints?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => AcceptanceCriteriaDraftDto)
+  acceptanceCriteria?: AcceptanceCriteriaDraftDto[];
+}
+
+export class AcceptanceCriteriaDraftDto {
+  @IsString()
+  content!: string;
+
+  @IsOptional()
+  @IsString()
+  criteriaType?: string;
+
+  @IsOptional()
+  @IsString()
+  testMethod?: string;
+}
+
+export class SaveUserStoriesDto {
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UserStoryDraftDto)
+  userStories!: UserStoryDraftDto[];
 }
 
 export class GenerateTasksDto {

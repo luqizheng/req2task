@@ -73,6 +73,9 @@ export const requirementsApi = {
   create: (data: RequirementDto) =>
     api.post<RequirementResponseDto>(`/requirements`, data),
 
+  createByProject: (projectId: string, data: RequirementDto) =>
+    api.post<RequirementResponseDto>(`/requirements/projects/${projectId}/requirements`, data),
+
   batchCreate: (requirements: RequirementDto[]) =>
     api.post<RequirementResponseDto[]>(`/requirements/batch`, { requirements }),
 

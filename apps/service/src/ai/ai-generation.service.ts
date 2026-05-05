@@ -471,6 +471,63 @@ ${existingReqsContent}
     return { userStories, rawContent: result.content };
   }
 
+  async generateUserStoriesOnly(
+    requirementId: string,
+    projectId: string,
+    context?: string,
+    featurePoints?: string,
+  ): Promise<{
+    userStories: Array<{
+      role: string;
+      goal: string;
+      benefit: string;
+      storyPoints: number;
+      acceptanceCriteria?: Array<{
+        criteriaType: string;
+        content: string;
+        testMethod?: string;
+      }>;
+    }>;
+    rawContent: string;
+  }> {
+    const requirement = await this.requirementRepository.findOne({
+      where: { id: requirementId },
+      relations: ['userStories'],
+    });
+
+    if (!requirement) {
+      throw new BadRequestException("Requirement not found");
+    }
+
+    const existingUserStories = requirement.userStories
+      ?.map((us) => `【已有】作为${us.role}，我想要${us.goal}，以便${us.benefit}`)
+      .join('\n') || '无';
+
+    const content = featurePoints || [requirement.title, requirement.description].filter(Boolean).join("\n");
+
+    const rendered = this.promptService.render("USER_STORY_GENERATION", {
+      projectId,
+      context,
+      requirementTitle: requirement.title,
+      requirementDescription: requirement.description,
+      featurePoints: content,
+      existingUserStories,
+    });
+
+    const result = await this.llmClient.generate({
+      systemPrompt: rendered.systemPrompt,
+      userPrompt: rendered.userPrompt,
+      temperature: rendered.temperature,
+      maxTokens: rendered.maxTokens,
+    });
+
+    const userStories = this.persistenceService.extractUserStories(
+      result.content,
+    );
+
+    return { userStories, rawContent: result.content };
+  }
+
   async generateTasks(
     requirementId: string,
     featurePoints: string,

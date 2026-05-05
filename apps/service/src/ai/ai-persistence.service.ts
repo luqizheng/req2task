@@ -360,6 +360,38 @@ export class AiPersistenceService {
     }
   }
 
+  extractUserStories(content: string): Array<{
+    role: string;
+    goal: string;
+    benefit: string;
+    storyPoints: number;
+    acceptanceCriteria?: Array<{
+      criteriaType: string;
+      content: string;
+      testMethod?: string;
+    }>;
+  }> {
+    const data = this.extractJsonArray(content);
+    if (!data || data.length === 0) {
+      this.logger.warn("No user stories found in AI response");
+      return [];
+    }
+
+    return data.map((item) => ({
+      role: item.role || "",
+      goal: item.goal || "",
+      benefit: item.benefit || "",
+      storyPoints: item.storyPoints || 0,
+      acceptanceCriteria: item.acceptanceCriteria
+        ? item.acceptanceCriteria.map((c: any) => ({
+            criteriaType: c.criteriaType || "functional",
+            content: c.content || "",
+            testMethod: c.testMethod || null,
+          }))
+        : undefined,
+    }));
+  }
+
   async persistUserStories(
     content: string,
     requirementId: string,
@@ -425,6 +457,73 @@ export class AiPersistenceService {
     } catch (error) {
       this.logger.error({ error }, "Failed to persist user stories");
       return [];
+    }
+  }
+
+  async persistSelectedUserStories(
+    userStories: Array<{
+      requirementId: string;
+      role: string;
+      goal: string;
+      benefit: string;
+      storyPoints: number;
+      acceptanceCriteria?: Array<{
+        criteriaType: string;
+        content: string;
+        testMethod?: string;
+      }>;
+    }>,
+  ): Promise<UserStory[]> {
+    if (!userStories || userStories.length === 0) {
+      return [];
+    }
+
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const savedUserStories: UserStory[] = [];
+
+      for (const item of userStories) {
+        const userStory = queryRunner.manager.create(UserStory, {
+          requirementId: item.requirementId,
+          role: item.role,
+          goal: item.goal,
+          benefit: item.benefit,
+          storyPoints: item.storyPoints || 0,
+        });
+
+        const saved = await queryRunner.manager.save(userStory);
+        savedUserStories.push(saved);
+
+        if (item.acceptanceCriteria && item.acceptanceCriteria.length > 0) {
+          for (const criteria of item.acceptanceCriteria) {
+            const acceptanceCriteria = queryRunner.manager.create(
+              AcceptanceCriteria,
+              {
+                userStoryId: (saved as any).id,
+                criteriaType: criteria.criteriaType || CriteriaType.FUNCTIONAL,
+                content: criteria.content,
+                testMethod: criteria.testMethod || null,
+              },
+            );
+            await queryRunner.manager.save(acceptanceCriteria);
+          }
+        }
+      }
+
+      await queryRunner.commitTransaction();
+      this.logger.log(
+        `Created ${savedUserStories.length} selected user stories`,
+      );
+
+      return savedUserStories;
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      throw error;
+    } finally {
+      await queryRunner.release();
     }
   }
 

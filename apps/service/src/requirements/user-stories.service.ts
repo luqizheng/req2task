@@ -4,11 +4,13 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { UserStory } from '@req2task/core';
+import { UserStory, AcceptanceCriteria } from '@req2task/core';
 import {
   CreateUserStoryDto,
   UpdateUserStoryDto,
   UserStoryResponseDto,
+  UserStoryDraftDto,
+  CriteriaType,
 } from '@req2task/dto';
 import { AcceptanceCriteriaService } from './acceptance-criteria.service';
 
@@ -73,6 +75,48 @@ export class UserStoriesService {
       throw new NotFoundException(`UserStory with ID ${id} not found`);
     }
     await this.userStoryRepository.remove(userStory);
+  }
+
+  async createFromDrafts(
+    requirementId: string,
+    drafts: UserStoryDraftDto[],
+  ): Promise<UserStoryResponseDto[]> {
+    const results: UserStoryResponseDto[] = [];
+
+    for (const draft of drafts) {
+      const userStory = this.userStoryRepository.create({
+        requirementId,
+        role: draft.role,
+        goal: draft.goal,
+        benefit: draft.benefit,
+        storyPoints: draft.storyPoints || 0,
+      });
+
+      const saved = await this.userStoryRepository.save(userStory);
+
+      if (draft.acceptanceCriteria && draft.acceptanceCriteria.length > 0) {
+        const criteria: Partial<AcceptanceCriteria>[] = draft.acceptanceCriteria.map(
+          (c) => ({
+            userStoryId: saved.id,
+            criteriaType: (c.criteriaType as CriteriaType) || CriteriaType.FUNCTIONAL,
+            content: c.content,
+            testMethod: c.testMethod || null,
+          }),
+        );
+        await this.acceptanceCriteriaService.createMany(criteria);
+      }
+
+      const withCriteria = await this.userStoryRepository.findOne({
+        where: { id: saved.id },
+        relations: ['acceptanceCriteria'],
+      });
+
+      if (withCriteria) {
+        results.push(this.toResponseDto(withCriteria));
+      }
+    }
+
+    return results;
   }
 
   async findById(id: string): Promise<UserStory> {

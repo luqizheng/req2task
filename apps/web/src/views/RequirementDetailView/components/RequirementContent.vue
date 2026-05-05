@@ -4,7 +4,6 @@ import type { RequirementResponseDto } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,9 +17,11 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Circle, ListTodo, Sparkles, Loader2 } from "lucide-vue-next";
-import { aiApi, type GeneratedUserStory } from "@/api/ai";
+import { ListTodo, Sparkles, Loader2 } from "lucide-vue-next";
+import { aiApi, type UserStoryDraft } from "@/api/ai";
 import { toast } from "vue-sonner";
+import UserStoryCard from "./UserStoryCard.vue";
+import UserStoryPreviewCard from "./UserStoryPreviewCard.vue";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
@@ -58,7 +59,11 @@ const isGeneratingUserStories = ref(false);
 const showUserStoryDialog = ref(false);
 const userStoryFeaturePoints = ref("");
 const userStoryContext = ref("");
-const generatedUserStories = ref<GeneratedUserStory[]>([]);
+
+const showPreviewDialog = ref(false);
+const previewUserStories = ref<UserStoryDraft[]>([]);
+const selectedUserStoryIndices = ref<Set<number>>(new Set());
+const isSavingUserStories = ref(false);
 
 const isGeneratingCriteria = ref<string | null>(null);
 const criteriaDialogUserStoryId = ref<string | null>(null);
@@ -73,16 +78,16 @@ const handleGenerateUserStories = async () => {
 
   try {
     isGeneratingUserStories.value = true;
-    const response = await aiApi.generateUserStoriesForRequirement(
+    const response = await aiApi.previewUserStories(
       props.requirement.id,
       props.projectId,
       userStoryFeaturePoints.value,
       userStoryContext.value || undefined
     );
     
-    generatedUserStories.value = response.userStories;
-    toast.success(`成功生成 ${response.userStories.length} 个用户故事`);
-    emit("user-stories-updated");
+    previewUserStories.value = response.userStories;
+    selectedUserStoryIndices.value = new Set(response.userStories.map((_, i) => i));
+    showPreviewDialog.value = true;
     showUserStoryDialog.value = false;
     userStoryFeaturePoints.value = "";
     userStoryContext.value = "";
@@ -94,6 +99,56 @@ const handleGenerateUserStories = async () => {
   } finally {
     isGeneratingUserStories.value = false;
   }
+};
+
+const toggleUserStorySelection = (index: number) => {
+  if (selectedUserStoryIndices.value.has(index)) {
+    selectedUserStoryIndices.value.delete(index);
+  } else {
+    selectedUserStoryIndices.value.add(index);
+  }
+  selectedUserStoryIndices.value = new Set(selectedUserStoryIndices.value);
+};
+
+const selectAllUserStories = () => {
+  selectedUserStoryIndices.value = new Set(previewUserStories.value.map((_, i) => i));
+};
+
+const deselectAllUserStories = () => {
+  selectedUserStoryIndices.value = new Set();
+};
+
+const handleSaveSelectedUserStories = async () => {
+  if (selectedUserStoryIndices.value.size === 0) {
+    toast.error("请至少选择一个用户故事");
+    return;
+  }
+
+  try {
+    isSavingUserStories.value = true;
+    const storiesToSave = Array.from(selectedUserStoryIndices.value).map(
+      (index) => previewUserStories.value[index]
+    );
+    const response = await aiApi.saveUserStories(props.requirement.id, storiesToSave);
+    toast.success(`成功保存 ${response.userStories.length} 个用户故事`);
+    emit("user-stories-updated");
+    showPreviewDialog.value = false;
+    previewUserStories.value = [];
+    selectedUserStoryIndices.value = new Set();
+  } catch (error) {
+    console.error("Failed to save user stories:", error);
+    toast.error("保存用户故事失败", {
+      description: error instanceof Error ? error.message : "请稍后重试",
+    });
+  } finally {
+    isSavingUserStories.value = false;
+  }
+};
+
+const closePreviewDialog = () => {
+  showPreviewDialog.value = false;
+  previewUserStories.value = [];
+  selectedUserStoryIndices.value = new Set();
 };
 
 const openCriteriaDialog = (userStoryId: string) => {
@@ -127,26 +182,6 @@ const handleGenerateCriteria = async () => {
   }
 };
 
-const criteriaTypeLabels: Record<string, string> = {
-  functional: "功能验收",
-  performance: "性能验收",
-  security: "安全验收",
-  usability: "易用性验收",
-  compatibility: "兼容性验收",
-  reliability: "可靠性验收",
-};
-
-const getCriteriaTypeColor = (type: string) => {
-  const colors: Record<string, string> = {
-    functional: "bg-blue-100 text-blue-700 border-blue-300",
-    performance: "bg-purple-100 text-purple-700 border-purple-300",
-    security: "bg-red-100 text-red-700 border-red-300",
-    usability: "bg-green-100 text-green-700 border-green-300",
-    compatibility: "bg-orange-100 text-orange-700 border-orange-300",
-    reliability: "bg-slate-100 text-slate-700 border-slate-300",
-  };
-  return colors[type] || "bg-slate-100 text-slate-700 border-slate-300";
-};
 </script>
 
 <template>
@@ -278,79 +313,13 @@ const getCriteriaTypeColor = (type: string) => {
         </div>
       </CardHeader>
       <CardContent v-if="requirement.userStories && requirement.userStories.length > 0" class="space-y-4">
-        <div
+        <UserStoryCard
           v-for="story in requirement.userStories"
           :key="story.id"
-          class="p-4 border rounded-lg space-y-3"
-        >
-          <div class="flex items-start gap-3">
-            <div class="flex-1">
-              <div class="flex items-center gap-2 mb-2">
-                <Badge variant="outline" class="bg-purple-50">
-                  角色: {{ story.role }}
-                </Badge>
-                <Badge variant="outline" class="bg-blue-50">
-                  {{ story.storyPoints }} SP
-                </Badge>
-              </div>
-              <p class="text-slate-800">
-                <span class="font-medium">作为</span> {{ story.role }}
-                <span class="font-medium">，我想要</span> {{ story.goal }}
-                <span class="font-medium">，以便于</span> {{ story.benefit }}
-              </p>
-            </div>
-          </div>
-
-          <div v-if="story.acceptanceCriteria && story.acceptanceCriteria.length > 0">
-            <Separator class="my-3" />
-            <div class="flex items-center justify-between mb-2">
-              <p class="text-sm font-medium text-slate-700">验收条件:</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                class="gap-1 text-xs text-blue-600 hover:text-blue-700"
-                @click="openCriteriaDialog(story.id)"
-              >
-                <Sparkles class="w-3 h-3" />
-                AI 补充
-              </Button>
-            </div>
-            <ul class="space-y-2">
-              <li
-                v-for="criteria in story.acceptanceCriteria"
-                :key="criteria.id"
-                class="flex items-start gap-2"
-              >
-                <CheckCircle2
-                  class="w-4 h-4 mt-0.5 flex-shrink-0 text-slate-300"
-                />
-                <div class="flex-1">
-                  <div class="flex items-center gap-2">
-                    <span class="text-sm text-slate-700">{{ criteria.content }}</span>
-                    <Badge
-                      :class="cn('text-xs', getCriteriaTypeColor(criteria.criteriaType))"
-                      variant="outline"
-                    >
-                      {{ criteriaTypeLabels[criteria.criteriaType] || criteria.criteriaType }}
-                    </Badge>
-                  </div>
-                </div>
-              </li>
-            </ul>
-          </div>
-          <div v-else class="mt-3">
-            <Separator class="my-3" />
-            <Button
-              variant="outline"
-              size="sm"
-              class="gap-2"
-              @click="openCriteriaDialog(story.id)"
-            >
-              <Sparkles class="w-4 h-4" />
-              AI 生成验收条件
-            </Button>
-          </div>
-        </div>
+          :story="story"
+          :is-generating-criteria="isGeneratingCriteria === story.id"
+          @generate-criteria="openCriteriaDialog"
+        />
       </CardContent>
       <CardContent v-else>
         <div class="text-center py-8 text-slate-400">
@@ -395,6 +364,50 @@ const getCriteriaTypeColor = (type: string) => {
             >
               <Loader2 v-if="isGeneratingCriteria !== null" class="w-4 h-4 mr-2 animate-spin" />
               {{ isGeneratingCriteria !== null ? '生成中...' : '生成验收条件' }}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog v-model:open="showPreviewDialog">
+        <DialogContent class="max-w-2xl max-h-[80vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle>预览用户故事</DialogTitle>
+            <DialogDescription>
+              请选择要保存的用户故事，已选 {{ selectedUserStoryIndices.size }} 个
+            </DialogDescription>
+          </DialogHeader>
+          <div class="flex gap-2 mb-4">
+            <Button variant="outline" size="sm" @click="selectAllUserStories">
+              全选
+            </Button>
+            <Button variant="outline" size="sm" @click="deselectAllUserStories">
+              取消全选
+            </Button>
+          </div>
+          <div class="flex-1 overflow-y-auto space-y-3">
+            <UserStoryPreviewCard
+              v-for="(story, index) in previewUserStories"
+              :key="index"
+              :story="story"
+              :selected="selectedUserStoryIndices.has(index)"
+              @toggle="toggleUserStorySelection(index)"
+            />
+          </div>
+          <DialogFooter class="mt-4">
+            <Button
+              variant="outline"
+              :disabled="isSavingUserStories"
+              @click="closePreviewDialog"
+            >
+              取消
+            </Button>
+            <Button
+              :disabled="isSavingUserStories || selectedUserStoryIndices.size === 0"
+              @click="handleSaveSelectedUserStories"
+            >
+              <Loader2 v-if="isSavingUserStories" class="w-4 h-4 mr-2 animate-spin" />
+              {{ isSavingUserStories ? '保存中...' : `保存所选 (${selectedUserStoryIndices.size})` }}
             </Button>
           </DialogFooter>
         </DialogContent>

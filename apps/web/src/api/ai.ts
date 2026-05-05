@@ -76,6 +76,18 @@ export interface GeneratedAcceptanceCriteria {
   createdAt: string;
 }
 
+export interface UserStoryDraft {
+  role: string;
+  goal: string;
+  benefit: string;
+  storyPoints: number;
+  acceptanceCriteria?: Array<{
+    criteriaType: string;
+    content: string;
+    testMethod?: string;
+  }>;
+}
+
 export const aiApi = {
   chat: (data: ChatRequestDto) => {
     return api.post<ChatResponse>('/ai/chat', data);
@@ -122,6 +134,29 @@ export const aiApi = {
       `/requirements/${requirementId}/user-stories/generate`,
       { featurePoints, context },
       { params: { projectId } }
+    );
+  },
+
+  previewUserStories: (
+    requirementId: string,
+    projectId: string,
+    featurePoints?: string,
+    context?: string
+  ) => {
+    return api.post<{ userStories: UserStoryDraft[]; rawContent: string }>(
+      `/requirements/${requirementId}/user-stories/preview`,
+      { featurePoints, context },
+      { params: { projectId } }
+    );
+  },
+
+  saveUserStories: (
+    requirementId: string,
+    userStories: UserStoryDraft[]
+  ) => {
+    return api.post<{ userStories: GeneratedUserStory[] }>(
+      `/requirements/${requirementId}/user-stories/save`,
+      { userStories }
     );
   },
 

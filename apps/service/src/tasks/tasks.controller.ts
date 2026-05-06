@@ -9,9 +9,12 @@ import {
   Query,
   UseGuards,
   Request,
+  Res,
   HttpCode,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
+import { Response } from 'express';
 import { AuthGuard } from '@nestjs/passport';
 import { TasksService, MarkReplacedDto, MarkCancelledDto } from './tasks.service';
 import { TaskKanbanService } from './task-kanban.service';
@@ -43,6 +46,8 @@ interface AuthenticatedRequest {
 @Controller()
 @UseGuards(AuthGuard('jwt'))
 export class TasksController {
+  private readonly logger = new Logger(TasksController.name);
+
   constructor(
     private readonly tasksService: TasksService,
     private readonly taskKanbanService: TaskKanbanService,
@@ -66,17 +71,23 @@ export class TasksController {
   }
 
   @Post('requirements/:requirementId/ai-generate-tasks')
-  @HttpCode(HttpStatus.CREATED)
+  @HttpCode(HttpStatus.OK)
   async generateTasks(
     @Param('requirementId') requirementId: string,
     @Body() dto: GenerateTasksDto,
     @Query('projectId') projectId: string,
     @Request() req: AuthenticatedRequest,
+    @Res() res: Response,
   ) {
     const user = req.user as { id?: string; userId?: string };
     const createdById = user?.id || 'system';
 
-    const result = await this.aiGenerationService.generateTasks(
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const stream$ = this.aiGenerationService.streamGenerateTasks(
       requirementId,
       dto.featurePoints,
       projectId,
@@ -84,23 +95,20 @@ export class TasksController {
       dto.context,
     );
 
-    return {
-      code: 0,
-      data: {
-        tasks: result.tasks.map((t) => ({
-          id: t.id,
-          taskNo: t.taskNo,
-          title: t.title,
-          description: t.description,
-          requirementId: t.requirementId,
-          status: t.status,
-          priority: t.priority,
-          estimatedHours: t.estimatedHours,
-          createdAt: t.createdAt,
-        })),
-        rawContent: result.rawContent,
+    stream$.subscribe({
+      next: (chunk) => {
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
       },
-    };
+      error: (error: Error) => {
+        this.logger.error({ error }, 'SSE stream error');
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      },
+      complete: () => {
+        res.write('data: [DONE]\n\n');
+        res.end();
+      },
+    });
   }
 
   @Get('requirements/:requirementId/tasks')

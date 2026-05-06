@@ -38,6 +38,7 @@ export interface DoneEvent {
   followUpQuestions?: string[];
   keyElements?: string[];
   questions?: AiQuestion[];
+  extractedData?: Record<string, unknown>;
 }
 
 export interface ErrorEvent {

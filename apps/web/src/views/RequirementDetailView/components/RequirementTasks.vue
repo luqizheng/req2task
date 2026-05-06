@@ -10,9 +10,10 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 import { Sparkles, Loader2, Check, X } from "lucide-vue-next";
-import { aiApi, type GeneratedTask } from "@/api/ai";
+import type { GeneratedTask } from "@/api/ai";
+import { useSSEStream } from "@/utils/useSSEStream";
 import { toast } from "vue-sonner";
-
+import { useJsonStream } from "json-stream-handler";
 const props = defineProps<{
   requirementId: string;
   projectId: string;
@@ -22,8 +23,22 @@ const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
 const isGeneratingTasks = ref(false);
 const unsavedGeneratedTasks = ref<GeneratedTask[]>([]);
-const savingTaskIds = ref<Set<string>>(new Set());
+const savingTaskIds = ref(new Set<string>());
 const requirement = ref<RequirementResponseDto | null>(null);
+
+const jsonStream = useJsonStream([
+  {
+    trigger: "*",
+    onArrayItem: (item) => {
+     
+      const task = item as TaskResponseDto;
+      tasks.value = [...tasks.value, task as TaskResponseDto];
+    },
+  },
+]);
+const sseStream = useSSEStream({
+  url: `/api/requirements/${props.requirementId}/ai-generate-tasks?projectId=${props.projectId}`,
+});
 
 const fetchTasks = async () => {
   try {
@@ -45,14 +60,32 @@ const fetchTasks = async () => {
 const handleGenerateTasks = async () => {
   try {
     isGeneratingTasks.value = true;
-    const response = await aiApi.generateTasksForRequirement(
-      props.requirementId,
-      props.projectId,
-      requirement.value?.featurePoints || undefined,
-    );
+    unsavedGeneratedTasks.value = [];
 
-    unsavedGeneratedTasks.value = response.tasks;
-    toast.success(`成功生成 ${response.tasks.length} 个任务`);
+    await sseStream.submitStream(
+      { featurePoints: requirement.value?.featurePoints },
+      {
+        onContent: (data) => {
+          jsonStream.feed(data || "");
+        },
+        onDone: (event) => {
+          const data = event.extractedData as
+            | { tasks?: GeneratedTask[] }
+            | undefined;
+          if (data?.tasks) {
+            unsavedGeneratedTasks.value = data.tasks;
+          }
+          toast.success(
+            `成功生成 ${unsavedGeneratedTasks.value.length} 个任务`,
+          );
+        },
+        onError: (error) => {
+          toast.error("生成任务失败", {
+            description: error.message || "请稍后重试",
+          });
+        },
+      },
+    );
   } catch (error) {
     console.error("Failed to generate tasks:", error);
     toast.error("生成任务失败", {
@@ -64,17 +97,19 @@ const handleGenerateTasks = async () => {
 };
 
 const handleKeepTask = (task: GeneratedTask) => {
-  unsavedGeneratedTasks.value = unsavedGeneratedTasks.value.filter(t => t.id !== task.id);
+  unsavedGeneratedTasks.value = unsavedGeneratedTasks.value.filter(
+    (t) => t.id !== task.id,
+  );
   tasks.value = [...tasks.value, task as TaskResponseDto];
 };
 
 const handleDeleteTask = async (task: GeneratedTask) => {
+  savingTaskIds.value.add(task.id);
   try {
-    savingTaskIds.value.add(task.id);
-    savingTaskIds.value = new Set(savingTaskIds.value);
-
     await tasksApi.delete(task.id);
-    unsavedGeneratedTasks.value = unsavedGeneratedTasks.value.filter(t => t.id !== task.id);
+    unsavedGeneratedTasks.value = unsavedGeneratedTasks.value.filter(
+      (t) => t.id !== task.id,
+    );
     toast.success("任务已删除");
   } catch (error) {
     console.error("Failed to delete task:", error);
@@ -83,7 +118,6 @@ const handleDeleteTask = async (task: GeneratedTask) => {
     });
   } finally {
     savingTaskIds.value.delete(task.id);
-    savingTaskIds.value = new Set(savingTaskIds.value);
   }
 };
 
@@ -103,8 +137,18 @@ defineExpose({
     <CardHeader>
       <div class="flex items-center justify-between">
         <CardTitle class="text-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          <svg
+            class="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            />
           </svg>
           关联任务 ({{ tasks.length + unsavedGeneratedTasks.length }})
         </CardTitle>
@@ -117,7 +161,7 @@ defineExpose({
         >
           <Loader2 v-if="isGeneratingTasks" class="w-4 h-4 animate-spin" />
           <Sparkles v-else class="w-4 h-4" />
-          {{ isGeneratingTasks ? '生成中...' : 'AI 生成' }}
+          {{ isGeneratingTasks ? "生成中..." : "AI 生成" }}
         </Button>
       </div>
     </CardHeader>
@@ -136,43 +180,64 @@ defineExpose({
           <div
             v-for="task in unsavedGeneratedTasks"
             :key="task.id"
-            class="p-3 border-2 border-dashed rounded-lg transition-colors"
-            :style="{ borderColor: 'var(--accent-foreground)', backgroundColor: 'var(--accent)' }"
+            class="p-3 border-2 border-dashed rounded-lg"
+            :class="cn('bg-accent', 'border-accent-foreground')"
           >
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-xs font-mono" :style="{ color: 'var(--muted-foreground)' }">{{ task.taskNo }}</span>
-                  <Badge variant="outline" class="text-xs" :style="{ borderColor: 'var(--accent-foreground)', color: 'var(--accent-foreground)' }">
+                  <span class="text-xs font-mono text-muted-foreground">{{
+                    task.taskNo
+                  }}</span>
+                  <Badge
+                    variant="outline"
+                    class="text-xs text-accent-foreground"
+                    :class="cn('border-accent-foreground')"
+                  >
                     新生成
                   </Badge>
                   <Badge variant="outline" class="text-xs">
                     {{ task.status }}
                   </Badge>
                 </div>
-                <p class="text-sm font-medium" :style="{ color: 'var(--foreground)' }">{{ task.title }}</p>
-                <p v-if="task.description" class="text-xs mt-1" :style="{ color: 'var(--muted-foreground)' }">
+                <p class="text-sm font-medium text-foreground">
+                  {{ task.title }}
+                </p>
+                <p
+                  v-if="task.description"
+                  class="text-xs mt-1 text-muted-foreground"
+                >
                   {{ task.description }}
                 </p>
               </div>
               <div class="flex items-center gap-2">
                 <Badge
-                  :class="cn(
-                    'text-xs',
-                    task.priority === TaskPriority.URGENT ? 'bg-destructive/15 text-destructive' :
-                    task.priority === TaskPriority.HIGH ? 'bg-primary/15 text-primary' :
-                    task.priority === TaskPriority.MEDIUM ? 'bg-accent text-accent-foreground' :
-                    'bg-muted text-muted-foreground'
-                  )"
+                  :class="
+                    cn(
+                      'text-xs',
+                      task.priority === TaskPriority.URGENT
+                        ? 'bg-destructive/15 text-destructive'
+                        : task.priority === TaskPriority.HIGH
+                          ? 'bg-primary/15 text-primary'
+                          : task.priority === TaskPriority.MEDIUM
+                            ? 'bg-accent text-accent-foreground'
+                            : 'bg-muted text-muted-foreground',
+                    )
+                  "
                 >
                   {{ task.priority }}
                 </Badge>
-                <span v-if="task.estimatedHours" class="text-xs" :style="{ color: 'var(--muted-foreground)' }">
+                <span
+                  v-if="task.estimatedHours"
+                  class="text-xs text-muted-foreground"
+                >
                   {{ task.estimatedHours }}h
                 </span>
               </div>
             </div>
-            <div class="flex justify-end gap-2 mt-3 pt-2" :style="{ borderTop: '1px solid var(--border)' }">
+            <div
+              class="flex justify-end gap-2 mt-3 pt-2 border-t border-border"
+            >
               <Button
                 size="sm"
                 variant="outline"
@@ -205,29 +270,44 @@ defineExpose({
             <div class="flex items-start justify-between gap-3">
               <div class="flex-1">
                 <div class="flex items-center gap-2 mb-1">
-                  <span class="text-xs font-mono text-muted-foreground">{{ task.taskNo }}</span>
+                  <span class="text-xs font-mono text-muted-foreground">{{
+                    task.taskNo
+                  }}</span>
                   <Badge variant="outline" class="text-xs">
                     {{ task.status }}
                   </Badge>
                 </div>
-                <p class="text-sm font-medium text-foreground">{{ task.title }}</p>
-                <p v-if="task.description" class="text-xs text-muted-foreground mt-1">
+                <p class="text-sm font-medium text-foreground">
+                  {{ task.title }}
+                </p>
+                <p
+                  v-if="task.description"
+                  class="text-xs text-muted-foreground mt-1"
+                >
                   {{ task.description }}
                 </p>
               </div>
               <div class="flex items-center gap-2">
                 <Badge
-                  :class="cn(
-                    'text-xs',
-                    task.priority === TaskPriority.URGENT ? 'bg-destructive/15 text-destructive' :
-                    task.priority === TaskPriority.HIGH ? 'bg-primary/15 text-primary' :
-                    task.priority === TaskPriority.MEDIUM ? 'bg-accent text-accent-foreground' :
-                    'bg-muted text-muted-foreground'
-                  )"
+                  :class="
+                    cn(
+                      'text-xs',
+                      task.priority === TaskPriority.URGENT
+                        ? 'bg-destructive/15 text-destructive'
+                        : task.priority === TaskPriority.HIGH
+                          ? 'bg-primary/15 text-primary'
+                          : task.priority === TaskPriority.MEDIUM
+                            ? 'bg-accent text-accent-foreground'
+                            : 'bg-muted text-muted-foreground',
+                    )
+                  "
                 >
                   {{ task.priority }}
                 </Badge>
-                <span v-if="task.estimatedHours" class="text-xs text-muted-foreground">
+                <span
+                  v-if="task.estimatedHours"
+                  class="text-xs text-muted-foreground"
+                >
                   {{ task.estimatedHours }}h
                 </span>
               </div>
@@ -235,9 +315,22 @@ defineExpose({
           </div>
         </div>
 
-        <div v-if="tasks.length === 0 && unsavedGeneratedTasks.length === 0" class="text-center py-8 text-muted-foreground">
-          <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+        <div
+          v-if="tasks.length === 0 && unsavedGeneratedTasks.length === 0"
+          class="text-center py-8 text-muted-foreground"
+        >
+          <svg
+            class="w-12 h-12 mx-auto mb-2 opacity-50"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+            />
           </svg>
           <p class="text-sm">暂无关联任务</p>
           <p class="text-xs mt-1">点击上方"AI 生成"按钮创建任务</p>

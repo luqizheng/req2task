@@ -574,6 +574,101 @@ ${existingReqsContent}
     return { tasks, rawContent: result.content };
   }
 
+  streamGenerateTasks(
+    requirementId: string,
+    featurePoints: string,
+    projectId: string,
+    createdById: string,
+    context?: string,
+  ): Observable<LLMStreamChunk> {
+    return new Observable<LLMStreamChunk>((subscriber) => {
+      let fullContent = '';
+
+      this.requirementRepository.findOne({
+        where: { id: requirementId },
+      }).then(async (requirement) => {
+        if (!requirement) {
+          subscriber.next({ type: 'error', message: 'Requirement not found' });
+          subscriber.complete();
+          return;
+        }
+
+        const existingTasks = await this.taskRepository.find({
+          where: { requirementId },
+          select: ['id', 'title', 'description'],
+        });
+
+        const existingTasksStr = existingTasks
+          .map((t) => `【已有】${t.title}${t.description ? ` - ${t.description}` : ''}`)
+          .join('\n') || '无';
+
+        const rendered = this.promptService.render('TASK_BREAKDOWN', {
+          projectId,
+          requirementId,
+          context,
+          featurePoints,
+          userStory: requirement.title,
+          existingTasks: existingTasksStr,
+        });
+
+        const stream$ = this.llmClient.streamGenerate({
+          title: `TaskGen_${requirementId}_${Date.now()}`,
+          systemPrompt: rendered.systemPrompt,
+          userPrompt: rendered.userPrompt,
+          temperature: rendered.temperature,
+          maxTokens: rendered.maxTokens,
+        });
+
+        stream$.subscribe({
+          next: (chunk) => {
+            if (chunk.type === 'content' && chunk.content) {
+              fullContent += chunk.content;
+              subscriber.next(chunk);
+            } else if (chunk.type === 'conversation_start' || chunk.type === 'message') {
+              subscriber.next(chunk);
+            }
+          },
+          error: (error: Error) => {
+            subscriber.error(error);
+          },
+          complete: async () => {
+            try {
+              const tasks = await this.persistenceService.persistTasks(
+                fullContent,
+                requirementId,
+                projectId,
+                createdById,
+              );
+
+              subscriber.next({
+                type: 'done',
+                extractedData: {
+                  tasks: tasks.map((t) => ({
+                    id: t.id,
+                    taskNo: t.taskNo,
+                    title: t.title,
+                    description: t.description,
+                    requirementId: t.requirementId,
+                    status: t.status,
+                    priority: t.priority,
+                    estimatedHours: t.estimatedHours,
+                    createdAt: t.createdAt,
+                  })),
+                  rawContent: fullContent,
+                },
+              });
+              subscriber.complete();
+            } catch (error) {
+              subscriber.error(error);
+            }
+          },
+        });
+      }).catch((error) => {
+        subscriber.error(error);
+      });
+    });
+  }
+
   async generateModules(
     projectId: string,
     requirements: string,

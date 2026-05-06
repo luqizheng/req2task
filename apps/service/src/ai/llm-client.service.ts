@@ -27,6 +27,7 @@ export interface LLMStreamChunk {
   followUpQuestions?: string[];
   keyElements?: string[];
   message?: string;
+  extractedData?: Record<string, unknown>;
 }
 
 export interface LLMStreamResult {

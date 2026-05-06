@@ -12,6 +12,16 @@ import { cn } from "@/lib/utils";
 import { Sparkles, Loader2, Check, X } from "lucide-vue-next";
 import { useSSEStream } from "@/utils/useSSEStream";
 import { toast } from "vue-sonner";
+import { useJsonStream } from "json-stream-handler";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const props = defineProps<{
   requirementId: string;
@@ -25,9 +35,12 @@ interface UnSavedTask {
   description: string | null;
   priority: string;
   estimatedHours: number | null;
+  isEditing: boolean;
+  editingTitle: string;
+  editingDescription: string;
+  editingPriority: string;
+  editingEstimatedHours: number | null;
 }
-
-const generateTempId = () => `temp-task-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 
 const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
@@ -35,6 +48,15 @@ const isGeneratingTasks = ref(false);
 const unsavedTasks = ref<UnSavedTask[]>([]);
 const requirement = ref<RequirementResponseDto | null>(null);
 
+const jsonStream = useJsonStream([
+  {
+    trigger: "*",
+    onArrayItem: (item) => {
+      const task = item as GeneratedTask;
+      tasks.value = [...tasks.value, task as TaskResponseDto];
+    },
+  },
+]);
 const sseStream = useSSEStream({
   url: `/api/requirements/${props.requirementId}/ai-generate-tasks-preview?projectId=${props.projectId}`,
 });
@@ -64,14 +86,17 @@ const handleGenerateTasks = async () => {
     await sseStream.submitStream(
       { featurePoints: requirement.value?.featurePoints },
       {
-        onDone: (event) => {
-          const data = event.extractedData as { tasks?: UnSavedTask[] } | undefined;
-          if (data?.tasks) {
-            unsavedTasks.value = data.tasks.map((t) => ({
-              ...t,
-              tempId: generateTempId(),
-            }));
-          }
+        onContent:(data)=>{
+          jsonStream.feed(data  || '');
+        },
+        onDone: (_event) => {
+          // const data = event.extractedData as { tasks?: UnSavedTask[] } | undefined;
+          // if (data?.tasks) {
+          //   unsavedTasks.value = data.tasks.map((t) => ({
+          //     ...t,
+          //     tempId: generateTempId(),
+          //   }));
+          // }
           toast.success(`成功生成 ${unsavedTasks.value.length} 个任务`);
         },
         onError: (error) => {
@@ -116,6 +141,49 @@ const handleSaveTask = async (task: UnSavedTask) => {
 
 const handleDeleteTask = (tempId: string) => {
   unsavedTasks.value = unsavedTasks.value.filter((t) => t.tempId !== tempId);
+};
+
+const saveTask = (task: UnSavedTask) => {
+  if (task.isEditing) {
+    saveEditTask(task);
+  }
+  handleSaveTask(task);
+};
+
+const startEditingTask = (task: UnSavedTask) => {
+  unsavedTasks.value = unsavedTasks.value.map((t) =>
+    t.tempId === task.tempId
+      ? {
+          ...t,
+          isEditing: true,
+          editingTitle: t.title,
+          editingDescription: t.description || "",
+          editingPriority: t.priority,
+          editingEstimatedHours: t.estimatedHours,
+        }
+      : t,
+  );
+};
+
+const saveEditTask = (task: UnSavedTask) => {
+  unsavedTasks.value = unsavedTasks.value.map((t) =>
+    t.tempId === task.tempId
+      ? {
+          ...t,
+          isEditing: false,
+          title: t.editingTitle,
+          description: t.editingDescription || null,
+          priority: t.editingPriority,
+          estimatedHours: t.editingEstimatedHours,
+        }
+      : t,
+  );
+};
+
+const cancelEditTask = (task: UnSavedTask) => {
+  unsavedTasks.value = unsavedTasks.value.map((t) =>
+    t.tempId === task.tempId ? { ...t, isEditing: false } : t,
+  );
 };
 
 onMounted(() => {
@@ -173,63 +241,139 @@ defineExpose({
             class="p-3 border-2 border-dashed rounded-lg"
             :class="cn('bg-accent', 'border-accent-foreground')"
           >
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="text-xs font-mono text-muted-foreground">{{ task.taskNo }}</span>
-                  <Badge variant="outline" class="text-xs text-accent-foreground" :class="cn('border-accent-foreground')">
-                    未保存
-                  </Badge>
-                  <Badge variant="outline" class="text-xs">
-                    TODO
-                  </Badge>
+            <template v-if="task.isEditing">
+              <div class="space-y-3">
+                <div class="space-y-2">
+                  <Input
+                    v-model="task.editingTitle"
+                    placeholder="任务标题"
+                    class="font-medium"
+                  />
+                  <Textarea
+                    v-model="task.editingDescription"
+                    placeholder="任务描述（可选）"
+                    class="min-h-[60px] text-xs"
+                  />
                 </div>
-                <p class="text-sm font-medium text-foreground">{{ task.title }}</p>
-                <p v-if="task.description" class="text-xs mt-1 text-muted-foreground">
-                  {{ task.description }}
-                </p>
+                <div class="flex items-center gap-3">
+                  <Select v-model="task.editingPriority">
+                    <SelectTrigger class="w-[120px]">
+                      <SelectValue placeholder="优先级" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="urgent">urgent</SelectItem>
+                      <SelectItem value="high">high</SelectItem>
+                      <SelectItem value="medium">medium</SelectItem>
+                      <SelectItem value="low">low</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <div class="flex items-center gap-2">
+                    <Input
+                      v-model.number="task.editingEstimatedHours"
+                      type="number"
+                      placeholder="预估工时"
+                      class="w-[100px]"
+                      min="0"
+                    />
+                    <span class="text-xs text-muted-foreground">小时</span>
+                  </div>
+                </div>
               </div>
-              <div class="flex items-center gap-2">
-                <Badge
-                  :class="
-                    cn(
-                      'text-xs',
-                      task.priority === 'urgent' || task.priority === TaskPriority.URGENT
-                        ? 'bg-destructive/15 text-destructive'
-                        : task.priority === 'high' || task.priority === TaskPriority.HIGH
-                          ? 'bg-primary/15 text-primary'
-                          : task.priority === 'medium' || task.priority === TaskPriority.MEDIUM
-                            ? 'bg-accent text-accent-foreground'
-                            : 'bg-muted text-muted-foreground',
-                    )
-                  "
+              <div class="flex justify-end gap-2 mt-3 pt-2 border-t border-border">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  class="gap-1"
+                  @click="cancelEditTask(task)"
                 >
-                  {{ task.priority }}
-                </Badge>
-                <span v-if="task.estimatedHours" class="text-xs text-muted-foreground">
-                  {{ task.estimatedHours }}h
-                </span>
+                  取消
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  class="gap-1"
+                  @click="handleDeleteTask(task.tempId)"
+                >
+                  <X class="w-3 h-3" />
+                  删除
+                </Button>
+                <Button
+                  size="sm"
+                  class="gap-1"
+                  @click="saveTask(task)"
+                >
+                  <Check class="w-3 h-3" />
+                  保存
+                </Button>
               </div>
-            </div>
-            <div class="flex justify-end gap-2 mt-3 pt-2 border-t border-border">
-              <Button
-                size="sm"
-                variant="outline"
-                class="gap-1"
-                @click="handleDeleteTask(task.tempId)"
-              >
-                <X class="w-3 h-3" />
-                删除
-              </Button>
-              <Button
-                size="sm"
-                class="gap-1"
-                @click="handleSaveTask(task)"
-              >
-                <Check class="w-3 h-3" />
-                保存
-              </Button>
-            </div>
+            </template>
+            <template v-else>
+              <div class="flex items-start justify-between gap-3">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="text-xs font-mono text-muted-foreground">{{ task.taskNo }}</span>
+                    <Badge variant="outline" class="text-xs text-accent-foreground" :class="cn('border-accent-foreground')">
+                      未保存
+                    </Badge>
+                    <Badge variant="outline" class="text-xs">
+                      TODO
+                    </Badge>
+                  </div>
+                  <p class="text-sm font-medium text-foreground">{{ task.title }}</p>
+                  <p v-if="task.description" class="text-xs mt-1 text-muted-foreground">
+                    {{ task.description }}
+                  </p>
+                </div>
+                <div class="flex items-center gap-2">
+                  <Badge
+                    :class="
+                      cn(
+                        'text-xs',
+                        task.priority === 'urgent' || task.priority === TaskPriority.URGENT
+                          ? 'bg-destructive/15 text-destructive'
+                          : task.priority === 'high' || task.priority === TaskPriority.HIGH
+                            ? 'bg-primary/15 text-primary'
+                            : task.priority === 'medium' || task.priority === TaskPriority.MEDIUM
+                              ? 'bg-accent text-accent-foreground'
+                              : 'bg-muted text-muted-foreground',
+                      )
+                    "
+                  >
+                    {{ task.priority }}
+                  </Badge>
+                  <span v-if="task.estimatedHours" class="text-xs text-muted-foreground">
+                    {{ task.estimatedHours }}h
+                  </span>
+                </div>
+              </div>
+              <div class="flex justify-end gap-2 mt-3 pt-2 border-t border-border">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  class="gap-1"
+                  @click="startEditingTask(task)"
+                >
+                  编辑
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  class="gap-1"
+                  @click="handleDeleteTask(task.tempId)"
+                >
+                  <X class="w-3 h-3" />
+                  删除
+                </Button>
+                <Button
+                  size="sm"
+                  class="gap-1"
+                  @click="saveTask(task)"
+                >
+                  <Check class="w-3 h-3" />
+                  保存
+                </Button>
+              </div>
+            </template>
           </div>
         </div>
 

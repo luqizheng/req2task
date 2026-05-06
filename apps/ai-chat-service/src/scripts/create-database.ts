@@ -27,12 +27,12 @@ async function createDatabase() {
     );
 
     if (checkDb.rows.length > 0) {
-      console.log(`Database "${database}" already exists`);
+      console.warn(`Database "${database}" already exists`);
       return;
     }
 
     await client.query(`CREATE DATABASE "${database}"`);
-    console.log(`Database "${database}" created successfully`);
+    console.warn(`Database "${database}" created successfully`);
   } catch (error) {
     console.error('Failed to create database:', error instanceof Error ? error.message : error);
     process.exit(1);

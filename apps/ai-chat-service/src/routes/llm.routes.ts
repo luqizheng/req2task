@@ -25,7 +25,7 @@ export function createLlmRoutes(llmService: LLMService): Router {
         });
       }
 
-      const { systemPrompt, userPrompt, temperature, maxTokens, conversationId } = validation.data;
+      const { systemPrompt, userPrompt, conversationId } = validation.data;
 
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
@@ -121,7 +121,7 @@ export function createLlmRoutes(llmService: LLMService): Router {
         });
       }
 
-      const { systemPrompt, userPrompt, temperature, maxTokens, conversationId } = validation.data;
+      const { systemPrompt, userPrompt, conversationId } = validation.data;
 
       const messages = [
         {

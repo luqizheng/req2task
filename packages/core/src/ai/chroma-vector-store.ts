@@ -24,7 +24,6 @@ export class ChromaVectorStore implements VectorStore {
   }
 
   private createEmbeddingFunction(): IEmbeddingFunction {
-    const self = this;
     return {
       name: 'ollama-embedding',
       generate: async (texts: string[]): Promise<number[][]> => {

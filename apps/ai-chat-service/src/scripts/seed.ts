@@ -3,12 +3,6 @@ import { DataSource } from "typeorm";
 import "dotenv/config";
 import { LLMConfig } from "../database/entities/llm-config.entity.js";
 
-const LLMProviderType = {
-  OLLAMA: "ollama",
-  DEEPSEEK: "deepseek",
-  OPENAI: "openai",
-} as const;
-
 async function seed() {
   const dataSource = new DataSource({
     type: "postgres",
@@ -23,23 +17,23 @@ async function seed() {
   });
 
   await dataSource.initialize();
-  console.log("Database connected");
+  console.warn("Database connected");
 
   const queryRunner = dataSource.createQueryRunner();
   await queryRunner.connect();
   await queryRunner.startTransaction();
 
   try {
-    console.log("Starting LLM config seed...");
+    console.warn("Starting LLM config seed...");
 
     const ollamaConfig = await queryRunner.manager.findOne(LLMConfig, {
-      where: { modelName: "qwen6:8b", provider: "ollama" as any },
+      where: { modelName: "qwen6:8b", provider: "ollama" },
     });
 
     if (!ollamaConfig) {
       const config = queryRunner.manager.create(LLMConfig, {
         name: "Ollama Default",
-        provider: "ollama" as any,
+        provider: "ollama",
         apiKey: "",
         baseUrl: "http://localhost:11434",
         modelName: "qwen3:0.6b",
@@ -50,9 +44,9 @@ async function seed() {
         isDefault: true,
       });
       await queryRunner.manager.save(config);
-      console.log("Created ollama LLM config (qwen6:8b)");
+      console.warn("Created ollama LLM config (qwen6:8b)");
     } else {
-      console.log("ollama LLM config already exists, updating...");
+      console.warn("ollama LLM config already exists, updating...");
       ollamaConfig.name = "Ollama Default";
       ollamaConfig.baseUrl = "http://localhost:11434";
       ollamaConfig.isActive = true;
@@ -61,13 +55,13 @@ async function seed() {
     }
 
     const deepseekConfig = await queryRunner.manager.findOne(LLMConfig, {
-      where: { modelName: "deepseek-chat", provider: "deepseek" as any },
+      where: { modelName: "deepseek-chat", provider: "deepseek" },
     });
 
     if (!deepseekConfig) {
       const config = queryRunner.manager.create(LLMConfig, {
         name: "DeepSeek Chat",
-        provider: "deepseek" as any,
+        provider: "deepseek",
         apiKey: process.env["DEEPSEEK_API_KEY"] || "",
         baseUrl: "https://api.deepseek.com",
         modelName: "deepseek-chat",
@@ -78,13 +72,13 @@ async function seed() {
         isDefault: false,
       });
       await queryRunner.manager.save(config);
-      console.log("Created deepseek LLM config (deepseek-chat)");
+      console.warn("Created deepseek LLM config (deepseek-chat)");
     } else {
-      console.log("deepseek LLM config already exists, skipping...");
+      console.warn("deepseek LLM config already exists, skipping...");
     }
 
     await queryRunner.commitTransaction();
-    console.log("LLM config seed completed successfully!");
+    console.warn("LLM config seed completed successfully!");
   } catch (error) {
     await queryRunner.rollbackTransaction();
     console.error("LLM config seed failed!", error);

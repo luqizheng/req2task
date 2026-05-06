@@ -27,12 +27,12 @@ async function dropDatabase() {
     );
 
     if (checkDb.rows.length === 0) {
-      console.log(`Database "${database}" does not exist`);
+      console.warn(`Database "${database}" does not exist`);
       return;
     }
 
     await client.query(`DROP DATABASE "${database}"`);
-    console.log(`Database "${database}" dropped successfully`);
+    console.warn(`Database "${database}" dropped successfully`);
   } catch (error) {
     console.error('Failed to drop database:', error instanceof Error ? error.message : error);
     process.exit(1);

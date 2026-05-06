@@ -274,7 +274,7 @@ export class WizardService {
 
   async suggestTechStack(
     systemType: SystemType,
-    architectureType?: ArchitectureType,
+    _architectureType?: ArchitectureType,
   ): Promise<TechStackDto> {
     const suggestions: Record<SystemType, TechStackDto> = {
       [SystemType.ECOMMERCE]: {
@@ -667,11 +667,11 @@ export class WizardService {
     return labels[scale];
   }
 
-  async saveWizardProgress(progress: WizardProgressDto): Promise<any> {
+  async saveWizardProgress(_progress: WizardProgressDto): Promise<any> {
     throw new Error('saveWizardProgress not implemented - use ProjectsService directly');
   }
 
-  async getWizardProgress(projectId: string): Promise<WizardProgressDto | null> {
+  async getWizardProgress(_projectId: string): Promise<WizardProgressDto | null> {
     throw new Error('getWizardProgress not implemented - use ProjectsService directly');
   }
 }

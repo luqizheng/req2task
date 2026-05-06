@@ -229,7 +229,7 @@ async function handleSave() {
           otherTechnologies: formData.value.backendTechs?.length ? formData.value.backendTechs : undefined,
         },
       },
-      databaseTypes: formData.value.databaseTypes?.length ? formData.value.databaseTypes : undefined,
+      databaseTypes: formData.value.databaseTypes,
       cloudProvider: formData.value.cloudProvider as any || undefined,
       securityLevel: formData.value.securityLevel as any || undefined,
       projectScale: formData.value.projectScale as any || undefined,

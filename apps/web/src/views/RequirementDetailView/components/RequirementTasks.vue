@@ -52,7 +52,7 @@ const jsonStream = useJsonStream([
   {
     trigger: "*",
     onArrayItem: (item) => {
-      const task = item as GeneratedTask;
+      const task = item as TaskResponseDto;
       tasks.value = [...tasks.value, task as TaskResponseDto];
     },
   },

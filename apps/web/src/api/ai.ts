@@ -156,11 +156,11 @@ export const aiApi = {
   generateTasksForRequirement: (
     requirementId: string,
     projectId: string,
-    featurePoints: string,
+    featurePoints?: string,
     context?: string
   ) => {
     return api.post<{ tasks: GeneratedTask[]; rawContent: string }>(
-      `/llm/generation/tasks/${requirementId}`,
+      `/requirements/${requirementId}/ai-generate-tasks`,
       { featurePoints, context },
       { params: { projectId } }
     );

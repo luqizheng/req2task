@@ -44,8 +44,6 @@ const projectId = route.params.projectId as string;
 const requirement = ref<RequirementResponseDto | null>(null);
 const allowedTransitionsRaw = ref<TransitionOption[]>([]);
 const conflicts = ref<ConflictDto[]>([]);
-const refreshTasksKey = ref(0);
-
 const allowedTransitions = computed<TransitionOptionWithLabel[]>(() => {
   
   return mapStatusesToOptions(allowedTransitionsRaw.value);
@@ -298,9 +296,7 @@ const goBack = () => {
   router.push(`/projects/${projectId}`);
 };
 
-const handleTasksUpdated = () => {
-  refreshTasksKey.value += 1;
-};
+const handleTasksUpdated = () => {};
 
 const handleUserStoriesAdded = (stories: any[]) => {
   if (requirement.value && requirement.value.userStories) {
@@ -372,12 +368,8 @@ onMounted(() => {
             />
 
             <RequirementTasks
-              v-if="requirement"
-              :requirement="requirement"
-              :requirement-id="requirement.id"
+              :requirement-id="requirementId"
               :project-id="projectId"
-              :refresh-key="refreshTasksKey"
-              @tasks-updated="fetchRequirement"
             />
           </div>
 

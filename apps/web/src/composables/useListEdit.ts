@@ -12,7 +12,7 @@ const useListEdit = <T>(
 ) => {
   const list = shallowRef <T[]>(initialList);
   const currentBackupItem = ref<T | undefined>();
-  let currentIndex = -1;
+  let currentIndex = ref(-1);
 
   const removeIndex = async (index: number) => {
     const item = toRaw(list.value.splice(index, 1)) as T;
@@ -22,26 +22,26 @@ const useListEdit = <T>(
 
   const setEditing = (index: number) => {
     const src = list.value[index];
-    currentIndex = index;
+    currentIndex.value = index;
     currentBackupItem.value = { ...src } as T;
   };
 
   const cancelEditing = () => {
-    list.value[currentIndex] = { ...currentBackupItem.value } as T;
+    list.value[currentIndex.value] = { ...currentBackupItem.value } as T;
     currentBackupItem.value = undefined;
   };
 
   return {
     save: async () => {
     
-      options.onEdited?.(toRaw(list.value[currentIndex] as T));
+      options.onEdited?.(toRaw(list.value[currentIndex.value] as T));
     },
     list,
     setEditing,
     cancelEditing,
     removeIndex,
     isEditing: (index: number) => {
-      return index === currentIndex;
+      return index === currentIndex.value;
     },
   };
 };

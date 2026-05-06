@@ -69,13 +69,23 @@ const sseStream = useSSEStream({
 });
 
 const fetchTasks = async () => {
+  debugger;
   try {
     loading.value = true;
     const [tasksResponse, reqResponse] = await Promise.all([
       tasksApi.getListByRequirement(props.requirementId),
       requirementsApi.getById(props.requirementId),
     ]);
-    tasks.value = tasksResponse.items || [];
+    tasks.value = tasksResponse.items;
+    tasks.value = [
+      {
+        title: "实现多语言环境配置功能",
+        priority: TaskPriority.HIGH,
+        description: "实现多语言环境配置功能",
+        estimatedHours: 10,
+        id: undefined,
+      },
+    ];
     requirement.value = reqResponse;
   } catch (error) {
     console.error("Failed to fetch tasks:", error);
@@ -201,7 +211,20 @@ defineExpose({
           :key="task.taskNo"
           :title="task.title"
         >
-          <p>{{ task.description }}</p>
+          <template #title>
+            <span v-if="!isEditing(index)">
+              {{ task.title }}
+            </span>
+            <Input
+              v-else
+              v-model="task.title"
+              class="w-full"
+              placeholder="任务标题"
+            />
+          </template>
+          {{ isEditing(index) }}
+          <p v-if="!isEditing(index)">{{ task.description }}</p>
+          <textarea v-else v-model="task.description" class="w-full h-12" />
 
           <template #actions>
             <ButtonGroup>

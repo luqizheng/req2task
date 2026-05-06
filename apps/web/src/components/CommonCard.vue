@@ -25,7 +25,9 @@ const props = withDefaults(defineProps<{
       <CardHeader v-if="title || description || $slots['title-icon']">
         <div v-if="title" class="flex items-center gap-2">
           <slot name="title-icon" />
-          <CardTitle>{{ title }}</CardTitle>
+          <CardTitle>
+          <slot name="title"> {{ title }}</slot> 
+          </CardTitle>
         </div>
         <CardDescription v-if="description">{{ description }}</CardDescription>
         <CardAction v-if="$slots.actions">

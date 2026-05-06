@@ -593,6 +593,32 @@ export class AiPersistenceService {
     }
   }
 
+  async previewTasks(content: string): Promise<Array<{
+    taskNo: string;
+    title: string;
+    description: string | null;
+    priority: string;
+    estimatedHours: number | null;
+  }>> {
+    const data = this.extractJsonArray(content);
+    if (!data || data.length === 0) {
+      this.logger.warn("No tasks found in AI response for preview");
+      return [];
+    }
+
+    return data.map((item, index) => ({
+      taskNo: `TSK-PENDING-${index + 1}`,
+      title: item.title || '',
+      description: item.description && item.techDescription
+        ? `${item.description}\n\n【技术描述】${item.techDescription}`
+        : item.techDescription
+          ? `【技术描述】${item.techDescription}`
+          : item.description || null,
+      priority: item.priority || 'medium',
+      estimatedHours: item.estimatedHours || null,
+    }));
+  }
+
   async persistModules(
     content: string,
     projectId: string,

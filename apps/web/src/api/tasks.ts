@@ -52,8 +52,10 @@ export const tasksApi = {
 
   getById: (id: string) => api.get<TaskResponseDto>(`/tasks/${id}`),
 
-  create: (requirementId: string, data: CreateTaskDto) =>
-    api.post<TaskResponseDto>(`/requirements/${requirementId}/tasks`, data),
+  create: (requirementId: string, data: CreateTaskDto, projectId?: string) =>
+    api.post<TaskResponseDto>(`/requirements/${requirementId}/tasks`, data, {
+      params: projectId ? { projectId } : undefined,
+    }),
 
   update: (id: string, data: UpdateTaskDto) =>
     api.put<TaskResponseDto>(`/tasks/${id}`, data),

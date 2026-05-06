@@ -58,6 +58,7 @@ export class TasksController {
   async create(
     @Param('requirementId') requirementId: string,
     @Body() createDto: CreateTaskDto,
+    @Query('projectId') projectId: string,
     @Request() req: AuthenticatedRequest,
   ): Promise<ApiResponse<TaskResponseDto>> {
     const user = req.user as { id?: string; userId?: string };
@@ -66,6 +67,7 @@ export class TasksController {
       requirementId,
       createDto,
       userId!,
+      projectId,
     );
     return { code: 0, data: result };
   }
@@ -101,6 +103,42 @@ export class TasksController {
       },
       error: (error: Error) => {
         this.logger.error({ error }, 'SSE stream error');
+        res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
+        res.end();
+      },
+      complete: () => {
+        res.write('data: [DONE]\n\n');
+        res.end();
+      },
+    });
+  }
+
+  @Post('requirements/:requirementId/ai-generate-tasks-preview')
+  @HttpCode(HttpStatus.OK)
+  async generateTasksPreview(
+    @Param('requirementId') requirementId: string,
+    @Body() dto: GenerateTasksDto,
+    @Query('projectId') projectId: string,
+    @Res() res: Response,
+  ) {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+
+    const stream$ = this.aiGenerationService.streamGenerateTasksPreview(
+      requirementId,
+      dto.featurePoints,
+      projectId,
+      dto.context,
+    );
+
+    stream$.subscribe({
+      next: (chunk) => {
+        res.write(`data: ${JSON.stringify(chunk)}\n\n`);
+      },
+      error: (error: Error) => {
+        this.logger.error({ error }, 'SSE stream preview error');
         res.write(`data: ${JSON.stringify({ type: 'error', message: error.message })}\n\n`);
         res.end();
       },

@@ -36,6 +36,7 @@ export class TasksService {
     requirementId: string,
     createDto: CreateTaskDto,
     createdById: string,
+    projectId?: string,
   ): Promise<TaskResponseDto> {
     const requirement = await this.requirementRepository.findOne({
       where: { id: requirementId },
@@ -46,12 +47,12 @@ export class TasksService {
       throw new NotFoundException(`Requirement with ID ${requirementId} not found`);
     }
 
-    const projectId = requirement.modules?.[0]?.projectId;
-    if (!projectId) {
+    const resolvedProjectId = projectId || requirement.modules?.[0]?.projectId;
+    if (!resolvedProjectId) {
       throw new BadRequestException('Requirement has no associated project');
     }
 
-    const entityKeys = await this.entityKeyService.generateEntityKey(projectId, EntityKeyType.TSK);
+    const entityKeys = await this.entityKeyService.generateEntityKey(resolvedProjectId, EntityKeyType.TSK);
 
     const task = this.taskRepository.create({
       requirementId,

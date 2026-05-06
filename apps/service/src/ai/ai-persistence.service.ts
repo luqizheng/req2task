@@ -554,10 +554,16 @@ export class AiPersistenceService {
         const tasks: Task[] = [];
 
         for (const [index, item] of data.entries()) {
+          const description = item.description && item.techDescription
+            ? `${item.description}\n\n【技术描述】${item.techDescription}`
+            : item.techDescription
+              ? `【技术描述】${item.techDescription}`
+              : item.description || null;
+
           const task = queryRunner.manager.create(Task, {
             taskNo: taskNos[index],
             title: item.title,
-            description: item.description || null,
+            description,
             requirementId,
             status: TaskStatus.TODO,
             priority: this.mapPriority(item.priority),

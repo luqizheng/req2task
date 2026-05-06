@@ -11,6 +11,7 @@ export const taskPrompts: PromptTemplate[] = [
 重要：Task业务对象字段（必须严格遵守）：
 - title: string (任务标题，不超过200字)
 - description: string | null (任务描述，可为null)
+- techDescription: string (技术实现描述，说明技术方案、架构设计、关键技术点和实现思路)
 - priority: "urgent" | "high" | "medium" | "low" (优先级)
 - estimatedHours: number | null (预估工时，小时为单位，如8.5)
 - status: "todo" (固定值，初始状态)
@@ -22,7 +23,8 @@ export const taskPrompts: PromptTemplate[] = [
 3. status必须为"todo"
 4. 只返回JSON数组格式，不要其他内容
 5. 不要生成与已有任务重复的内容
-6. 每个任务要具体、可执行、无重叠`,
+6. 每个任务要具体、可执行、无重叠
+7. techDescription必须包含具体的技术方案描述`,
     userPromptTemplate: `## 已有任务（不要重复生成）
 {{existingTasks}}
 
@@ -47,6 +49,7 @@ JSON格式：
   {
     "title": "任务标题",
     "description": "任务详细描述",
+    "techDescription": "使用xx技术方案实现，关键类设计，数据流向等",
     "priority": "high",
     "estimatedHours": 4,
     "status": "todo"

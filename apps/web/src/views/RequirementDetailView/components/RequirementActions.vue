@@ -21,7 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Sparkles, Loader2, Trash2, Download, AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-vue-next";
+import { Sparkles, Loader2, Trash2, Download, AlertTriangle, AlertCircle, CheckCircle2, Settings } from "lucide-vue-next";
 import { aiApi } from "@/api/ai";
 import { toast } from "vue-sonner";
 
@@ -162,19 +162,7 @@ const handleOneClickGenerate = async () => {
   <Card>
     <CardHeader>
       <CardTitle class="text-lg flex items-center gap-2">
-        <svg
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"
-          />
-        </svg>
+        <Settings class="w-5 h-5" />
         操作
       </CardTitle>
     </CardHeader>

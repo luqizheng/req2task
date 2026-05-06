@@ -14,7 +14,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ListTodo, Sparkles, Loader2, CheckCircle2, Circle } from "lucide-vue-next";
+import { ListTodo, Sparkles, Loader2, CheckCircle2, Circle, List, ClipboardList, FolderTree } from "lucide-vue-next";
 import { Separator } from "@/components/ui/separator";
 import { aiApi, type UserStoryDraft } from "@/api/ai";
 import { toast } from "vue-sonner";
@@ -265,9 +265,7 @@ const handleGenerateCriteria = async () => {
       <CardHeader>
         <div class="flex items-center justify-between">
           <CardTitle class="text-lg flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-            </svg>
+            <List class="w-5 h-5" />
             功能点
           </CardTitle>
           <div class="flex items-center gap-2">
@@ -442,9 +440,7 @@ const handleGenerateCriteria = async () => {
       </CardContent>
       <CardContent v-else>
         <div class="text-center py-8 text-slate-400">
-          <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
+          <ClipboardList class="w-12 h-12 mx-auto mb-2 opacity-50" />
           <p class="text-sm">暂无用户故事</p>
           <p class="text-xs mt-1">点击上方"AI 生成"按钮创建用户故事</p>
         </div>
@@ -492,9 +488,7 @@ const handleGenerateCriteria = async () => {
     <Card v-if="requirement.children && requirement.children.length > 0">
       <CardHeader>
         <CardTitle class="text-lg flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
-          </svg>
+          <FolderTree class="w-5 h-5" />
           子需求 ({{ requirement.children.length }})
         </CardTitle>
       </CardHeader>

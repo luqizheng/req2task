@@ -61,6 +61,7 @@ export class TasksService {
       priority: createDto.priority || TaskPriority.MEDIUM,
       status: TaskStatus.TODO,
       taskNo: entityKeys[0],
+      entityKey: entityKeys[0],
       assignedToId: createDto.assignedToId || null,
       estimatedHours: createDto.estimatedHours || null,
       dueDate: createDto.dueDate ? new Date(createDto.dueDate) : null,

@@ -8,24 +8,15 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { Sparkles, Loader2, Check, X, CheckSquare } from "lucide-vue-next";
+import { Sparkles, Loader2, CheckSquare } from "lucide-vue-next";
 import { useSSEStream } from "@/utils/useSSEStream";
 import { toast } from "vue-sonner";
 import { useJsonStream } from "json-stream-handler";
 import CommonCard from "@/components/CommonCard.vue";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { ButtonGroup } from "@/components/ui/button-group";
 import useListEdit from "@/composables/useListEdit";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import api from "@/api/axios";
+import { PrioritySelect, PriorityBadge } from "@/components/common";
 
 const props = defineProps<{
   requirementId: string;
@@ -37,7 +28,6 @@ const {
   removeIndex,
   setEditing,
   cancelEditing,
-  saveEdit,
   isEditing,
 } = useListEdit<TaskResponseDto>([], {
   isPersist: (item) => !!item.id,
@@ -69,7 +59,6 @@ const sseStream = useSSEStream({
 });
 
 const fetchTasks = async () => {
-  debugger;
   try {
     loading.value = true;
     const [tasksResponse, reqResponse] = await Promise.all([
@@ -77,15 +66,6 @@ const fetchTasks = async () => {
       requirementsApi.getById(props.requirementId),
     ]);
     tasks.value = tasksResponse.items;
-    tasks.value = [
-      {
-        title: "实现多语言环境配置功能",
-        priority: TaskPriority.HIGH,
-        description: "实现多语言环境配置功能",
-        estimatedHours: 10,
-        id: undefined,
-      },
-    ];
     requirement.value = reqResponse;
   } catch (error) {
     console.error("Failed to fetch tasks:", error);
@@ -209,36 +189,86 @@ defineExpose({
         <CommonCard
           v-for="(task, index) in tasks"
           :key="task.taskNo"
-          :title="task.title"
+          class="mb-3"
         >
-          <template #title>
-            <span v-if="!isEditing(index)">
-              {{ task.title }}
-            </span>
-            <Input
+          <template #header>
+            <div class="flex items-center justify-between gap-3">
+              <div class="flex-1">
+                <div v-if="!isEditing(index)" class="font-medium">
+                  {{ task.title }}
+                </div>
+                <Input
+                  v-else
+                  v-model="task.title"
+                  class="w-full"
+                  placeholder="任务标题"
+                />
+              </div>
+              <PriorityBadge
+                v-if="task.priority"
+                :priority="task.priority"
+              />
+            </div>
+          </template>
+
+          <div class="space-y-3">
+            <div v-if="!isEditing(index)" class="text-sm text-muted-foreground">
+              {{ task.description || '暂无描述' }}
+            </div>
+            <Textarea
               v-else
-              v-model="task.title"
-              class="w-full"
-              placeholder="任务标题"
+              v-model="task.description"
+              class="w-full min-h-[60px]"
+              placeholder="任务描述"
             />
-          </template>
-          {{ isEditing(index) }}
-          <p v-if="!isEditing(index)">{{ task.description }}</p>
-          <textarea v-else v-model="task.description" class="w-full h-12" />
+            <div v-if="!isEditing(index) && task.estimatedHours" class="text-xs text-muted-foreground">
+              预估工时: {{ task.estimatedHours }}h
+            </div>
+            <div v-if="isEditing(index)" class="flex items-center gap-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-muted-foreground">优先级:</span>
+                <PrioritySelect v-model="task.priority" />
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-muted-foreground">工时:</span>
+                <Input
+                  v-model.number="task.estimatedHours"
+                  type="number"
+                  class="w-20 h-7 text-xs"
+                  placeholder="小时"
+                />
+              </div>
+            </div>
+          </div>
 
-          <template #actions>
-            <ButtonGroup>
-              <Button variant="default" @click="setEditing(index)">编辑</Button>
-              <Button v-if="!task.id" variant="outline" @click="saveTask(task)"
-                >保存</Button
-              >
-              <Button variant="destructive" @click="removeIndex(index)"
-                >删除</Button
-              >
-            </ButtonGroup>
+          <template #footer>
+            <div class="flex items-center gap-2 pt-2 border-t mt-3">
+              <template v-if="isEditing(index)">
+                <Button variant="default" size="sm" @click="saveTask(task)">
+                  保存
+                </Button>
+                <Button variant="outline" size="sm" @click="cancelEditing()">
+                  取消
+                </Button>
+              </template>
+              <template v-else>
+                <Button variant="outline" size="sm" @click="setEditing(index)">
+                  编辑
+                </Button>
+                <Button
+                  v-if="!task.id"
+                  variant="secondary"
+                  size="sm"
+                  @click="saveTask(task)"
+                >
+                  保存
+                </Button>
+              </template>
+              <Button variant="destructive" size="sm" @click="removeIndex(index)">
+                删除
+              </Button>
+            </div>
           </template>
-
-          <template #footer> </template>
         </CommonCard>
 
         <!-- <div v-if="tasks.length > 0" class="space-y-3">

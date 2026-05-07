@@ -29,6 +29,7 @@ const useListEdit = <T>(
   const cancelEditing = () => {
     list.value[currentIndex.value] = { ...currentBackupItem.value } as T;
     currentBackupItem.value = undefined;
+    currentIndex.value = -1;
   };
 
   return {

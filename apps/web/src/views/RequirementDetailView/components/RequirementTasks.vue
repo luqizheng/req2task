@@ -107,12 +107,14 @@ const handleGenerateTasks = async () => {
 
 const saveTask = async (task: TaskResponseDto) => {
   try {
+    const estimatedHours = task.estimatedHours ? Number(task.estimatedHours) : undefined;
+
     if (task.id) {
       await tasksApi.update(task.id, {
         title: task.title,
         description: task.description || undefined,
         priority: task.priority as TaskPriority,
-        estimatedHours: task.estimatedHours || undefined,
+        estimatedHours,
       });
     } else {
       const created = await tasksApi.create(
@@ -121,7 +123,7 @@ const saveTask = async (task: TaskResponseDto) => {
           title: task.title,
           description: task.description || undefined,
           priority: task.priority as TaskPriority,
-          estimatedHours: task.estimatedHours || undefined,
+          estimatedHours,
         },
         props.projectId,
       );
@@ -189,6 +191,7 @@ defineExpose({
         <CommonCard
           v-for="(task, index) in tasks"
           :key="task.taskNo"
+          :title="task.title"
           class="mb-3"
         >
           <template #header>

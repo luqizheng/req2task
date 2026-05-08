@@ -178,7 +178,7 @@ export const aiApi = {
     context?: string
   ) => {
     return api.post<{ acceptanceCriteria: GeneratedAcceptanceCriteria[]; rawContent: string }>(
-      `/llm/generation/acceptance-criteria/${userStoryId}`,
+      `/acceptance-criteria/user-stories/${userStoryId}/ai-generate-acceptance-criteria`,
       { context }
     );
   },

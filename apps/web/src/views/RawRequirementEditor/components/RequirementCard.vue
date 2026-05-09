@@ -250,9 +250,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Cloud, CloudOff, Loader2, Save, Trash2, X, AlertTriangle, AlertCircle } from "lucide-vue-next";
-import { Priority, AiGeneratedRequirementDto } from "@req2task/dto";
+import { AiGeneratedRequirementDto } from "@req2task/dto";
 import { useRawRequirementCreateStore } from "../store";
 import { requirementsApi } from "@/api/requirements";
+import { PRIORITY_CONFIG, getEnumLabel, getEnumVariant } from "@/utils/enum-config";
 
 interface Props {
   requirement: AiGeneratedRequirementDto;
@@ -346,26 +347,11 @@ const handleKeepExisting = async () => {
 };
 
 const priorityVariant = computed(() => {
-  const variantMap: Record<
-    Priority,
-    "default" | "secondary" | "destructive" | "outline"
-  > = {
-    critical: "destructive",
-    high: "default",
-    medium: "secondary",
-    low: "outline",
-  };
-  return variantMap[(props.requirement.priority as Priority) || Priority.LOW];
+  return getEnumVariant(PRIORITY_CONFIG, props.requirement.priority)
 });
 
 const priorityLabel = computed(() => {
-  const labelMap: Record<Priority, string> = {
-    critical: "高优先级",
-    high: "高优先级",
-    medium: "中优先级",
-    low: "低优先级",
-  };
-  return labelMap[(props.requirement.priority as Priority) || Priority.LOW];
+  return getEnumLabel(PRIORITY_CONFIG, props.requirement.priority)
 });
 
 const displayTags = computed(() => {

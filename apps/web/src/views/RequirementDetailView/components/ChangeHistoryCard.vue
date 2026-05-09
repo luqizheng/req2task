@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, onMounted } from "vue";
-import type { RequirementResponseDto } from "@req2task/dto";
-import { RequirementStatus } from "@req2task/dto";
+import type { RequirementResponseDto, RequirementStatus } from "@req2task/dto";
 import type { ChangeLogItem } from "@/api/requirements";
 import { requirementsApi } from "@/api/requirements";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { History, User, ArrowRight, FileText } from "lucide-vue-next";
 import { formatDateTime } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { REQUIREMENT_STATUS_CONFIG, getEnumLabel } from "@/utils/enum-config";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
@@ -57,16 +57,7 @@ const getChangeTypeColor = (changeType: string) => {
 
 const getStatusLabel = (status: string | null) => {
   if (!status) return "";
-  const labels: Record<string, string> = {
-    [RequirementStatus.DRAFT]: "草稿",
-    [RequirementStatus.REVIEWED]: "已审核",
-    [RequirementStatus.APPROVED]: "已批准",
-    [RequirementStatus.REJECTED]: "已拒绝",
-    [RequirementStatus.PROCESSING]: "进行中",
-    [RequirementStatus.COMPLETED]: "已完成",
-    [RequirementStatus.CANCELLED]: "已取消",
-  };
-  return labels[status] || status;
+  return getEnumLabel(REQUIREMENT_STATUS_CONFIG, status as RequirementStatus);
 };
 
 const formatValue = (value: string | null, changeType: string) => {

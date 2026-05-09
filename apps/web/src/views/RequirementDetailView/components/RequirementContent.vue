@@ -186,7 +186,7 @@ const handleGenerateCriteria = async () => {
       criteriaDialogUserStoryId.value,
       criteriaContext.value || undefined
     );
-    
+   
     toast.success(`成功生成 ${response.acceptanceCriteria.length} 个验收条件`);
     emit("user-stories-updated");
     showCriteriaDialog.value = false;
@@ -424,6 +424,7 @@ const handleGenerateCriteria = async () => {
           </div>
           <div v-if="story.acceptanceCriteria && story.acceptanceCriteria.length > 0">
             <Separator class="my-2" />
+            {{story.id}}
             <p class="text-xs font-medium mb-1" :style="{ color: 'var(--muted-foreground)' }">验收条件:</p>
             <ul class="space-y-1">
               <li

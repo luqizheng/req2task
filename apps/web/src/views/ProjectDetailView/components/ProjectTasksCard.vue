@@ -2,10 +2,11 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { TaskResponseDto } from "@req2task/dto";
-import { TaskStatus, TaskPriority } from "@req2task/dto";
+import { TaskStatus } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import EnumBadge from "@/components/common/EnumBadge.vue";
+import { TASK_STATUS_CONFIG, TASK_PRIORITY_CONFIG } from "@/utils/enum-config";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -24,22 +25,6 @@ const router = useRouter();
 const tasks = ref<TaskResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
-
-const statusConfig: Record<TaskStatus, { label: string; class: string }> = {
-  [TaskStatus.TODO]: { label: "待办", class: "bg-status-draft/10 text-status-draft" },
-  [TaskStatus.IN_PROGRESS]: { label: "进行中", class: "bg-status-processing/10 text-status-processing" },
-  [TaskStatus.IN_REVIEW]: { label: "审核中", class: "bg-status-reviewed/10 text-status-reviewed" },
-  [TaskStatus.DONE]: { label: "已完成", class: "bg-status-completed/10 text-status-completed" },
-  [TaskStatus.BLOCKED]: { label: "已阻塞", class: "bg-status-rejected/10 text-status-rejected" },
-  [TaskStatus.CANCELLED]: { label: "已取消", class: "bg-status-cancelled/10 text-status-cancelled" },
-};
-
-const priorityConfig: Record<TaskPriority, { label: string; class: string }> = {
-  [TaskPriority.URGENT]: { label: "紧急", class: "bg-priority-critical text-white" },
-  [TaskPriority.HIGH]: { label: "高", class: "bg-priority-high text-white" },
-  [TaskPriority.MEDIUM]: { label: "中", class: "bg-priority-medium text-white" },
-  [TaskPriority.LOW]: { label: "低", class: "bg-priority-low text-white" },
-};
 
 const fetchTasks = async () => {
   try {
@@ -115,18 +100,8 @@ onMounted(() => {
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <Badge
-              :class="priorityConfig[task.priority]?.class"
-              class="text-xs"
-            >
-              {{ priorityConfig[task.priority]?.label || task.priority }}
-            </Badge>
-            <Badge
-              :class="statusConfig[task.status]?.class"
-              class="text-xs"
-            >
-              {{ statusConfig[task.status]?.label || task.status }}
-            </Badge>
+            <EnumBadge :value="task.priority" :config="TASK_PRIORITY_CONFIG" class="text-xs" />
+            <EnumBadge :value="task.status" :config="TASK_STATUS_CONFIG" class="text-xs" />
             <Avatar v-if="task.assignedTo" class="w-6 h-6">
               <AvatarFallback class="text-xs">
                 {{ getInitials(task.assignedTo.displayName) }}

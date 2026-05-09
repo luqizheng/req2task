@@ -1,52 +1,48 @@
-import { RequirementStatus } from '@req2task/dto';
+import type { RequirementStatus } from '@req2task/dto'
+import { REQUIREMENT_STATUS_CONFIG, getEnumLabel } from '@/utils/enum-config'
 
 export interface StatusOption {
-  to: string;
-  label: string;
-  color: string;
+  to: string
+  label: string
+  color: string
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  [RequirementStatus.DRAFT]: '草稿',
-  [RequirementStatus.REVIEWED]: '已评审',
-  [RequirementStatus.APPROVED]: '已批准',
-  [RequirementStatus.REJECTED]: '已拒绝',
-  [RequirementStatus.PROCESSING]: '处理中',
-  [RequirementStatus.COMPLETED]: '已完成',
-  [RequirementStatus.CANCELLED]: '已取消',
-};
-
-const STATUS_COLORS: Record<string, string> = {
-  [RequirementStatus.DRAFT]: '#94a3b8',
-  [RequirementStatus.REVIEWED]: '#8b5cf6',
-  [RequirementStatus.APPROVED]: '#2563eb',
-  [RequirementStatus.REJECTED]: '#dc2626',
-  [RequirementStatus.PROCESSING]: '#f59e0b',
-  [RequirementStatus.COMPLETED]: '#16a34a',
-  [RequirementStatus.CANCELLED]: '#6b7280',
-};
-
+/**
+ * @deprecated Use REQUIREMENT_STATUS_CONFIG from '@/utils/enum-config' instead.
+ * Kept for backward-compat with transition options that need hex colors.
+ */
 export const getStatusLabel = (status: string): string => {
-  return STATUS_LABELS[status] || status;
-};
+  return getEnumLabel(REQUIREMENT_STATUS_CONFIG, status as RequirementStatus)
+}
 
 export const getStatusColor = (status: string): string => {
-  return STATUS_COLORS[status] || '#6b7280';
-};
+  const colors: Record<string, string> = {
+    draft: '#94a3b8',
+    reviewed: '#8b5cf6',
+    approved: '#2563eb',
+    rejected: '#dc2626',
+    processing: '#f59e0b',
+    completed: '#16a34a',
+    cancelled: '#6b7280',
+  }
+  return colors[status] || '#6b7280'
+}
 
 export const mapStatusesToOptions = (statuses: string[]): StatusOption[] => {
-
   return statuses.map((status) => ({
     to: status,
-    label: STATUS_LABELS[status] || status,
-    color: STATUS_COLORS[status] || '#6b7280',
-  }));
-};
+    label: getEnumLabel(REQUIREMENT_STATUS_CONFIG, status as RequirementStatus),
+    color: getStatusColor(status),
+  }))
+}
 
+/**
+ * @deprecated Use toSelectOptions(REQUIREMENT_STATUS_CONFIG) instead.
+ */
 export const getRequirementStatusOptions = (): StatusOption[] => {
-  return Object.values(RequirementStatus).map((status) => ({
+  return (Object.keys(REQUIREMENT_STATUS_CONFIG) as RequirementStatus[]).map((status) => ({
     to: status,
-    label: STATUS_LABELS[status],
-    color: STATUS_COLORS[status],
-  }));
-};
+    label: getEnumLabel(REQUIREMENT_STATUS_CONFIG, status),
+    color: getStatusColor(status),
+  }))
+}

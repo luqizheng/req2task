@@ -26,7 +26,8 @@ import {
 
 } from '@/components/ui/pagination'
 import type { RequirementResponseDto } from '@req2task/dto'
-import { RequirementStatus, Priority } from '@req2task/dto'
+import EnumBadge from '@/components/common/EnumBadge.vue'
+import { REQUIREMENT_STATUS_CONFIG, PRIORITY_CONFIG } from '@/utils/enum-config'
 
 const props = defineProps<{
   requirements: RequirementResponseDto[]
@@ -43,23 +44,6 @@ const emit = defineEmits<{
   delete: [id: string]
   'update:page': [page: number]
 }>()
-
-const statusConfig = {
-  [RequirementStatus.DRAFT]: { variant: 'outline' as const, label: '草稿' },
-  [RequirementStatus.REVIEWED]: { variant: 'secondary' as const, label: '已审查' },
-  [RequirementStatus.APPROVED]: { variant: 'default' as const, label: '已批准' },
-  [RequirementStatus.REJECTED]: { variant: 'destructive' as const, label: '已拒绝' },
-  [RequirementStatus.PROCESSING]: { variant: 'secondary' as const, label: '处理中' },
-  [RequirementStatus.COMPLETED]: { variant: 'default' as const, label: '已完成' },
-  [RequirementStatus.CANCELLED]: { variant: 'outline' as const, label: '已取消' }
-}
-
-const priorityConfig = {
-  [Priority.CRITICAL]: { variant: 'destructive' as const, label: '紧急' },
-  [Priority.HIGH]: { variant: 'secondary' as const, label: '高' },
-  [Priority.MEDIUM]: { variant: 'outline' as const, label: '中' },
-  [Priority.LOW]: { variant: 'outline' as const, label: '低' }
-}
 
 const formatDate = (date: Date) => {
   return new Date(date).toLocaleDateString('zh-CN')
@@ -141,14 +125,10 @@ const pageNumbers = computed(() => {
               </div>
             </TableCell>
             <TableCell>
-              <Badge :variant="statusConfig[req.status].variant">
-                {{ statusConfig[req.status].label }}
-              </Badge>
+              <EnumBadge :value="req.status" :config="REQUIREMENT_STATUS_CONFIG" />
             </TableCell>
             <TableCell>
-              <Badge :variant="priorityConfig[req.priority].variant">
-                {{ priorityConfig[req.priority].label }}
-              </Badge>
+              <EnumBadge :value="req.priority" :config="PRIORITY_CONFIG" />
             </TableCell>
             <TableCell>{{ req.storyPoints }}</TableCell>
             <TableCell>{{ req.createdBy?.displayName || '-' }}</TableCell>

@@ -4,11 +4,12 @@ import { useRoute, useRouter } from "vue-router";
 import { projectsApi } from "@/api/projects";
 import { requirementsApi } from "@/api/requirements";
 import type { ProjectResponseDto, ProjectProgressDto } from "@req2task/dto";
-import { ProjectStatus, Priority, RequirementSource } from "@req2task/dto";
+import { Priority, RequirementSource } from "@req2task/dto";
 import CreateRequirementDialog from "@/components/requirements/CreateRequirementDialog.vue";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
+import EnumBadge from "@/components/common/EnumBadge.vue";
+import { PROJECT_STATUS_CONFIG } from "@/utils/enum-config";
 import { Button } from "@/components/ui/button";
 import {
   ChevronRight,
@@ -43,34 +44,6 @@ const error = ref<string | null>(null);
 const isRefreshing = ref(false);
 const isCreateRequirementDialogOpen = ref(false);
 const isCreating = ref(false);
-
-const statusConfig: Record<ProjectStatus, { label: string; class: string; dot: string }> = {
-  [ProjectStatus.PLANNING]: {
-    label: "规划中",
-    class: "bg-blue-50 text-blue-700 border-blue-200",
-    dot: "bg-blue-500",
-  },
-  [ProjectStatus.ACTIVE]: {
-    label: "进行中",
-    class: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  [ProjectStatus.ON_HOLD]: {
-    label: "暂停",
-    class: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-500",
-  },
-  [ProjectStatus.COMPLETED]: {
-    label: "已完成",
-    class: "bg-purple-50 text-purple-700 border-purple-200",
-    dot: "bg-purple-500",
-  },
-  [ProjectStatus.ARCHIVED]: {
-    label: "已归档",
-    class: "bg-slate-100 text-slate-600 border-slate-200",
-    dot: "bg-slate-400",
-  },
-};
 
 const tabItems = [
   { value: "overview", label: "概览", icon: LayoutDashboard },
@@ -210,16 +183,7 @@ onMounted(() => {
                 <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
                   {{ project.name }}
                 </h1>
-                <Badge
-                  :class="statusConfig[project.status]?.class"
-                  variant="outline"
-                  class="px-2.5 py-0.5 font-medium text-xs"
-                >
-                  <span
-                    :class="['w-1.5 h-1.5 rounded-full mr-1.5', statusConfig[project.status]?.dot]"
-                  />
-                  {{ statusConfig[project.status]?.label || project.status }}
-                </Badge>
+                <EnumBadge :value="project.status" :config="PROJECT_STATUS_CONFIG" show-dot />
               </div>
               <p class="text-sm text-slate-500 font-mono">{{ project.projectKey }}</p>
             </div>

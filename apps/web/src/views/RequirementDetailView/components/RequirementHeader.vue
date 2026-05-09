@@ -7,6 +7,7 @@ import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbP
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ButtonGroup } from "@/components/ui/button-group";
+import { REQUIREMENT_STATUS_CONFIG, PRIORITY_CONFIG, getEnumLabel } from "@/utils/enum-config";
 
 const props = defineProps<{
   requirement: RequirementResponseDto;
@@ -53,22 +54,7 @@ const handleStatusChange = (newStatus: unknown) => {
   }
 };
 
-const statusConfig: Record<RequirementStatus, { label: string; color: string }> = {
-  [RequirementStatus.DRAFT]: { label: "草稿", color: "status-draft" },
-  [RequirementStatus.REVIEWED]: { label: "已审核", color: "status-reviewed" },
-  [RequirementStatus.APPROVED]: { label: "已批准", color: "status-approved" },
-  [RequirementStatus.REJECTED]: { label: "已拒绝", color: "status-rejected" },
-  [RequirementStatus.PROCESSING]: { label: "进行中", color: "status-processing" },
-  [RequirementStatus.COMPLETED]: { label: "已完成", color: "status-completed" },
-  [RequirementStatus.CANCELLED]: { label: "已取消", color: "status-cancelled" },
-};
 
-const priorityConfig: Record<Priority, { label: string; color: string }> = {
-  [Priority.CRITICAL]: { label: "关键", color: "priority-critical" },
-  [Priority.HIGH]: { label: "高", color: "priority-high" },
-  [Priority.MEDIUM]: { label: "中", color: "priority-medium" },
-  [Priority.LOW]: { label: "低", color: "priority-low" },
-};
 </script>
 
 <template>
@@ -127,7 +113,7 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
               'border-priority-low text-priority-low hover:bg-priority-low': requirement.priority === Priority.LOW,
             }"
           >
-            {{ priorityConfig[requirement.priority]?.label }}
+            {{ getEnumLabel(PRIORITY_CONFIG, requirement.priority) }}
           </Badge>
      
           <ButtonGroup>
@@ -145,7 +131,7 @@ const priorityConfig: Record<Priority, { label: string; color: string }> = {
                 requirement.status === RequirementStatus.CANCELLED && 'border-2 border-status-cancelled text-primary bg-primary/20 font-medium',
               ]"
             >
-              {{ statusConfig[requirement.status]?.label }}
+              {{ getEnumLabel(REQUIREMENT_STATUS_CONFIG, requirement.status) }}
             </Button>
          
             <Button

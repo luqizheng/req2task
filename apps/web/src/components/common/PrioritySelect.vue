@@ -1,36 +1,23 @@
 <script setup lang="ts">
-import { TaskPriority } from "@req2task/dto";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Priority } from '@req2task/dto'
+import { PRIORITY_CONFIG } from '@/utils/enum-config'
+import EnumSelect from './EnumSelect.vue'
 
 defineProps<{
-  modelValue?: TaskPriority;
-}>();
+  modelValue?: Priority
+}>()
 
 const emit = defineEmits<{
-  "update:modelValue": [value: TaskPriority];
-}>();
-
-const handleValueChange = (value: string) => {
-  emit("update:modelValue", value as TaskPriority);
-};
+  'update:modelValue': [value: Priority]
+}>()
 </script>
 
 <template>
-  <Select :model-value="modelValue" @update:model-value="handleValueChange">
-    <SelectTrigger class="w-28 h-7 text-xs">
-      <SelectValue />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="low">低</SelectItem>
-      <SelectItem value="medium">中</SelectItem>
-      <SelectItem value="high">高</SelectItem>
-      <SelectItem value="urgent">紧急</SelectItem>
-    </SelectContent>
-  </Select>
+  <EnumSelect
+    :model-value="modelValue"
+    :config="PRIORITY_CONFIG"
+    placeholder="优先级"
+    class="w-24 h-7 text-xs"
+    @update:model-value="(v) => v && emit('update:modelValue', v as Priority)"
+  />
 </template>

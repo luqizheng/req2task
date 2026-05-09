@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import ProjectStatusSelect from "@/components/ProjectStatusSelect.vue";
+import ProjectStatusSelect from "@/components/common/ProjectStatusSelect.vue";
 import ProjectCard from "./ProjectCard.vue";
 import {
   DropdownMenu,

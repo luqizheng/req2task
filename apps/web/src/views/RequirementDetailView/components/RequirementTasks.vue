@@ -16,7 +16,7 @@ import CommonCard from "@/components/CommonCard.vue";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import useListEdit from "@/composables/useListEdit";
-import { PrioritySelect, PriorityBadge } from "@/components/common";
+import { TaskPrioritySelect, TaskPriorityBadge } from "@/components/common";
 
 const props = defineProps<{
   requirementId: string;
@@ -207,9 +207,9 @@ defineExpose({
                   placeholder="任务标题"
                 />
               </div>
-              <PriorityBadge
+              <TaskPriorityBadge
                 v-if="task.priority"
-                :priority="task.priority"
+                :value="task.priority"
               />
             </div>
           </template>
@@ -230,7 +230,7 @@ defineExpose({
             <div v-if="isEditing(index)" class="flex items-center gap-3">
               <div class="flex items-center gap-2">
                 <span class="text-xs text-muted-foreground">优先级:</span>
-                <PrioritySelect v-model="task.priority" />
+                <TaskPrioritySelect v-model="task.priority" />
               </div>
               <div class="flex items-center gap-2">
                 <span class="text-xs text-muted-foreground">工时:</span>

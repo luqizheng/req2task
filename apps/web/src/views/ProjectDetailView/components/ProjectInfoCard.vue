@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import type { ProjectResponseDto } from "@req2task/dto";
-import { ProjectStatus } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import EnumBadge from "@/components/common/EnumBadge.vue";
+import { PROJECT_STATUS_CONFIG } from "@/utils/enum-config";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Calendar,
@@ -22,34 +22,6 @@ defineProps<{
   project: ProjectResponseDto;
   isSettings?: boolean;
 }>();
-
-const statusConfig: Record<ProjectStatus, { label: string; class: string; dot: string }> = {
-  [ProjectStatus.PLANNING]: {
-    label: "规划中",
-    class: "bg-blue-50 text-blue-700 border-blue-200",
-    dot: "bg-blue-500",
-  },
-  [ProjectStatus.ACTIVE]: {
-    label: "进行中",
-    class: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    dot: "bg-emerald-500",
-  },
-  [ProjectStatus.ON_HOLD]: {
-    label: "暂停",
-    class: "bg-amber-50 text-amber-700 border-amber-200",
-    dot: "bg-amber-500",
-  },
-  [ProjectStatus.COMPLETED]: {
-    label: "已完成",
-    class: "bg-purple-50 text-purple-700 border-purple-200",
-    dot: "bg-purple-500",
-  },
-  [ProjectStatus.ARCHIVED]: {
-    label: "已归档",
-    class: "bg-slate-100 text-slate-600 border-slate-200",
-    dot: "bg-slate-400",
-  },
-};
 
 const router = useRouter();
 
@@ -80,16 +52,7 @@ const goBack = () => {
             {{ isSettings ? "项目设置" : "项目信息" }}
           </CardTitle>
         </div>
-        <Badge
-          :class="statusConfig[project.status]?.class"
-          variant="outline"
-          class="px-2.5 py-0.5 font-medium text-xs"
-        >
-          <span
-            :class="['w-1.5 h-1.5 rounded-full mr-1.5', statusConfig[project.status]?.dot]"
-          />
-          {{ statusConfig[project.status]?.label || project.status }}
-        </Badge>
+        <EnumBadge :value="project.status" :config="PROJECT_STATUS_CONFIG" show-dot />
       </div>
     </CardHeader>
     <CardContent class="p-6">

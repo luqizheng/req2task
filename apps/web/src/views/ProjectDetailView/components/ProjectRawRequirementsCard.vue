@@ -2,10 +2,11 @@
 import { ref, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import type { RawRequirementResponseDto } from "@req2task/dto";
-import { RawRequirementStatus, CollectionType } from "@req2task/dto";
+import { CollectionType } from "@req2task/dto";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import EnumBadge from "@/components/common/EnumBadge.vue";
+import { RAW_REQUIREMENT_STATUS_CONFIG } from "@/utils/enum-config";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   DropdownMenu,
@@ -39,16 +40,6 @@ const rawRequirements = ref<RawRequirementResponseDto[]>([]);
 const loading = ref(true);
 const error = ref<string | null>(null);
 const isRefreshing = ref(false);
-
-const statusConfig: Record<RawRequirementStatus, { label: string; class: string }> = {
-  [RawRequirementStatus.PENDING]: { label: "待处理", class: "bg-slate-100 text-slate-700" },
-  [RawRequirementStatus.PROCESSING]: { label: "处理中", class: "bg-blue-100 text-blue-700" },
-  [RawRequirementStatus.COMPLETED]: { label: "已完成", class: "bg-emerald-100 text-emerald-700" },
-  [RawRequirementStatus.CLARIFIED]: { label: "已澄清", class: "bg-indigo-100 text-indigo-700" },
-  [RawRequirementStatus.CONVERTED]: { label: "已转换", class: "bg-purple-100 text-purple-700" },
-  [RawRequirementStatus.DISCARDED]: { label: "已废弃", class: "bg-red-100 text-red-700" },
-  [RawRequirementStatus.FAILED]: { label: "失败", class: "bg-red-100 text-red-700" },
-};
 
 const collectionTypeConfig: Record<CollectionType, { label: string; icon: string }> = {
   [CollectionType.MEETING]: { label: "会议", icon: "users" },
@@ -191,12 +182,7 @@ defineExpose({
                 <h4 class="font-medium text-slate-800 truncate">
                   {{ raw.title || "未命名需求" }}
                 </h4>
-                <Badge
-                  :class="statusConfig[raw.status]?.class"
-                  class="text-xs shrink-0"
-                >
-                  {{ statusConfig[raw.status]?.label || raw.status }}
-                </Badge>
+                <EnumBadge :value="raw.status" :config="RAW_REQUIREMENT_STATUS_CONFIG" class="text-xs shrink-0" />
               </div>
               <p class="text-sm text-slate-600 line-clamp-2 mb-3">
                 {{ raw.content }}

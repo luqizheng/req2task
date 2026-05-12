@@ -176,7 +176,7 @@ req2task/
 
 **UI 体系：** shadcn-vue（基于 Reka UI + Tailwind CSS），使用 Field 组件替代废弃的 Form 组件。
 
-**状态管理：** Pinia stores（user、ai）
+**状态管理：** Pinia stores（user、ai、counter）— ⚠️ 缺失 project、requirement、task、userStory、acceptanceCriteria、rawRequirement、llmConfig 等 Store
 
 ### 3.4 apps/service — NestJS 后端主服务
 

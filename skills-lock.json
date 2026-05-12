@@ -6,6 +6,12 @@
       "sourceType": "github",
       "computedHash": "3604c38953c20f99daef7200a0df2a552081e5c5d98f2878d95c41a24f66ed5a"
     },
+    "gstack": {
+      "source": "garrytan/gstack",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "345e502d260435d3348846782abc43a0fed6e92f89c8b7fb201836209e1f47c2"
+    },
     "impeccable": {
       "source": "pbakaus/impeccable",
       "sourceType": "github",

@@ -1,7 +1,7 @@
 # 前端开发路线图
 
 **文档版本**: v1.0
-**最后更新**: 2026-04-17
+**最后更新**: 2026-05-12
 **状态**: 🚧 进行中
 **里程碑**: M6 (对接后端 Sprint 13-15)
 
@@ -15,19 +15,20 @@
 
 | 类别 | 数量 | 说明 |
 |------|------|------|
-| 页面 | 19 | 基础 CRUD + AI 功能 |
-| Store | 7 | user, project, requirement, task, ai 等 |
-| API 模块 | 9 | auth, projects, requirements, tasks, ai 等 |
-| 组件 | 5 | layout + 4 project 业务组件 |
+| 页面 | 20+ | 基础 CRUD + AI 功能 |
+| Store | 3 | user、ai、counter（⚠️ 严重缺失） |
+| API 模块 | 10（有效） | auth, projects, requirements, tasks, ai, featureModules, rawRequirements, llm-config, conversation, attachment, file-data, users, wizard（含5个待清理 copy 文件） |
+| 组件 | 20+ | View 子组件 + layout |
 
 ### 1.2 缺失项
 
 | 类型 | 缺失项 | 优先级 |
 |------|--------|--------|
-| Store | userStory, acceptanceCriteria, rawRequirement, llmConfig | P0 |
-| 页面 | RawRequirementCollectView, UserStoryManageView | P0 |
+| Store | project, requirement, task, userStory, acceptanceCriteria, rawRequirement, llmConfig | P0 |
+| 代码卫生 | 5 个 `* copy.ts` 文件需清理 | P0 |
+| 页面 | RawRequirementCollectView, UserStoryManageView | P1 |
 | 组件 | 通用组件库 (8+), 业务组件 (4+) | P1 |
-| 功能 | 权限管理 UI, 通知面板, 提示词模板管理 | P2 |
+| 功能 | 权限管理 UI, 通知面板, WebSocket 实时同步 | P2 |
 
 ---
 

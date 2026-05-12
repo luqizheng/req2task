@@ -13,10 +13,12 @@
 | AI 需求生成 | ✅ 已完成 | Sprint 08 | AI 生成需求、用户故事 |
 | AI 冲突检测 | ✅ 已完成 | Sprint 09 | 语义检索、冲突分析、AI Chat |
 | AI 增强与优化 | ✅ 已完成 | Sprint 10 | 任务分解、工时估算 |
-| 高级功能 | 🚧 进行中 | Sprint 11 | 项目看板、报表、基线管理 |
-| 高级功能（下） | ⏳ 待开始 | Sprint 12 | 权限完善、通知系统 |
-| 需求变更处理 | ⏳ 待开始 | Sprint 15 | 任务替代/废弃、工时统计 |
-| RawRequirement 关联 | ⏳ 待开始 | Sprint 14 | 原始需求关联、版本链 |
+| 高级功能 | ✅ 已完成 | Sprint 11 | 项目看板、报表、基线管理 |
+| 权限与通知 | ✅ 已完成 | Sprint 12 | 权限守卫、通知系统 |
+| 文件与存储 | ✅ 已完成 | Sprint 11-12 | file-data、project-attachment、rustfs |
+| 开发者 WebSocket | ✅ 已完成 | Sprint 11-12 | developer-ws 网关 |
+| 需求变更处理 | ⏳ 待开始 | Sprint 14 | 任务替代/废弃、工时统计 |
+| RawRequirement 关联 | ⏳ 待开始 | Sprint 15 | 原始需求关联、版本链 |
 
 > 状态符号：✅ 已完成 | 🚧 进行中 | ⏳ 待开始 | ⚠️ 有变更
 

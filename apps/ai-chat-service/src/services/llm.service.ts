@@ -1,6 +1,11 @@
-import LLM from '@themaximalist/llm.js';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatOllama } from '@langchain/ollama';
+import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
+import { HumanMessage, SystemMessage, AIMessage } from '@langchain/core/messages';
+import { StringOutputParser } from '@langchain/core/output_parsers';
 import type { Message, FileAttachment, LLMConfigMetadata } from '../types.js';
-import type { Options } from '@themaximalist/llm.js';
+import { LLMProviderType } from '../types.js';
 import { logger } from '../utils/logger.js';
 
 export interface LLMResponse {
@@ -15,142 +20,229 @@ export interface StreamChunk {
 
 export class LLMService {
   private defaultModel: string;
+  private defaultClient: BaseChatModel;
 
   constructor(defaultModel: string = 'gpt-4o-mini') {
     this.defaultModel = defaultModel;
+    this.defaultClient = this.createDefaultClient();
+  }
+
+  private createDefaultClient(): BaseChatModel {
+    logger.debug({ model: this.defaultModel }, 'Creating default LLM client');
+    
+    if (this.defaultModel.startsWith('claude')) {
+      return new ChatAnthropic({
+        model: this.defaultModel,
+        temperature: 0.7,
+        maxTokens: 2000,
+      });
+    }
+    
+    if (this.defaultModel.startsWith('llama') || this.defaultModel.startsWith('gemma')) {
+      return new ChatOllama({
+        model: this.defaultModel,
+        temperature: 0.7,
+      });
+    }
+    
+    return new ChatOpenAI({
+      model: this.defaultModel,
+      temperature: 0.7,
+      maxTokens: 2000,
+    });
+  }
+
+  private createClientFromConfig(config: LLMConfigMetadata): BaseChatModel {
+    const { provider, modelName, apiKey, baseUrl, temperature, maxTokens } = config;
+    
+    logger.debug({ provider, modelName, baseUrl }, 'Creating LLM client from config');
+
+    switch (provider) {
+      case LLMProviderType.DEEPSEEK:
+        return new ChatOpenAI({
+          model: modelName,
+          temperature: Number(temperature),
+          maxTokens: Number(maxTokens),
+          apiKey: apiKey,
+          configuration: {
+            baseURL: baseUrl,
+          },
+        });
+      case LLMProviderType.OLLAMA:
+        return new ChatOllama({
+          model: modelName,
+          temperature: Number(temperature),
+        });
+      case LLMProviderType.ANTHROPIC:
+        return new ChatAnthropic({
+          model: modelName,
+          temperature: Number(temperature),
+          maxTokens: Number(maxTokens),
+          apiKey: apiKey,
+        });
+      case LLMProviderType.OPENAI:
+      default:
+        return new ChatOpenAI({
+          model: modelName,
+          temperature: Number(temperature),
+          maxTokens: Number(maxTokens),
+          apiKey: apiKey,
+          configuration: baseUrl ? { baseURL: baseUrl } : undefined,
+        });
+    }
+  }
+
+  private convertMessages(messages: Message[]): (SystemMessage | HumanMessage | AIMessage)[] {
+    return messages.map((m) => {
+      switch (m.role) {
+        case 'system':
+          return new SystemMessage(m.content);
+        case 'assistant':
+          return new AIMessage(m.content);
+        case 'user':
+        default:
+          return new HumanMessage(m.content);
+      }
+    });
+  }
+
+  private processFiles(files?: FileAttachment[]): string {
+    if (!files || files.length === 0) {
+      return '';
+    }
+
+    return files
+      .map((file, index) => {
+        const fileName = file.name || `附件${index + 1}`;
+        if (file.type === 'text') {
+          return `[${fileName}]\n${file.data}`;
+        }
+        return `[${fileName}] (${file.type} 文件)\n${file.data}`;
+      })
+      .join('\n\n');
+  }
+
+  private enrichMessagesWithFiles(
+    messages: Message[],
+    files?: FileAttachment[],
+  ): Message[] {
+    const fileContents = this.processFiles(files);
+    if (!fileContents) {
+      return messages;
+    }
+
+    const enrichedMessages = [...messages];
+    const systemMessageIndex = enrichedMessages.findIndex((m) => m.role === 'system');
+
+    if (systemMessageIndex >= 0) {
+      enrichedMessages[systemMessageIndex] = {
+        ...enrichedMessages[systemMessageIndex],
+        content: `${enrichedMessages[systemMessageIndex].content}\n\n[附加文件内容]\n${fileContents}`,
+      };
+    } else {
+      enrichedMessages.unshift({
+        id: '',
+        role: 'system',
+        content: `[附加文件内容]\n${fileContents}`,
+        createdAt: new Date(),
+      });
+    }
+
+    return enrichedMessages;
   }
 
   async complete(
     messages: Message[],
     model?: string,
-    files?: FileAttachment[]
+    files?: FileAttachment[],
   ): Promise<LLMResponse> {
     logger.debug({ model: model || this.defaultModel, messageCount: messages.length, hasFiles: !!files }, 'LLM complete start');
-    
-    const processedMessages = this.processMessages(messages, files);
-    logger.debug({ processedCount: processedMessages.length }, 'Messages processed');
-    
-    const options: Options = {
-      model: model || this.defaultModel,
-      extended: true,
-    };
-    logger.debug({ options }, 'LLM options prepared');
 
-    const response = await LLM(processedMessages, options);
-    logger.debug({ responseType: typeof response }, 'LLM response received');
+    const enrichedMessages = this.enrichMessagesWithFiles(messages, files);
+    const convertedMessages = this.convertMessages(enrichedMessages);
 
-    if (typeof response === 'string') {
-      logger.debug({ contentLength: response.length }, 'Response is string');
-      return {
-        content: response,
-        finishReason: null,
-      };
-    }
+    const client = model && model !== this.defaultModel 
+      ? this.createClientFromConfig({
+          provider: LLMProviderType.OPENAI,
+          modelName: model,
+          temperature: 0.7,
+          maxTokens: 2000,
+          topP: 1,
+        })
+      : this.defaultClient;
 
-    const typedResponse = response as {
-      content: string;
-      finishReason?: string;
-    };
+    const chain = client.pipe(new StringOutputParser());
+    const response = await chain.invoke(convertedMessages);
 
-    logger.debug({ contentLength: typedResponse.content?.length, finishReason: typedResponse.finishReason }, 'Response parsed');
-    
+    logger.debug({ contentLength: response.length }, 'LLM response received');
+
     return {
-      content: typedResponse.content,
-      finishReason: (typedResponse.finishReason as LLMResponse['finishReason']) || null,
+      content: response,
+      finishReason: 'stop',
     };
   }
 
   async completeWithConfig(
     messages: Message[],
     config: LLMConfigMetadata,
-    files?: FileAttachment[]
+    files?: FileAttachment[],
   ): Promise<LLMResponse> {
     logger.debug({ config: { ...config, apiKey: config.apiKey ? '***' : undefined }, messageCount: messages.length }, 'LLM completeWithConfig start');
-    
-    const processedMessages = this.processMessages(messages, files);
-    logger.debug({ processedCount: processedMessages.length }, 'Messages processed');
-    
-    const options: Options = {
-      model: config.modelName,
-      service: config.provider,
-      apiKey: config.apiKey,
-      baseUrl: config.baseUrl,
-      temperature: Number(config.temperature),
-      max_tokens: Number(config.maxTokens),
-      extended: true,
-    };
-    logger.debug({ model: config.modelName, service: config.provider, baseUrl: config.baseUrl }, 'LLM options prepared with config');
 
-    const response = await LLM(processedMessages, options);
-    logger.debug({ responseType: typeof response }, 'LLM response received');
+    const enrichedMessages = this.enrichMessagesWithFiles(messages, files);
+    const convertedMessages = this.convertMessages(enrichedMessages);
 
-    if (typeof response === 'string') {
-      logger.debug({ contentLength: response.length }, 'Response is string');
-      return {
-        content: response,
-        finishReason: null,
-      };
-    }
+    const client = this.createClientFromConfig(config);
+    const chain = client.pipe(new StringOutputParser());
+    const response = await chain.invoke(convertedMessages);
 
-    const typedResponse = response as {
-      content: string;
-      finishReason?: string;
-    };
+    logger.debug({ contentLength: response.length }, 'LLM response received');
 
-    logger.debug({ contentLength: typedResponse.content?.length, finishReason: typedResponse.finishReason }, 'Response parsed');
-    
     return {
-      content: typedResponse.content,
-      finishReason: (typedResponse.finishReason as LLMResponse['finishReason']) || null,
+      content: response,
+      finishReason: 'stop',
     };
   }
 
   async *streamComplete(
     messages: Message[],
     model?: string,
-    files?: FileAttachment[]
+    files?: FileAttachment[],
   ): AsyncGenerator<StreamChunk> {
     logger.debug({ model: model || this.defaultModel, messageCount: messages.length, hasFiles: !!files }, 'LLM streamComplete start');
-    
-    const processedMessages = this.processMessages(messages, files);
-    logger.debug({ processedCount: processedMessages.length }, 'Messages processed');
-    
-    const options: Options = {
-      model: model || this.defaultModel,
-      stream: true,
-      extended: true,
-    };
-    logger.debug({ options }, 'LLM stream options prepared');
 
-    const response = await LLM(processedMessages, options) as unknown as {
-      stream: AsyncGenerator<Record<string, unknown>>;
-    };
-    logger.debug('LLM stream response obtained');
+    const enrichedMessages = this.enrichMessagesWithFiles(messages, files);
+    const convertedMessages = this.convertMessages(enrichedMessages);
 
-    let chunkCount = 0;
+    const client = model && model !== this.defaultModel
+      ? this.createClientFromConfig({
+          provider: LLMProviderType.OPENAI,
+          modelName: model,
+          temperature: 0.7,
+          maxTokens: 2000,
+          topP: 1,
+        })
+      : this.defaultClient;
+
+    const stream = await client.stream(convertedMessages);
+
     let totalContentLength = 0;
-    
-    for await (const chunk of response.stream) {
-      logger.debug({ chunkType: chunk.type, chunkKeys: Object.keys(chunk) }, 'Stream chunk received');
-      
-      if (chunk.type === 'content' && typeof chunk.content === 'string') {
-        chunkCount++;
-        totalContentLength += chunk.content.length;
-        logger.debug({ chunkCount, contentLength: chunk.content.length, totalContentLength }, 'Content chunk processed');
-        
+
+    for await (const chunk of stream) {
+      const content = chunk.content as string;
+      if (content) {
+        totalContentLength += content.length;
+        logger.debug({ contentLength: content.length, totalContentLength }, 'Stream chunk received');
+
         yield {
-          content: chunk.content,
+          content,
           done: false,
         };
-      } else if (chunk.type === 'thinking' && typeof chunk.content === 'string') {
-        logger.debug({ thinkingLength: chunk.content.length }, 'Thinking chunk received');
-      } else {
-        logger.debug({ chunk }, 'Other chunk type received');
       }
     }
 
-    logger.debug({ totalChunks: chunkCount, totalContentLength }, 'LLM stream completed');
-    
+    logger.debug({ totalContentLength }, 'LLM stream completed');
+
     yield {
       content: '',
       done: true,
@@ -160,116 +252,42 @@ export class LLMService {
   async *streamCompleteWithConfig(
     messages: Message[],
     config: LLMConfigMetadata,
-    files?: FileAttachment[]
+    files?: FileAttachment[],
   ): AsyncGenerator<StreamChunk> {
     logger.debug({ config: { ...config, apiKey: config.apiKey ? '***' : undefined }, messageCount: messages.length }, 'LLM streamCompleteWithConfig start');
-    
-    const processedMessages = this.processMessages(messages, files);
-    logger.debug({ processedCount: processedMessages.length }, 'Messages processed');
-    
-    const options: Options = {
-      model: config.modelName,
-      service: config.provider,
-      apiKey: config.apiKey,
-      baseUrl: config.baseUrl,
-      temperature: Number(config.temperature),
-      max_tokens: Number(config.maxTokens),
-      stream: true,
-      extended: true,
-    };
-    logger.debug({ model: config.modelName, service: config.provider, baseUrl: config.baseUrl }, 'LLM stream options prepared with config');
 
-    const response = await LLM(processedMessages, options) as unknown as {
-      stream: AsyncGenerator<Record<string, unknown>>;
-    };
-    logger.debug('LLM stream response obtained');
+    const enrichedMessages = this.enrichMessagesWithFiles(messages, files);
+    const convertedMessages = this.convertMessages(enrichedMessages);
 
-    let chunkCount = 0;
+    const client = this.createClientFromConfig(config);
+    const stream = await client.stream(convertedMessages);
+
     let totalContentLength = 0;
-    
-    for await (const chunk of response.stream) {
-      logger.debug({ chunkType: chunk.type, chunkKeys: Object.keys(chunk) }, 'Stream chunk received');
-      
-      if (chunk.type === 'content' && typeof chunk.content === 'string') {
-        chunkCount++;
-        totalContentLength += chunk.content.length;
-        logger.debug({ chunkCount, contentLength: chunk.content.length, totalContentLength }, 'Content chunk processed');
-        
+
+    for await (const chunk of stream) {
+      const content = chunk.content as string;
+      if (content) {
+        totalContentLength += content.length;
+        logger.debug({ contentLength: content.length, totalContentLength }, 'Stream chunk received');
+
         yield {
-          content: chunk.content,
+          content,
           done: false,
         };
-      } else if (chunk.type === 'thinking' && typeof chunk.content === 'string') {
-        logger.debug({ thinkingLength: chunk.content.length }, 'Thinking chunk received');
-      } else {
-        logger.debug({ chunk }, 'Other chunk type received');
       }
     }
 
-    logger.debug({ totalChunks: chunkCount, totalContentLength }, 'LLM stream completed');
-    
+    logger.debug({ totalContentLength }, 'LLM stream completed');
+
     yield {
       content: '',
       done: true,
     };
   }
 
-  private processMessages(
-    messages: Message[],
-    files?: FileAttachment[]
-  ): Array<{ role: 'system' | 'user' | 'assistant'; content: string }> {
-    logger.debug({ messageCount: messages.length, hasFiles: !!files }, 'processMessages called');
-    
-    const baseMessages = messages.map(m => ({
-      role: m.role as 'system' | 'user' | 'assistant',
-      content: m.content,
-    }));
-    logger.debug({ baseMessageCount: baseMessages.length, roles: baseMessages.map(m => m.role) }, 'Base messages extracted');
-
-    if (!files || files.length === 0) {
-      logger.debug('No files, returning base messages');
-      return baseMessages;
-    }
-
-    logger.debug({ fileCount: files.length, fileNames: files.map(f => f.name) }, 'Processing files');
-
-    const fileContents = files
-      .map((file, index) => {
-        const fileName = file.name || `附件${index + 1}`;
-        if (file.type === 'text') {
-          return `[${fileName}]\n${file.data}`;
-        }
-        return `[${fileName}] (${file.type} 文件)\n${file.data}`;
-      })
-      .join('\n\n');
-
-    const systemMessageIndex = baseMessages.findIndex(m => m.role === 'system');
-    const systemMessage = systemMessageIndex >= 0
-      ? baseMessages[systemMessageIndex]
-      : null;
-
-    const otherMessages = systemMessageIndex >= 0
-      ? baseMessages.filter((_, i) => i !== systemMessageIndex)
-      : baseMessages;
-
-    const enrichedSystemMessage: { role: 'system' | 'user' | 'assistant'; content: string } = systemMessage
-      ? {
-          ...systemMessage,
-          content: `${systemMessage.content}\n\n[附加文件内容]\n${fileContents}`,
-        }
-      : {
-          role: 'system',
-          content: `[附加文件内容]\n${fileContents}`,
-        };
-
-    logger.debug({ hasEnrichedSystem: !!systemMessage, totalOutput: [enrichedSystemMessage, ...otherMessages].length }, 'Messages processed with files');
-    
-    return [enrichedSystemMessage, ...otherMessages];
-  }
-
   extractFollowUpQuestions(content: string): string[] {
     logger.debug({ contentLength: content.length }, 'extractFollowUpQuestions called');
-    
+
     const patterns = [
       /(?:追问|问题|请问|能否|是否可以|请确认)[:：]\s*([^\n]+)/gi,
       /(\d+[.、](?:\s*[^\n]+))/g,
@@ -290,13 +308,13 @@ export class LLMService {
 
     const result = Array.from(questions).slice(0, 5);
     logger.debug({ extractedCount: result.length }, 'extractFollowUpQuestions result');
-    
+
     return result;
   }
 
   extractKeyElements(content: string): string[] {
     logger.debug({ contentLength: content.length }, 'extractKeyElements called');
-    
+
     const elementPatterns = [
       /(?:功能|特性|需求)[:：]\s*([^\n，,]+)/gi,
       /(?:用户|角色)[:：]\s*([^\n，,]+)/gi,
@@ -318,7 +336,7 @@ export class LLMService {
 
     const result = Array.from(elements).slice(0, 10);
     logger.debug({ extractedCount: result.length }, 'extractKeyElements result');
-    
+
     return result;
   }
 }

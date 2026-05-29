@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { DataSource } from "typeorm";
 import "dotenv/config";
 import { LLMConfig } from "../database/entities/llm-config.entity.js";
+import { LLMProviderType } from "../types.js";
 
 async function seed() {
   const dataSource = new DataSource({
@@ -27,13 +28,13 @@ async function seed() {
     console.warn("Starting LLM config seed...");
 
     const ollamaConfig = await queryRunner.manager.findOne(LLMConfig, {
-      where: { modelName: "qwen6:8b", provider: "ollama" },
+      where: { modelName: "qwen6:8b", provider: LLMProviderType.OLLAMA },
     });
 
     if (!ollamaConfig) {
       const config = queryRunner.manager.create(LLMConfig, {
         name: "Ollama Default",
-        provider: "ollama",
+        provider: LLMProviderType.OLLAMA,
         apiKey: "",
         baseUrl: "http://localhost:11434",
         modelName: "qwen3:0.6b",
@@ -55,13 +56,13 @@ async function seed() {
     }
 
     const deepseekConfig = await queryRunner.manager.findOne(LLMConfig, {
-      where: { modelName: "deepseek-chat", provider: "deepseek" },
+      where: { modelName: "deepseek-chat", provider: LLMProviderType.DEEPSEEK },
     });
 
     if (!deepseekConfig) {
       const config = queryRunner.manager.create(LLMConfig, {
         name: "DeepSeek Chat",
-        provider: "deepseek",
+        provider: LLMProviderType.DEEPSEEK,
         apiKey: process.env["DEEPSEEK_API_KEY"] || "",
         baseUrl: "https://api.deepseek.com",
         modelName: "deepseek-chat",

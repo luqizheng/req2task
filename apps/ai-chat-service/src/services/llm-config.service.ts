@@ -1,8 +1,10 @@
 import crypto from 'crypto';
 import { Repository, DataSource } from 'typeorm';
+import { ChatOpenAI } from '@langchain/openai';
+import { ChatAnthropic } from '@langchain/anthropic';
+import { ChatOllama } from '@langchain/ollama';
 import { LLMConfig } from '../database/index.js';
-import LLM from '@themaximalist/llm.js';
-import type { Options } from '@themaximalist/llm.js';
+import { LLMProviderType } from '../types.js';
 import type {
   CreateLlmConfigDto,
   UpdateLlmConfigDto,
@@ -130,19 +132,39 @@ export class LlMConfigService {
     }
 
     try {
-      if (!config.apiKey && config.provider !== 'ollama') {
+      if (!config.apiKey && config.provider !== LLMProviderType.OLLAMA) {
         return { success: false, message: 'API Key is not configured' };
       }
 
-      const options: Options = {
-        model: config.modelName,
-        service: config.provider,
-        apiKey: config.apiKey ? decryptKey(config.apiKey) : undefined,
-        baseUrl: config.baseUrl || undefined,
-        max_tokens: 10,
-      };
+      const apiKey = config.apiKey ? decryptKey(config.apiKey) : undefined;
 
-      await LLM('Hello', options);
+      let client;
+      switch (config.provider) {
+        case LLMProviderType.ANTHROPIC:
+          client = new ChatAnthropic({
+            model: config.modelName,
+            apiKey,
+            maxTokens: 10,
+          });
+          break;
+        case LLMProviderType.OLLAMA:
+          client = new ChatOllama({
+            model: config.modelName,
+          });
+          break;
+        case LLMProviderType.DEEPSEEK:
+        case LLMProviderType.OPENAI:
+        default:
+          client = new ChatOpenAI({
+            model: config.modelName,
+            apiKey,
+            configuration: config.baseUrl ? { baseURL: config.baseUrl } : undefined,
+            maxTokens: 10,
+          });
+          break;
+      }
+
+      await client.invoke('Hello');
 
       return { success: true, message: `${config.provider} connection successful` };
     } catch (error) {

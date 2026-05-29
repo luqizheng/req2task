@@ -18,7 +18,7 @@ export class LLMConfig {
 
   @Column({
     type: 'enum',
-    enum: ['deepseek', 'openai', 'ollama'] as const,
+    enum: ['deepseek', 'openai', 'ollama', 'anthropic'] as const,
     default: 'deepseek',
   })
   provider!: LLMProviderType;

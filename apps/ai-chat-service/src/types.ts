@@ -1,8 +1,6 @@
-export enum LLMProviderType {
-  DEEPSEEK = 'deepseek',
-  OPENAI = 'openai',
-  OLLAMA = 'ollama',
-}
+import { LLMProviderType } from '@req2task/dto';
+
+export { LLMProviderType };
 
 export interface Message {
   id: string;
